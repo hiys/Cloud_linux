@@ -1,0 +1,282 @@
+
+
+
+#!/bin/bash
+id=$(ifconfig  eth0|grep   -Po  "(?<=inet  192.168.1.)\d+")
+
+rsync   -aXSH  --delete  192.168.1.5:/rooot/
+
+
+
+en 以太网  wl  无线局域网   ww  无线广域网 
+o 表示在主板 网卡
+p  表示 位置
+s 表示插槽 slot
+
+将网卡名称修改为eth风格
+
+ 
+
+1.先ifconfig查看到网卡目前名称，一般都为enXXXX然后编辑网卡的配置文件
+
+#vi /etc/sysconfig/network-scripts/ifcfg-enXXXX（旧网卡名称）将里面的DEVICE(NAME)项修改为eth0（新网卡名称）
+
+2.重命名该配置文件
+
+# cd /etc/sysconfig/network-scripts/
+
+# mv ifcfg-enXXXX ifcfg-eth0
+
+3.修改配置文件
+
+# vi /etc/default/grub
+
+在文件中GRUBCMDLINELINUX这一行的 rhgb quiet前添加：
+
+net.ifnames=0 biosdevname=0
+
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200n8" ##注意 115200n8
+
+保存并退出
+
+4.运行命令
+
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+
+
+重新生成GRUB配置并更新内核参数。
+
+5.重启机器#reboot
+
+6.#ifconfig 查看网卡信息是否修改成功
+
+
+
+# tr  'a-z'  'A-Z'
+hello
+HELLO
+
+# cat a.txt
+aaa
+zzz
+
+# tr  'a-z'  'A-Z' < a.txt
+AAA
+ZZZ
+
+[root@hiys ~]# cat b.txt 
+aaa
+iii
+ooo
+aaa
+iii
+[root@hiys ~]# tr  'a-k'  'A-K'  < b.txt
+AAA
+III
+ooo
+AAA
+III
+[root@hiys ~]# cat  b.txt
+aaa
+iii
+ooo
+aaa
+iii
+[root@hiys ~]# 
+
+[root@hiys ~]# tr  'a-z'  'A-Z'  <<EOF
+> hello boy
+> EOF
+HELLO BOY
+
+[root@hiys ~]# cat  <<EOF  > xx.txt
+> haha
+> EOF
+
+[root@hiys ~]# cat  xx.txt 
+haha
+
+[root@hiys ~]# vim  test.sh
+[root@hiys ~]# cat  test.sh
+#!/bin/bash
+cat  <<EOF  > xx.txt
+ haha
+EOF   ## 注意一定定格写
+echo  -e "create\n\t\033[32;1m[DONE]\033[0m" #{#『 "033[32;1m... \033[0m "注意都是数字零，不是字母o；绿色』}
+echo
+[root@hiys ~]# . test.sh
+create
+	[DONE]
+
+[root@hiys ~]# cat  xx.txt 
+ haha
+[root@hiys ~]# cat  xx.txt |tr  'a-z'  'A-Z'
+ HAHA
+[root@hiys ~]# 
+
+[root@hiys ~]# vim  b.txt 
+[root@hiys ~]# cat  b.txt
+aaa
+iii
+xxooo
+xxxx
+aaa
+jjj
+iii
+ccc
+[root@hiys ~]# grep -B4  -A1  -n  'j'  b.txt  ## before  after
+2-iii
+3-xxooo
+4-xxxx
+5-aaa
+6:jjj
+7-iii
+[root@hiys ~]# 
+
+[root@hiys ~]# vim testxx.txt
+[root@hiys ~]# cat a.txt 
+echo  tty2-tty6 > /dev/tty6
+tty
+/dev/tty1 
+ echo haha > /dev/tty1 
+haha
+[root@hiys ~]# cat b.txt 
+aaa
+iii
+xxooo
+xxxx
+aaa
+jjj
+iii
+ccc
+[root@hiys ~]# grep -1  -n  'j'  b.txt
+5-aaa
+6:jjj
+7-iii
+[root@hiys ~]# grep -1  'j'  b.txt
+aaa
+jjj
+iii
+[root@hiys ~]# grep  -n  'j'  b.txt
+6:jjj
+[root@hiys ~]# grep  -2  'j'  b.txt
+xxxx
+aaa
+jjj
+iii
+ccc
+[root@hiys ~]# 
+
+[root@hiys ~]# cat testxx.txt 
+/root/a.txt
+/root/b.txt
+[root@hiys ~]# cat testxx.txt  |xargs   ls  -l
+-rw-r--r-- 1 root root 72 11月 26 11:09 /root/a.txt
+-rw-r--r-- 1 root root 35 12月  3 19:40 /root/b.txt
+[root@hiys ~]# find  /boot   -size  +5M  -exec  cp  {}  /opt  \;
+
+[root@hiys ~]# find  /boot/  -name  'vmlinux*'
+
+[root@hiys ~]# find  -mtime  -3  ## 按时间查
+[root@hiys ~]# 
+[root@hiys ~]# 
+[root@hiys ~]# 
+[root@hiys ~]# 
+
+
+
+vim  xx.txt
+ 
+:8,15s/^/   /g
+缩进 空格
+
+
+tar  caf  xx.tar.gz   /wenjianjia/   ## 自动判断 a  --- auto;c  创建
+tar  caf  xx2.tar.bz2  /wenjianjia/
+file   /wenjianjia.*  # 查看文件类型  
+
+
+网卡 设备型号  virtio  e1000 rtl8139 区别
+
+
+Mycat-server-1.6-RELEASE-20161028204710-linux.tar.gz
+
+
+[root@hiys nsd1807]# which  sealert  
+/usr/bin/sealert
+[root@hiys nsd1807]# sealert  -b  --help
+Usage: sealert [options]
+
+Options:
+  -h, --help            show this help message and exit
+  -b, --browser         Launch the browser
+  -s, --service         Start sealert as a dbus service
+  -S, --noservice       Start sealert without dbus service as stand alone app
+  -l LOOKUPID, --lookupid=LOOKUPID
+                        Lookup alert by id, id may be wildcard * to lookup all
+                        alerts
+  -a FILE, --analyze=FILE
+                        Scan a log file, analyze it's AVC's
+  -u USER, --user=USER  logon user name
+  -p PASSWORD, --password=PASSWORD
+                        logon user password
+  -P PLUGIN, --plugin=PLUGIN
+                        Plugin Name Required for -f
+  -f FIX, --fix=FIX     fix avc with the given uuid, requires plugin
+[root@hiys nsd1807]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

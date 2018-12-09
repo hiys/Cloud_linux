@@ -1,0 +1,463 @@
+
+
+
+
+
+[root@hiys ~]# ls /mnt/
+
+[root@hiys ~]# du  -sh  /mnt/
+4.0K	/mnt/
+
+[root@hiys ~]# df  -hT  /mnt/
+文件系统       类型  容量  已用    可用  已用%   挂载点
+/dev/sda2      ext4  118G   61G   52G   54% /
+
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   0 111.8G  0 disk 
+└─sdb1   8:17   0 111.8G  0 part 
+loop0    7:0    0 935.4M  0 loop /var/ftp/ceph
+loop1    7:1    0   3.8G  0 loop /var/ftp/rhel7
+
+[root@hiys ~]# mount.ntfs-3g  /dev/sdb1  /mnt/
+
+[root@hiys mnt]# df -hT /mnt                    ## 注意fuseblk
+文件系统           类型       容量    已用    可用   已用%  挂载点
+/dev/sdb1      fuseblk  112G   58G   55G   52%   /mnt
+
+
+
+[root@hiys ~]# ls /javaweb/lost+found/
+
+[root@hiys ~]# ls /javaweb/
+lost+found
+
+[root@hiys ~]# df  -hT  /javaweb/
+文件系统         类型   容量    已用   可用   已用% 挂载点
+/dev/sda3    ext4  120G   61M  114G    1% /javaweb
+
+[root@hiys ~]# df  -hT  /javaweb/lost+found/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/sda3      ext4  120G   61M  114G    1% /javaweb
+
+[root@hiys ~]# du  -sh  /javaweb/lost+found/
+16K	/javaweb/lost+found/
+
+[root@hiys ~]# du  -sh  /javaweb/
+20K	/javaweb/
+
+[root@hiys ~]#  rpm -q ntfs-3g_ntfsprogs 
+ntfs-3g_ntfsprogs-2013.1.13-1.el6.x86_64
+
+[root@hiys ~]# lsmod  |grep  -E 'uas|usb_s'
+
+[root@hiys ~]# rpm -qa |grep  fuse
+fuse-libs-2.9.2-8.el7.x86_64
+fuse-2.9.2-8.el7.x86_64
+gvfs-fuse-1.30.4-3.el7.x86_64
+
+[root@hiys ~]# more /proc/partitions 
+major minor  #blocks  name
+
+   8        0  976762584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   8        3  127926272 sda3
+   7        0    3963904 loop0
+   7        1    8491008 loop1
+   7        2     173000 loop2
+   7        3    3108838 loop3
+
+[root@hiys ~]#  lsmod  |grep  -E 'uas|usb_s'
+
+[root@hiys ~]# which  mount.ntfs-3g 
+/usr/sbin/mount.ntfs-3g
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part /run/media/root/BANQ
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  1 loop /var/ftp/CentOS7-1708
+loop2    7:2    0   169M  1 loop /var/ftp/RHEL7-extras
+loop3    7:3    0     3G  1 loop /var/ftp/RHEL7OSP
+
+[root@hiys ~]# df  -hT  /dev/sdb1           ## 注意 vfat
+文件系统         类型    容量    已用    可用   已用% 挂载点
+/dev/sdb1     vfat  118G   42G   76G   36%  /run/media/root/BANQ
+
+
+[root@hiys ~]#  lsmod  |grep  -E 'uas|usb_s'
+uas                    22429  0 
+usb_storage            66615  2 uas
+
+[root@hiys ~]# du  -sh  /dev/sdb1
+0	/dev/sdb1
+
+[root@hiys ~]# ls /run/media/root/BANQ/
+Banq-1.ico  ISO-RPM-TAR-ZIP
+
+[root@hiys ~]# ls  /javaweb/
+lost+found 
+
+[root@hiys ~]# mv  /run/media/root/BANQ/*  /javaweb/  
+ 
+[root@hiys ~]# ls  /javaweb/
+Banq-1.ico  ISO-RPM-TAR-ZIP  lost+found
+
+[root@hiys ~]# ls  /javaweb/ISO-RPM-TAR-ZIP/ |wc  -l
+148
+[root@hiys ~]# ls   /run/media/root/BANQ/
+
+[root@hiys ~]# fdisk  -l  /dev/sdb1
+
+磁盘 /dev/sdb1：125.8 GB, 125828890624 字节，245759552 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+磁盘标识符：0x6f20736b
+
+This doesn't look like a partition table
+Probably you selected the wrong device.
+
+     设备 Boot      Start         End      Blocks       Id  System
+/dev/sdb1p1   ?   778135908  1919645538   570754815+  72  未知
+/dev/sdb1p2   ?   168689522  2104717761   968014120   65  Novell Netware 386
+/dev/sdb1p3   ?  1869881465  3805909656   968014096   79  未知
+/dev/sdb1p4   ?  2885681152  2885736650       27749+   d  未知
+
+Partition table entries are not in disk order
+
+[root@hiys ~]# ls /dev/sd*
+/dev/sda  /dev/sda1  /dev/sda2  /dev/sda3  /dev/sdb  /dev/sdb1
+
+[root@hiys ~]# mkf
+mkfifo       mkfontscale  mkfs.btrfs   mkfs.ext2    mkfs.ext4    mkfs.minix   mkfs.ntfs    mkfs.xfs
+mkfontdir    mkfs         mkfs.cramfs  mkfs.ext3    mkfs.fat     mkfs.msdos   mkfs.vfat    
+
+/************
+NTFS格式最大的优点是可以支持4G以上至2T的文件进行传输，
+在传输速度上相对与fat32也有着较为明显的优势。
+NTFS对FAT和HPFS作了若干改进，
+例如，支持元数据，并且使用了高级数据结构，
+以便于改善性能、可靠性和磁盘空间利用率，并提供了若干附加扩展功能。
+************/
+
+
+[root@hiys ~]# mkfs.ntfs /dev/sdb1
+Cluster size has been automatically set to 4096 bytes.
+Initializing device with zeroes:  19%
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part 
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  1 loop /var/ftp/CentOS7-1708
+loop2    7:2    0   169M  1 loop /var/ftp/RHEL7-extras
+loop3    7:3    0     3G  1 loop /var/ftp/RHEL7OSP
+[root@hiys ~]# 
+[root@hiys ~]# mkfs.ntfs /dev/sdb1   ## 此过程会很慢 约一小时以上
+
+Cluster size has been automatically set to 4096 bytes.
+Initializing device with zeroes: 100% - Done.
+Creating NTFS volume structures.
+mkntfs completed successfully. Have a nice day.
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part 
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  1 loop /var/ftp/CentOS7-1708
+loop2    7:2    0   169M  1 loop /var/ftp/RHEL7-extras
+loop3    7:3    0     3G  1 loop /var/ftp/RHEL7OSP
+[root@hiys ~]# 
+
+[root@hiys ~]# blkid  /dev/sdb
+/dev/sdb: PTTYPE="dos" 
+
+[root@hiys ~]# blkid  /dev/sdb1
+/dev/sdb1: UUID="562FB3196A04A1C8" TYPE="ntfs" 
+
+[root@hiys ~]# ls  /javaweb/
+Banq-1.ico  ISO-RPM-TAR-ZIP  lost+found
+
+[root@hiys ~]# fdisk  -l  /dev/sdb1
+
+磁盘 /dev/sdb1：125.8 GB, 125828890624 字节，245759552 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+磁盘标识符：0x2052474d
+
+This doesn't look like a partition table
+Probably you selected the wrong device.
+
+     设备 Boot      Start         End      Blocks   Id  System
+/dev/sdb1p1   ?     6579571  1924427647   958924038+  70  DiskSecure Multi-Boot
+/dev/sdb1p2   ?  1953251627  3771827541   909287957+  43  未知
+/dev/sdb1p3   ?   225735265   225735274           5   72  未知
+/dev/sdb1p4      2642411520  2642463409       25945    0  Empty
+
+Partition table entries are not in disk order
+[root@hiys ~]# 
+
+[root@hiys ~]# ls  /mnt/
+
+[root@hiys ~]# mount.ntfs-3g   /dev/sdb1   /mnt/
+
+[root@hiys ~]# ls  /mnt/
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part /mnt
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  1 loop /var/ftp/CentOS7-1708
+loop2    7:2    0   169M  1 loop /var/ftp/RHEL7-extras
+loop3    7:3    0     3G  1 loop /var/ftp/RHEL7OSP
+
+[root@hiys ~]# du  -sh  /mnt/
+4.0K	/mnt/
+
+[root@hiys ~]# ls  /javaweb/ISO-RPM-TAR-ZIP/*.iso
+/javaweb/ISO-RPM-TAR-ZIP/cn_windows_server_2008_r2_standard_enterprise_datacenter_and_web_with_sp1_vl_build_x64_dvd_617396.iso
+/javaweb/ISO-RPM-TAR-ZIP/EMOS_1.6_x86_64.iso
+/javaweb/ISO-RPM-TAR-ZIP/rhcs2.0-rhosp9-20161113-x86_64.iso
+/javaweb/ISO-RPM-TAR-ZIP/RHEL7-extras.iso
+/javaweb/ISO-RPM-TAR-ZIP/RHEL7OSP-10.iso
+/javaweb/ISO-RPM-TAR-ZIP/RHEL7OSP-8.0-20160421-x86_64.iso
+/javaweb/ISO-RPM-TAR-ZIP/rhel-server-6.7-x86_64-dvd.iso
+/javaweb/ISO-RPM-TAR-ZIP/rhel-server-7.4-x86_64-dvd.iso
+
+[root@hiys ~]# ls  /mnt/
+[root@hiys ~]# mv  /javaweb/ISO-RPM-TAR-ZIP/   /mnt/
+
+[root@hiys ~]# ls  /mnt/
+ISO-RPM-TAR-ZIP
+
+[root@hiys ~]# ls  /mnt/ISO-RPM-TAR-ZIP/ |wc  -l
+146
+[root@hiys ~]# ls  /javaweb/
+Banq-1.ico  lost+found
+
+[root@hiys ~]# mv  /javaweb/Banq-1.ico    /mnt/
+
+[root@hiys ~]# ls  /mnt/
+Banq-1.ico  ISO-RPM-TAR-ZIP
+
+[root@hiys ~]# \cp  -rf  '/root/桌面/rpm-tar-zip-iso'  /mnt/ISO-RPM-TAR-ZIP/
+
+
+[root@hiys ~]# ps  -ef |grep  pts/   ## 查看当前所有的 pts/ 相关的 进程
+root      3267  3187  0 08:00 pts/0    00:00:00 bash
+root      3312  3187  0 08:00 pts/1    00:00:00 bash
+root      3431  3187  0 08:01 pts/2    00:00:00 bash
+root      3473  3187  0 08:01 pts/3    00:00:00 bash
+root     12288  3431  0 13:00 pts/2    00:00:00 virsh console Mob
+root     13256  3267  1 13:27 pts/0    00:01:40 cp -rf /root/桌面/rpm-tar-zip-iso /mnt/ISO-RPM-TAR-ZIP/
+root     17787  3312  0 16:11 pts/1    00:00:00 ps -ef
+root     17788  3312  0 16:11 pts/1    00:00:00 grep --color=auto pts/
+[root@hiys ~]# 
+
+[root@hiys ~]# ls /mnt/ISO-RPM-TAR-ZIP/  |wc   -l
+150
+[root@hiys ~]# ls /mnt/ISO-RPM-TAR-ZIP/rpm-tar-zip-iso/ |wc  -l
+50
+
+
+
+
+windows 分区
+C  ： 120 G 系统
+D  ： 200 G 软件
+E  ： 剩余空间1/2 常用文件
+F  ： 不常用 文件
+Linux 分区
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part /mnt
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  1 loop /var/ftp/CentOS7-1708
+loop2    7:2    0   169M  1 loop /var/ftp/RHEL7-extras
+loop3    7:3    0     3G  1 loop /var/ftp/RHEL7OSP
+---------------------------------
+/boot
+/
+/var/
+
+
+fuseblk文件系统不支持locate，好像。因为fuseblk类型的磁盘里的文件都扫描不出来。
+df -lhT #查看各个磁盘的文件系统。
+/etc/updatedb.conf的内容是：
+~~~
+PRUNE_BIND_MOUNTS="yes"
+#排除列表
+# PRUNENAMES=".git .bzr .hg .svn"
+#排除路径
+#PRUNEPATHS="/tmp /var/spool /media /home/.ecryptfs"
+PRUNEPATHS="/tmp /var/spool"
+#检索的文件系统类型
+PRUNEFS="NFS fuseblk nfs nfs4 ntfs ntfs-3g vfats rpc_pipefs afs binfmt_misc proc smbfs autofs iso9660 ncpfs coda devpts ftpfs devfs mfs shfs sysfs cifs lustre tmpfs usbfs udf fuse.glusterfs fuse.sshfs curlftpfs ecryptfs fusesmb devtmpfs"
+~~~
+fuseblk格式是因为windows的ntfs格式，Linux需要通过一个fuse的软件来转换才能读取。
+转换之后就是fuseblk格式。
+locate "断面" #D盘是fuseblk,其根目录下就有一个”21号断面.dxf",但是该locate并没有结果。
+
+
+
+
+
+
+vim  index.html
+
+浮动ip 花钱买
+弹性公网ip  要钱买的
+
+
+选择网卡
+弹性公网ip 就可以在网卡ip范围内切换
+ifconfig  eth0:1
+
+
+
+https://www.cnblogs.com/xubing-613/p/6844564.html
+
+当出现Permission denied (publickey,gssapi-keyex,gssapi-with-mic) 警告的时候，恭喜你，你已经离成功很近了。
+
+远程主机这里设为slave2，用户为Hadoop。
+
+本地主机设为slave1
+
+以下都是在远程主机slave2上的配置，使得slave1可以免密码连接到slave2上。如果想免密码互联，原理一样的，在slave1上也这么配置即可！
+
+（1）首先：配置ssh服务器配置文件。
+
+在root 用户下才能配置。
+
+vi /etc/ssh/sshd_config
+
+权限设为no：
+
+#PermitRootLogin yes
+
+#UsePAM yes
+
+#PasswordAuthentication yes
+
+如果前面有# 号，将#号去掉，之后将yes修改为no。
+
+修改之后为：
+
+PermitRootLogin no
+
+UsePAM no
+
+PasswordAuthentication no
+
+权限设为yes：
+
+RSAAuthentication yes
+
+PubkeyAuthentication yes
+
+（2）重启sshd服务
+
+systemctl restart sshd.service
+
+systemctl status sshd.service #查看ssh服务的状态
+
+#systemctl start sshd.service  #开启ssh服务
+
+#sytemctl enable sshd.service #ssh服务随开机启动，还有个disabled
+
+#systemctl stop sshd.ervice #停止
+
+正常情况下应该是Active：active（running）
+
+（3）修改文件夹以及文件的权限。
+
+#chmod 700 /home/Hadoop/.ssh
+
+#chmod 644 /home/Hadoop/.ssh/authorized_keys
+
+（4）在slave1上进行测试
+
+ssh slave2
+
+
+
+命令行提示符号是 PS1 定义的
+PS1='\u@\t  \w\$ '
+PS1='[ \u@\h  \W] \$ '
+
+[root@hiys ~]# stat --help
+用法：stat [选项]... 文件...
+Display file or file system status.
+
+Mandatory arguments to long options are mandatory for short options too.
+  -L, --dereference     follow links
+  -f, --file-system     display file system status instead of file status
+  -c  --format=FORMAT   use the specified FORMAT instead of the default;
+                          output a newline after each use of FORMAT
+      --printf=FORMAT   like --format, but interpret backslash escapes,
+                          and do not output a mandatory trailing newline;
+                          if you want a newline, include \n in FORMAT
+  -t, --terse           print the information in terse form
+      --help		显示此帮助信息并退出
+      --version		显示版本信息并退出
+........................
+注意：您的shell 内含自己的stat 程序版本，它会覆盖这里所提及的相应
+版本。请查阅您的shell 文档获知它所支持的选项。
+
+GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+请向<http://translationproject.org/team/zh_CN.html> 报告stat 的翻译错误
+要获取完整文档，请运行：info coreutils 'stat invocation'
+[root@hiys ~]# 
+
+　mkdir usbFAT32
+
+　　#加载FAT32 文件系统格式U盘
+
+　　mount -t vfat /dev/sdc4 /mnt/usbFAT32
+
+　　#查看文件
+
+　　ls /mnt/usbFAT32
+
+　　(2)挂载NTFS的U盘：
+
+　　使用fdisk -l 查看设备，下面信息是U盘的完整信息，8097MB、NTFS、/dev/sdb4
+
+
+
+
+
+

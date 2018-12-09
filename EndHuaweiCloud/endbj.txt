@@ -1,0 +1,257 @@
+
+https://console.huaweicloud.com/console/?region=cn-north-1&locale=zh-cn#/home
+
+弹性云服务器 ECS
+
+fe3630yinHi
+
+购买弹性云服务器
+fe3630yinHi
+按需记费
+
+了解如何选择弹性云服务器类型
+
+
+名称	指纹	                                                           操作
+hiyes	82:3b:a1:ac:95:1a:76:0d:81:31:f8:8b:ca:bb:99:3a
+
+密码
+请妥善管理密码，系统无法获取您设置的密码内容。
+
+
+hiyes.pem
+RSA 私钥
+强度: 2048 bits
+
+算法:	RSA
+长度:	2048
+指纹
+SHA1:	13 93 6A 03 78 06 7F B4 84 A8 E4 1F D9 56 00 F6 82 0A 38 9F
+SHA256:	B4 B9 D7 C1 88 3A 12 CD 4A EC 00 94 D0 07 CA 4E BF FD D0 7D 99 52 8C 58 68 0B 96 91 A8 FA 8E AC
+
+[root@hiys 下载]# pwd
+/root/下载
+[root@hiys 下载]# ls
+hiyes.pem
+[root@hiys 下载]# cat hiyes.pem 
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEAx2pacf94/UqazIVBiJkTc0Bj5SJXeuk0+yT8A+/jEUP29pPG
+w8eCa0KQx++G4wqxNEOYCKf87jCrKnY8fca003Lc3RlM+sTd24xF/G2KxLiOgII6
+AiwP47P1C9biRyHzpMhcvywXJNte/ep3lEfO+UJMEAqqLqEc9KOmHawnjwAlU/uA
+Kmv1r7ICzVuaQeYFMWe1nevXYnfRHXBYA1RqnHP6XQvDQ2N0FlMItGf5MbV9rrz5
+U4vb1KlKS41xiog2nWmRMn0vex+qy1HCNAdjCppm6veWodNmr/Gp1wDmCOG7BMEE
+oUmPo53c3nqkzf7eJuQ7WgyVs0G7df6gJvVPnwIDAQABAoIBAEGIWNq3quoKN17Y
+t9WNAJBSa8GkDH2O3+NcnxkoH0XQQPt9SseR6/EVugCKXZiFLgDP6cmGcx9PjSBy
+JKTsxQXr7FsYcmzCf2oj6efvk7fcMrBWm3uVQU+CFxhh8JCRvsC7O4dzlNN+5/On
+ts5a3tCZEef/qTeTqLFYikGcDo/2VssQ+2VhYqtOXzhDbkNUG8wKarTtJOEPOJVe
+E0amJtrGrt0qlFxabSS0TplScgM8nVa+4NtE40i8dwVNAFXfcfQ44s5hBuj0x1EO
+0sP8wZeOpK/xm8jaZM8G16VH2Du09bBWRyUnojqxv/DZMQCL4MfCjcnv98vQBOBi
+u610lCECgYEA5GmcF+kmyoz32VnFjpMH2TLnKHiYsPHrZFlsNDqpdfHmpohszbf4
+H+gvHYflXAC9CRrmTxZnzHuA0CMpYL8G4Ca3C2NOpLLmLDuAKSQJFjT9guX5RRgN
+/1uiRMoEY7CJh+9wnhwtAkaaDZeK1IMoni1SlwSfjluNRZml9LmSjA8CgYEA34Ar
+VrrcKZH/FeoWRWs0ks+PSyvpZelHW0YMAEIhja6ojUenRgFZE73qEDd4FB6lXJwo
+EZENBG3U7gGwJ9IUwaX73LhrzUN906W/aeMaiR5/ijvPgC/xSu1sr9/6aTjqDekb
+xeqBlUOT9jvnjeW4PpOaNKFWCxbm3Ol8UQo5s3ECgYEAyT+f75VWv1pLOi8VmJRF
+cwKdlxQCfMz6OLVtV+tjye6z6YEEVJFGRl6dvKgy1sgzxmT0DTTRieI7UafZWkuV
+dEPIPXlnHkgd81UNi7Iba3yO7RlRcqZKFvcW1wMjsO4njyTRlg1/PqUUMOuXv7w8
+Onn2beb96kESDQPeq+whidMCgYEAgMsVLmeD05jETFaW+u3qX+eoBYOKfiXN7vUQ
+mV2ChGjvzGpMJHVGZa/9H9c3JTD7zcBW/rh9rd205GqonmnbeDQ0TV8hECoiakKL
+aXNrqTSf/oK08oOuIqVrCnahkN0xU07PqF+YyPEmZLDkoMqOP9FC/a0zLjTGWOtb
+rj+cPKECgYEAn+kmpGHdhMVP53dHU/yda9RHNV8CxN/ETCH0qBhQFZJ+G2AuR6uj
+imtvN8EIbVePQsT5wzZdOB54rgZVSGQfgtsDRDin1VQ9e5++O/SJW+2/4JC5yuyR
+qA7Z0K2Mkynm9bt4TjWLDrnxq+8pPUv/FSwFIW/Au+UqS9uBL7KX3kY=
+-----END RSA PRIVATE KEY-----
+[root@hiys 下载]# 
+
+
+fe3630yinHi
+
+fe3630yinHi
+
+
+云主机服务名称  ecs-test
+
+详情
+产品类型	产品规格	计费模式	数量	
+价格
+云服务器	
+地域	广州	
+可用区	可用区2	
+规格	通用计算型 | s2.small.1 | 1vCPUs | 1GB	
+镜像	CentOS 7.5 64bit	
+系统盘	高IO, 40GB	
+虚拟私有云	vpc-a797	
+安全组	sg-ffbd	
+网卡	
+subnet-a797(192.168.1.0/24)
+弹性公网IP	
+暂时不使用弹性公网IP
+云服务器名称	ecs-test	
+按需计费
+
+
+任务提交成功！
+您的弹性云服务器ecs-test已经开始创建，请耐心等待。
+返回云服务器列表
+
+https://console.huaweicloud.com/ecm/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/ecs/manager/vmList
+
+
+https://console.huaweicloud.com/ecm/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/ecs/manager/vmList
+
+名称/ID	可用区	状态	规格/镜像	IP地址	计费模式	操作
+ecs-test
+588bf177-1840-4f57-9c7a-52625fa6fde0
+可用区2	 运行中
+1vCPUs | 1GB | s2.small.1
+CentOS 7.5 64bit
+192.168.1.211(私有)
+按需计费
+远程登录更多
+ecs-test
+1ed74b82-bfc9-46fd-a686-9b452d5d1d16
+可用区2	 运行中
+1vCPUs | 1GB | s2.small.1
+CentOS 7.5 64bit
+192.168.1.200(私有)
+按需计费
+远程登录更多
+
+
+
+https://console.huaweicloud.com/ecm/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/ecs/manager/vmList/vmDetail/volumes?instanceId=588bf177-1840-4f57-9c7a-52625fa6fde0
+
+弹性云服务器ecs-test
+开机 关机 重启 远程登录更多
+名称
+ecs-test
+状态
+运行中
+ID
+588bf177-1840-4f57-9c7a-52625fa6fde0
+磁盘
+1个
+可用区
+可用区2
+计费模式
+按需计费
+委托
+--  	新建委托
+虚拟私有云
+vpc-a797
+规格
+通用计算型 | s2.small.1 | 1vCPUs | 1GB
+镜像
+CentOS 7.5 64bit
+网卡
+1个
+创建时间
+2018/11/30 10:01:13 GMT+08:00
+启动时间
+2018/11/30 10:05:05 GMT+08:00
+云硬盘
+网卡
+安全组
+弹性公网IP
+监控
+标签
+如果创建的数据盘较多，全部创建完成需要几分钟，请耐心等待。
+部分磁盘需要重启才能生效，如果在弹性云服务器内找不到已挂载的磁盘，请重启弹性云服务器。
+ 挂载磁盘您还可以挂载23块VBD磁盘或59块SCSI磁盘。
+ 查看监控数据卸载ecs-test | 系统盘 | 40GB
+
+
+
+弹性云服务器ecs-test
+开机 关机 重启 远程登录更多
+名称
+ecs-test
+状态
+运行中
+ID
+588bf177-1840-4f57-9c7a-52625fa6fde0
+磁盘
+1个
+可用区
+可用区2
+计费模式
+按需计费
+委托
+--  	新建委托
+虚拟私有云
+vpc-a797
+规格
+通用计算型 | s2.small.1 | 1vCPUs | 1GB
+镜像
+CentOS 7.5 64bit
+网卡
+1个
+创建时间
+2018/11/30 10:01:13 GMT+08:00
+启动时间
+2018/11/30 10:05:05 GMT+08:00
+
+
+
+
+点击 远程登录
+
+ecs-test  login: root
+
+Password : fe3630yinHi
+
+
+
+route  -n
+
+
+# yum  install  -y  lrzsz  ## windows 安装 Xshell 安装
+
+
+购买 ECS云主机
+购买 一台 云主机 使用密码
+购买一台 云主机 使用 密钥
+购买一个弹性公网 IP
+
+把 弹性公网 IP 和 密码主机 绑定
+通过Xshell  或 ssh 命令链接 弹性公网IP
+
+进入 使用密码的云主机，安装 lrzsz
+上传私钥 到 这台云主机 scp,xshell
+
+通过这台密码主机，连接到其他云主机
+
+https://support.huaweicloud.com/help-novice.html
+
+https://bbs.huaweicloud.com/blogs/39b4322fcf3211e7b8317ca23e93a891
+华为云社区
+首页
+博客
+论坛
+问答
+直播
+视频
+专题
+云享专家
+
+https://bbs.huaweicloud.com/blogs/1cab883fa03411e7b8317ca23e93a891
+【摘要】 弹性云服务器(Elastic Cloud Server)是华为云推出的一种可随时获取、弹性可扩展的计算云服务器，帮助您打造可靠、安全、灵活、高效的应用环境，确保业务持久稳定运行。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
