@@ -1,0 +1,72 @@
+#!/bin/bash
+
+BASEVM=rh6_template
+IMG_DIR=/var/lib/libvirt/images
+#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+#if [ $ROOM -le 9 ];then
+#ROOM=0$ROOM
+#fi
+#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+
+read -p "number of vms: " number
+if [[ ! "$number" =~ ^[0-9]+$ ]]; then
+    echo "you must input a number."
+    exit 1
+fi
+
+if [ $number -le 0 -o $number -gt 9 ]; then
+    echo "number out of range(1~9)."
+    exit 2
+fi
+VMNUM=$number
+if [ $VMNUM -le 9 ];then
+VMNUM=0$VMNUM
+fi
+
+counter=0
+vms=0
+num=$(virsh  list --all | grep rh6  | wc -l)
+if [ $num -ge 9 ];then
+  echo -e "\033[31m You already have 9 virtual machines \033[0m"
+  exit 3
+fi
+
+while [ $vms -lt $number ]
+do
+    let counter++
+    newvm=rh6_node${counter}
+    if [ -f ${IMG_DIR}/${newvm}.img ]; then
+        continue
+    fi
+    
+    qemu-img create -f qcow2 -b ${IMG_DIR}/.rh6_template.img ${IMG_DIR}/${newvm}.img &> /dev/null
+    
+    cat /var/lib/libvirt/images/.rhel6.xml > /tmp/myvm.xml
+    sed -i "/<name>${BASEVM}/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+#    sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    sed -i "/${BASEVM}\.img/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+#    sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/a3/${n}/" /tmp/myvm.xml
+
+#    sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/b3/${n}/" /tmp/myvm.xml
+
+#    sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/c3/${n}/" /tmp/myvm.xml
+#
+#    sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/d3/${n}/" /tmp/myvm.xml
+
+    virsh define /tmp/myvm.xml &> /dev/null
+    echo -e "created ${newvm}\t\t\t\t\t\033[32;1m[Done]\033[0m"
+    let vms++
+
+done
