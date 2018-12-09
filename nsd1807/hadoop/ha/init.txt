@@ -1,0 +1,47 @@
+#-----------------------------------------------------#
+初始化启动集群
+ALL: 所有机器
+nodeX： node1    node2    node3
+NN1: hadoop-nn01
+NN2: hadoop-nn02
+#-----------------------------------------------------#
+ALL:  同步配置到所有集群机器
+
+NN1: 初始化ZK集群  ./bin/hdfs zkfc -formatZK
+nodeX:  启动 journalnode 服务 
+        ./sbin/hadoop-daemon.sh start journalnode
+
+NN1: 格式化  ./bin/hdfs  namenode  -format
+NN2: 数据同步到本地 /var/hadoop/dfs
+
+NN1: 初始化 JNS
+        ./bin/hdfs namenode -initializeSharedEdits
+
+nodeX: 停止 journalnode 服务
+        ./sbin/hadoop-daemon.sh stop journalnode
+#-----------------------------------------------------#
+启动集群
+NN1: ./sbin/start-all.sh
+NN2: ./sbin/yarn-daemon.sh start resourcemanager
+
+查看集群状态
+./bin/hdfs haadmin -getServiceState nn1  
+./bin/hdfs haadmin -getServiceState nn2
+./bin/yarn rmadmin -getServiceState rm1
+./bin/yarn rmadmin -getServiceState rm2
+
+./bin/hdfs dfsadmin -report
+./bin/yarn  node  -list
+
+访问集群：
+./bin/hadoop  fs -ls  /
+./bin/hadoop  fs -mkdir hdfs://nsd1807/input
+
+验证高可用，关闭 active namenode
+./sbin/hadoop-daemon.sh stop namenode
+./sbin/yarn-daemon.sh stop resourcemanager
+
+恢复节点
+./sbin/hadoop-daemon.sh stop namenode
+./sbin/yarn-daemon.sh stop resourcemanager
+

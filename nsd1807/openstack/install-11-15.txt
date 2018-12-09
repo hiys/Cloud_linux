@@ -1,0 +1,40 @@
+两台虚拟机  (硬盘，配置文件 xml)
+第一台  opensack
+             50G  系统盘
+qemu-img  create  -b  node.qcow2  -f qcow2  openstack.img 50G
+             20G  空盘
+qemu-img  create                               -f qcow2  disk.img           20G
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+             2       块网卡
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+             9G    以上的内存
+  <memory unit='KB'>9600000</memory>
+  <currentMemory unit='KB'>9600000</currentMemory>
+第二天  nova01
+             50G  系统盘
+qemu-img  create  -b  node.qcow2  -f qcow2   nova01.img  50G
+             2       块网卡
+             4.5G 以上内存
+#------------------------------------------------------------------#
+配置 ip 地址  ifcfg-eth0， ifcfg-eth1
+BOOTPROTO="none"
+IPADDR="192.168.1.10"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.1.254"
+
+配置  /etc/hosts
+192.168.1.10	openstack
+192.168.1.11	nova01
+配置  /etc/resolv.conf
+nameserver 192.168.1.254
+
+配置  /etc/chrony.conf
+
+配置  12 yum 源  10731

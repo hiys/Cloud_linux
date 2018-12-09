@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+
+  <schema name="v_mydb" checkSQLschema="false" sqlMaxLimit="100" dataNode="dn1" >
+  </schema>
+  <dataNode name="dn1" dataHost="cluster_db" database="mydb" />
+  <dataHost name="cluster_db" maxCon="1000" minCon="10" balance="3"
+        writeType="0" dbType="mysql" dbDriver="native" switchType="1"  slaveThreshold="100">
+    <heartbeat>select user()</heartbeat>
+    <!-- can have multi write hosts -->
+    <writeHost host="M1" url="192.168.1.210:3306" user="root"
+           password="toor">
+      <!-- can have multi read hosts -->
+      <readHost host="S1" url="192.168.1.115:3306" user="read" password="toor" />
+      <readHost host="S2" url="192.168.1.144:3306" user="read" password="toor" />
+      <readHost host="S3" url="192.168.1.80:3306"  user="read" password="toor" />
+      <readHost host="S4" url="192.168.1.250:3306" user="read" password="toor" />
+    </writeHost>
+  </dataHost>
+</mycat:schema>
