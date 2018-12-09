@@ -1,0 +1,582 @@
+企业级系统基础部署
+			|			classroom—————————|
+			|						|
+			|						|
+	物理机		|					dev-server
+			|						|
+			|	|——————— |———————|——— |
+			|	|		|		|
+			|	|		|		|
+			 client-pc01  clinet-pc02  clinet-pc03
+项目需求
+
+某公司业务需求，搭建一个开发测试平台使用。要求如下：
+1、Classroom是红帽环境给的服务器，dev-server、clinet-pc01-03均为clone-vm7克隆出来的机器，dev-server有两个网卡，ip分别为： 172.25.0.20/24  192.168.4.10、192.168.4.20、192.168.4.21、192.168.4.22 。
+2、classroom为dev-server提供ldap服务，提供ldapuser1-3用户登录。使其能够在clinet-pc01-03进行远程登录，登陆之后的家目录为classroom提供的/home/guests/ldapuser1-3。
+3、dev-server有两个网卡，对客户机提供yum、文件共享、等服务。具体要求如下：
+->搭建本地yum源，安装vsftpd服务，创建目录 /var/ftp/rhel7 
+->将rhel7的光盘挂载到/var/ftp/rhel7 上面，并给客户机提供光盘内的内容。
+->创建用户组admin及用户zhangsan、wangwu、lisi 。将三个用户均添加到admin中。密码为 adminuser ， 创建用户test，密码为123456。
+->创建目录  /prot/www/onlyrenet.com  。 /prot/www/zhangsan 、 /prot/www/wangwu 、 /prot/www/lisi 。
+-> /prot/www/onlyrenet.com  允许admin组进行读写操作，允许其他所有用户读，但拒绝test进行读写执行的操作。  Test只能够访问/prot/www目录。
+->该服务器需要每一天02:15分备份/prot/www 目录到  /data 目录下面，并打包成 www-****-**-**.tar.gz 的文件，以当日的日期命名。  
+
+要求提供方案实施步骤
+
+			|			classroom————————— |
+			|						|
+	物理机		|					dev-server
+			|						|
+			| dev-server--ipv4.addresses 172.25.0.20/24  gateway 172.25.0.254  dns 172.25.254.254
+			| dev-server--ipv4.addresses 192.168.4.10/24  gateway 192.168.4.254
+			|	|——————— |———————|——— |
+			|	|		|		|
+			|	|		|		|
+			 client-pc01  clinet-pc02  clinet-pc03
+	client-pc01  ipv4.addresses 192.168.4.20  ipv4.gateway 192.168.4.254   
+	clinet-pc02  ipv4.addresses 192.168.4.21  ipv4.gateway 192.168.4.254
+	clinet-pc03  ipv4.addresses 192.168.4.22  ipv4.gateway 192.168.4.254
+实施方案：
+[root@room9pc01 ~]# rht-vmctl reset classroom
+[root@room9pc01 ~]# rht-vmctl reset  desktop
+[root@room9pc01 ~]# touch /root/桌面/胡海龙-企业实战项目.txt
+[root@room9pc01 ~]# ssh -X root@172.25.0.10
+[root@desktop0 ~]# tail -1 /etc/resolv.conf
+nameserver 172.25.254.254
+[root@desktop0 ~]# route -n | head -3 | tail -2
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.25.0.254    0.0.0.0         UG    1024   0        0 eth0
+
+[root@desktop0 ~]# tail -1 /etc/resolv.conf
+nameserver 172.25.254.254
+
+[root@desktop0 ~]# ifconfig | head -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.10  netmask 255.255.255.0  broadcast 172.25.0.255
+
+[root@room9pc01 ~]# ifconfig private1 | head -2
+private1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.4.254  netmask 255.255.255.0  broadcast 192.168.4.255
+[root@room9pc01 ~]# ifconfig rhce:0
+rhce:0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.250  netmask 255.255.0.0  broadcast 172.25.255.255
+        ether 52:54:00:45:6a:61  txqueuelen 1000  (Ethernet)
+
+经过查询虚拟机desktop和物理机的配置，可知
+dev-server-------ipv4.addresses 172.25.0.20/24   gateway 172.25.0.254    dns 172.25.254.254
+dev-server-------ipv4.addresses 192.168.4.10/24  gateway 192.168.4.254
+
+client-pc01  ipv4.addresses 192.168.4.20 ipv4.gateway 192.168.4.254   
+clinet-pc02  ipv4.addresses 192.168.4.21 ipv4.gateway 192.168.4.254
+clinet-pc03  ipv4.addresses 192.168.4.22 ipv4.gateway 192.168.4.254
+
+
+[root@desktop0 ~]# firefox http://classroom.example.com
+http://classroom.example.com/content/rhel7.0/x86_64/errata/Packages/kernel-3.10.0-123.1.2.el7.x86_64.rpm
+[root@desktop0 ~]# uname -r
+3.10.0-123.el7.x86_64
+[root@desktop0 ~]# ls -l /boot/vmlinuz-3.10.0-123.el7.x86_64
+-rwxr-xr-x. 1 root root 4902000 5月   5 2014 /boot/vmlinuz-3.10.0-123.el7.x86_64
+
+[root@room9pc01 ~]# ls /content/rhel7.0/x86_64/errata/Packages/
+kernel-3.10.0-123.1.2.el7.x86_64.rpm      rht-system-1.0.0-2.el7.noarch.rpm
+kernel-doc-3.10.0-123.1.2.el7.noarch.rpm
+
+[root@desktop0 ~]# cat /etc/redhat-release 
+Red Hat Enterprise Linux Server release 7.0 (Maipo)
+
+
+[root@room9pc01 ~]# tail -1 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/iso/
+CentOS-7-x86_64-DVD-1708.iso  rhel-server-6.7-x86_64-dvd.iso  Win10_Pro_X64_zh_CN.iso
+lost+found                    rhel-server-7.4-x86_64-dvd.iso
+[root@room9pc01 ~]# cat /etc/centos-release
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@room9pc01 ~]# uname -r
+3.10.0-693.el7.x86_64
+[root@room9pc01 ~]# ls -l /boot/vmlinuz-3.10.0-693.el7.x86_64 
+-rwxr-xr-x. 1 root root 5877760 8月  23 2017 /boot/vmlinuz-3.10.0-693.el7.x86_64
+[root@room9pc01 ~]# find / -name 'kernel-3.10.0-693.el7.x86_64.rpm'
+/var/ftp/rhel7/Packages/kernel-3.10.0-693.el7.x86_64.rpm
+
+经过查询虚拟机desktop和物理机的配置，可知
+由于系统版本不一致， Red Hat Enterprise Linux Server release 7.0 (Maipo)---desktop虚拟机--/boot/vmlinuz-3.10.0-123.el7.x86_64
+真实物理机/boot/vmlinuz-3.10.0-693.el7.x86_64  ----CentOS Linux release 7.4.1708 (Core) 
+系统不兼容。
+所以不能使用http://classroom.example.com/rhel7.0/x86_64/dvd  上的YUM源 搭建本地克隆的虚拟机YUM仓库。
+
+
+[root@room9pc01 ~]# clone-auto7
+number of vms: 4
+created rh7_node1					[Done]
+created rh7_node2					[Done]
+created rh7_node3					[Done]
+created rh7_node4					[Done]
+[root@room9pc01 ~]# virsh shutdown desktop
+域 desktop 被关闭
+[root@room9pc01 ~]# virsh destroy desktop
+域 desktop 被删除
+
+重命名为dev-server、clinet-pc01，clinet-pc02，clinet-pc03
+#echo ‘dev-server’ > /etc/hostname
+#reboot
+#echo ‘clinet-pc01’ > /ect/hostname
+#reboot
+#echo ‘clinet-pc02’ > /ect/hostname
+#reboot
+#echo ‘clinet-pc03’ > /ect/hostname
+#reboot
+#echo ‘clinet-pc04’ > /ect/hostname
+#reboot
+
+为4 台虚拟机配ip,gateway,dns.
+#nmcli device status
+#nmcli connection add con-name eth72 ifname eth0 type ethernet
+#nmcli connection add con-name eth92 ifname eth1 type ethernet
+#nmcli connection modify eth72 ipv4.method  manual ipv4.addresses 172.25.0.20/24 
+ipv4.gateway 172.25.0.254 ipv4.dns 172.25.254.254 connection.autoconnect yes
+#nmcli connection modify eth92 ipv4.method manual ipv4.addresses 192.168.4.10/24 
+ipv4.gateway 192.168.4.254 connection.autoconnect yes
+#nmcli connection up eth72
+#nmcli connection up eth92
+
+#nmcli connection add con-name eth92 ifname eth0 type ethernet
+#nmcli connection modify eth92 ipv4.method manual ipv4.addresses 192.168.4.20/24 
+ipv4.gateway 192.168.4.254 connection.autoconnect yes
+#nmcli connection up eth92
+同样给剩下的client-pc02,client-pc03配置ipaddresses, gateway
+
+			|			classroom————————— |
+			|						|
+	物理机		|					dev-server
+			|						|
+			| dev-server--ipv4.addresses 172.25.0.20/24  gateway 172.25.0.254  dns 172.25.254.254
+			| dev-server--ipv4.addresses 192.168.4.10/24  gateway 192.168.4.254
+			|	|——————— |———————|——— |
+			|	|		|		|
+			|	|		|		|
+			 client-pc01  clinet-pc02  clinet-pc03
+	client-pc01  ipv4.addresses 192.168.4.20  ipv4.gateway 192.168.4.254   
+	clinet-pc02  ipv4.addresses 192.168.4.21  ipv4.gateway 192.168.4.254
+	clinet-pc03  ipv4.addresses 192.168.4.22  ipv4.gateway 192.168.4.254
+
+
+[root@room9pc01 ~]# ssh -X root@172.25.0.20
+[root@dev-server ~]# nmcli connection show | head -3
+名称    UUID                                  类型            设备   
+eth72   22b518b4-5564-47f7-9335-8f6953b408f5  802-3-ethernet  eth0   
+eth92   aaa4a56f-bea5-4692-bdd4-9c4bf72dde83  802-3-ethernet  eth1   
+[root@dev-server ~]# tail -4 /etc/sysconfig/network-scripts/ifcfg-eth72
+IPADDR=172.25.0.20
+PREFIX=24
+GATEWAY=172.25.0.254
+DNS1=172.25.254.254
+[root@dev-server ~]# cat /etc/hostname 
+dev-server
+[root@dev-server ~]# hostname
+dev-server
+[root@room9pc01 ~]# ssh -X root@192.168.4.10
+[root@dev-server ~]# nmcli connection show | head -3
+名称    UUID                                  类型            设备   
+eth72   22b518b4-5564-47f7-9335-8f6953b408f5  802-3-ethernet  eth0   
+eth92   aaa4a56f-bea5-4692-bdd4-9c4bf72dde83  802-3-ethernet  eth1   
+[root@dev-server ~]# tail -4 /etc/sysconfig/network-scripts/ifcfg-eth92 
+ONBOOT=yes
+IPADDR=192.168.4.10
+PREFIX=24
+GATEWAY=192.168.4.254
+
+
+[root@room9pc01 ~]# ssh -x root@192.168.4.20
+[root@client-pc01 ~]# tail -3 /etc/sysconfig/network-scripts/ifcfg-eth92
+IPADDR=192.168.4.20
+PREFIX=24
+GATEWAY=192.168.4.254
+[root@client-pc01 ~]# nmcli connection show | head -2
+名称    UUID                                  类型            设备   
+eth92   7a80a1a4-93c8-483c-a665-e6704eaacd2e  802-3-ethernet  eth0   
+[root@client-pc01 ~]# hostname
+client-pc01
+
+[root@client-pc02 ~]# tail -3 /etc/sysconfig/network-scripts/ifcfg-eth92 
+IPADDR=192.168.4.21
+PREFIX=24
+GATEWAY=192.168.4.254
+[root@client-pc02 ~]# hostname
+client-pc02
+
+[root@room9pc01 ~]# virsh console clinet-pc03
+
+[root@clinet-pc03 ~]# ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.22  netmask 255.255.255.0  broadcast 192.168.4.255
+
+[root@clinet-pc03 ~]# route -n | head -3
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.4.254   0.0.0.0         UG    100    0        0 eth0
+[root@clinet-pc03 ~]# tail -3 /etc/sysconfig/network-scripts/ifcfg-eth0
+IPADDR=192.168.4.22
+PREFIX=24
+GATEWAY=192.168.4.254
+
+2、classroom为dev-server提供ldap服务，提供ldapuser1-3用户登录。使其能够在clinet-pc01-03进行远程登录，登陆之后的家目录为classroom提供的/home/guests/ldapuser1-3。
+
+[root@room9pc01 ~]# tail -1 /etc/fstab
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso    /var/ftp/rhel7  iso9660 defaults 0 0
+[root@room9pc01 ~]# ls /var/ftp/rhel7
+addons  extra_files.json  isolinux    Packages                 RPM-GPG-KEY-redhat-release
+EFI     GPL               LiveOS      repodata                 TRANS.TBL
+EULA    images            media.repo  RPM-GPG-KEY-redhat-beta
+
+[root@room9pc01 ~]# systemctl status vsftpd | head -3
+● vsftpd.service - Vsftpd ftp daemon
+   Loaded: loaded (/usr/lib/systemd/system/vsftpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since 日 2018-07-08 11:18:42 CST; 6h ago
+
+[root@dev-server ~]# ls /etc/yum.repos.d/
+[root@dev-server ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@dev-server ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://172.25.0.250/rhel7
+
+[root@dev-server ~]# yum clean all
+[root@dev-server ~]# yum repolist
+源标识                                     源名称                                       状态
+rhel7                            rhel7.4                            4,986
+repolist: 4,986
+
+[root@dev-server ~]# showmount -e classroom.example.com
+Export list for classroom.example.com:
+/home/guests 172.25.0.0/255.255.0.0
+[root@dev-server ~]# showmount -e 172.25.254.254
+Export list for 172.25.254.254:
+/home/guests 172.25.0.0/255.255.0.0
+
+[root@dev-server ~]# mkdir /home/guests
+[root@dev-server ~]# mount 172.25.254.254:/home/guests /home/guests
+[root@dev-server ~]# ls /home/guests
+ldapuser0   ldapuser12  ldapuser16  ldapuser2   ldapuser5  ldapuser9
+ldapuser1   ldapuser13  ldapuser17  ldapuser20  ldapuser6
+ldapuser10  ldapuser14  ldapuser18  ldapuser3   ldapuser7
+ldapuser11  ldapuser15  ldapuser19  ldapuser4   ldapuser8
+[root@room11pc13 ~]# ssh -X root@172.25.0.20
+[root@dev-server ~]# history | tail -18 | head -16
+   40  yum -y install sssd
+   41  authconfig-tui 
+   42  ls /etc/openldap/cacerts/
+   43  ls /home
+   44  showmount 172.25.254.254
+   45  showmount -e 172.25.254.254
+   46  mkdir /home/guests
+   47  mount 172.25.254.254:/home/guests /home/guests
+   48  ls /home/guests
+   49  exit
+   50  ls /etc/openldap/
+   51  cd /etc/openldap/cacerts
+   52  ls
+   53  wget http://classroom.example.com/pub/example-ca.crt
+   54  ls
+   55  exit
+[root@room11pc13 ~]# virsh start clinet-pc01
+域 clinet-pc01 已开始
+
+[root@room11pc13 ~]# virsh start clinet-pc02
+域 clinet-pc02 已开始
+
+[root@room11pc13 ~]# virsh start clinet-pc03
+域 clinet-pc03 已开始
+[root@room11pc13 ~]# ssh -X root@192.168.4.20
+[root@clinet-pc01 ~]# hostname
+clinet-pc01
+[root@clinet-pc01 ~]# ifconfig | head -3
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.20  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet6 fe80::6a02:ae9a:63fc:f4dd  prefixlen 64  scopeid 0x20<link>
+[root@clinet-pc01 ~]# ssh -X root@192.168.4.10
+[ldapuser0@dev-server ~]$ su - ldapuser1    #password密码ldapuser用户
+Password: 
+[ldapuser1@dev-server ~]$ pwd
+/home/guests/ldapuser1
+[ldapuser1@dev-server ~]$ su - ldapuser2    #password密码ldapuser用户
+Password: 
+[ldapuser2@dev-server ~]$ pwd
+/home/guests/ldapuser2
+[ldapuser2@dev-server ~]$ su - ldapuser0   #password密码ldapuser用户
+Password: 
+上一次登录：二 7月 10 14:58:53 CST 2018pts/1 上
+[ldapuser0@dev-server ~]$ pwd
+/home/guests/ldapuser0
+[ldapuser0@dev-server ~]$ su - root    #密码123
+密码：
+上一次登录：二 7月 10 14:57:50 CST 2018从 192.168.4.20pts/1 上
+[root@dev-server ~]# pwd
+/root
+[root@dev-server ~]# ls /home/
+guests  lisi
+[root@dev-server ~]# exit
+登出
+Connection to 192.168.4.10 closed.
+
+[root@clinet-pc02 ~]# ifconfig | head -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.21  netmask 255.255.255.0  broadcast 192.168.4.255
+[root@clinet-pc02 ~]# hostname
+clinet-pc02
+[root@clinet-pc02 ~]# ssh -X root@192.168.4.10
+[root@dev-server ~]# ls /home/guests/
+[root@dev-server ~]# su - ldapuser0
+[ldapuser0@dev-server ~]$ pwd
+/home/guests/ldapuser0
+[ldapuser0@dev-server ~]$ su - ldapuser1
+[ldapuser1@dev-server ~]$ pwd
+/home/guests/ldapuser1
+[ldapuser1@dev-server ~]$ su - ldapuser2
+[ldapuser2@dev-server ~]$ pwd
+/home/guests/ldapuser2
+[root@dev-server ~]# exit
+登出
+Connection to 192.168.4.10 closed.
+
+[root@room11pc13 ~]# virsh start clinet-pc03
+[root@room11pc13 ~]# ssh -X root@192.168.4.22
+[root@clinet-pc03 ~]# ifconfig | head -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.22  netmask 255.255.255.0  broadcast 192.168.4.255
+[root@clinet-pc03 ~]# ssh -X root@192.168.4.10
+[root@dev-server ~]# su - ldapuser0
+[ldapuser0@dev-server ~]$ pwd
+/home/guests/ldapuser0
+[ldapuser0@dev-server ~]$ su - ldapuser1
+[ldapuser1@dev-server ~]$ pwd
+/home/guests/ldapuser1
+[ldapuser1@dev-server ~]$ su - ldapuser2
+[ldapuser2@dev-server ~]$ pwd
+/home/guests/ldapuser2
+[ldapuser2@dev-server ~]$ exit
+登出
+[ldapuser1@dev-server ~]$ exit
+登出
+[ldapuser0@dev-server ~]$ exit
+登出
+[root@dev-server ~]# exit
+登出
+Connection to 192.168.4.10 closed.
+
+3、dev-server有两个网卡，对客户机提供yum、文件共享、等服务。具体要求如下：
+->搭建本地yum源，安装vsftpd服务，创建目录 /var/ftp/rhel7 
+->将rhel7的光盘挂载到/var/ftp/rhel7 上面，并给客户机提供光盘内的内容。
+->创建用户组admin及用户zhangsan、wangwu、lisi 。将三个用户均添加到admin中。密码为 adminuser ， 创建用户test，密码为123456。
+->创建目录  /prot/www/onlyrenet.com  。 /prot/www/zhangsan 、 /prot/www/wangwu 、 /prot/www/lisi 。
+-> /prot/www/onlyrenet.com  允许admin组进行读写操作，允许其他所有用户读，但拒绝test进行读写执行的操作。  Test只能够访问/prot/www目录。
+->该服务器需要每一天02:15分备份/prot/www 目录到  /data 目录下面，并打包成 www-****-**-**.tar.gz 的文件，以当日的日期命名。  
+
+[root@dev-server ~]# ls /etc/yum.repos.d/
+rhel7.repo
+[root@dev-server ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7.4]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://172.25.0.250/rhel7
+[root@dev-server ~]# rpm -q vsftpd
+未安装软件包 vsftpd 
+[root@dev-server ~]# ls /var
+[root@dev-server ~]# ls /var/ftp
+ls: 无法访问/var/ftp: 没有那个文件或目录
+[root@dev-server ~]# yum -y install vsftpd
+[root@dev-server ~]# rpm -q vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+[root@dev-server ~]# ls /var/ftp
+pub
+[root@dev-server ~]# mkdir /var/ftp/rhel7
+[root@dev-server ~]# ls -l /dev/cdrom
+lrwxrwxrwx. 1 root root 3 7月  10 19:29 /dev/cdrom -> sr0
+[root@dev-server ~]# ls -l /dev/sr0
+brw-rw----+ 1 root cdrom 11, 0 7月  10 19:29 /dev/sr0
+[root@dev-server ~]# mount /dev/cdrom /var/ftp/rhel7
+mount: /dev/sr0 写保护，将以只读方式挂载
+[root@dev-server ~]# ls  /var/ftp/rhel7
+addons            images      repodata
+EFI               isolinux    RPM-GPG-KEY-redhat-beta
+EULA              LiveOS      RPM-GPG-KEY-redhat-release
+extra_files.json  media.repo  TRANS.TBL
+GPL               Packages
+[root@dev-server ~]# systemctl start vsftpd
+[root@dev-server ~]# systemctl status vsftpd
+[root@dev-server ~]# systemctl enable vsftpd
+
+[root@clinet-pc03 ~]# rm -f /etc/yum.repos.d/redhat.repo
+[root@clinet-pc03 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@clinet-pc03 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.10/rhel7
+[root@clinet-pc03 ~]# firefox ftp://192.168.4.10/rhel7
+
+[root@clinet-pc03 ~]# yum clean all
+[root@clinet-pc03 ~]# yum repolist 
+[root@clinet-pc03 ~]# cat /etc/redhat-release
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+[root@clinet-pc03 ~]# uname -r
+3.10.0-693.el7.x86_64
+
+
+
+[root@room11pc13 ~]# ssh -X root@192.168.4.21
+root@192.168.4.21's password: 
+Last login: Tue Jul 10 17:08:19 2018 from 192.168.4.254
+[root@clinet-pc02 ~]# ls /etc/yum.repos.d/
+[root@clinet-pc02 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@clinet-pc02 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7.4]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.10/rhel7
+[root@clinet-pc02 ~]# yum repolist 
+
+
+
+[root@clinet-pc01 ~]# ls /etc/yum.repos.d/
+[root@clinet-pc01 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@clinet-pc01 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7.4]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.10/rhel7
+[root@clinet-pc01 ~]# yum repolist
+源标识                                源名称                         状态
+rhel7.4                       rhel7.4              4,986
+repolist: 4,986
+[root@clinet-pc01 ~]# tail -3 /etc/sysconfig/network-scripts/ifcfg-eth92 
+IPADDR=192.168.4.20
+PREFIX=24
+GATEWAY=192.168.4.254
+[root@clinet-pc01 ~]# rpm -q httpd
+未安装软件包 httpd 
+[root@clinet-pc01 ~]# yum -y install httpd
+[root@clinet-pc01 ~]# rpm -q httpd
+httpd-2.4.6-67.el7.x86_64
+
+
+3->创建用户组admin及用户zhangsan、wangwu、lisi 。将三个用户均添加到admin中。密码为 adminuser ， 创建用户test，密码为123456。
+->创建目录  /prot/www/onlyrenet.com  。 /prot/www/zhangsan 、 /prot/www/wangwu 、 /prot/www/lisi 。
+-> /prot/www/onlyrenet.com  允许admin组进行读写操作，允许其他所有用户读，但拒绝test进行读写执行的操作。  Test只能够访问/prot/www目录。
+->该服务器需要每一天02:15分备份/prot/www 目录到  /data 目录下面，并打包成 www-****-**-**.tar.gz 的文件，以当日的日期命名。  
+[root@dev-server ~]# grep admin /etc/group
+[root@dev-server ~]# grep zhangsan /etc/passwd
+[root@dev-server ~]# grep lisi /etc/passwd
+lisi:x:1000:1000:lisi:/home/lisi:/bin/bash
+[root@dev-server ~]# grep wangwu /etc/passwd
+[root@dev-server ~]# useradd zhangsan
+[root@dev-server ~]# useradd wangwu
+[root@dev-server ~]# groupadd admin
+[root@dev-server ~]# gpasswd -M 'zhangsan,wangwu,lisi' admin
+[root@dev-server ~]# grep admin /etc/group
+admin:x:1003:zhangsan,wangwu,lisi
+[root@dev-server ~]# useradd test
+[root@dev-server ~]# echo 123456 | passwd --stdin test
+
+[root@dev-server ~]# mkdir -p /prot/www/onlyrenet.com /prot/www/zhangsan /prot/www/wangwu /prot/www/lisi
+[root@dev-server ~]# ls /prot/www/
+lisi  onlyrenet.com  wangwu  zhangsan
+
+3-> /prot/www/onlyrenet.com  允许admin组进行读写操作，允许其他所有用户读，但拒绝test进行读写执行的操作。  Test只能够访问/prot/www目录。
+ 
+[root@dev-server ~]# ls /home
+guests  lisi  test  wangwu  zhangsan
+#admin:x:1003:zhangsan,wangwu,lisi
+[root@dev-server ~]# ls -ld  /prot/www/onlyrenet.com/
+drwxr-xr-x. 2 root root 6 7月  10 20:27 /prot/www/onlyrenet.com/
+[root@dev-server ~]# chown :admin /prot/www/onlyrenet.com/
+[root@dev-server ~]# chmod 775 /prot/www/onlyrenet.com/
+[root@dev-server ~]# ls -ld /prot/www/onlyrenet.com/
+drwxrwxr-x. 2 root admin 6 7月  10 20:27 /prot/www/onlyrenet.com/
+
+[root@dev-server ~]# setfacl -m u:test:000 /prot/www/onlyrenet.com/
+[root@dev-server ~]# ls -ld /prot/www/onlyrenet.com/
+drwxrwxr-x+ 2 root admin 6 7月  10 20:27 /prot/www/onlyrenet.com/
+[root@dev-server ~]# getfacl /prot/www/onlyrenet.com/
+getfacl: Removing leading '/' from absolute path names
+# file: prot/www/onlyrenet.com/
+# owner: root
+# group: admin
+user::rwx
+user:test:---
+group::rwx
+[root@dev-server ~]# setfacl -R  -m u:test:--- /prot/
+[root@dev-server ~]# getfacl /prot/www
+getfacl: Removing leading '/' from absolute path names
+# file: prot/www
+# owner: root
+# group: root
+user::rwx
+user:test:---
+group::r-x
+mask::r-x
+other::r-x
+
+[root@dev-server ~]# setfacl -m u:test:rx /prot/www
+[root@dev-server ~]# getfacl /prot/www
+getfacl: Removing leading '/' from absolute path names
+# file: prot/www
+# owner: root
+# group: root
+user::rwx
+user:test:r-x
+group::r-x
+mask::r-x
+other::r-x
+
+3->该服务器需要每一天02:15分备份/prot/www 目录到  /data 目录下面，并打包成 www-****-**-**.tar.gz 的文件，以当日的日期命名。 
+[root@dev-server ~]# rpm -q cronie
+cronie-1.4.11-17.el7.x86_64
+[root@dev-server ~]# rpm -q crontabs 
+crontabs-1.11-6.20121102git.el7.noarch
+
+[root@dev-server ~]# which tar
+/usr/bin/tar
+[root@dev-server ~]# ls -l /usr/bin/tar
+[root@dev-server ~]# mkdir /data
+[root@dev-server ~]# crontab -e -u root
+[root@dev-server ~]# crontab -l -u root
+15 02 * * * /usr/bin/tar -zcf /data/www-$(date +%F).tar.gz /prot/www
+
+[root@dev-server ~]# systemctl restart crond
+[root@dev-server ~]# systemctl enable crond
+
+[root@dev-server ~]# systemctl status crond
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
