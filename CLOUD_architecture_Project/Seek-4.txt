@@ -1,0 +1,1086 @@
+
+
+===================== 建立 基于 node.qcow2  的第二个 3网卡 虚拟机模版 ===============
+
+
+[root@hiys ~]# tty
+/dev/pts/0
+
+[root@hiys ~]# echo  $LANG
+en_US.UTF-8
+
+[root@hiys ~]# rm  -f  /var/log/libvirt/qemu/VM.log 
+[root@hiys ~]# ls  /var/log/libvirt/qemu/
+Seek.log
+
+[root@hiys ~]# cd  /var/lib/libvirt/images/
+
+[root@hiys images]# ls
+bin      db    lost+found  Seek.qcow2             tedu-wallpaper-weekend.png  win.img
+conf.d   exam  node.qcow2  Student.sh             vsftpd.conf
+content  iso   qemu        tedu-wallpaper-01.png  Weekend.sh
+
+[root@hiys images]# qemu-img  create   -b  node.qcow2    -f    qcow2  VM.img   20G
+.....................
+
+[root@hiys images]# du  -sh  node.qcow2 
+1.2G	node.qcow2
+
+[root@hiys images]# du  -sh  VM.img 
+196K	VM.img
+
+[root@hiys images]# cd  /etc/libvirt/qemu/
+
+[root@hiys qemu]# ls
+autostart  networks  Seek.xml  VM.xml.txt  win2008.xml
+
+[root@hiys qemu]# vim  VM.xml
+
+[root@hiys qemu]# cat  VM.xml
+<domain type='kvm'>
+  <name>VM</name>
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/VM.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+
+[root@hiys qemu]# ls
+autostart  networks  Seek.xml  VM.xml  VM.xml.txt  win2008.xml
+
+[root@hiys qemu]# virsh  define   /etc/libvirt/qemu/VM.xml
+................
+[root@hiys qemu]# virsh  start  VM
+...................
+[root@hiys qemu]# virsh   console   VM
+Connected to domain VM
+Escape character is ^]
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: a        ## 密码 a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# ls
+eip
+
+[root@localhost ~]# cat   /etc/sysconfig/network
+# Created by anaconda
+IPV6INIT="no"
+NETWORKING="yes"
+NOZEROCONF="yes"    ## 禁用空路由
+
+[root@localhost ~]# cat  eip 
+#!/usr/bin/python
+import os, sys
+
+def conf_ip(ip):
+    iplist = []
+    f = open("/etc/sysconfig/network-scripts/ifcfg-eth0", "r+")
+    for i in f:
+        iplist.append('BOOTPROTO="static"\n' if 'BOOTPROTO=' in i else i)
+    iplist.extend(['IPADDR="192.168.1.{0}"\n'.format(ip),'NETMASK="255.255.255.0"\n','GATEWAY="192.168.1.254"\n'])
+    f.seek(0,0)
+    f.writelines(iplist)
+    f.truncate()
+    f.close()
+if  __name__ == '__main__':
+    if  len(sys.argv) == 2 and sys.argv[1].isdigit():
+        conf_ip(sys.argv[1])
+        os.remove(sys.argv[0])
+
+[root@localhost ~]# ls  /usr/local/
+bin  etc  games  include  lib  lib64  libexec  sbin  share  src
+
+[root@VM ~]# ls  /usr/local/bin/ 
+title
+
+[root@localhost ~]# cat   /usr/local/bin/title
+#!/bin/bash
+astr=$'\xe2\x98\x85 --虚拟机--\xe2\x98\x85 '
+export LANG=C
+_tc=$((RANDOM%8))
+_cols=$(($(tput cols)-${#astr}))
+tput sc
+if ((_tc));then
+     tput setf ${_tc}
+else
+     tput setb ${_tc}
+fi
+tput rev
+tput bold
+tput blink
+tput cup 0 $((${_cols}+6))
+printf "%s" "${astr}"
+tput sgr0
+tput rc
+
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.196  netmask 255.255.255.0  broadcast 192.168.0.255
+...................................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+..............................
+
+[root@localhost ~]# echo  $LANG
+en_US.UTF-8
+
+[root@localhost ~]# tty
+/dev/ttyS0
+[root@localhost ~]# echo VM > /etc/hostname 
+
+[root@localhost ~]# free
+              total        used        free      shared  buff/cache   available
+Mem:        1644600       59756     1514244        8460       70600     1422236
+Swap:             0           0           0
+
+[root@localhost ~]# grep  -n   'physical id'  /proc/cpuinfo
+10:physical id	: 0
+36:physical id	: 1
+[root@localhost ~]# egrep   -o  'svm|vmx'  /proc/cpuinfo 
+
+[root@localhost ~]# shutdown  -h  now
+.............
+[root@hiys ~]# virsh  start  VM
+Domain VM started
+
+[root@hiys ~]# ssh  -X  192.168.0.196
+.....................
+root@192.168.0.196's password: a
+...........................
+[root@VM ~]# echo  1 |passwd  --stdin  root     ## 密码 修改成 1
+................
+[root@VM ~]# hostname
+VM
+[root@VM ~]# tty
+/dev/pts/0                                    ★ --虚拟机--★ 
+
+[root@VM ~]# source  /usr/local/bin/title 
+
+[root@VM ~]# echo  $LANG
+C
+[root@VM ~]# locale
+LANG=C
+LC_CTYPE="C"
+....................
+LC_MEASUREMENT="C"                                                                        ★★★ 
+LC_IDENTIFICATION="C"
+LC_ALL=     
+    
+[root@VM ~]# export  LANG="en_US.UTF-8"
+
+[root@VM ~]# vim  eip 
+
+[root@VM ~]# cat   eip
+#!/usr/bin/python
+import os, sys
+
+def conf_ip(ip):
+    iplist = []
+    f = open("/etc/sysconfig/network-scripts/ifcfg-eth0", "r+")
+    for i in f:
+        iplist.append('BOOTPROTO="static"\n' if 'BOOTPROTO=' in i else i)
+    iplist.extend(['IPADDR="192.168.0.{0}"\n'.format(ip),'NETMASK="255.255.255.0"\n','GATEWAY="192.168.0.254"\n'])
+    f.seek(0,0)
+    f.writelines(iplist)
+    f.truncate()
+    f.close()
+if  __name__ == '__main__':
+    if  len(sys.argv) == 2 and sys.argv[1].isdigit():
+        conf_ip(sys.argv[1])
+        os.remove(sys.argv[0])
+
+[root@VM ~]# ll  /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 May 29  2018 /etc/rc.local -> rc.d/rc.local
+
+[root@VM ~]# ll  /etc/rc.d/rc.local 
+-rwxr-xr-x 1 root root 473 Dec  5 15:06 /etc/rc.d/rc.local
+
+[root@VM ~]# vim  /etc/rc.d/rc.local
+
+[root@VM ~]# tail  -2  /etc/rc.d/rc.local   ## 开机自起,设置语言
+touch /var/lock/subsys/local
+export   LANG="en_US.UTF-8"
+
+[root@VM ~]# source   /etc/rc.d/rc.local
+
+[root@VM ~]# echo  $LANG
+en_US.UTF-8
+
+[root@VM ~]# tail  -2  /etc/rc.local    ## 开机自起
+
+touch /var/lock/subsys/local
+export   LANG="en_US.UTF-8"
+
+[root@VM ~]# vim   /etc/bashrc 
+
+[root@VM ~]# tail   -2   /etc/bashrc  ## 开机自起，设置密码
+# vim:ts=4:sw=4
+echo  1  | passwd --stdin root &> /dev/null    ## 密码 修改成 1
+
+[root@VM ~]# ll  /etc/bashrc
+-rw-r--r-- 1 root root 2918 Dec  5 16:19 /etc/bashrc
+
+[root@VM ~]# source  /etc/bashrc
+
+[root@VM ~]# echo  $?
+0
+
+[root@VM ~]# rpm  -qa  |grep  cloud-
+cloud-utils-growpart-0.29-2.el7.noarch
+
+[root@VM ~]# ll  /usr/bin/growpart 
+-rwxr-xr-x 1 root root 21428 Aug  4  2017 /usr/bin/growpart   
+                                                                    ★★★ 
+[root@VM ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  20G  0 disk 
+└─vda1 253:1    0  20G  0 part /
+
+[root@VM ~]# /usr/bin/growpart   /dev/vda    1   ## 给/dev/vda的第1个分区扩容
+
+NOCHANGE: partition 1 is size 41940959. it cannot be grown
+
+[root@VM ~]# echo  $LANG
+en_US.UTF-8                                            ★★★ 
+[root@VM ~]# ll /usr/sbin/xfs_growfs
+-rwxr-xr-x. 1 root root 335104 Aug  4  2017 /usr/sbin/xfs_growfs
+
+[root@VM ~]# /usr/sbin/xfs_growfs   /     # 文件系统扩容
+
+meta-data=/dev/vda1              isize=512    agcount=41, agsize=131008 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0 spinodes=0
+data     =                       bsize=4096   blocks=5242619, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal               bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+[root@VM ~]# df  -hT
+Filesystem     Type      Size  Used Avail Use% Mounted on
+/dev/vda1      xfs        20G 1008M   20G   5% /
+devtmpfs       devtmpfs  1.8G     0  1.8G   0% /dev
+tmpfs          tmpfs     1.8G     0  1.8G   0% /dev/shm
+tmpfs          tmpfs     1.8G  8.3M  1.8G   1% /run
+tmpfs          tmpfs     1.8G     0  1.8G   0% /sys/fs/cgroup
+tmpfs          tmpfs     351M     0  351M   0% /run/user/0
+
+[root@VM ~]#  ls  /usr/local/
+bin  etc  games  include  lib  lib64  libexec  sbin  share  src
+
+[root@VM ~]# chmod  777  /usr/local/bin/title
+
+[root@VM ~]# cat  /usr/local/bin/title
+#!/bin/bash
+export LANG=en_US.UTF-8
+
+[root@VM ~]# lsattr   /usr/local/bin/title
+---------------- /usr/local/bin/title
+
+
+[root@VM ~]# tty
+/dev/pts/0
+
+[root@VM ~]# route  -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@VM ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.196 
+
+=====================虚拟机  DNS 域名解析 能上网  [  3  ]  =================
+
+[root@VM ~]# ping  -c2  www.baidu.com
+PING www.a.shifen.com (14.215.177.39) 56(84) bytes of data.
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=1 ttl=54 time=9.16 ms
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=2 ttl=54 time=8.94 ms
+
+--- www.a.shifen.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 8.948/9.058/9.168/0.110 ms
+
+===============  配置yum源   [  4  ]  ===============
+
+[root@VM ~]# ls  /etc/yum.repos.d/
+local.repo
+
+[root@VM ~]# systemctl is-active  sshd
+active
+
+[root@VM ~]# scp  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo 
+...............
+[root@VM ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.0.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+
+[root@VM ~]#  yum  clean all >/dev/null && yum  repolist  |tail -5
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9,591
+ansible                              ansible                                 18
+docker                               docker                                   2
+repolist: 9,611
+
+================ 禁用selinux   [  5  ] =========================
+
+[root@VM ~]# sed  -n  7p  /etc/selinux/config 
+SELINUX=disabled
+
+
+==============  停止 服务 NetworkManager  ===========
+
+[root@VM ~]# systemctl   is-active   NetworkManager   ## 与openstack 和 network 冲突
+inactive
+
+[root@VM ~]# systemctl   is-enabled   NetworkManager
+Failed to get unit file state for NetworkManager.service: No such file or directory
+
+
+
+======================= 配置网卡  ifcfg-eth0  [  6  ] ============
+
+[root@VM ~]# vim  /etc/resolv.conf 
+[root@VM ~]# cat  /etc/resolv.conf
+nameserver 192.168.0.254
+search vbr
+
+[root@VM ~]# cat   /etc/sysconfig/network-scripts/ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"      ## 指定设备驱动
+ONBOOT="yes"       ## 开机自启动
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"   ## 如果为IPv4和IPv6两者设置了连接，则将此选项设置为yes,否则no
+NM_CONTROLLED="no"      ## 禁用 NetworkManager 服务
+TYPE="Ethernet"       ## 网卡类型
+BOOTPROTO="dhcp"
+
+[root@VM ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth0
+[root@VM ~]# cat   /etc/sysconfig/network-scripts/ifcfg-eth0   ## 这是  动 态ip 配置
+NAME="eth0"
+DEVICE="eth0"     ## 指定设备驱动
+ONBOOT="yes"       ## 开机自启动
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"   ## 如果为IPv4和IPv6两者设置了连接，则将此选项设置为yes,否则no
+NM_CONTROLLED="no"      ## 禁用 NetworkManager 服务
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+GATEWAY="192.168.0.254"
+
+[root@VM ~]# cp   /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-eth1
+[root@VM ~]# cp   /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-eth2
+
+[root@VM ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0   ifdown-ippp    ifdown-Team      ifup-ippp   ifup-routes       network-functions
+ifcfg-eth1   ifdown-ipv6    ifdown-TeamPort  ifup-ipv6   ifup-sit          network-functions-ipv6
+ifcfg-eth2   ifdown-isdn    ifdown-tunnel    ifup-isdn   ifup-Team
+ifcfg-lo     ifdown-post    ifup             ifup-plip   ifup-TeamPort
+ifdown       ifdown-ppp     ifup-aliases     ifup-plusb  ifup-tunnel
+ifdown-bnep  ifdown-routes  ifup-bnep        ifup-post   ifup-wireless
+ifdown-eth   ifdown-sit     ifup-eth         ifup-ppp    init.ipv6-global
+
+[root@VM ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth1   ## 这是  动 态ip 配置
+
+[root@VM ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth1   ## 这是  动 态ip 配置
+NAME="eth1"
+DEVICE="eth1"      ## 指定设备驱动
+ONBOOT="yes"       ## 开机自启动
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"   ## 如果为IPv4和IPv6两者设置了连接，则将此选项设置为yes,否则no
+NM_CONTROLLED="no"       ## 禁用 NetworkManager 服务
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+GATEWAY="192.168.0.254"
+
+[root@VM ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth2
+
+[root@VM ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth2    ## 这是 静态ip 配置
+NAME="eth2"
+DEVICE="eth2"      ## 指定设备驱动
+ONBOOT=yes         ## 开机自启动
+NM_CONTROLLED="no"       ## 禁用 NetworkManager 服务
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL="no"   ## 如果为IPv4和IPv6两者设置了连接，则将此选项设置为yes,否则no
+BOOTPROTO="static"
+IPADDR="192.168.2.10"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.0.254"
+
+=====================  卸载 防火墙 与 NetworkManager  [  7  ]  ==============
+
+[root@VM ~]# echo  $LANG
+en_US.UTF-8
+[root@VM ~]# yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall
+
+....................
+================== 测试 network 能否 连接   [  8  ] ==============
+
+[root@VM ~]# systemctl  restart  network
+[root@VM ~]# systemctl   status   network
+● network.service - LSB: Bring up/down networking
+   Loaded: loaded (/etc/rc.d/init.d/network; bad; vendor preset: disabled)
+   Active: active (running) since Wed 2018-12-05 18:07:29 CST; 19s ago
+     Docs: man:systemd-sysv-generator(8)
+  Process: 22779 ExecStop=/etc/rc.d/init.d/network stop (code=exited, status=0/SUCCESS)
+  Process: 22955 ExecStart=/etc/rc.d/init.d/network start (code=exited, status=0/SUCCESS)
+   CGroup: /system.slice/network.service
+           ├─23126 /sbin/dhclient -1 -q -lf /var/lib/dhclient/dhclient--eth0.lease -pf /var/run/d...
+           └─23225 /sbin/dhclient -1 -q -lf /var/lib/dhclient/dhclient--eth1.lease -pf /var/run/d...
+
+Dec 05 18:07:20 VM dhclient[23175]: DHCPDISCOVER on eth1 to 255.255.255.255 port 67 interval ...085)
+Dec 05 18:07:23 VM dhclient[23175]: DHCPREQUEST on eth1 to 255.255.255.255 port 67 (xid=0x3b4fe085)
+Dec 05 18:07:23 VM dhclient[23175]: DHCPOFFER from 192.168.1.254
+Dec 05 18:07:23 VM dhclient[23175]: DHCPACK from 192.168.1.254 (xid=0x3b4fe085)
+Dec 05 18:07:25 VM NET[23218]: /usr/sbin/dhclient-script : updated /etc/resolv.conf
+Dec 05 18:07:25 VM dhclient[23175]: bound to 192.168.1.183 -- renewal in 1705 seconds.
+Dec 05 18:07:25 VM network[22955]: Determining IP information for eth1... done.
+Dec 05 18:07:25 VM network[22955]: [  OK  ]
+Dec 05 18:07:29 VM network[22955]: Bringing up interface eth2:  [  OK  ]
+Dec 05 18:07:29 VM systemd[1]: Started LSB: Bring up/down networking.
+Hint: Some lines were ellipsized, use -l to show in full.
+[root@VM ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.196  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:c8:9a:86  txqueuelen 1000  (Ethernet)
+        RX packets 13476  bytes 7254059 (6.9 MiB)
+        RX errors 0  dropped 8  overruns 0  frame 0
+        TX packets 5738  bytes 731670 (714.5 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.183  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:40:ae:d1  txqueuelen 1000  (Ethernet)
+        RX packets 1284  bytes 81030 (79.1 KiB)
+        RX errors 0  dropped 1155  overruns 0  frame 0
+        TX packets 4  bytes 768 (768.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.10  netmask 255.255.255.0  broadcast 192.168.2.255
+        ether 52:54:00:b4:70:0a  txqueuelen 1000  (Ethernet)
+        RX packets 1275  bytes 80010 (78.1 KiB)
+        RX errors 0  dropped 1174  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@VM ~]# cat  /etc/fstab 
+
+#
+# /etc/fstab
+# Created by anaconda on Mon May 28 19:45:28 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/vda1		/	xfs	defaults		0   0
+
+
+[root@VM ~]# cat  -n   /usr/sbin/dhclient-script  |tail   -4
+   819	        ;;
+   820	esac
+   821	
+   822	exit_with_hooks 0
+
+[root@VM ~]# cat  -n  /usr/sbin/dhclient-script  |sed  -n  '130,136p;148p;159p'
+   130	        if [ -n "${new_domain_name_servers}" ]; then
+   131	            for nameserver in ${new_domain_name_servers} ; do
+   132	                echo "nameserver ${nameserver}" >> "${rscf}"
+   133	            done
+   134	        else # keep 'old' nameservers
+   135	            sed -n /^\w*[Nn][Aa][Mm][Ee][Ss][Ee][Rr][Vv][Ee][Rr]/p /etc/resolv.conf >> "${rscf}"
+   136	        fi
+   148	        echo "; generated by /usr/sbin/dhclient-script" > ${rscf}
+   159	            echo "search ${search}" >> $rscf
+
+[root@VM ~]# cat  /etc/resolv.conf 
+; generated by /usr/sbin/dhclient-script
+search vbr1
+nameserver 192.168.1.254
+
+[root@VM ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.196 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.183 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.10 
+
+[root@VM ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+=====================虚拟机  DNS 域名解析 能上网   [  9  ] ================
+
+[root@VM ~]# ping  -c3  www.baidu.com
+PING www.a.shifen.com (14.215.177.38) 56(84) bytes of data.
+64 bytes from 14.215.177.38 (14.215.177.38): icmp_seq=1 ttl=54 time=10.4 ms
+64 bytes from 14.215.177.38 (14.215.177.38): icmp_seq=2 ttl=54 time=11.7 ms
+64 bytes from 14.215.177.38 (14.215.177.38): icmp_seq=3 ttl=54 time=10.4 ms
+
+--- www.a.shifen.com ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 10.467/10.889/11.708/0.579 ms
+
+================== 安装虚拟化 常用 软件包    [  11  ] ==============
+
+[root@VM ~]# yum clean all >/dev/null  && yum repolist |tail -5
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9,591
+ansible                              ansible                                 18
+docker                               docker                                   2
+repolist: 9,611
+[root@VM ~]# yum  -y  install  git   vim-enhanced     net-tools      tree   lrzsz     \
+> libguestfs-tools    libvirt-python    python-setuptools    virt-install   virt-manager \
+> virt-v2v            virt-viewer       bind-chroot          bind           chrony   \
+> cloud-utils-growpart    cloud-init         vsftpd          elinks         lftp   \
+> qemu-kvm            libvirt      libvirt-client   libvirt-daemon   libvirt-daemon-driver-qemu \
+> bridge-utils    bash-completion     rsync 
+
+.........................                                                                    
+  yum-utils.noarch 0:1.1.31-42.el7                                                         
+
+Complete!
+
+[root@VM ~]# rpm  -q   git   vim-enhanced   net-tools   tree          lrzsz  
+  libguestfs-tools   libvirt-python   python-setuptools   virt-install  virt-manager 
+  virt-v2v              virt-viewer   bind-chroot         bind          chrony  
+  cloud-utils-growpart   cloud-init   vsftpd              elinks        lftp  
+  qemu-kvm           libvirt          libvirt-client    libvirt-daemon  libvirt-daemon-driver-qemu 
+  bridge-utils       bash-completion   rsync
+
+git-1.8.3.1-11.el7.x86_64
+vim-enhanced-7.4.160-5.el7.x86_64
+net-tools-2.0-0.24.20131004git.el7.x86_64
+tree-1.6.0-10.el7.x86_64 
+lrzsz-0.12.20-36.el7.x86_64    ## xshell 上传下载工具 软件包[上传rz、下载sz命令]
+
+libguestfs-tools-1.36.3-6.el7.noarch
+libvirt-python-3.2.0-3.el7.x86_64
+python-setuptools-0.9.8-7.el7.noarch
+virt-install-1.4.1-7.el7.noarch       ## 系统安装工具 【可选功能】
+virt-manager-1.4.1-7.el7.noarch       ## 图形管理工具 【可选功能】
+
+virt-v2v-1.36.3-6.el7.x86_64     ## 虚拟机 迁移 工具【可选功能】
+virt-viewer-5.0-7.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+bind-9.9.4-50.el7.x86_64
+chrony-3.1-2.el7.centos.x86_64
+
+cloud-utils-growpart-0.29-2.el7.noarch  ### 扩展分区软件cloud-utils-growpart
+cloud-init-0.7.9-9.el7.centos.2.x86_64
+vsftpd-3.0.2-22.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+lftp-4.4.8-8.el7_3.2.x86_64
+
+qemu-kvm-1.5.3-141.el7.x86_64   ## 为 kvm 提供底层仿真支持  【虚拟化平台 安装必备软件】
+libvirt-3.2.0-14.el7.x86_64
+libvirt-client-3.2.0-14.el7.x86_64   ## 用户端软件,提供客户端管理命令 【虚拟化平台 安装必备软件】
+libvirt-daemon-3.2.0-14.el7.x86_64    ## 守护进程,管理虚拟机     【虚拟化平台 安装必备软件】
+libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64   ## libvirtd 连接 qemu 的驱动  【虚拟化平台 安装必备软件】
+
+bridge-utils-1.5-9.el7.x86_64       ## 虚拟 交换机 管理工具包
+bash-completion-2.1-6.el7.noarch      ## 支持Tab键
+rsync-3.0.9-18.el7.x86_64
+
+
+
+
+[root@VM ~]#  head  -6  /proc/meminfo     ## 查看内存信息
+MemTotal:        1644600 kB
+MemFree:          804636 kB
+MemAvailable:    1259188 kB
+Buffers:            2088 kB
+Cached:           630216 kB
+SwapCached:            0 kB
+[root@VM ~]# free
+              total        used        free      shared  buff/cache   available
+Mem:        1644600      101952      804636        8472      738012     1259232
+Swap:             0           0           0
+[root@VM ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  20G  0 disk 
+└─vda1 253:1    0  20G  0 part /
+
+[root@VM ~]#  grep  -n   'physical id'  /proc/cpuinfo 
+10:physical id	: 0
+36:physical id	: 1
+
+[root@VM ~]# egrep   -o  'svm|vmx'  /proc/cpuinfo  # #查看 是否支持 虚拟化 -o参数(只输出匹配的部分)
+
+[root@VM ~]# which  fuser
+/usr/sbin/fuser
+[root@VM ~]# rpm  -qf   /usr/sbin/fuser 
+psmisc-22.20-15.el7.x86_64
+
+======================= 检查 路由 ---  禁用空路由 -  [  12  ]=====================
+
+[root@VM ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@VM ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.196 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.183 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.10 
+
+[root@VM ~]# cat  /etc/sysconfig/network
+# Created by anaconda
+IPV6INIT="no"
+NETWORKING="yes"
+NOZEROCONF="yes"     ## 禁用空路由
+
+[root@VM ~]# systemctl   restart  network
+
+[root@VM ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@VM ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.196 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.183 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.10 
+
+[root@VM ~]# ip  address  show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 52:54:00:c8:9a:86 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.196/24 brd 192.168.0.255 scope global dynamic eth0
+       valid_lft 3165sec preferred_lft 3165sec
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 52:54:00:40:ae:d1 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.183/24 brd 192.168.1.255 scope global dynamic eth1
+       valid_lft 3167sec preferred_lft 3167sec
+4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 52:54:00:b4:70:0a brd ff:ff:ff:ff:ff:ff
+    inet 192.168.2.10/24 brd 192.168.2.255 scope global eth2
+       valid_lft forever preferred_lft forever
+
+[root@VM ~]# cat  /etc/resolv.conf 
+; generated by /usr/sbin/dhclient-script
+search vbr1
+nameserver 192.168.1.254   ## 注意 search 必须在 nameserver 的下一行
+ 
+[root@VM ~]# echo $LANG   ### 注意英语环境
+en_US.UTF-8
+
+[root@VM ~]# echo  "nameserver 192.168.0.254" > /etc/resolv.conf 
+[root@VM ~]# cat  /etc/resolv.conf
+nameserver 192.168.0.254
+
+===================  添 加 console配置 [  13  ] ===========================
+
+[root@VM ~]# ll  /etc/sysconfig/grub 
+lrwxrwxrwx. 1 root root 17 May 29  2018 /etc/sysconfig/grub -> /etc/default/grub
+
+[root@VM ~]# ll  /etc/default/grub 
+-rw-r--r-- 1 root root 381 May 28  2018 /etc/default/grub
+
+[root@VM ~]# cat  /etc/default/grub  ## 内核启动参数 配置文件
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --speed=115200"
+GRUB_CMDLINE_LINUX="crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8"
+GRUB_DISABLE_RECOVERY="true"
+GRUB_DISABLE_LINUX_UUID="true"
+GRUB_ENABLE_LINUX_LABEL="true"
+
+/*** ~]# cat  /etc/default/grub  ## 添加串口终端
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL_OUTPUT="serial  console"         ##串口终端
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"    ## 串口连接速率 是 115200
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200n8" ##注意 115200n8
+GRUB_DISABLE_LINUX_UUID="true"    ## 不使用uuid
+GRUB_ENABLE_LINUX_LABEL="true"
+GRUB_DISABLE_RECOVERY="true"
+*************************************/
+
+
+================ 重新生成grub.cfg  [ 14 ]重新生成GRUB配置并更新内核参数===============
+
+
+[root@VM ~]# sed  -n  '97p;111p;114p'  /boot/grub2/grub.cfg
+	linux16 /boot/vmlinuz-3.10.0-693.el7.x86_64 root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+	linux16 /boot/vmlinuz-0-rescue-ca1b99ed73b54ac2ad4802a3584a439a root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+if [ "x$default" = 'CentOS Linux (3.10.0-693.el7.x86_64) 7 (Core)' ]; then default='Advanced options for CentOS Linux>CentOS Linux (3.10.0-693.el7.x86_64) 7 (Core)'; fi;
+
+[root@VM ~]# which  grub2-mkconfig
+/usr/sbin/grub2-mkconfig
+
+[root@VM ~]# rpm  -qf  /usr/sbin/grub2-mkconfig 
+grub2-tools-2.02-0.64.el7.centos.x86_64
+
+[root@VM ~]# rpm  -qa  |grep  grub
+
+grub2-tools-minimal-2.02-0.64.el7.centos.x86_64
+grub2-pc-modules-2.02-0.64.el7.centos.noarch
+grub2-tools-extra-2.02-0.64.el7.centos.x86_64
+grub2-pc-2.02-0.64.el7.centos.x86_64
+grubby-8.28-23.el7.x86_64
+grub2-common-2.02-0.64.el7.centos.noarch
+grub2-tools-2.02-0.64.el7.centos.x86_64
+grub2-2.02-0.64.el7.centos.x86_64
+
+[root@VM ~]# grub2-mkconfig   -o   /boot/grub2/grub.cfg
+
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-3.10.0-693.el7.x86_64
+Found initrd image: /boot/initramfs-3.10.0-693.el7.x86_64.img
+Found linux image: /boot/vmlinuz-0-rescue-ca1b99ed73b54ac2ad4802a3584a439a
+Found initrd image: /boot/initramfs-0-rescue-ca1b99ed73b54ac2ad4802a3584a439a.img
+done
+
+
+==================== 修改/etc/fstab 文件中 UUID 手工修改 成 系统设备/dev/*?  【 15 】============
+
+
+[root@VM ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  20G  0 disk 
+└─vda1 253:1    0  20G  0 part /
+
+[root@VM ~]# blkid
+/dev/vda1: UUID="8af29d5a-8fed-4a93-be34-e2a2789cc3f7" TYPE="xfs" 
+
+[root@VM ~]# sed  -i  's/UUID=.*\(xfs\).*\(defaults\).*/\/dev\/vda1    \/    \1     \2    0   0/'  /etc/fstab 
+
+[root@VM ~]# vim   /etc/fstab
+[root@VM ~]# tail  -n  3  /etc/fstab 
+
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/vda1    /     xfs    defaults     0    0
+
+
+[root@VM ~]# df  -hT
+Filesystem     Type      Size  Used Avail Use% Mounted on
+/dev/vda1      xfs        20G  1.5G   19G   8% /
+devtmpfs       devtmpfs  1.8G     0  1.8G   0% /dev
+tmpfs          tmpfs     1.8G     0  1.8G   0% /dev/shm
+tmpfs          tmpfs     1.8G  8.3M  1.8G   1% /run
+tmpfs          tmpfs     1.8G     0  1.8G   0% /sys/fs/cgroup
+tmpfs          tmpfs     351M     0  351M   0% /run/user/0
+
+
+[root@VM ~]# cat  -n  /etc/ssh/ssh_config  |sed  -n  '41p;58,61p'   ## 客户端ssh/ssh_config
+    41	#   Port 22
+    58	Host *
+    59		GSSAPIAuthentication yes
+    60	# If this option is set to yes then remote X11 clients will have full access
+    61	# to the original X11 display. As virtually no X11 client supports the untrusted
+
+[root@VM ~]# cat   -n  /etc/ssh/sshd_config  |sed  -n  '17p;38p;65p'   # 服务端 ssh/sshd_config
+    17	Port 22
+    38	PermitRootLogin yes
+    65	PasswordAuthentication yes
+
+[root@VM ~]# cat  -n   /etc/ssh/sshd_config  |sed  -n  '78,80p'    # 服务端 ssh/sshd_config
+    78	# GSSAPI options
+    79	GSSAPIAuthentication yes
+    80	GSSAPICleanupCredentials no
+------------------------------------------------------------------------
+    78	# GSSAPI options
+           ## 在客户端登录服务端会用gssapi-keyex,gssapi-with-mic进行身份校验,同样客户端也要支持这种身份验证
+        ## 是否允许使用基于 GSSAPI 的用户认证
+    79	GSSAPIAuthentication yes   
+
+           ## 是否在用户退出登录后自动销毁用户凭证缓存
+    80	GSSAPICleanupCredentials no
+
+[root@VM ~]# systemctl  restart   sshd
+[root@VM ~]# systemctl  is-enabled   sshd
+enabled
+[root@VM ~]# reboot
+
+==================== 测试 真机 可以 console 远程连接   【 16 】================
+
+[root@hiys ~]# virsh  console  VM
+Connected to domain VM
+Escape character is ^]
+                            回车
+..................
+[  260.430978] cloud-init[924]: 2018-12-05 21:24:32,439 - url_helper.py[WARNING]: Calling 'http://192.168.0.254/latest/meta-data/instance-id' failed [112/120s]: bad status code [404]
+[  267.443473] cloud-init[924]: 2018-12-05 21:24:39,451 - url_helper.py[WARNING]: Calling 'http://192.168.0.254/latest/meta-data/instance-id' failed [119/120s]: request error [('Connection aborted.', error(115, 'Operation now in progress'))]
+[  274.452400] cloud-init[924]: 2018-12-05 21:24:46,460 - DataSourceCloudStack.py[CRITICAL]: Giving up on waiting for the metadata from ['http://192.168.0.254/latest/meta-data/instance-id'] after 126 seconds
+         Starting Hostname Service...
+[  OK  ] Started Hostname Service.
+[  OK  ] Started Initial cloud-init job (metadata service crawler).
+[  OK  ] Reached target Cloud-config availability.
+         Starting Permit User Sessions...
+         Starting OpenSSH server daemon...
+[  OK  ] Reached target Network is Online.
+         Starting Apply the settings specified in cloud-config...
+         Starting Notify NFS peers of a restart...
+[  OK  ] Started Permit User Sessions.
+[  OK  ] Started Command Scheduler.
+         Starting Command Scheduler...
+         Starting Terminate Plymouth Boot Screen...
+         Starting Wait for Plymouth Boot Screen to Quit...
+[  OK  ] Started Notify NFS peers of a restart.
+[  OK  ] Started OpenSSH server daemon.
+[  275.215476] cloud-init[1118]: Cloud-init v. 0.7.9 running 'modules:config' at Wed, 05 Dec 2018 13:24:47 +0000. Up 275.18 seconds.
+[  275.424423] cloud-init[1147]: Cloud-init v. 0.7.9 running 'modules:final' at Wed, 05 Dec 2018 13:24:47 +0000. Up 275.38 seconds.
+[  275.432851] cloud-init[1147]: ci-info: no authorized ssh keys fingerprints found for user centos.
+ci-info: no authorized ssh keys fingerprints found for user centos.
+ec2: 
+ec2: #############################################################
+ec2: -----BEGIN SSH HOST KEY FINGERPRINTS-----
+ec2: 256 SHA256:v0gcYquUmcYPhE7/4aAJDiFIDmDkeBVHcrX0vW2PSFw no comment (ECDSA)
+ec2: 256 SHA256:dWeNcSDjjcE565eMqRLPaBW9JMKw49nErQAFWeWLo1c no comment (ED25519)
+ec2: 2048 SHA256:lFQ2NgZo0YDBGxMktv9l08BdaiUCUVMz92AhHzwNnt4 no comment (RSA)
+ec2: -----END SSH HOST KEY FINGERPRINTS-----
+ec2: #############################################################
+-----BEGIN SSH HOST KEY KEYS-----
+ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBiFuAQ9kcsvL+K/Tj08qPp4OevK+0Lm1PymuY/qogS1H3rUD3Y6JgcH6dlf6bT9V7pmUTQDHBZHv9lxh4gJ+Bk= 
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDulg8hUqXvDNEwKISQcPaDGTw+LzEQbgfT0G2vEW1Jq 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTeEikH1xs14TrMeym+T4ZG9tEkQVW66m8DTmVardsOBSk1yrRfW7uRmk+8dPHpe/5qzaKgTw8MctmB8GUYDTMTOclAD8RbqZN4GwDsC3ENvRvoocRh5aZAbZZDyUaKUin/9+V/zOOO2Mvmf6hrrWb3wLeWT45iipeap+RrlkigtUdFYK/Zg6AJo0kc2HG8+bLelsEZXYg/f3eXCp4m+j9R2JJZgVdTez4BCZYFzB7A3g6D0LuKNY76vNOXikbK0X34NRfAgeVsmvYK5gWAILlmvveWFYJbfx4Ktwmq4rPwqG520NOH5vKdSntnGQlRj5n9eZEmFftmyBLS4I83eqH 
+-----END SSH HOST KEY KEYS-----
+[  275.494667] cloud-init[1147]: Cloud-init v. 0.7.9 finished at Wed, 05 Dec 2018 13:24:47 +0000. Datasource DataSourceNone.  Up 275.49 seconds
+[  275.496499] cloud-init[1147]: 2018-12-05 21:24:47,505 - cc_final_message.py[WARNING]: Used fallback datasource
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+VM login: root
+Password:  1                 ##  密码 1
+Last login: Wed Dec  5 15:29:09 from 192.168.0.254
+
+[root@VM ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.196  netmask 255.255.255.0  broadcast 192.168.0.255
+。。。。。。。。。。。。。。。。。
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.183  netmask 255.255.255.0  broadcast 192.168.1.255
+........................
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.10  netmask 255.255.255.0  broadcast 192.168.2.255
+.................................
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+......................................
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+        ether 52:54:00:90:b4:59  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@VM ~]# tty
+/dev/ttyS0
+[root@VM ~]# ip    route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.196 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.183 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.10 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+[root@VM ~]# cat   /etc/resolv.conf 
+; Created by cloud-init on instance boot automatically, do not edit.
+;
+; generated by /usr/sbin/dhclient-script
+search vbr1
+nameserver 192.168.1.254
+[root@VM ~]# 
+[root@VM ~]# cat  -n  /etc/ssh/ssh_config  |sed  -n  '41p;58,61p' 
+    41	#   Port 22
+    58	Host *
+    59		GSSAPIAuthentication yes
+    60	# If this option is set to yes then remote X11 clients will have full access
+    61	# to the original X11 display. As virtually no X11 client supports the untrusted
+[root@VM ~]# 
+[root@VM ~]# 
+[root@VM ~]#  cat   -n  /etc/ssh/sshd_config  |sed  -n  '17p;38p;65p;78,80p' 
+    17	Port 22
+    38	PermitRootLogin yes
+    65	PasswordAuthentication no
+    78	# GSSAPI options
+    79	GSSAPIAuthentication yes
+    80	GSSAPICleanupCredentials no
+
+[root@VM ~]# echo  $LANG
+en_US.UTF-8
+[root@VM ~]# tty
+/dev/ttyS0
+[root@VM ~]#  Ctrl  +  ]   退出 
+
+==================== 测试 真机 可以 ssh 远程连接   【 17 】================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---------------------------- ## 安装扩展分区软件 ---------------------------------
+             第一次开机自动扩容【英语环境LANG=en_US.UTF-8】
+
+[root@Mob ~]# rpm  -q   cloud-utils-growpart
+cloud-utils-growpart-0.29-2.el7.noarch
+
+[root@Mob ~]# rpm  -qf  /bin/growpart
+cloud-utils-growpart-0.29-2.el7.noarch
+
+[root@Mob ~]# ll  /usr/bin/growpart 
+-rwxr-xr-x. 1 root root 21428 Aug  4  2017 /usr/bin/growpart
+
+[root@Mob ~]# /usr/bin/growpart   /dev/vda  1     ## 给/dev/vda的第1个分区扩容
+
+NOCHANGE: partition 1 could only be grown by -33 [fudge=2048]
+
+[root@Mob ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0   3G  0 disk 
+└─vda1 253:1    0   3G  0 part /
+
+[root@Mob ~]# ll /usr/sbin/xfs_growfs 
+-rwxr-xr-x. 1 root root 335104 Aug  4  2017 /usr/sbin/xfs_growfs
+
+[root@Mob ~]# /usr/sbin/xfs_growfs   /    # 文件系统扩容
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

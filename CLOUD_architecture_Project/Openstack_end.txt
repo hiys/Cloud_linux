@@ -1,0 +1,757 @@
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]
+                HTTP  FTP  TFTP  SMTP  SNMP  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包
+                ICMP  IGMP    IP   ARP   RARP
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流
+
+          层            主机A                              主机B          数据单元
+-----------------------------------------------------------------------------------------------------------------------------------------------
+APDU 是应用层协议数据单元
+报文，message，一般指完整的信息，传输层实现报文交付。我们将位于应用层的信息分组称为报文。
+frame，Datagram，segment是基于所在协议层不同而取了不同的名字
+
+PPDU 是表示层协议数据单元
+SPDU 是会话层协议数据单元
+TPDU 是传输层协议数据单元，即 "数据段”
+传输层 segment（报文段）
+报文段，segment，组成报文的每个分组。我们将传输层分组称为报文段。
+抓包抓到的是传输层的包，所以packet，frame，Datagram，segment是存在于同条记录中的
+
+网络层的协议数据单元，即 "数据包”
+网络层 packet （数据包）
+
+数据链路层的协议数据单元，即 "数据帧”
+数据链路层 frame（数据帧）
+帧，frame，数据链路层的协议数据单元。我们将链路层分组称为帧。
+
+物理层的协议数据单元，即 数据“比特”
+物理层 bit （比特）
+
+1.报文(message)
+报文是网络中交换与传输的数据单元，也是网络传输的单元。
+报文包含了将要发送的完整的数据信息，其长短不需一致。
+报文在传输过程中会不断地封装成分组、包、帧来传输，
+封装的方式就是添加一些控制信息组成的首部，那些就是报文头。
+ 
+2.分组(packet)
+分组是在网络中传输的二进制格式的单元，
+为了提供通信性能和可靠性，每个用户发送的数据会被分成多个更小的部分。
+在每个部分的前面加上一些必要的控制信息组成的首部，
+有时也会加上尾部，就构成了一个分组。
+ 
+3.数据包(data packet)
+数据包是TCP/IP协议通信传输中的数据单元，也称为“包”。
+是指自包含的，带有足够寻址信息，可独立地从源主机传输到目的主机，
+而不需要依赖早期的源主机和目的主机之间交换信息以及传输网络的数据包。
+ 
+4.数据报(datagram)
+面向无连接的数据传输，其工作过程类似于报文交换。
+采用数据报方式传输时，被传输的分组称为数据报。
+ 
+5.帧(frame)
+帧是数据链路层的传输单元。它将上层传入的数据添加一个头部和尾部，组成了帧。
+ 
+应用层——消息
+传输层——数据段(segment)
+网络层——分组、数据包（packet）
+链路层——帧（frame）
+
+ICMP是“Internet Control Message Ptotocol”（Internet控制消息协议）的缩写。
+它是TCP/IP协议族的一个子协议，用于在IP主机、路由器之间传递控制消息
+
+ping命令通常用来作为网络可用性的检查。
+ping命令可以对一个网络地址发送测试数据包，看该网络地址是否有响应并统计响应时间，以此测试网络。
+
+ping和ICMP的关系
+ping命令发送数据使用的是ICMP协议。
+
+ping的原理
+向指定的网络地址发送一定长度的数据包，按照约定，若指定网络地址存在的话，会返回同样大小的数据包，
+若在特定时间内没有返回，就是“超时”，会被认为指定的网络地址不存在。
+
+TCP的优点： 可靠，稳定 
+TCP的可靠体现在TCP在传递数据之前，
+会有三次握手来建立连接，
+而且在数据传递时，
+有确认、窗口、重传、拥塞控制机制，
+在数据传完后，
+还会断开连接用来节约系统资源。 
+
+TCP的缺点： 慢，效率低，占用系统资源高，易被攻击 
+TCP在传递数据之前，要先建连接，这会消耗时间，
+而且在数据传递时，
+确认机制、重传机制、拥塞控制机制等都会消耗大量的时间，
+而且要在每台设备上维护所有的传输连接，
+事实上，每个连接都会占用系统的CPU、内存等硬件资源。
+因为TCP有确认机制、三次握手机制，
+这些也导致TCP容易被人利用，实现DOS、DDOS、CC等攻击。
+
+UDP的优点： 快，比TCP稍安全 
+UDP没有TCP的握手、确认、窗口、重传、拥塞控制等机制，
+UDP是一个无状态的传输协议，
+所以它在传递数据时非常快。
+没有TCP的这些机制，
+UDP较TCP被攻击者利用的漏洞就要少一些。
+
+但UDP也是无法避免攻击的，
+比如：UDP Flood攻击…… 
+
+UDP的缺点： 不可靠，不稳定 
+因为UDP没有TCP那些可靠的机制，
+在数据传递时，如果网络质量不好，就会很容易丢包。 
+
+ 什么时候应该使用TCP： 
+当对网络通讯质量有要求的时候，
+比如：整个数据要准确无误的传递给对方，
+这往往用于一些要求可靠的应用，比如HTTP、HTTPS、FTP等传输文件的协议，POP、SMTP等邮件传输的协议。 
+在日常生活中，常见使用TCP协议的应用如下： 
+  浏览器，用的HTTP FlashFXP，
+  FTP Outlook，
+  POP、SMTP Putty，
+  Telnet、SSH QQ文件传输 ………… 
+
+什么时候应该使用UDP： 
+当对网络通讯质量要求不高的时候，要求网络通讯速度能尽量的快，这时就可以使用UDP。
+
+ 比如，日常生活中，常见使用UDP协议的应用如下： 
+QQ语音 QQ视频 TFTP ……
+有些应用场景对可靠性要求不高会用到UPD，比如长视频，要求速率
+
+
+小结TCP与UDP的区别：
+1.基于连接与无连接；
+2.对系统资源的要求（TCP较多，UDP少）；
+3.UDP程序结构较简单；
+4.流模式与数据报模式 ；
+
+5.TCP保证数据正确性，UDP可能丢包，TCP保证数据顺序，UDP不保证。
+
+tcp协议和udp协议的差别 
+TCP UDP 
+是否连接 面向连接 面向非连接 
+传输可靠性 可靠 不可靠 
+应用场合 传输大量数据 少量数据 
+速度 慢 快
+
+TCP与UDP区别总结：
+
+1、TCP面向连接（如打电话要先拨号建立连接）;UDP是无连接的，即发送数据之前不需要建立连接
+
+2、TCP提供可靠的服务。也就是说，通过TCP连接传送的数据，无差错，不丢失，不重复，且按序到达;UDP尽最大努力交付，即不保证可靠交付
+
+3、TCP面向字节流，实际上是TCP把数据看成一连串无结构的字节流;UDP是面向报文的
+
+UDP没有拥塞控制，因此网络出现拥塞不会使源主机的发送速率降低（对实时应用很有用，如IP电话，实时视频会议等）
+
+4、每一条TCP连接只能是点到点的;UDP支持一对一，一对多，多对一和多对多的交互通信
+
+5、TCP首部开销20字节;UDP的首部开销小，只有8个字节
+6、TCP的逻辑通信信道是全双工的可靠信道，UDP则是不可靠信道
+
+
+---------------------------------------------------------------------------------------------------------------------------
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# tail   -3   /etc/bashrc  ##  开机自动执行命令
+# vim:ts=4:sw=4
+/usr/sbin/ifconfig rhce:0 172.25.0.250
+#echo Hiyes1 | passwd --stdin root &> /dev/null
+
+========================= 挂载  U 盘 =========================
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 465.8G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part 
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0 935.4M  0 loop /var/ftp/ceph
+
+[root@hiys ~]# rpm  -q  ntfs-3g_ntfsprogs
+ntfs-3g_ntfsprogs-2013.1.13-1.el6.x86_64
+
+[root@hiys ~]# rpm  -qa  |grep  fuse
+fuse-libs-2.9.2-8.el7.x86_64
+fuse-2.9.2-8.el7.x86_64
+gvfs-fuse-1.30.4-3.el7.x86_64
+
+[root@hiys ~]# lsmod |egrep  'uas|usb_storage'
+uas                    22429  0 
+usb_storage            66615  1 uas
+
+[root@hiys ~]# more  /proc/partitions 
+major minor  #blocks  name
+
+   8        0  488386584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   7        0    3963904 loop0
+   7        1     957812 loop1
+   8       16  122880000 sdb
+   8       17  122879776 sdb1
+
+[root@hiys ~]# fdisk  -l  /dev/sdb 
+
+磁盘 /dev/sdb：125.8 GB, 125829120000 字节，245760000 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+磁盘标识符：0x00000000
+
+   设备 Boot      Start         End      Blocks   Id  System
+/dev/sdb1             448   245759999   122879776    c  W95 FAT32 (LBA)
+
+
+[root@hiys ~]# mkdir  /hiyes
+
+[root@hiys ~]# ls  /hiyes/
+[root@hiys ~]# mount.
+mount.fuse        mount.lowntfs-3g  mount.nfs         mount.nfs4        mount.ntfs-3g
+
+[root@hiys ~]# mount.ntfs-3g  /dev/sdb1 
+
+ntfs-3g: No mountpoint is specified.
+
+ntfs-3g 2013.1.13 integrated FUSE 27 - Third Generation NTFS Driver
+........................................
+Usage:    ntfs-3g [-o option[,...]] <device|image_file> <mount_point>
+
+Options:  ro (read-only mount), windows_names, uid=, gid=,
+          umask=, fmask=, dmask=, streams_interface=.
+          Please see the details in the manual (type: man ntfs-3g).
+
+Example: ntfs-3g /dev/sda1 /mnt/windows
+
+News, support and information:  http://tuxera.com
+
+[root@hiys ~]# mount.ntfs-3g  /dev/sdb1   /hiyes/
+
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 465.8G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part /hiyes
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0 935.4M  0 loop /var/ftp/ceph
+
+======================================================
+
+[root@hiys ~]# rm  -f  /var/log/libvirt/qemu/*.log
+[root@hiys ~]# ls  /var/log/libvirt/qemu/
+
+[root@hiys ~]# cd  /var/lib/libvirt/images/
+
+[root@hiys images]# ls
+Student.sh  Weekend.sh  conf.d   db    iso         node.qcow2  tedu-wallpaper-01.png       vsftpd.conf
+VM.img      bin         content  exam  lost+found  qemu        tedu-wallpaper-weekend.png  win.img
+
+[root@hiys images]# tty
+/dev/pts/0
+/*****************
+[root@hiys ~]# qemu-img   create   -f  qcow2   /var/lib/libvirt/images/disk-Va1.img   8G
+[root@hiys ~]# qemu-img   create   -b  /var/lib/libvirt/images/node.qcow2  \
+>   -f  qcow2   /var/lib/libvirt/images/Va1.img    16G
+***************/
+
+[root@hiys images]# qemu-img   create   -f  qcow2  /var/lib/libvirt/images/disk-Va1.img  8G
+
+[root@hiys images]# qemu-img   create   -b   node.qcow2   -f  qcow2    Va1.img    16G
+
+[root@hiys images]# ls
+Student.sh  Weekend.sh  content       exam        node.qcow2             tedu-wallpaper-weekend.png
+VM.img      bin         db            iso         qemu                   vsftpd.conf
+Va1.img     conf.d      disk-Va1.img  lost+found  tedu-wallpaper-01.png  win.img
+
+[root@hiys ~]# ls   /var/lib/libvirt/images/
+......................
+[root@hiys images]# cd  /etc/libvirt/qemu/
+
+[root@hiys qemu]# ls
+VM.xml  VM.xml.txt  autostart  networks  win2008.xml
+
+[root@hiys qemu]# cp  VM.xml.txt   Va1.xml
+[root@hiys qemu]# cat   Va1.xml
+<domain type='kvm'>
+  <name>VM</name>      ## 修改点 1
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+...................
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/VM.img'/>   ## 修改点 2
+      <target dev='vda' bus='virtio'/>  ## 磁盘源 'vda' 
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-VM.img'/>   ## 修改点 3
+      <target dev='vdb' bus='virtio'/>  ## 磁盘源 'vdb' 
+    </disk>
+........................
+
+[root@hiys qemu]#  cat  -n  Va1.xml  |sed -n '/<name>\|VM.img\|disk-VM.img/p'
+     2	  <name>VM</name>
+    26	      <source file='/var/lib/libvirt/images/VM.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-VM.img'/>
+
+[root@hiys qemu]# sed  -i   '/<name>/s/VM/Va1/;/\/VM.img/s/VM/Va1/;/disk-VM.img/s/VM/Va1/'  Va1.xml
+
+ [root@hiys qemu]#  cat  -n  Va1.xml  |sed -n '/<name>\|Va1.img\|disk-Va1.img/p'
+     2	  <name>Va1</name>
+    26	      <source file='/var/lib/libvirt/images/Va1.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va1.img'/>
+
+[root@hiys qemu]# ls
+
+/******************************
+[root@hiys ~]# virsh  define  /etc/libvirt/qemu/Va1.xml 
+setlocale: No such file or directory
+error: Failed to define domain from /etc/libvirt/qemu/Va1.xml
+error: XML 错误：磁盘源 'vda' 和 '/var/lib/libvirt/images/Va1.img' 有重复的目标 '/var/lib/libvirt/images/disk-Va1.img'
+
+/****** 
+      <source file='/var/lib/libvirt/images/disk-Va1.img'/>
+      <target dev='vdb' bus='virtio'/>  磁盘源 'vdb'  注意这里
+    </disk>
+***************/
+[root@hiys ~]# vim   /etc/libvirt/qemu/Va1.xml
+[root@hiys ~]# virsh  define  /etc/libvirt/qemu/Va1.xml 
+[root@hiys ~]# virsh  start  Va1
+[root@hiys ~]# cat   /etc/libvirt/qemu/Va1.xml 
+[root@hiys ~]# virsh  edit  Va1
+setlocale: No such file or directory
+error: XML 错误：磁盘源 'vda' 和 '/var/lib/libvirt/images/Va1.img' 有重复的目标 '/var/lib/libvirt/images/disk-Va1.img'
+Failed. Try again? [y,n,i,f,?]: y
+Domain Va1 XML configuration not changed.
+*********************/
+
+
+
+[root@hiys qemu]#  qemu-img   create   -f  qcow2   /var/lib/libvirt/images/disk-Va2.img   8G
+
+[root@hiys qemu]# qemu-img   create   -b  /var/lib/libvirt/images/node.qcow2   -f  qcow2   /var/lib/libvirt/images/Va2.img    16G
+
+[root@hiys qemu]# ls   /var/lib/libvirt/images/
+Student.sh  Va2.img     conf.d   disk-Va1.img  iso         qemu                        vsftpd.conf
+VM.img      Weekend.sh  content  disk-Va2.img  lost+found  tedu-wallpaper-01.png       win.img
+Va1.img     bin         db       exam          node.qcow2  tedu-wallpaper-weekend.png
+
+[root@hiys qemu]# ls
+VM.xml  VM.xml.txt  Va1.xml  autostart  networks  win2008.xml
+
+[root@hiys qemu]# vim  Va1.xml 
+[root@hiys qemu]# cp   Va1.xml  Va2.xml
+
+[root@hiys qemu]# vim  Va2.xml
+[root@hiys qemu]# cat  Va2.xml
+<domain type='kvm'>
+  <name>Va2</name>
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/Va2.img'/>
+      <target dev='vda' bus='virtio'/>  ## 注意磁盘源 vda
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-Va2.img'/>
+      <target dev='vdb' bus='virtio'/>  ## 注意磁盘源 vdb
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# 
+
+[root@hiys qemu]# virsh  define  /etc/libvirt/qemu/Va2.xml 
+
+[root@hiys qemu]# virsh  define   Va1.xml 
+
+[root@hiys qemu]# virsh  start  Va1
+
+[root@hiys qemu]# virsh  start  Va2
+
+Connected to domain Va1
+Escape character is ^]
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password:  a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.151  netmask 255.255.255.0  broadcast 192.168.0.255
+........................
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+..............
+[root@localhost ~]# lsblk 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0   8G  0 disk 
+
+[root@hiys qemu]# virsh  console  Va2
+setlocale: No such file or directory
+Connected to domain Va2
+Escape character is ^]
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: 
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# ip  address  show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+....................
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 52:54:00:ab:06:5c brd ff:ff:ff:ff:ff:ff
+    inet 192.168.0.198/24 brd 192.168.0.255 scope global dynamic eth0
+    ...............
+3: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN qlen 1000
+    link/ether 52:54:00:83:68:88 brd ff:ff:ff:ff:ff:ff
+4: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN qlen 1000
+    link/ether 52:54:00:d0:bb:8d brd ff:ff:ff:ff:ff:ff
+
+[root@localhost ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0   8G  0 disk 
+[root@localhost ~]#   Ctrl  +  ] 退出
+[root@hiys qemu]# 
+
+[root@hiys qemu]# cd  /var/lib/libvirt/images/
+[root@hiys images]# cp  '/root/桌面/MoBan/VM.img'  .
+[root@hiys images]# ls
+Student.sh  Va2.img     conf.d   disk-Va1.img  iso         qemu                        vsftpd.conf
+VM.img      Weekend.sh  content  disk-Va2.img  lost+found  tedu-wallpaper-01.png       win.img
+Va1.img     bin         db       exam          node.qcow2  tedu-wallpaper-weekend.png
+
+======================  注意是后端盘 变成了 VM.img  不再是 node.qcow2 ===============
+
+[root@hiys qemu]# cd  /var/lib/libvirt/images/
+
+[root@hiys images]# qemu-img  create  -b  /var/lib/libvirt/images/VM.img   -f   qcow2   Va3.img  16G
+
+[root@hiys images]# qemu-img  create     -f   qcow2   disk-Va3.img  8G
+
+[root@hiys images]# ls
+Student.sh  Va2.img     bin      db            disk-Va3.img  lost+found  tedu-wallpaper-01.png       win.img
+VM.img      Va3.img     conf.d   disk-Va1.img  exam          node.qcow2  tedu-wallpaper-weekend.png
+Va1.img     Weekend.sh  content  disk-Va2.img  iso           qemu        vsftpd.conf
+
+
+[root@hiys images]# cd  /etc/libvirt/qemu/
+
+[root@hiys qemu]# sed  -i   '/<name>/s/VM/Va3/;/\/VM.img/s/VM/Va3/;/disk-VM.img/s/VM/Va3/'  Va3.xml
+
+[root@hiys qemu]#  cat  -n  Va3.xml  |sed -n '/<name>\|Va3.img\|disk-Va3.img/p'
+     2	  <name>Va3</name>
+    26	      <source file='/var/lib/libvirt/images/Va3.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va3.img'/>
+
+[root@hiys qemu]# virsh  define  /etc/libvirt/qemu//Va3.xml 
+
+[root@hiys qemu]# virsh  start  Va3
+
+[root@hiys qemu]# ls        ## 注意 后端二次开发的镜像/var/lib/libvirt/images/VM.img 的配置文件 VM.xml 已经删除
+VM.xml.txt  Va1.xml  Va2.xml  Va3.xml  autostart  networks  win2008.xml
+
+[root@hiys qemu]# virsh  console  Va3
+setlocale: No such file or directory
+Connected to domain Va3
+Escape character is ^]
+
+:/# root
+sh: root: command not found
+:/# 1
+sh: 1: command not found
+:/# pwd
+/
+:/# ls
+bin  dracut-state.sh  etc   kernel  lib64  root  sbin	   sys	    tmp  var
+dev  early_cpio       init  lib     proc   run	 shutdown  sysroot  usr
+:/# echo  hello
+hello
+:/# ping  -c3  192.168.0.254
+connect: Network is unreachable
+:/# 
+[root@hiys qemu]# virsh  shutdown  Va3
+setlocale: No such file or directory
+Domain Va3 is being shutdown
+
+[root@hiys qemu]# virsh  undefine  Va3
+setlocale: No such file or directory
+Domain Va3 has been undefined
+
+[root@hiys qemu]# virsh  destroy   Va3
+setlocale: No such file or directory
+Domain Va3 destroyed
+
+
+[root@hiys qemu]# ls
+VM.xml.txt  Va1.xml  Va2.xml  autostart  networks  win2008.xml
+
+[root@hiys qemu]# ls  /var/lib/libvirt/images/
+Student.sh  Va2.img     bin      db            disk-Va3.img  lost+found  tedu-wallpaper-01.png       
+.............
+
+[root@hiys qemu]# rm  -f  /var/lib/libvirt/images/*Va3.img
+
+[root@hiys qemu]# ls  /var/lib/libvirt/images/
+Student.sh  Va2.img     conf.d   disk-Va1.img  iso         qemu                        vsftpd.conf
+....................
+**************************************************************************
+
+[root@hiys qemu]# vish  console  Va3
+...........
+
+localhost login: root
+Password: a
+Last failed login: Thu Dec  6 16:22:49 CST 2018 on ttyS0
+There was 1 failed login attempt since the last successful login.
+Last login: Wed May 30 20:18:45 on ttyS0
+
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.118  netmask 255.255.255.0  broadcast 192.168.0.255
+................
+[root@localhost ~]# cat  /etc/default/grub 
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --speed=115200"
+GRUB_CMDLINE_LINUX="crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8"
+GRUB_DISABLE_RECOVERY="true"
+GRUB_DISABLE_LINUX_UUID="true"
+GRUB_ENABLE_LINUX_LABEL="true"
+[root@localhost ~]# tty
+/dev/ttyS0
+root@localhost ~]# cat  -n  /etc/ssh/sshd_config  |sed  -n  '17p;38p;65p;78,80p'
+    17	Port 22
+    38	PermitRootLogin yes
+    65	PasswordAuthentication yes
+    78	# GSSAPI options
+    79	GSSAPIAuthentication yes
+    80	GSSAPICleanupCredentials no
+
+[root@localhost ~]# cat  /etc/resolv.conf 
+; generated by /usr/sbin/dhclient-script
+search vbr
+nameserver 192.168.0.254
+[root@localhost ~]# echo  Va3 >/etc/hostname 
+[root@localhost ~]# reboot
+
+/****
+/usr/bin/expect  << EOF
+  spawn  scp  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+  expect "password:"  {send  "1\r"}
+  expect eof
+EOF
+
+***/
+
+[root@Va1 ~]# ping  -c2  www.baidu.com
+PING www.a.shifen.com (14.215.177.39) 56(84) bytes of data.
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=1 ttl=52 time=9.18 ms
+64 bytes from 14.215.177.39 (14.215.177.39): icmp_seq=2 ttl=52 time=9.55 ms
+..................
+[root@Va1 ~]# ping  -c2  114.114.114.114
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+64 bytes from 114.114.114.114: icmp_seq=1 ttl=80 time=26.1 ms
+64 bytes from 114.114.114.114: icmp_seq=2 ttl=70 time=23.4 ms
+...............................
+[root@Va1 ~]# 
+                      ============== 配置DNS（真机操作）======================
+
+[root@hiys ~]# vim /etc/named.conf
+ 12 options {
+ 13         listen-on port 53 { 192.168.1.254; };
+ 14 //      listen-on-v6 port 53 { ::1; };
+ 15         directory       "/var/named";
+ 16         dump-file       "/var/named/data/cache_dump.db";
+ 17         statistics-file "/var/named/data/named_stats.txt";
+ 18         memstatistics-file "/var/named/data/named_mem_stats.txt";
+ 19         allow-query     { any; };
+ 20         forwarders   { 114.114.114.114; };  # /转发dns,真机的服务器地址
+
+ 31         recursion yes;
+ 32 
+ 33         dnssec-enable no;
+ 34         dnssec-validation no;
+
+
+[root@hiys ~]# systemctl start named && systemctl enable named
+
+
+在VIM中进行文本替换：
+
+    1.  替换当前行中的内容：    :s/from/to/    （s即substitude）
+        :s/from/to/     ：  将当前行中的第一个from，替换成to。如果当前行含有多个
+                            from，则只会替换其中的第一个。
+        :s/from/to/g    ：  将当前行中的所有from都替换成to。
+        :s/from/to/gc   ：  将当前行中的所有from都替换成to，但是每一次替换之前都
+                            会询问请求用户确认此操作。
+
+        注意：这里的from和to都可以是任何字符串，其中from还可以是正则表达式。
+
+    2.  替换某一行的内容：      :33s/from/to/g
+        :.s/from/to/g   ：  在当前行进行替换操作。
+        :33s/from/to/g  ：  在第33行进行替换操作。
+        :$s/from/to/g   ：  在最后一行进行替换操作。
+
+    3.  替换某些行的内容：      :10,20s/from/to/g
+        :10,20s/from/to/g   ：  对第10行到第20行的内容进行替换。
+        :1,$s/from/to/g     ：  对第一行到最后一行的内容进行替换（即全部文本）。
+        :1,.s/from/to/g     ：  对第一行到当前行的内容进行替换。
+        :.,$s/from/to/g     ：  对当前行到最后一行的内容进行替换。
+        :'a,'bs/from/to/g   ：  对标记a和b之间的行（含a和b所在的行）进行替换。
+                                其中a和b是之前用m命令所做的标记。
+
+    4.  替换所有行的内容：      :%s/from/to/g
+        :%s/from/to/g   ：  对所有行的内容进行替换。
+
+    5.  替换命令的完整形式：    :[range]s/from/to/[flags]
+        5.1 s/from/to/
+            把from指定的字符串替换成to指定的字符串，from可以是正则表达式。
+        5.2 [range]
+            有以下一些表示方法：
+            不写range   ：  默认为光标所在的行。
+            .           ：  光标所在的行。
+            1           ：  第一行。
+            $           ：  最后一行。
+            33          ：  第33行。
+            'a          ：  标记a所在的行（之前要使用ma做过标记）。
+            .+1         ：  当前光标所在行的下面一行。
+            $-1         ：  倒数第二行。（这里说明我们可以对某一行加减某个数值来
+                            取得相对的行）。
+            22,33       ：  第22～33行。
+            1,$         ：  第1行 到 最后一行。
+            1,.         ：  第1行 到 当前行。
+            .,$         ：  当前行 到 最后一行。
+            'a,'b       ：  标记a所在的行 到 标记b所在的行。
+
+            %           ：  所有行（与 1,$ 等价）。
+
+            ?chapter?   ：  从当前位置向上搜索，找到的第一个chapter所在的行。（
+                            其中chapter可以是任何字符串或者正则表达式。
+            /chapter/   ：  从当前位置向下搜索，找到的第一个chapter所在的行。（
+                            其中chapter可以是任何字符串或者正则表达式。
+
+            注意，上面的所有用于range的表示方法都可以通过 +、- 操作来设置相对偏
+            移量。
+
+        5.3 [flags]
+            这里可用的flags有：
+
+            无      ：  只对指定范围内的第一个匹配项进行替换。
+            g       ：  对指定范围内的所有匹配项进行替换。
+            c       ：  在替换前请求用户确认。
+            e       ：  忽略执行过程中的错误。
+
+            注意：上面的所有flags都可以组合起来使用，比如 gc 表示对指定范围内的
+            所有匹配项进行替换，并且在每一次替换之前都会请用户确认。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

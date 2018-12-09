@@ -1,0 +1,197 @@
+
+/****
+./configure \
+--prefix=/usr/local/nginx \
+--pid-path=/usr/local/nginx/logs/nginx.pid \
+--lock-path=/var/lock/subsys/nginx \
+--error-log-path=/var/log/nginx/error.log \
+--http-log-path=/var/log/nginx/access.log \
+--with-http_gzip_static_module \
+--http-client-body-temp-path=/var/temp/nginx/client \
+--http-proxy-temp-path=/var/temp/nginx/proxy \
+--http-fastcgi-temp-path=/var/temp/nginx/fastcgi \
+--http-uwsgi-temp-path=/var/temp/nginx/uwsgi \
+--http-scgi-temp-path=/var/temp/nginx/scgi
+***/
+[root@web1 ~]# ss -anputl |grep nginx |column -t
+tcp  LISTEN  0  128  *:80  *:*  users:(("nginx",pid=4338,fd=6),("nginx",pid=4334,fd=6))
+[root@web1 ~]# 
+[root@web1 ~]# cat /usr/local/nginx/logs/nginx.pid 
+4334
+[root@web1 ~]# ls /var/lock/subsys/
+network  rhnsd  rhsmcertd
+
+[root@web1 ~]# tail -2 /etc/rc.local 
+
+touch /var/lock/subsys/local
+
+[root@web1 ~]# tail -n 2 /etc/rc.d/rc.local 
+
+touch /var/lock/subsys/local
+
+[root@web1 ~]# ll /etc/rc.d/rc.local
+-rw-r--r--. 1 root root 473 6月  27 2017 /etc/rc.d/rc.local
+[root@web1 ~]# ll /etc/rc.local
+lrwxrwxrwx. 1 root root 13 1月  30 2018 /etc/rc.local -> rc.d/rc.local
+
+[root@web1 ~]# chmod +x /etc/rc.d/rc.local
+
+[root@web1 ~]# ll /etc/rc.d/rc.local
+-rwxr-xr-x. 1 root root 473 6月  27 2017 /etc/rc.d/rc.local
+[root@web1 ~]# 
+[root@web1 ~]# vim /etc/init.d/nginx
+[root@web1 ~]# cat /etc/init.d/nginx
+#!/bin/bash
+nginxd=/usr/local/nginx/sbin/nginx
+nginx_config=/usr/local/nginx/conf/nginx.conf
+nginx_pid=/usr/local/nginx/logs/nginx.pid
+RETVAL=0
+prog=$(basename $nginxd)
+. /etc/rc.d/init.d/functions
+. /etc/sysconfig/network
+[ "${NETWORKING}" = "no" ] && exit 0
+[ -x $nginxd ] || exit 0
+start(){
+ if [ -f $nginx_pid ];then
+  echo "nginx is already running...";
+  exit  1
+ fi
+ echo  -n $"Starting $prog:"
+ daemon  $nginxd  -c  ${nginx_config}
+ RETVAL=$?
+ echo
+ [ $RETVAL = 0 ] && touch /var/lock/subsys/nginx
+ return  $RETVAL
+}
+stop(){
+ echo  -n  $"Stopping $prog:"
+ killproc  $nginxd
+ RETVAL=$?
+ echo
+ [ $RETVAL = 0 ] &&  rm  -f  /var/lock/subsys/nginx  /usr/local/nginx/logs/nginx.pid
+}
+reload(){
+ echo  -n  $"Stopping $prog:"
+ killproc  $nginxd  -HUP
+ #kill  -HUP `cat ${nginx_pid}`
+ RETVAL=$?
+ echo
+}
+case  $1  in
+start)
+ start;;
+stop)
+ stop;;
+reload)
+ reload;;
+restart)
+ stop;
+ start;;
+status)
+ status $prog
+ RETVAL=$?
+ ;;
+*)
+ echo $"Usage:$prog {start|stop|restart|reload|status|help}"
+ exit 2
+esac
+exit $RETVAL
+[root@web1 ~]# 
+[root@web1 ~]# ll /etc/init.d/nginx
+-rw-r--r--. 1 root root 1016 10月  4 16:52 /etc/init.d/nginx
+[root@web1 ~]# chmod +x /etc/init.d/nginx
+[root@web1 ~]# vim /etc/rc.local 
+[root@web1 ~]# tail -2 /etc/rc.local 
+touch /var/lock/subsys/local
+/etc/init.d/nginx  start   #注意这最后一行是手写的
+[root@web1 ~]# tail -2 /etc/rc.d/rc.local 
+touch /var/lock/subsys/local
+/etc/init.d/nginx  start  #注意这最后一行是自动生成的
+[root@web1 ~]# ll /etc/rc.local  #软链接文件
+lrwxrwxrwx. 1 root root 13 1月  30 2018 /etc/rc.local -> rc.d/rc.local
+[root@web1 ~]# 
+[root@web1 ~]# ll /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 498 10月  4 16:56 /etc/rc.d/rc.local
+============================================
+[root@web1 ~]# cat /etc/init.d/nginx
+#!/bin/bash
+nginxd=/usr/local/nginx/sbin/nginx
+nginx_config=/usr/local/nginx/conf/nginx.conf
+nginx_pid=/usr/local/nginx/logs/nginx.pid
+RETVAL=0
+prog=$(basename $nginxd)
+. /etc/rc.d/init.d/functions
+. /etc/sysconfig/network
+[ "${NETWORKING}" = "no" ] && exit 0
+[ -x $nginxd ] || exit 0
+start(){
+ if [ -f $nginx_pid ];then
+  echo "nginx is already running...";
+  exit 1
+ fi
+ echo -n $"Starting $prog:"
+ daemon  $nginxd  -c ${nginx_config}
+ RETVAL=$?
+ echo
+ [ $RETVAL = 0 ] && touch /var/lock/subsys/nginx
+ return $RETVAL
+}
+stop(){
+ echo  -n  $"Stopping $prog:"
+ killproc $nginxd
+ RETVAL=$?
+ echo
+ [ $RETVAL = 0 ] && rm  -f /var/lock/subsys/nginx  /usr/local/nginx/logs/nginx.pid
+}
+reload(){
+ echo -n $"Stopping $prog:"
+ killproc  $nginxd  -HUP
+ RETVAL=$?
+ echo
+}
+case $1 in
+start)
+ start;;
+stop)
+ stop;;
+reload)
+ reload;;
+restart)
+ stop;
+ start;;
+status)
+ status $prog
+ RETVAL=$?
+ ;;
+*)
+ echo $"Usage:$prog {start|stop|restart|reload|status|help}"
+ exit 2
+esac
+exit $RETVAL
+[root@web1 ~]# /etc/init.d/nginx status
+Unit nginx.service could not be found.
+[root@web1 ~]# ls /var/lock/subsys/
+network  rhnsd  rhsmcertd
+[root@web1 ~]# ss -anpult |grep nginx
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=4343,fd=6),("nginx",pid=4339,fd=6))
+[root@web1 ~]# reboot
+
+[root@web1 ~]# ls /var/lock/subsys/
+local  network  nginx  rhnsd  rhsmcertd 
+[root@web1 ~]# systemctl reload nginx
+Warning: nginx.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+[root@web1 ~]# netstat -anpult |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      1120/nginx: master  
+[root@web1 ~]# cat /usr/local/nginx/logs/nginx.pid 
+1120
+[root@web1 ~]# systemctl status nginx |sed -n 3p
+Warning: nginx.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+   Active: active (running) since 四 2018-10-04 17:15:51 CST; 7min ago
+
+
+
+
+
+
+
+
