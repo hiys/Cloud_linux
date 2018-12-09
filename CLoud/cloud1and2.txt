@@ -1,0 +1,617 @@
+
+安装 linux 自定义虚拟机 制作 模板 配置yum 网卡
+
+自定义虚拟机安装（KVM）
+
+[真机操作]
+一、安装虚拟化平台
+安装必备软件：
+qemu-kvm //为 kvm 提供底层仿真支持
+libvirt-daemon //守护进程,管理虚拟机
+libvirt-client //用户端软件,提供客户端管理命令
+libvirt-daemon-driver-qemu //libvirtd 连接 qemu 的驱动
+可选功能：
+virt-install //系统安装工具
+virt-manager //图形管理工具
+virt-v2v //虚拟机迁移工具
+virt-p2v //物理机迁移工具
+
+]#yum install -y qemu-kvm libvirt-daemon libvirt-client libvirt-daemon-driver-qemu 
+]#systemctl start libvirtd
+
+二、创建一个虚拟网络vbr
+
+[root@hiys ~]# cd /etc/libvirt/qemu/networks/;ls
+autostart    node.qcow2  private1.xml  public1.xml  rhce.xml
+default.xml  node.xml    private2.xml  public2.xml  vbr.xml
+
+[root@hiys networks]# vim vbr.xml 
+
+[root@hiys networks]# cat vbr.xml
+<network>
+  <name>vbr</name>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <forward mode="nat"/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start="192.168.1.100" end="192.168.1.200"/>
+    </dhcp>
+  </ip>
+</network>
+[root@hiys networks]# 
+[root@hiys networks]# virsh net-define vbr.xml  //定义虚拟网卡vbr
+从 vbr定义网络vbr.xml
+
+[root@hiys networks]# virsh net-start vbr  //启动网卡vbr
+网络 vbr 已开始
+
+[root@hiys networks]# ifconfig vbr
+vbr: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:5e:9d:13  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@hiys networks]# 
+
+[root@hiys networks]# cat vbr.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr</name>
+  <uuid>a0e2dbc9-4d0b-4e6c-9af4-77ce238e3668</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:5e:9d:13'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# virsh net-autostart vbr     //设置开机自起
+网络vbr标记为自动启动
+
+[root@hiys ~]# ls /etc/libvirt/qemu/
+autostart  networks  node1.xml  node.xml
+
+[root@hiys ~]# ls /etc/libvirt/qemu/networks/
+autostart    node.qcow2  private1.xml  public1.xml  rhce.xml
+default.xml  node.xml    private2.xml  public2.xml  vbr.xml
+[root@hiys ~]# virsh net-destroy vbr2
+错误：删除网络 vbr2 失败
+错误：所需操作无效：network 'vbr2' is not active
+
+[root@hiys ~]# virsh net-list --all
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr2                 不活跃  否           是
+
+[root@hiys ~]# virsh net-start vbr2
+网络 vbr2 已开始
+
+[root@hiys ~]# virsh net-destroy vbr2
+网络 vbr2 被删除
+
+[root@hiys ~]# virsh net-undefine vbr2
+错误：取消定义网络 vbr2 失败
+错误：无法删除配置文件 '/etc/libvirt/qemu/networks/vbr2.xml': 没有那个文件或目录
+
+[root@hiys ~]# 
+
+[root@hiys ~]# ls /var/lib/libvirt/images/  ## 磁盘镜像文件--虚拟机的硬盘 .img
+
+[root@hiys ~]# ls /etc/libvirt/qemu/   ## 虚拟机配置声明文件XML文件 .xml
+
+
+[root@hiys ~]# vim /etc/yum.repos.d/extras.repo 
+[root@hiys ~]# cat /etc/yum.repos.d/extras.repo
+[RHEL7-extras]
+name=RHEL7-extras
+baseurl=ftp://192.168.1.254/extras
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# cat /etc/yum.repos.d/centos.repo 
+[Centos1708]
+name=CentOS-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/iso/
+enabled=1
+[root@hiys ~]# 
+
+[root@hiys ~]# vim  /etc/yum.repos.d/RHEL7OSP.repo 
+[root@hiys ~]# cat /etc/yum.repos.d/RHEL7OSP.repo
+
+[RHEL7OSP-devtools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+enabled=1
+
+[RHEL7OSP-optools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+enabled=1
+
+[RHEL7OSP-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-rpms
+enabled=1
+
+[RHEL7OSP-tools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+pnabled=1
+
+[RHEL7OSP-rhceph-2-mon-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+enabled=1
+
+[RHEL7OSP-rhceph-2-osd-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+enabled=1
+
+[RHEL7OSP-rhceph-2-tools-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-agent-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-installer-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-main-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+enabled=1
+[root@hiys ~]# 
+
+
+[root@hiys ~]# yum clean all >/dev/null && yum repolist |tail -18
+源标识                           源名称                                    状态
+Centos1708                       CentOS-1708                               9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+mon                              mon                                          41
+osd                              osd                                          28
+rhel7                            rhel7.4                                   4,986
+tools                            tools                                        33
+repolist: 15,819
+[root@hiys ~]# echo "15819-33-4986-28-41" |bc
+10731
+
+[root@hiys ~]# ls /var/ftp/RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+comps.xml  Packages  repodata
+
+[root@hiys ~]# ls /var/ftp/RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms/
+comps.xml  Packages  repodata
+
+[root@hiys ~]# ls /var/ftp/RHEL7OSP/rhel-7-server-rhscon-2-main-rpms/
+comps.xml  Packages  repodata
+[root@hiys ~]# 
+
+[root@hiys ~]# ls /var/ftp/RHEL7OSP/
+docs                                      rhel-7-server-rhceph-2-osd-rpms
+rhel-7-server-openstack-10-devtools-rpms  rhel-7-server-rhceph-2-tools-rpms
+rhel-7-server-openstack-10-optools-rpms   rhel-7-server-rhscon-2-agent-rpms
+rhel-7-server-openstack-10-rpms           rhel-7-server-rhscon-2-installer-rpms
+rhel-7-server-openstack-10-tools-rpms     rhel-7-server-rhscon-2-main-rpms
+rhel-7-server-rhceph-2-mon-rpms           version.txt
+
+[root@hiys ~]# ls /var/ftp/
+ceph  extras  iso  node.qcow2  pub  rhel7  RHEL7OSP  share
+
+[root@hiys ~]# ls /var/ftp/extras/
+comps.xml  Packages  repodata  version.txt
+
+[root@hiys ~]# ls /var/ftp/iso/
+CentOS_BuildTag  GPL       LiveOS    RPM-GPG-KEY-CentOS-7
+EFI              images    Packages  RPM-GPG-KEY-CentOS-Testing-7
+EULA             isolinux  repodata  TRANS.TBL
+
+[root@hiys ~]# tail -5 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso  /var/ftp/ceph  iso9660  defaults 0  0
+/var/lib/libvirt/images/iso/CentOS7-1708.iso  /var/ftp/iso  iso9660 defaults  0  0
+/var/lib/libvirt/images/iso/RHEL7-extras.iso  /var/ftp/extras/  iso9660 defaults  0  0
+/var/lib/libvirt/images/iso/RHEL7OSP-10.iso  /var/ftp/RHEL7OSP  iso9660 defaults  0  0
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+centos.repo  extras.repo           packagekit-media.repo  RHEL7OSP.repo
+ceph.repo    NSD-2018-1-12.tar.gz  repo                   rhel7.repo
+[root@hiys ~]# 
+
+三、配置转发DNS
+
+[root@hiys ~]# yum -y install  bind-chroot |tail -9
+  验证中      : 32:bind-chroot-9.9.4-50.el7.x86_64                          2/2 
+
+已安装:
+  bind-chroot.x86_64 32:9.9.4-50.el7                                            
+
+作为依赖被安装:
+  bind.x86_64 32:9.9.4-50.el7                                                   
+
+完毕！
+[root@hiys ~]# rpm -qa |grep -E 'bind|bind-chroot'
+bind-libs-9.9.4-50.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+bind-license-9.9.4-50.el7.noarch
+bind-utils-9.9.4-50.el7.x86_64
+bind-9.9.4-50.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+keybinder3-0.3.0-1.el7.x86_64
+bind-libs-lite-9.9.4-50.el7.x86_64
+[root@hiys ~]# 
+
+[root@hiys ~]# vim /etc/named.conf 
+
+
+[root@hiys ~]# cat -n /etc/named.conf |sed -n '12,21p;33,34p'
+    12	options {
+    13		listen-on port 53 { 192.168.1.254; };
+    14	//	listen-on-v6 port 53 { ::1; };
+    15		directory 	"/var/named";
+    16		dump-file 	"/var/named/data/cache_dump.db";
+    17		statistics-file "/var/named/data/named_stats.txt";
+    18		memstatistics-file "/var/named/data/named_mem_stats.txt";
+    19		allow-query     { any; };
+    20	        forwarders   { 114.114.114.114; };
+    21		/* 
+    33		dnssec-enable no;
+    34		dnssec-validation no;
+[root@hiys ~]# 
+
+/**************
+　　114.114.114.114是国内移动、电信和联通通用的DNS，手机和电脑端都可以使用，干净无广告，解析成功率相对来说更高，国内用户使用的比较多，而且速度相对快、稳定，是国内用户上网常用的DNS
+
+　　8.8.8.8是GOOGLE公司提供的DNS，该地址是全球通用的，相对来说，更适合国外以及访问国外网站的用户使用
+**************/
+[root@hiys ~]# ping -c2 -i0.2 -w1 114.114.114.114
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+64 bytes from 114.114.114.114: icmp_seq=1 ttl=67 time=26.8 ms
+64 bytes from 114.114.114.114: icmp_seq=2 ttl=72 time=43.8 ms
+
+--- 114.114.114.114 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 201ms
+rtt min/avg/max/mdev = 26.878/35.363/43.848/8.485 ms
+[root@hiys ~]# 
+
+[root@hiys ~]# nslookup  aliyun.com
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+Non-authoritative answer:
+Name:	aliyun.com
+Address: 140.205.230.3
+Name:	aliyun.com
+Address: 140.205.172.21
+Name:	aliyun.com
+Address: 140.205.34.12
+Name:	aliyun.com
+Address: 140.205.172.20
+Name:	aliyun.com
+Address: 140.205.32.13
+
+[root@hiys ~]# systemctl restart named
+
+[root@hiys ~]# tail -15 /etc/named.conf
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+zone "." IN {
+	type hint;
+	file "named.ca";
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";
+
+[root@hiys ~]# dig +trace  aliyum.com
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-50.el7 <<>> +trace aliyum.com
+;; global options: +cmd
+.			57040	IN	NS	f.root-servers.net.
+..........................................
+.			57040	IN	NS	k.root-servers.net.
+.			57040	IN	NS	l.root-servers.net.
+.			507220	IN	RRSIG	NS 8 0 518400 20181127050000 20181114040000 2134 . pv0C5jzKJcedkLL69U7FAKTcNwGoCnPJspNh3R+70COq7bc1vHTHXCCL QAG9Jl3pyI5M5PyZBSCf+uwNkdozSALbQ4tyQm75wKD1HxpgksfWT2pj romV14zH2x7ZkDP1b0MJXKHqiaAzwclDw6sFqWw248r1A6oCmRdC96Z/ jPY+Jvup4mbPugxULmRaJUHbQ1Cb4wDw0SLjmfnpvcqlofAGX0MSiHSa iIW4vg4vQbzXGvDXvNoxuunx4X4F0HVBsgL2iurWPl431y10cgo2JuQm QSfQDuf3UqbQbsZHcR0tc0pDRhMn/AScOw5J9PoGBurlswC6ItniuLUS odXtfQ==
+;; Received 525 bytes from 176.121.0.100#53(176.121.0.100) in 328 ms
+..............
+[root@hiys ~]# dig   aliyum.com 
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-50.el7 <<>> aliyum.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: SERVFAIL, id: 24818
+;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;aliyum.com.			IN	A
+
+;; Query time: 1 msec
+;; SERVER: 176.121.0.100#53(176.121.0.100)
+;; WHEN: 三 11月 14 19:37:03 CST 2018
+;; MSG SIZE  rcvd: 39
+
+
+四、配置时间服务
+
+[root@hiys ~]# nslookup ntp.aliyun.com 
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+Non-authoritative answer:
+Name:	ntp.aliyun.com
+Address: 203.107.6.88
+
+[root@hiys ~]# nslookup ntp1.aliyun.com 
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+Non-authoritative answer:
+Name:	ntp1.aliyun.com
+Address: 120.25.115.20
+
+[root@hiys ~]# 
+
+[root@hiys ~]# yum -y install chrony |tail -3
+Loading mirror speeds from cached hostfile
+软件包 chrony-3.1-2.el7.centos.x86_64 已安装并且是最新版本
+无须任何处理
+[root@hiys ~]# vim /etc/chrony.conf 
+[root@hiys ~]# sed -n 3,10p /etc/chrony.conf
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+server  ntp.aliyun.com iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+# Record the rate at which the system clock gains/losses time.
+[root@hiys ~]# 
+
+[root@hiys ~]# systemctl restart chronyd
+[root@hiys ~]# systemctl is-enabled chronyd
+enabled
+   #查看使用了哪个时间服务器同步，星号的为正在同步的时间服务器
+[root@hiys ~]# chronyc  sources  -v  # 查看时间同步源* 203.107.6.88
+210 Number of sources = 1
+
+  .-- Source mode  '^' = server, '=' = peer, '#' = local clock.
+ / .- Source state '*' = current synced, '+' = combined , '-' = not combined,
+| /   '?' = unreachable, 'x' = time may be in error, '~' = time too variable.
+||                                                 .- xxxx [ yyyy ] +/- zzzz
+||      Reachability register (octal) -.           |  xxxx = adjusted offset,
+||      Log2(Polling interval) --.      |          |  yyyy = measured offset,
+||                                \     |          |  zzzz = estimated error.
+||                                 |    |           \
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^* 203.107.6.88   ---星号的为正在同步的时间服务器        2   6    17    17   -284us[ -844us] +/-   35ms
+[root@hiys ~]# 
+
+              # chronyc sourcestats -v  #查看同步状态
+[root@hiys ~]# chronyc sourcestats  -v
+210 Number of sources = 1
+                             .- Number of sample points in measurement set.
+                            /    .- Number of residual runs with same sign.
+                           |    /    .- Length of measurement set (time).
+                           |   |    /      .- Est. clock freq error (ppm).
+                           |   |   |      /           .- Est. error in freq.
+                           |   |   |     |           /         .- Est. offset.
+                           |   |   |     |          |          |   On the -.
+                           |   |   |     |          |          |   samples. \
+                           |   |   |     |          |          |             |
+Name/IP Address            NP  NR  Span  Frequency  Freq Skew  Offset  Std Dev
+==============================================================================
+203.107.6.88                7   3   200     -5.137     61.308   -216us  1517us
+[root@hiys ~]# 
+
+五、配置ftp服务
+
+[root@hiys ~]# rpm -q vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+
+[root@hiys ~]# sed -n '112p;117,118p'  /etc/vsftpd/vsftpd.conf 
+listen=YES      //开启ipv4监听
+#listen_ipv6=YES
+listen_ipv6=NO     //关闭ipv6监听 
+[root@hiys ~]# 
+[root@hiys ~]# systemctl is-enabled vsftpd
+enabled
+[root@hiys ~]# systemctl stop NetworkManager
+[root@hiys ~]# systemctl is-active NetworkManager
+inactive
+[root@hiys ~]# systemctl is-enabled NetworkManager
+enabled
+[root@hiys ~]# 
+
+
+六、快速搭建网络yum源
+[root@hiys ~]# yum repolist |tail -18
+源标识                           源名称                                    状态
+Centos1708                       CentOS-1708                               9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+mon                              mon                                          41
+osd                              osd                                          28
+rhel7                            rhel7.4                                   4,986
+tools                            tools                                        33
+repolist: 15,819
+[root@hiys ~]# 
+
+[root@hiys ~]# cd /var/lib/libvirt/images/;ls
+bin      disk1.img  iso         qemu                        vsftpd.conf
+conf.d   disk2.img  lost+found  Student.sh                  Weekend.sh
+content  disk.img   node1.img   tedu-wallpaper-01.png       XXXX-1.qcow2
+db       exam       ooxx.img    tedu-wallpaper-weekend.png
+[root@hiys images]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+
+[root@hiys images]# virsh net-list --all
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+
+[root@hiys images]# 
+[root@hiys images]# ifconfig  vbr
+vbr: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:5e:9d:13  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@hiys images]# pwd
+/var/lib/libvirt/images
+                 ## 1、创建一个新的磁盘镜像文件
+[root@hiys images]# qemu-img  create  -f  qcow2  node.qcow2  24G
+Formatting 'node.qcow2', fmt=qcow2 size=25769803776 encryption=off cluster_size=65536 lazy_refcounts=off 
+[root@hiys images]# virt-manager 
+[root@hiys images]# 
+
+ 生成虚拟机提供操作系统安装URL :   ftp://176.121.213.81/iso/
+ 
+   内存(M) , RAM: 2048
+          CPU :  2
+
+  选择或创建自定义存储      /var/lib/libvirt/images/node.qcow2 
+
+ [root@hiys images]# ll /var/lib/libvirt/images/node.qcow2 
+-rw-r--r-- 1 root root 197120 11月 14 20:24 /var/lib/libvirt/images/node.qcow2
+[root@hiys images]# lsattr  /var/lib/libvirt/images/node.qcow2
+-------------e-- /var/lib/libvirt/images/node.qcow2
+[root@hiys images]# 
+
+
+[root@hiys images]# ls
+bin      db         disk.img  lost+found  ooxx.img    tedu-wallpaper-01.png       Weekend.sh
+conf.d   disk1.img  exam      node1.img   qemu        tedu-wallpaper-weekend.png  XXXX-1.qcow2
+content  disk2.img  iso       node.qcow2  Student.sh  vsftpd.conf
+[root@hiys images]# ifconfig |head -2
+enp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.213.81  netmask 255.255.255.0  broadcast 176.121.213.255
+[root@hiys images]# 
+[root@hiys images]# ls /etc/yum.repos.d/
+centos.repo  extras.repo           packagekit-media.repo  RHEL7OSP.repo
+ceph.repo    NSD-2018-1-12.tar.gz  repo                   rhel7.repo
+
+[root@hiys images]# ls /var/ftp/iso/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+
+[root@hiys images]# ls /etc/yum.repos.d/centos.repo 
+/etc/yum.repos.d/centos.repo
+
+[root@hiys images]# ls /var/ftp/
+ceph  extras  iso  node.qcow2  pub  rhel7  RHEL7OSP  share
+
+[root@hiys images]# cat  /etc/yum.repos.d/centos.repo 
+[Centos1708]
+name=CentOS-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/iso/
+enabled=1
+[root@hiys images]# 
+
+[root@hiys ~]# ls /etc/pki/rpm-gpg/
+RPM-GPG-KEY-CentOS-7  RPM-GPG-KEY-CentOS-Debug-7  RPM-GPG-KEY-CentOS-Testing-7
+
+[root@hiys ~]# ls /var/ftp/iso/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+
+[root@hiys ~]# ls /var/ftp/iso/RPM-GPG-KEY-CentOS-7 
+/var/ftp/iso/RPM-GPG-KEY-CentOS-7
+[root@hiys ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

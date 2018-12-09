@@ -1,0 +1,342 @@
+
+
+[root@hiys ~]# which git
+/usr/bin/git
+[root@hiys ~]# rpm -qa |grep git
+lockdev-1.0.4-0.13.20111007git.el7.x86_64
+ipxe-roms-qemu-20170123-1.git4e85b27.el7.noarch
+crontabs-1.11-6.20121102git.el7.noarch
+lldpad-1.0.1-3.git036e314.el7.x86_64
+squashfs-tools-4.3-0.21.gitaae0aff4.el7.x86_64
+numad-0.5-17.20150602git.el7.x86_64
+xdg-utils-1.1.0-0.17.20120809git.el7.noarch
+linux-firmware-20170606-56.gitc990aae.el7.noarch
+xorg-x11-drv-ati-7.7.1-3.20160928git3fc839ff.el7.x86_64
+lm_sensors-libs-3.4.0-4.20160601gitf9185e5.el7.x86_64
+net-tools-2.0-0.22.20131004git.el7.x86_64
+git-1.8.3.1-11.el7.x86_64
+taglib-1.8-7.20130218git.el7.x86_64
+
+
+
+[root@hiys ~]# LANG=zh_CN.UTF-8 git --help
+
+用法：git [--version] [--help] [-c name=value]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p|--paginate|--no-pager] [--no-replace-objects] [--bare]
+           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
+           <command> [<args>]
+最常用的 git 命令有：
+   add        添加文件内容至索引
+   bisect     通过二分查找定位引入 bug 的变更
+   branch     列出、创建或删除分支
+   checkout   检出一个分支或路径到工作区
+   clone      克隆一个版本库到一个新目录
+   commit     记录变更到版本库
+   diff       显示提交之间、提交和工作区之间等的差异
+   fetch      从另外一个版本库下载对象和引用
+   grep       输出和模式匹配的行
+   init       创建一个空的 Git 版本库或重新初始化一个已存在的版本库
+   log        显示提交日志
+   merge      合并两个或更多开发历史
+   mv         移动或重命名一个文件、目录或符号链接
+
+   pull       获取并合并另外的版本库或一个本地分支
+
+   push       更新远程引用和相关的对象
+   rebase     本地提交转移至更新后的上游分支中
+   reset      重置当前HEAD到指定状态
+   rm         从工作区和索引中删除文件
+   show       显示各种类型的对象
+   status     显示工作区状态
+   tag        创建、列出、删除或校验一个GPG签名的 tag 对象
+
+命令 'git help -a' 和 'git help -g' 显示可用的子命令和一些指南。参见
+'git help <命令>' 或 'git help <指南>' 来查看给定的子命令帮助或指南。
+
+[root@hiys ~]# 
+
+ftp://176.121.213.3/
+nsd1807
+1807tedu
+
+[root@hiys ~]# mv nsd1807/  /cloud-download
+[root@hiys ~]# ls nsd1807/
+ls: 无法访问nsd1807/: 没有那个文件或目录
+[root@hiys ~]# ls /cloud-download
+docs  grub  ifcfg-eth0  node.xml  readme.txt  vbr.xml
+
+[root@hiys ~]# cp -r /cloud-download/*  '/root/桌面/CLoud'  
+[root@hiys ~]#
+
+[root@hiys ~]# git clone git://124.193.128.166/nsd1807.git
+正克隆到 'nsd1807'...
+remote: Counting objects: 25, done.
+remote: Compressing objects: 100% (22/22), done.
+remote: Total 25 (delta 7), reused 0 (delta 0)
+接收对象中: 100% (25/25), 842.77 KiB | 0 bytes/s, done.
+处理 delta 中: 100% (7/7), done.
+
+[root@hiys ~]# cd nsd1807/
+
+[root@hiys nsd1807]# git pull
+Already up-to-date.
+
+[root@hiys nsd1807]# cat readme.txt 
+
+git 软件安装
+yum install -y git
+外地校区
+git clone git://124.193.128.166/nsd1807.git
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+更新(必须进入 git 目录)
+git  pull
+[root@hiys nsd1807]# 
+
+===============================
+
+[root@hiys ~]# cd /etc/libvirt/qemu/
+
+[root@hiys qemu]# vim node1.xml
+[root@hiys qemu]# cat node1.xml
+
+<domain type='kvm'>
+  <name>node1</name>
+  <memory unit='KiB'>2048000</memory>
+  <currentMemory unit='KiB'>2048000</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/node.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+
+[root@hiys qemu]# ls
+autostart       networks   Va51.xml  Va53.xml  Va55.xml  Va57.xml  Vb50.xml  Vb52.xml
+centos7xxx.xml  node1.xml  Va52.xml  Va54.xml  Va56.xml  Va58.xml  Vb51.xml
+[root@hiys qemu]# 
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# ls networks/
+autostart    node.qcow2  private1.xml  public1.xml  rhce.xml  vbr.xml
+default.xml  node.xml    private2.xml  public2.xml  vbr2.xml
+
+[root@hiys qemu]# cat networks/vbr.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr</name>
+  <uuid>c5a2bea8-e3dc-42ae-a4f0-16cbfede0c09</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:c1:de:29'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.99' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+[root@hiys qemu]# 
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+
+[root@hiys qemu]# virsh net-list --all
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              不活跃  否           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr2                 不活跃  否           是
+
+[root@hiys qemu]# virsh net-autostart default 
+网络default标记为自动启动
+
+[root@hiys qemu]# virsh net-start  default
+网络 default 已开始
+
+[root@hiys qemu]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+
+[root@hiys qemu]# virsh -c qemu:///system
+欢迎使用 virsh，虚拟化的交互式终端。
+
+输入：'help' 来获得命令的帮助信息
+       'quit' 退出
+
+virsh # net-
+net-autostart    net-destroy      net-edit         net-list         net-undefine
+net-create       net-dhcp-leases  net-event        net-name         net-update
+net-define       net-dumpxml      net-info         net-start        net-uuid
+virsh # quit
+
+[root@hiys qemu]# 
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# virsh autostart Va51
+域 Va51标记为自动开始
+
+[root@hiys qemu]# virsh autostart Va51 --disable
+域 Va51取消标记为自动开始
+
+[root@hiys qemu]# virsh shutdown Va51
+域 Va51 被关闭
+
+[root@hiys qemu]# virsh start centos7xxx
+域 centos7xxx 已开始
+
+
+[root@hiys qemu]# virsh console centos7xxx
+连接到域 centos7xxx
+换码符为 ^]
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+First login: root
+密码：123
+Last login: Tue Nov 13 17:52:21 on ttyS0
+[root@First ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.103  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::5054:ff:fefb:51fd  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:fb:51:fd  txqueuelen 1000  (Ethernet)
+        RX packets 107  bytes 9381 (9.1 KiB)
+        RX errors 0  dropped 8  overruns 0  frame 0
+        TX packets 65  bytes 7595 (7.4 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+        ether 52:54:00:9e:cf:1a  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@First ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+[root@First ~]# 
+ 
+
+===========First 虚拟机=========
+
+
+cd /var/ftp/
+rpm --import RPM-GPG-KEY-CentOS-7
+
+yum -y install rsync
+修改 /etc/default/grub
+
+grub2-mkconfig   -o  /boot/grub2/grub.cfg
+
+lsblk
+
+blkid
+/dev/sda1:UUID="xxxqqxxxxx---xx" TYPE="xfs"
+
+
+yum  install -y cloud-utils-growpart
+
+清理日志文件信息
+关闭虚拟机
+真机 执行 virt-sysprep  -d node
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

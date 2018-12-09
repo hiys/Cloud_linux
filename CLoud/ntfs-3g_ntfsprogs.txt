@@ -1,0 +1,588 @@
+
+
+[root@hiys ~]# yum list |grep -i ntfs
+ntfs-3g_ntfsprogs.x86_64               2013.1.13-1.el6                 installed
+[root@hiys ~]# rpm -q ntfs-3g_ntfsprogs 
+ntfs-3g_ntfsprogs-2013.1.13-1.el6.x86_64
+[root@hiys ~]#  more /proc/partitions 
+major minor  #blocks  name
+
+   8        0  976762584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   7        0     957812 loop0
+   7        1    3963904 loop1
+[root@hiys ~]# ls /dev/sd*
+/dev/sda  /dev/sda1  /dev/sda2
+[root@hiys ~]# 
+
+[root@hiys ~]# df
+文件系统           1K-块      已用     可用 已用% 挂载点
+/dev/sda2      123723328  44207288 73208200   38% /
+devtmpfs         8074684         0  8074684    0% /dev
+tmpfs            8089448     32264  8057184    1% /dev/shm
+tmpfs            8089448      9760  8079688    1% /run
+tmpfs            8089448         0  8089448    0% /sys/fs/cgroup
+/dev/loop0        957812    957812        0  100% /var/ftp/ceph
+/dev/sda1      206292968 138602808 57188016   71% /var/lib/libvirt/images
+/dev/loop1       3963760   3963760        0  100% /var/ftp/rhel7
+tmpfs            1617892        44  1617848    1% /run/user/0
+[root@hiys ~]# 
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+loop0    7:0    0 935.4M  0 loop /var/ftp/ceph
+loop1    7:1    0   3.8G  0 loop /var/ftp/rhel7
+[root@hiys ~]# 
+[root@hiys ~]# ls /sys/class/scsi_host/
+host0  host1  host2  host3
+[root@hiys ~]# lsattr txt.txt 
+-------------e-- txt.txt  ##这个‘e'属性表示，该文件在磁盘块映射上使用了extents。 
+这里的extents我们可以理解成是一个连续的范围。这个属性是不能通过chattr去除的。
+[root@hiys ~]# ll txt.txt
+-rw-r--r-- 1 root root 11 11月  5 08:47 txt.txt
+[root@hiys ~]# 
+[root@hiys ~]# ll /sys/class/scsi_host/host0/scan 
+--w------- 1 root root 4096 11月 12 12:42 /sys/class/scsi_host/host0/scan
+
+[root@hiys ~]# lsattr /sys/class/scsi_host/host0/scan
+lsattr: 权限不够 While reading flags on /sys/class/scsi_host/host0/scan
+
+[root@hiys ~]# chmod 700 /sys/class/scsi_host/host0/scan
+
+[root@hiys ~]# ll /sys/class/scsi_host/host0/scan
+-rwx------ 1 root root 4096 11月 12 12:47 /sys/class/scsi_host/host0/scan
+
+[root@hiys ~]# lsattr /sys/class/scsi_host/host0/scan
+lsattr: 对设备不适当的 ioctl 操作 While reading flags on /sys/class/scsi_host/host0/scan
+[root@hiys ~]# echo $?
+1
+[root@hiys ~]# chmod 200 /sys/class/scsi_host/host0/scan
+[root@hiys ~]# ll /sys/class/scsi_host/host0/scan
+--w------- 1 root root 4096 11月 12 12:47 /sys/class/scsi_host/host0/scan
+[root@hiys ~]# 
+####cat scsisum.sh
+
+#!/usr/bin/bash
+scsisum=`ll /sys/class/scsi_host/host*|wc -l`
+for ((i=0;i<${scsisum};i++))
+do
+    echo "- - -" > /sys/class/scsi_host/host${i}/scan
+done
+--------------------- 
+
+[root@hiys ~]# lsmod
+Linux命令：lsmod——显示已载入系统的模块
+lsmod 其实就是list modules的缩写，即 列出所有模块.
+功能说明：显示已载入系统的模块。
+语法：lsmod 模块名称
+说明：执行lsmod指令，会列出所有已载入系统的模块。
+Linux操作系统的核心具有模块化的特性，
+因此在编译核心时，无需把全部的功能都放入核心。
+你可以将这些功能编译成一个个单独的模块，待需要时再分别载入。
+Module                  Size  Used by
+vhost_net              22499  36 
+vhost                  48513  1 vhost_net
+macvtap                22497  1 vhost_net
+macvlan                19239  1 macvtap
+fuse                   91874  3 
+..................................
+
+[root@hiys ~]# 
+[root@hiys ~]# lsmod |wc -l
+111
+
+[root@hiys ~]# lsmod |wc -l
+113
+[root@hiys ~]# lsmod 
+Module                  Size  Used by
+
+uas                    22429  0 
+usb_storage            66615  1 uas
+
+vhost_net              22499  36 
+vhost                  48513  1 vhost_net
+macvtap                22497  1 vhost_net
+macvlan                19239  1 macvtap
+fuse                   91874  3 
+xt_CHECKSUM            12549  1 
+iptable_mangle         12695  1 
+ipt_MASQUERADE         12678  3 
+nf_nat_masquerade_ipv4    13412  1 ipt_MASQUERADE
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+.......................................
+r8169                  85083  0 
+serio_raw              13413  0 
+mii                    13934  1 r8169
+wmi                    19070  2 mxm_wmi,nouveau
+video                  24520  2 i915,nouveau
+i2c_hid                18821  0 
+i2c_core               40756  7 drm,i915,i2c_i801,i2c_hid,drm_kms_helper,i2c_algo_bit,nouveau
+[root@hiys ~]# 
+[root@hiys ~]# lsmod |grep -E 'uas|usb_s'
+uas                    22429  0 
+usb_storage            66615  1 uas
+[root@hiys ~]# 
+
+
+
+[root@hiys ~]# rpm -q ntfs-3g_ntfsprogs 
+ntfs-3g_ntfsprogs-2013.1.13-1.el6.x86_64
+
+[root@hiys ~]# lsmod |grep  -E 'uas|usb_storage'
+
+[root@hiys ~]# ll /sys/class/scsi_host/host0/scan 
+--w------- 1 root root 4096 11月 12 20:56 /sys/class/scsi_host/host0/scan
+
+[root@hiys ~]# ls /dev/sd*
+/dev/sda  /dev/sda1  /dev/sda2
+
+[root@hiys ~]# more /proc/partitions 
+major minor  #blocks  name
+
+   8        0  976762584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   7        0     957812 loop0
+   7        1    3963904 loop1
+[root@hiys ~]# 
+
+linux系统挂载NTFS移动硬盘
+有时候做大数据量迁移时，为了快速迁移大数据，有可能在Linux服务器上临时挂载NTFS格式的移动硬盘， 
+一般情况下，Linux是识别不了NTFS格式移动硬盘的（需要重编译Linux核心才能，加挂NTFS分区），
+这时候为了能让Linux服务器能够识别NTFS的移动硬盘，就必须安装ntfs-3g（Third Generation Read/Write NTFS Driver）的包。
+
+一、NTFS-3G介绍
+NTFS-3G是一个开源项目，
+NTFS-3G是为Linux, Android, Mac OS X, FreeBSD, NetBSD, OpenSolaris, QNX, Haiku,
+和其他操作系统提供的一个稳定的，功能齐全，读写NTFS的驱动程序的。
+它提供了安全处理Windows XP，Windows Server 2003，Windows 2000，Windows Vista，Windows Server 2008
+和Windows 7操作系统下的NTFS文件系统。
+
+NTFS-3g是一个开源软件，它支持在Linux下面读写NTFS格式的分区。
+它非常的快速，同时也很安全。它支持Windows 2000、XP、2003和Vista，并且支持所有的符合POSIX标准的磁盘操作。 
+ntfs-3g的目的是为了持续的发展，各硬件平台和操作系统的用户需要可靠的互通与支持ntfs的驱动，
+ntfs-3g可以提供可信任的、功能丰富的高性能解决方案。经过了12年多的发展，ntfs-3g已经逐渐稳定； 
+资料介绍
+官方网址：http://www.tuxera.com/，
+文档手册：http://www.tuxera.com/community/ntfs-3g-manual/
+下载地址：http://www.tuxera.com/community/ntfs-3g-download/
+
+二、安装与挂载
+步骤一：解压安装NTFS-3G。
+# tar -xvzf ntfs-3g_ntfsprogs-2012.1.15.tgz
+# cd ntfs-3g_ntfsprogs-2012.1.15
+# ./configure 
+# make 
+# make install 
+
+解压安装权限
+
+#su  回车   输入密码即可
+
+之后系统会提示安装成功，下面就可以用ntfs-3g来实现对NTFS分区的读写了
+
+步骤二:配置挂载NTFS格式的移动硬盘
+1. 首先得到NTFS分区的信息 
+# sudo fdisk -l | grep NTFS
+[root@DB-Server klb]# sudo fdisk -l | grep NTFS 
+/dev/sdc1 * 1 244 1955776+ 7 HPFS/NTFS 
+　　
+2. 设置挂载点，用如下命令实现挂载 
+# mount -t ntfs-3g  
+　　
+例如得到的NTFS分区信息为/dev/sdc1，挂载点设置在/mnt/usb下，可以用 
+# mount -t ntfs-3g /dev/sdb1 /media
+　　或者直接用 
+# ntfs-3g ntfs-3g /dev/sdb1 /media 
+
+3. 如果想实现开机自动挂载，可以在/etc/fstab里面添加如下格式语句 
+　　 ntfs-3g silent,umask=0,locale=zh_CN.utf8 0 0 
+　　这样可以实现NTFS分区里中文文件名的显示。 
+
+4. 卸载分区可以用umount实现，用 
+# umount 　　或者 　　
+# umount
+
+ 
+
+5. 检查NTFS硬盘分区信息，其中图中红线框出来的部分为我的NTFS硬盘信息
+
+fdisk -l
+3.1.  安装其它软件
+3.1.1.   Fuse安装
+
+从http://fuse.sourceforge.net上下载源代码
+# wget http://easynews.dl.sourceforge.net/sourceforge/fuse/fuse-2.7.1.tar.gz
+解压缩源代码：
+# tar zxf fuse-2.7.1.tar.gz
+编译和安装fuse源代码
+# cd fuse-2.7.1
+# ./configure --exec-prefix=/; make; make install
+3.1.2.   Ntfs-3g安装
+
+从网站http://www.tuxera.com/community/ntfs-3g-download/上下载源代码包：
+http://tuxera.com/opensource/ntfs-3g_ntfsprogs-2011.4.12.tgz
+解压缩安装：
+# tar zxf ntfs-3g_ntfsprogs-2011.4.12.tgz
+编译和安装ntfs-3g源代码。
+# cd ntfs-3g_ntfsprogs-2011.4.12
+# ./configure
+# make
+# make install
+Top
+3.2.  Mount NTFS分区
+如果在安装过程中没有出现错误，NTFS卷可以mount到Linux上，并且具有读写权限。
+# fdisk -l | grep NTFS
+# mount -t ntfs-3g /dev/sdb1 /mnt/ntfs
+[root@localhost ntfs-3g_ntfsprogs-2011.4.12]# mount -t ntfs-3g /dev/sdb1 /mnt/ntfs
+FATAL: Module fuse not found.  （这是由于没有安装fuse模块导致的）
+下载网址：http://ftp.riken.go.jp/Linux/cern/slc52test/extras/x86_64/failed/
+在google上查找kernel-module-fuse-2.6.18-128.el5PAE的rpm安装程序，下载安装然后重新mount。
+
+from：http://blog.csdn.net/fan_hai_ping/article/details/6673318
+
+ [root@hiys ~]# yum list |grep fuse
+fuse.x86_64                            2.9.2-8.el7                     @anaconda
+fuse-libs.x86_64                       2.9.2-8.el7                     @anaconda
+gvfs-fuse.x86_64                       1.30.4-3.el7                    @anaconda
+ceph-fuse.x86_64                       1:10.2.2-38.el7cp               tools    
+fuse-devel.i686                        2.9.2-8.el7                     rhel7    
+fuse-devel.x86_64                      2.9.2-8.el7                     rhel7    
+fuse-libs.i686                         2.9.2-8.el7                     rhel7    
+fuseiso.x86_64                         20070708-15.el7                 rhel7    
+glusterfs-fuse.x86_64                  3.8.4-18.4.el7                  rhel7    
+[root@hiys ~]# rpm -qa |grep  fuse
+fuse-libs-2.9.2-8.el7.x86_64
+fuse-2.9.2-8.el7.x86_64
+gvfs-fuse-1.30.4-3.el7.x86_64
+[root@hiys ~]# 
+
+
+
+ [root@hiys ~]# rpm -q ntfs-3g_ntfsprogs 
+Display all 1385 possibilities? (y or n)
+[root@hiys ~]# rpm -q ntfs-3g_ntfsprogs 
+ntfs-3g_ntfsprogs-2013.1.13-1.el6.x86_64
+[root@hiys ~]# lsmod |grep  -E 'uas|usb_storage'
+[root@hiys ~]# ll /sys/class/scsi_host/host0/scan 
+--w------- 1 root root 4096 11月 12 20:56 /sys/class/scsi_host/host0/scan
+[root@hiys ~]# ls /dev/sd*
+/dev/sda  /dev/sda1  /dev/sda2
+[root@hiys ~]# more /proc/partitions 
+major minor  #blocks  name
+
+   8        0  976762584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   7        0     957812 loop0
+   7        1    3963904 loop1
+[root@hiys ~]# rpm -q fuse
+fuse-2.9.2-8.el7.x86_64
+[root@hiys ~]# yum list |grep fuse
+fuse.x86_64                            2.9.2-8.el7                     @anaconda
+fuse-libs.x86_64                       2.9.2-8.el7                     @anaconda
+gvfs-fuse.x86_64                       1.30.4-3.el7                    @anaconda
+ceph-fuse.x86_64                       1:10.2.2-38.el7cp               tools    
+fuse-devel.i686                        2.9.2-8.el7                     rhel7    
+fuse-devel.x86_64                      2.9.2-8.el7                     rhel7    
+fuse-libs.i686                         2.9.2-8.el7                     rhel7    
+fuseiso.x86_64                         20070708-15.el7                 rhel7    
+glusterfs-fuse.x86_64                  3.8.4-18.4.el7                  rhel7    
+[root@hiys ~]# rpm -qa |grep  fuse
+fuse-libs-2.9.2-8.el7.x86_64
+fuse-2.9.2-8.el7.x86_64
+gvfs-fuse-1.30.4-3.el7.x86_64
+[root@hiys ~]#  
+[root@hiys ~]#  ls /dev/sd*
+/dev/sda  /dev/sda1  /dev/sda2
+[root@hiys ~]# lsmod |grep -E 'uas|usb_storage'
+uas                    22429  0 
+usb_storage            66615  1 uas
+[root@hiys ~]#  ls /dev/sd*
+/dev/sda  /dev/sda1  /dev/sda2  /dev/sdb  /dev/sdb1
+[root@hiys ~]# more /proc/partitions 
+major minor  #blocks  name
+
+   8        0  976762584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   7        0     957812 loop0
+   7        1    3963904 loop1
+   8       16  117220823 sdb
+   8       17  117219328 sdb1
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   0 111.8G  0 disk 
+└─sdb1   8:17   0 111.8G  0 part 
+loop0    7:0    0 935.4M  0 loop /var/ftp/ceph
+loop1    7:1    0   3.8G  0 loop /var/ftp/rhel7
+[root@hiys ~]# df -hT
+文件系统       类型      容量  已用  可用 已用% 挂载点
+/dev/sda2      ext4      118G   69G   44G   62% /
+devtmpfs       devtmpfs  7.8G     0  7.8G    0% /dev
+tmpfs          tmpfs     7.8G   14M  7.8G    1% /dev/shm
+tmpfs          tmpfs     7.8G  9.1M  7.8G    1% /run
+tmpfs          tmpfs     7.8G     0  7.8G    0% /sys/fs/cgroup
+/dev/sda1      ext4      197G  133G   55G   71% /var/lib/libvirt/images
+/dev/loop1     iso9660   3.8G  3.8G     0  100% /var/ftp/rhel7
+/dev/loop0     iso9660   936M  936M     0  100% /var/ftp/ceph
+tmpfs          tmpfs     1.6G   36K  1.6G    1% /run/user/0
+[root@hiys ~]# mount.ntfs-3g ^C
+[root@hiys ~]# mkdir /2018
+[root@hiys ~]# ls /mnt/
+[root@hiys ~]# mount.ntfs-3g  /dev/sdb1 /mnt/
+[root@hiys ~]# ls /mnt/
+2015-10-12  F盘           System Volume Information
+2015-11-1   haiLong.png   tao-U
+2015-6-all  handbook      tomcat
+2015-730    Hier_folder   UPIMG
+7yue        IO-FileJava   xampp
+AngularJs   Javabook      zuoyeSQL
+books       java文件      案例
+ch171       JSD_code      [达内-求职秀]胡海龙个人简历.doc
+C-桌面文集  MySqlWRuan    海龙.jpg
+D盘         notsq         简历海龙.htm
+E盘         PSweb         简历预览.pdf
+fold        $RECYCLE.BIN  新闻发布系统数据库
+foldimg     SQL-2008      英
+[root@hiys ~]# cd /mnt/
+[root@hiys mnt]# cp -r ./*  /2018/
+cp: 写入"/2018/PSweb/课后练习视频/14.7.1.avi" 出错: 设备上没有空间
+cp: 扩展"/2018/PSweb/课后练习视频/14.7.1.avi" 失败: 设备上没有空间
+..........................................
+cp: 扩展"/2018/PSweb/课后练习视频/Thumbs.db" 失败: 设备上没有空间
+cp: 无法创建目录"/2018/$RECYCLE.BIN": 设备上没有空间
+cp: 无法创建目录"/2018/SQL-2008": 设备上没有空间
+cp: 无法创建目录"/2018/System Volume Information": 设备上没有空间
+cp: 无法创建目录"/2018/tao-U": 设备上没有空间
+cp: 无法创建目录"/2018/tomcat": 设备上没有空间
+cp: 无法创建目录"/2018/UPIMG": 设备上没有空间
+cp: 无法创建目录"/2018/xampp": 设备上没有空间
+cp: 无法创建目录"/2018/zuoyeSQL": 设备上没有空间
+cp: 无法创建目录"/2018/案例": 设备上没有空间
+cp: 写入"/2018/[达内-求职秀]胡海龙个人简历.doc" 出错: 设备上没有空间
+cp: 扩展"/2018/[达内-求职秀]胡海龙个人简历.doc" 失败: 设备上没有空间
+cp: 写入"/2018/海龙.jpg" 出错: 设备上没有空间
+cp: 扩展"/2018/海龙.jpg" 失败: 设备上没有空间
+cp: 写入"/2018/简历海龙.htm" 出错: 设备上没有空间
+cp: 扩展"/2018/简历海龙.htm" 失败: 设备上没有空间
+cp: 写入"/2018/简历预览.pdf" 出错: 设备上没有空间
+cp: 扩展"/2018/简历预览.pdf" 失败: 设备上没有空间
+cp: 无法创建目录"/2018/新闻发布系统数据库": 设备上没有空间
+cp: 无法创建目录"/2018/英": 设备上没有空间
+
+[root@hiys mnt]# df -hT /mnt
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/sdb1      fuseblk  112G   58G   55G   52% /mnt
+[root@hiys mnt]# umount /mnt
+umount: /mnt：目标忙。
+        (有些情况下通过 lsof(8) 或 fuser(1) 可以
+         找到有关使用该设备的进程的有用信息)
+[root@hiys mnt]# cd
+[root@hiys ~]# umount /mnt
+[root@hiys ~]# echo $?
+0
+[root@hiys ~]# df -hT /mnt
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/sda2      ext4  118G  118G     0  100% /
+[root@hiys ~]# ls /2018
+2015-10-12  ch171       haiLong.png  MySqlWRuan
+2015-11-1   C-桌面文集  handbook     notsq
+2015-6-all  D盘         Hier_folder  PSweb
+2015-730    E盘         IO-FileJava  [达内-求职秀]胡海龙个人简历.doc
+7yue        fold        Javabook     海龙.jpg
+AngularJs   foldimg     java文件     简历海龙.htm
+books       F盘         JSD_code     简历预览.pdf
+.........................
+[root@hiys ~]# ls /javabash: 无法为立即文档创建临时文件: 设备上没有空间
+bash: 无法为立即文档创建临时文件: 设备上没有空间
+^C
+[root@hiys ~]# ls /java/
+2015-10-12  books       foldimg                          海龙.jpg
+2015-11-1   ch171       F盘                              简历海龙.htm
+2015-6-all  C-桌面文集  haiLong.png                      简历预览.pdf
+2015-730    D盘         java文件
+7yue        E盘         mnt
+AngularJs   fold        [达内-求职秀]胡海龙个人简历.doc
+[root@hiys ~]# rm -rf /java/
+[root@hiys ~]# ls /java/
+ls: 无法访问/java/: 没有那个文件或目录
+[root@hiys ~]# df -hT
+文件系统       类型      容量  已用  可用 已用% 挂载点
+/dev/sda2      ext4      118G   92G   21G   82% /
+devtmpfs       devtmpfs  7.8G     0  7.8G    0% /dev
+tmpfs          tmpfs     7.8G   14M  7.8G    1% /dev/shm
+tmpfs          tmpfs     7.8G  9.0M  7.8G    1% /run
+tmpfs          tmpfs     7.8G     0  7.8G    0% /sys/fs/cgroup
+/dev/sda1      ext4      197G  133G   55G   71% /var/lib/libvirt/images
+/dev/loop1     iso9660   3.8G  3.8G     0  100% /var/ftp/rhel7
+/dev/loop0     iso9660   936M  936M     0  100% /var/ftp/ceph
+tmpfs          tmpfs     1.6G   36K  1.6G    1% /run/user/0
+[root@hiys ~]# ls -ld /2018/
+drwxr-xr-x 25 root root 4096 11月 12 21:38 /2018/
+[root@hiys ~]# ls /2018/
+2015-10-12  ch171       haiLong.png  MySqlWRuan
+2015-11-1   C-桌面文集  handbook     notsq
+2015-6-all  D盘         Hier_folder  PSweb
+2015-730    E盘         IO-FileJava  [达内-求职秀]胡海龙个人简历.doc
+7yue        fold        Javabook     海龙.jpg
+AngularJs   foldimg     java文件     简历海龙.htm
+books       F盘         JSD_code     简历预览.pdf
+[root@hiys ~]# 
+
+yum 安装 kvm
+KVM是什么? for Kernel-based Virtual Machine
+
+安装环境Centos 6.5 mini x64  禁用selinux, 禁用防火墙
+
+安装过程:
+
+1. 查看我们的电脑是否支持 虚拟化
+
+grep -E -o 'svm|vmx' /proc/cpuinfo
+ 
+
+如果有结果就说明支持
+如果没有返回那么久需要你自己去BIOS开启,在bios找 Virtualization Technology 或者VT关键字 让其为on或enabled..
+
+2.安装kvm
+
+yum install qemu-kvm libvirt libvirt-python libguestfs-tools virt-install -y
+ 
+
+如果需要图形化的管理工具还需要装
+
+yum install virt-manager -y
+ 
+
+3.配置网卡(桥接模式)
+
+复制代码
+cd /etc/sysconfig/network-scripts/
+cp ifcfg-eth0 ifcfg-br0
+cat > ifcfg-eth0 <<EOF
+DEVICE=eth0
+BRIDGE=br0
+EOF
+
+vim ifcfg-br0
+复制代码
+将br0改成下列:　　
+
+DEVICE="br0"
+TYPE="Bridge"
+ONBOOT=yes
+BOOTPROTO=static #静态ip地址
+IPADDR=192.168.6.22 #ip地址修改成自己的
+NETMASK=255.255.255.0 
+GATEWAY=192.168.6.254 #网关地址
+DELAY="0"
+eth0 改成:
+
+DEVICE=eth0
+BRIDGE=br0
+ 
+
+重启网卡服务
+
+service network restart 
+ 
+
+ifconfig
+ 查看br0是否启动
+
+开启IP转发:
+
+sed -i /ip_forward/s/0/1/  /etc/sysctl.conf
+sysctl -p
+ 
+
+4.加入开机启动,并启动服务...
+
+chkconfig  --level 35 libvirtd on
+service libvirtd start
+ 
+
+ 
+
+安装完成.....
+使用篇
+这里主要讲 使用远程图形化界面(VNC)管理kvm
+
+因为我使用的是mini安装包没有安装桌面
+
+所以要安装桌面
+
+yum groupinstall "desktop"
+ 
+
+安装VNC:
+
+yum install tigervnc-server -y
+ 
+
+启动VNC服务
+
+vncserver 
+ 
+
+如果看到:New 'CentOS:1 (root)' desktop is CentOS:1 这句说明启动成功:
+
+　　VNC的基本操作:
+　　　　vncserver --help  #帮助
+　　　　vncserver 启动一个可以连接的接口
+
+　　　　vncserver -list 查看已经启动的接口
+
+　　　　vncserver -kill  禁用一个接口  假如上边的接口1我们禁用掉   vncserver -kill :1
+
+客户端连接:
+
+
+
+IP地址:接口   IP:1
+
+打开管理界面:
+
+
+
+使用上边的方法打开虚拟机管理界面
+
+关于这个工具的具体使用 看另一篇文章
+
+我们双击上边的localhost(QEMU)就会出现一些kvm的信息,可以修改.
+
+右击new 就是新建..
+
+
+广州市天河区天源路5号之三天河新天地C座6楼
+
+https://reg.jd.com/reg/person
+13530503630
+ 用户名   135hiys
+
+岑村北街易众电脑店
+广东省广州市天河区岑村北街23号
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

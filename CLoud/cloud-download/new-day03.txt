@@ -1,0 +1,192 @@
+基本匹配条件 :适用于select   update   delete
+数值比较   =    >   >=   <   <=   !=
+where  字段名   符号  数字
+
+select  id,name from user1  where  id = 10;
+
+update  user1  set password="B",homedir="/root" where id<=10;
+
+delete  from  user1 where  uid>=3000;
+
+select name,uid,gid from user1 where uid = gid;
+
+select name,uid,gid from user1 where uid != gid;
+
+字符比较    =   !=
+where  字段名   符号  "字符串"
+
+select name from user1 where name = "root";
+
+select name from user1 where shell = "/bin/bash";
+
+select name,shell  from user1 where shell !="/bin/bash";
+
+
+匹配空  is  null
+匹配非空  is not  null
+
+insert into user1(name)values("zhangshu");
+select * from user name="zhangshu";
+
+select id, name,uid from user1 where  uid is null;
+
+select name,uid from user1 where  uid is not null;
+
+update  user1  set  uid=250  where  uid is null;
+
+select id,name,uid from user1 where  name="zhangshu";
+
+update  user1  set  uid=null  where name="bin";
+update  user1  set  name=""  where name="bin";
+
+逻辑比较   :  多个匹配条件
+逻辑与  and    多个匹配条件同时匹配
+逻辑或  or      多个匹配条件时某个条件匹配即可
+逻辑非  !  或者 not  取反
+
+
+select id,name,uid from user1 where  name="zhangshu" and 
+
+uid=250;
+
+select id,name,uid from user1 where  name="zhangshu" or 
+
+uid=250 or  id=1;
+
+
+select id,name,uid from user1
+where   
+name="zhangshu"  or   id=1   and   name="root";
+
+select id,name,uid from user1
+where   
+uid=3  or   id=1  and   name="root";
+
+select id,name,uid from user1
+where   
+(uid=3  or   id=1)   and   name="root";
+
+
+范围内匹配
+select  name  from user1  
+where 
+name in ("zhangshu","mysql","rsync","apache");
+
+select  name,uid  from user1  where uid in (10,200,250,1,13);
+
+select  name,uid,shell  from user1  
+where 
+shell not in ("/bin/bash","/sbin/nologin");
+
+select  id,name from user1  where id  between 10 and  25;
+
+select  DISTINCT shell from user1;
+
+select  DISTINCT shell from user1  where uid >=100;
+
+高级匹配条件：适用于 select  update  delete
+模糊匹配like
+insert into  user1(id,name)values(67,null),(69,"");
+select name from user1 where  name like '____';
+select name from user1 where  name like '__%__';
+select name from user1 where  name like 'a%';
+select name from user1 where  name like '%';
+
+正则匹配  regexp  '正则表达式'
+.  ^  $   [ ]   *
+
+select  name from user1 where name regexp  '^a';
+select  name from user1 where name regexp  'a';
+insert into  user1(name)values("yaya8"),("ya6ya"),("1yaya");
+select  name from user1 where name regexp '[0-9]'
+select  name from user1 where name regexp '[0-9]$'
+
+select  name,uid from user1 where uid regexp '...';
+select  name,uid from user1 where uid regexp '^...$';
+select  name,uid from user1 where uid regexp '^r.*t$';
+select  name,uid from user1 where name regexp '^a.*t$';
+
+四则计算  适用于  select  update
++   -  *  /   %
+
+select  name,uid from user1 where uid >=10 and uid<=20;
+
+update   user1  set uid=uid+1  where uid >=10 and uid<=20;
+
+update   user1  set uid=uid-2  where uid >=10 and uid<=20;
+
+
+alter table user1 add age int(2) default  19 after name;
+
+select name,age from user1 where name="root";
+
+select  name ,  2018 - age  s_year  from user1 where  name="root";
+
+select  name, uid,gid , (uid+gid)/2  pjz  from user1;
+
+操作查询结果  适用于  select 
+聚集函数
+select   avg(gid)   from  user1;
+select count(name) , count(id) from  user1;
+select  min(uid)  from  user1;
+select  max(id)  from user1;
+select  max(gid)  from  user1 where  id > 30;
+select  sum(age)  from  user1;
+select   count(name) from user where  shell = "/bin/bash";
+
+升序  小---->大
+降序  大---->小
+select  id,name from user1 order  by  id；
+select  id,name from user1 order  by  id  desc;
+
+mysql> select  shell  from user1 where   name like '____'
+    -> group  by shell;
+
+select  部门  from  员工信息表  where 
+性别=“女”  and   年龄<=30  and  工资 >=20000  and 婚姻="否" 
+group  by  部门；
+
+select  部门  from  员工信息表  group  by  部门；
+
+
+财务
+市场
+
+select  姓名 from  员工信息表  
+where  部门 in ("财务","市场") and 性别=“女”;
+
+select name from user1 
+where shell!="/bin/bash" 
+having  name =  "mysql";
+
+select name from user1  having name in ("xiaojiu","laoshi");
+
+select name from user1  where  id <=20
+having name  is null;
+
+select  shell  from user1   group by  shell
+having   shell =  "/sbin/shutdown";
+
+限制查询结果显示行数 (默认显示查询结果的所有行)
+sql查询  limit  数字；  只显示查询结果的前几行
+select   * from  user1  limit   3;
+select   * from  user1  where uid <=20 limit 1;
+select   * from  user1  where uid <=20 limit 5;
+sql查询  limit  数字1,数字2；  只显示查询结果指定范围的行。
+mysql> select   * from  user1  where uid <=20；
+mysql> select   * from  user1  where uid <=20  limit  2,5;
+mysql> select   * from  user1  where uid <=20  limit  2,2;
+select  *  from user1  order by  uid  desc  limit 5;
+
+
+
+
+
+
+
+
+
+
+
+
+

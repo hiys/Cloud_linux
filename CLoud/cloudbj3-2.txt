@@ -1,0 +1,113 @@
+
+
+
+  765  yum -y install NetworkManager-* firewalld-* python-firewall
+  766  rpm -qa |grep -E  'NetworkManager-|firewalld-|python-firewall'
+  767  systemctl is-active NetworkManager
+  768  yum -y groupinstall "GNOME Desktop" "Graphical Administration Tools"
+  769  ls /lib/systemd/system/runlevel5.target
+  770  ln -sf /lib/systemd/system/runlevel5.target /etc/systemd/system/default.target
+  771  which startx
+  772  startx
+[root@hiys ~]# locale
+LANG=en_US.UTF-8
+LC_CTYPE="en_US.UTF-8"
+LC_NUMERIC="en_US.UTF-8"
+LC_TIME="en_US.UTF-8"
+LC_COLLATE="en_US.UTF-8"
+LC_MONETARY="en_US.UTF-8"
+LC_MESSAGES="en_US.UTF-8"
+LC_PAPER="en_US.UTF-8"
+LC_NAME="en_US.UTF-8"
+LC_ADDRESS="en_US.UTF-8"
+LC_TELEPHONE="en_US.UTF-8"
+LC_MEASUREMENT="en_US.UTF-8"
+LC_IDENTIFICATION="en_US.UTF-8"
+LC_ALL=
+[root@hiys ~]# vim /etc/sysconfig/
+anaconda          firewalld         libvirt-guests    raid-check        smartmontools
+atd               grub              man-db            rdisc             sshd
+authconfig        htcacheclean      modules/          readonly-root     sysstat
+autofs            httpd             named             rhn/              sysstat.ioconf
+cbq/              init              netconsole        rpcbind           virtlockd
+cgred             ip6tables-config  network           rpc-rquotad       virtlogd
+chronyd           iptables-config   network-scripts/  rsyncd            virt-who
+console/          irqbalance        nfs               rsyslog           wpa_supplicant
+cpupower          kdump             ntpd              run-parts         
+crond             kernel            ntpdate           samba             
+ebtables-config   ksm               qemu-ga           saslauthd         
+fcoe              libvirtd          radvd             selinux           
+[root@hiys ~]# vim /etc/local.conf
+[root@hiys ~]# vim /etc/local
+locale.conf  localtime    
+[root@hiys ~]# vim /etc/locale.conf 
+[root@hiys ~]# source /etc/locale.conf
+[root@hiys ~]# localectl set-locale LANG=en_US.utf8
+[root@hiys ~]# localectl list-locales|grep zh_CN
+zh_CN
+zh_CN.gb18030
+zh_CN.gb2312
+zh_CN.gbk
+zh_CN.utf8
+[root@hiys ~]# localectl set-locale LANG=zh_CN.utf8
+[root@hiys ~]# 
+
+
+[root@hiys ~]# export LANG=zh_CN.UTF-8
+[root@hiys ~]# echo $LANG
+zh_CN.UTF-8
+[root@hiys ~]# date
+2018年 11月 15日 星期四 21:17:05 CST
+[root@hiys ~]# 
+
+
+
+
+openstack-nova-console.service  ##vnc
+
+openstack-nova-
+openstack-cinder
+
+fangwen he anquan
+tianjia guize
+qita xieyi
+rukou
+qita xieyi
+chukou
+
+chuang jian kuai zhao
+bianji an  quan zu 
+
+
+neutron-dhcp
+neutron-l3
+##zai openstack shang zhixing
+cat keystonerc_admin
+
+zai openstack shang anzhuan nova01
+
+98 CONFIG_COMPUTE_HOSTS=192.168.1.10,192.168.1.11
+
+102   CONFIG_NETWORK_HOSTS=192.168.1.11,192.168.1.10
+
+#packstack  --answer-file=answer.ini
+shuru root mima
+
+cd /etc/http.d/conf.d/
+vim 15-hori
+
+
+#logout  ## ==exit
+
+# ssh 192.168.1.11 virsh list
+
+
+bianji yun zhuji
+yun zhuji re qianyi
+kuai shebei qianyi
+
+
+
+
+
+

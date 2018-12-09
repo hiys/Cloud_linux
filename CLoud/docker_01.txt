@@ -1,0 +1,141 @@
+1 docker01
+docker 安装
+
+停止禁用防火墙
+systemctl stop firewalld
+systemctl mask firewalld
+
+禁用 selinux
+
+配置 yum 源，安装 docker
+yum install docker-engine
+
+启动测试
+systemctl start docker
+ifconfig  启动后可以看见 docker0 
+docker version
+
+搜索 docker  search
+下载 docker  pull  busybox
+查看帮助  docker  help  pull
+查看镜像  docker  images
+
+导入镜像
+[root@localhost ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+[root@localhost ~]# docker load <busybox.tar 
+c5183829c43c: Loading layer  1.36 MB/1.36 MB
+Loaded image: busybox:latest32.77 kB/1.36 MB
+[root@localhost ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              f6e427c148a7        3 weeks ago         1.146 MB
+
+导出镜像
+docker save busybox >busybox.tar
+
+导入所有文件
+unzip docker_img.zip
+cd   docker_images
+for i in *;do docker load <${i};done
+
+利用镜像启动容器
+docker run -it busybox /bin/sh
+docker run -it centos /bin/bash
+
+查看容器列表
+docker  ps
+
+查看详细信息
+docker inspect  21d2aeb977cc
+docker inspect -f '{.NetworkSettings.IPAddress}' 21d2aeb977cc
+
+docker 问题列表，及解答
+问题：docker run -it  busybox  /bin/bash  报错问题
+原因：
+最后的命令是容器内部命令，容器内，存在才可以执行
+可以不指定，不指定启动默认命令
+
+问题：docker run -it  centos  退出后，配置全部丢失
+原因：
+run 启动的是新的容器，老的容器退出后就停止了
+启动管理一个老的容器可以使用 docker start|stop|restart
+
+问题：老容器启动以后，怎么在进入？
+docker  exec -it  容器id  /bin/bash
+docker  attach    容器id
+
+exec 与 attach 的区别
+exec     单独启动命令运行，与容器启动的终端无关
+attach  不启动新的命令，直接连接 console 终端
+exec     退出不会影响容器的运行
+attach  退出后，容器结束
+
+问题：如果我使用attach 连接容器后，怎么才能不结束容器？
+解决方法：把容器放后台，使用快捷键 ctrl + pq
+
+问题：attach 为什么退出后，容器会结束？
+因为 attach 连接进容器的 pid 1 的进程，当 attach 结束时候，pid 为 1 的进程被结束
+所有整个容器被销毁
+
+问题：docker run -it  nginx  没响应？
+因为 nginx 启动的默认 cmd 时 nginx daemon，该进程不是一个交互式的进程
+
+docker run 使用
+-i   交互式的
+-t   分配终端
+-d  把容器放在后台运行
+
+docker  run  -it    centos   cmd   启动一个交互式的容器，在前台运行
+docker  run  -d    centos   cmd   启动一个非交互式的容器，在后台运行
+docker  run  -itd  centos   cmd   启动一个交互式的容器，在后台运行
+
+测试
+docker  run  -it    centos  /bin/bash           成功
+docker  run  -d    centos  /bin/bash           失败
+docker  run  -itd  centos  /bin/bash           成功
+
+docker  run -it     nginx   nginx                   失败
+docker  run -d     nginx   nginx                   失败
+docker  run -itd   nginx   nginx                   失败
+
+docker  run -it      nginx   nginx -g "daemon off;"   成功
+docker  run -d      nginx   nginx -g "daemon off;"   成功
+docker  run -itd    nginx   nginx -g "daemon off;"   成功
+
+交互式的进程启动要使用  it ， 非交互式的使用 d ，交互式的放后台使用  itd
+启动  bash  的正确姿势  docker run -itd  centos
+启动 nginx 的正确姿势  docker run  -d  -p 80:80  nginx
+
+小练习： 启动一个 nginx 的容器，修改默认首页为 "hello world"
+
+设置IP伪装访问网络
+[root@room9pc19 docker]# ifconfig 
+enp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.40.50.119  netmask 255.255.255.0  broadcast 172.40.50.255
+        ether 94:de:80:81:e3:53  txqueuelen 1000  (Ethernet)
+        RX packets 5947707  bytes 593709850 (566.2 MiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 12611909  bytes 18788418441 (17.4 GiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+物理机上查找上网用的网卡
+打开路由转发
+sysctl -w net.ipv4.ip_forward=1
+设置伪装上网
+[root@room9pc19 docker]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -o enp2s0 -j MASQUERADE
+
+在虚拟机里面设置默认路由
+ip route replace default via 192.168.4.254
+
+模拟 docker 端口绑定转发
+iptables -t nat -I PREROUTING -d 192.168.4.10 -p tcp --dport 8080 -i eth0 -j DNAT --to 172.17.0.3:80
+docker  run -d -p 8080:80 nginx
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,749 @@
+
+防火墙服务默认使用的是 firewalld ，而不是 iptables 。如果想改用 iptables ，可以参考以下步骤：
+
+1.安装
+
+[root@localhost ~]# yum install iptables-services
+1
+2.屏蔽该服务
+
+[root@localhost ~]# systemctl mask firewalld
+
+# systemctl mask firewalld 屏蔽服务（让它不能启动）
+# ln -s '/dev/null''/etc/systemd/system/firewalld.service'
+# systemctl unmask firewalld 显示服务（如 firewalld.service）
+# rm '/etc/systemd/system/firewalld.service'
+
+3.启用iptables
+
+[root@localhost ~]# systemctl enable iptables
+#如果需要使用 ip6tables , 需另外加一行
+[root@localhost ~]# systemctl enable ip6tables
+
+4.启动iptables，停止firewalld
+
+#停止firewalld服务，开启 iptables服务
+[root@localhost ~]# systemctl stop firewalld
+[root@localhost ~]# systemctl start iptables
+# 同上，如果需要使用 ip6tables , 需另外加一条
+[root@localhost ~]# systemctl start ip6tables
+--------------------- 
+
+[root@hiys ~]# rpm -q git
+git-1.8.3.1-11.el7.x86_64
+
+[root@hiys ~]# git clone  git://124.193.128.166/nsd1807.git
+
+[root@hiys ~]# ls nsd1807/readme.txt
+nsd1807/readme.txt
+[root@hiys ~]# 
+[root@hiys ~]# git pull
+fatal: 'https://github.com/hiyest/webjava.git' does not appear to be a git repository
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   100G  0 part /javaweb
+loop0    7:0    0 935.4M  0 loop /var/ftp/ceph
+loop1    7:1    0   3.8G  0 loop /var/ftp/rhel7
+[root@hiys ~]# df -hT
+文件系统           类型        容量    已用    可用  已用%  挂载点
+/dev/sda2      ext4      118G   43G   70G   38% /
+devtmpfs       devtmpfs  7.8G     0  7.8G    0% /dev
+tmpfs          tmpfs     7.8G   34M  7.7G    1% /dev/shm
+tmpfs          tmpfs     7.8G  9.0M  7.8G    1% /run
+tmpfs          tmpfs     7.8G     0  7.8G    0% /sys/fs/cgroup
+/dev/sda1      ext4      197G  104G   84G   56% /var/lib/libvirt/images
+/dev/loop1     iso9660   3.8G  3.8G     0  100% /var/ftp/rhel7
+/dev/loop0     iso9660   936M  936M     0  100% /var/ftp/ceph
+tmpfs          tmpfs     1.6G   60K  1.6G    1% /run/user/0
+/dev/sda3      ext4       99G   49G   45G   53% /javaweb
+[root@hiys ~]# 
+[root@hiys ~]# git clone  git://124.193.128.166/nsd1807.git
+fatal: 目标路径 'nsd1807' 已经存在，并且不是一个空目录。
+
+[root@hiys ~]# git pull
+fatal: 'https//github.com/hiyest/webjava.git' does not appear to be a git repository
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+[root@hiys ~]# 
+esxi  vcenter
+[root@hiys ~]# ls  nsd1807/
+readme.txt
+[root@hiys ~]# rm -rf nsd1807/
+
+[root@hiys ~]# git clone git://124.193.128.166/nsd1807.git
+正克隆到 'nsd1807'...
+remote: Counting objects: 10, done.
+remote: Compressing objects: 100% (7/7), done.
+remote: Total 10 (delta 1), reused 0 (delta 0)
+接收对象中: 100% (10/10), 840.70 KiB | 731.00 KiB/s, done.
+处理 delta 中: 100% (1/1), done.
+[root@hiys ~]# cat nsd1807/readme.txt 
+git 软件安装
+yum install -y git
+
+外地校区
+git clone git://124.193.128.166/nsd1807.git
+
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+
+更新(必须进入 git 目录)
+git  pull
+[root@hiys ~]# virsh -c qemu:///system
+欢迎使用 virsh，虚拟化的交互式终端。
+
+输入：'help' 来获得命令的帮助信息
+       'quit' 退出
+
+virsh # list
+ Id    名称                         状态
+----------------------------------------------------
+ 1     Vb50                           running
+
+virsh # net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     否           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+
+virsh # list --all
+ Id    名称                         状态
+----------------------------------------------------
+ 1     Vb50                           running
+ -     Va51                           关闭
+ -     Va52                           关闭
+ -     Va53                           关闭
+ -     Va54                           关闭
+ -     Va55                           关闭
+ -     Va56                           关闭
+ -     Va57                           关闭
+ -     Va58                           关闭
+ -     Vb51                           关闭
+ -     Vb52                           关闭
+
+virsh # net-
+net-autostart    net-destroy      net-edit         net-list         net-undefine     
+net-create       net-dhcp-leases  net-event        net-name         net-update       
+net-define       net-dumpxml      net-info         net-start        net-uuid    
+     
+virsh # 
+[root@hiys ~]# df -hT
+文件系统       类型      容量  已用  可用 已用% 挂载点
+/dev/sda2      ext4      118G   43G   70G   38% /
+devtmpfs       devtmpfs  7.8G     0  7.8G    0% /dev
+tmpfs          tmpfs     7.8G   11M  7.8G    1% /dev/shm
+tmpfs          tmpfs     7.8G  9.0M  7.8G    1% /run
+tmpfs          tmpfs     7.8G     0  7.8G    0% /sys/fs/cgroup
+/dev/sda1      ext4      197G  104G   84G   56% /var/lib/libvirt/images
+/dev/loop1     iso9660   3.8G  3.8G     0  100% /var/ftp/rhel7
+/dev/loop0     iso9660   936M  936M     0  100% /var/ftp/ceph
+tmpfs          tmpfs     1.6G   60K  1.6G    1% /run/user/0
+/dev/sda3      ext4       99G   49G   45G   53% /javaweb
+[root@hiys ~]# ls nsd1807/
+docs  readme.txt
+[root@hiys ~]# ls nsd1807/docs/
+NSD_CLOUD_01.pdf
+[root@hiys ~]# vim nsd1807/readme.txt 
+[root@hiys ~]# cat nsd1807/readme.txt
+git 软件安装
+yum install -y git
+
+外地校区
+git clone git://124.193.128.166/nsd1807.git
+
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+
+更新(必须进入 git 目录)
+git  pull
+[root@hiys ~]# cd nsd1807/
+[root@hiys nsd1807]# ls
+docs  readme.txt
+[root@hiys nsd1807]# git pull
+remote: Counting objects: 7, done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 6 (delta 1), reused 0 (delta 0)
+Unpacking objects: 100% (6/6), done.
+来自 git://124.193.128.166/nsd1807
+   1d0d471..36e6b41  master     -> origin/master
+更新 1d0d471..36e6b41
+Fast-forward
+ node.xml | 42 ++++++++++++++++++++++++++++++++++++++++++
+ vbr.xml  | 11 +++++++++++
+ 2 files changed, 53 insertions(+)
+ create mode 100644 node.xml
+ create mode 100644 vbr.xml
+[root@hiys nsd1807]# ls
+docs  node.xml  readme.txt  vbr.xml
+[root@hiys nsd1807]# cat node.xml 
+<domain type='kvm'>
+  <name>node</name>
+  <memory unit='KB'>2097152</memory>
+  <currentMemory unit='KB'>2097152</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/node.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys nsd1807]# 
+[root@hiys nsd1807]# cp node.xml  /etc/libvirt/qemu/networks/
+
+[root@hiys ~]# head -3 /proc/cpuinfo 
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+[root@hiys ~]# wc -l /proc/cpuinfo
+104 /proc/cpuinfo
+[root@hiys ~]# 
+[root@hiys ~]# head -3 /proc/cpuinfo 
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+[root@hiys ~]# wc -l /proc/cpuinfo
+104 /proc/cpuinfo
+[root@hiys ~]# ls /var/ftp/
+ceph  pub  rhel7  share
+[root@hiys ~]# tail -2 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso  /var/ftp/ceph  iso9660  defaults 0  0
+[root@hiys ~]# ls /var/lib/libvirt/images/iso/
+CentOS7-1708.iso              rhcs2.0-rhosp9-20161113-x86_64.iso  rhel-server-6.7-x86_64-dvd.iso
+CentOS-7-x86_64-DVD-1708.iso  RHEL7-extras.iso                    rhel-server-7.4-x86_64-dvd.iso
+lost+found                    RHEL7OSP-10.iso                     Win10_Pro_X64_zh_CN.iso
+[root@hiys ~]# ls /etc/yum.repos.d/
+ceph.repo  NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo
+[root@hiys ~]# systemctl is-active firewalld
+unknown
+[root@hiys ~]# systemctl stop firewalld
+
+[root@hiys ~]# systemctl mask firewalld
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@hiys ~]# vim /etc/fstab 
+
+[root@hiys ~]# tail -3 /etc/fstab
+
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso  /var/ftp/ceph  iso9660  defaults 0  0
+/var/lib/libvirt/images/iso/CentOS7-1708.iso  /var/ftp/iso  iso9660 defaults  0  0
+
+[root@hiys ~]# mkdir /var/ftp/iso
+[root@hiys ~]# vim /etc/yum.repos.d/iso.repo
+[root@hiys ~]# cat /etc/yum.repos.d/iso.repo
+[Centos1708]
+name=CentOS-1708
+gpgcheck=0
+baseurl=file:///var/ftp/iso/
+enabled=1
+
+[root@hiys ~]# mount -a
+mount: /dev/loop2 写保护，将以只读方式挂载
+[root@hiys ~]# ls /var/ftp/iso/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+
+[root@hiys ~]# yum clean all >/dev/null && yum repolist |tail -10
+已加载插件：fastestmirror, langpacks
+Determining fastest mirrors
+源标识                               源名称                                状态
+Centos1708                           CentOS-1708                           9,591
+mon                                  mon                                      41
+osd                                  osd                                      28
+rhel7                                rhel7.4                               4,986
+tools                                tools                                    33
+repolist: 14,679
+[root@hiys ~]# 
+
+[root@hiys ~]# du -sh  # [对当前目录下所有的目录和文件的大小进行汇总,-s表示汇总,-h表示以KB, MB, GB, TB格式进行人性化显示]
+34G	.
+[root@hiys ~]# ls /etc/yum.repos.d/
+ceph.repo  iso.repo  NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo
+[root@hiys ~]# cat /etc/yum.repos.d/ceph.repo 
+[mon]
+name=mon
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[root@hiys ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+gpgcheck=0
+baseurl=file:///var/ftp/rhel7/
+enabled=1
+[root@hiys ~]# 
+[root@hiys networks]# ls
+autostart  default.xml  node.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+[root@hiys networks]# 
+[root@hiys networks]# pwd
+/etc/libvirt/qemu/networks
+[root@hiys networks]# ls /var/lib/libvirt/images/
+bin      exam        qemu            rh7_node2.img  rh7_node6.img  Student.sh                  Weekend.sh
+conf.d   iso         rh7_node10.img  rh7_node3.img  rh7_node7.img  tedu-wallpaper-01.png
+content  lost+found  rh7_node11.img  rh7_node4.img  rh7_node8.img  tedu-wallpaper-weekend.png
+db       ooxx.img    rh7_node17.img  rh7_node5.img  rh7_node9.img  vsftpd.conf
+[root@hiys networks]# 
+
+
+ftp://176.121.213.81/iso
+
+[root@hiys networks]# qemu-img  create  -f  qcow2  node.qcow2 2G
+Formatting 'node.qcow2', fmt=qcow2 size=2147483648 encryption=off cluster_size=65536 lazy_refcounts=off 
+[root@hiys networks]# ls
+autostart    node.qcow2  private1.xml  public1.xml  rhce.xml
+default.xml  node.xml    private2.xml  public2.xml  vbr.xml
+[root@hiys networks]# vim node.xml 
+[root@hiys networks]# tail -3 node.xml
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys networks]# ifconfig |head -2
+enp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.213.81  netmask 255.255.255.0  broadcast 176.121.213.255
+[root@hiys networks]# 
+
+
+==============虚拟机 配置 ===================
+
+
+[local_source]
+name=local Centos source
+baseurl=ftp://192.168.1.254/iso
+gpgcheck=0
+enabled=1
+yum -y install vim git
+
+vim /etc/selinux/config
+SELINUX=disabled
+
+systemctl mask firewalld
+yum remove -y firewalld-*
+
+reboot
+[root@First ~]# ifconfig |awk '/inet /{print $2}';route -n |awk '{print $2}'
+192.168.1.103
+127.0.0.1
+192.168.122.1
+IP
+Gateway
+192.168.1.254
+0.0.0.0
+0.0.0.0
+[root@First ~]# ls /etc/yum.repos.d/
+local.repo  repo
+[root@First ~]# cat /etc/yum.repos.d/local.repo 
+[local_source]
+name=local CentOS  source
+baseurl=ftp://192.168.1.254/iso
+enabled=1
+gpgcheck=0
+[root@First ~]# sed -n 7p /etc/selinux/config 
+SELINUX=disabled
+[root@First ~]# yum -y remove firewalld-* | tail -3
+  firewalld-filesystem.noarch 0:0.4.4.4-6.el7                                   
+
+完毕！
+[root@First ~]# 
+
+vim ifcfg-eth0
+
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+#IPADDR="192.168.1.XX"
+#NETMASK="255.255.255.0"
+
+
+[root@hiys nsd1807]# git pull
+remote: Counting objects: 4, done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 3 (delta 1), reused 0 (delta 0)
+Unpacking objects: 100% (3/3), done.
+来自 git://124.193.128.166/nsd1807
+   36e6b41..7e523f5  master     -> origin/master
+更新 36e6b41..7e523f5
+Fast-forward
+ ifcfg-eth0 | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+ create mode 100644 ifcfg-eth0
+[root@hiys nsd1807]# ls
+docs  ifcfg-eth0  node.xml  readme.txt  vbr.xml
+[root@hiys nsd1807]# cat ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+#IPADDR="192.168.1.XX"
+#NETMASK="255.255.255.0"
+[root@hiys nsd1807]# 
+
+
+
+# Generated by dracut initrd
+NAME="eth0"
+HWADDR="52:54:00:fb:51:fd"
+ONBOOT=yes
+NETBOOT=yes
+UUID="cd6c49a6-0861-4619-9810-f6838dd9f731"
+IPV6INIT=yes
+BOOTPROTO=dhcp
+TYPE=Ethernet
+
+
+[root@First ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0
+[root@First ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+#NAME="eth0"
+#HWADDR="52:54:00:fb:51:fd"
+#ONBOOT=yes
+#NETBOOT=yes
+#UUID="cd6c49a6-0861-4619-9810-f6838dd9f731"
+#IPV6INIT=yes
+#BOOTPROTO=dhcp
+#TYPE=Ethernet
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+IPADDR="192.168.1.103"
+NETMASK="255.255.255.0"
+[root@First ~]# 
+[root@First ~]# systemctl stop NetworkManager
+
+[root@First ~]# yum -y remove NetworkManager-*
+..............................
+  libnma.x86_64 0:1.8.0-3.el7                                                                                 
+  nautilus.x86_64 0:3.22.3-3.el7                                                                              
+  nm-connection-editor.x86_64 0:1.8.0-3.el7                                                                   
+  orca.x86_64 0:3.6.3-4.el7                                                                                   
+  pulseaudio-gdm-hooks.x86_64 0:10.0-3.el7                                                                    
+  system-config-printer.x86_64 0:1.4.1-19.el7                                                                 
+  telepathy-gabble.x86_64 0:0.18.1-4.el7                                                                      
+  telepathy-mission-control.x86_64 1:5.16.3-3.el7                                                             
+  totem.x86_64 1:3.22.1-1.el7                                                                                 
+  totem-nautilus.x86_64 1:3.22.1-1.el7                                                                        
+  tracker.x86_64 0:1.10.5-4.el7                                                                               
+
+完毕！
+[root@First ~]# reboot
+
+
+yum provides ifconfig
+yum -y install net-tools 
+
+vim /etc/sysconfig/network
+
+ip route show
+default via 192.168.1.254 dev eth0
+[root@hiys ~]# ssh -X 192.168.1.103
+root@192.168.1.103's password: 
+Last login: Tue Nov 13 17:19:00 2018 from 192.168.1.254
+[root@First ~]# yum provides ifconfig
+已加载插件：fastestmirror, langpacks
+Loading mirror speeds from cached hostfile
+local_source/filelists_db                                                              | 6.7 MB  00:00:00     
+net-tools-2.0-0.22.20131004git.el7.x86_64 : Basic networking tools
+源    ：@anaconda
+匹配来源：
+文件名    ：/usr/sbin/ifconfig
+
+[root@First ~]# yum -y install net-tools  vim-enhanced bridge-utils psmisc |tail -9
+已加载插件：fastestmirror, langpacks
+Loading mirror speeds from cached hostfile
+软件包 net-tools-2.0-0.22.20131004git.el7.x86_64 已安装并且是最新版本
+软件包 2:vim-enhanced-7.4.160-2.el7.x86_64 已安装并且是最新版本
+软件包 bridge-utils-1.5-9.el7.x86_64 已安装并且是最新版本
+软件包 psmisc-22.20-15.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@First ~]# vim /etc/sysconfig/network
+[root@First ~]# cat /etc/sysconfig/network
+# Created by anaconda
+NOZEROCONF="yes"
+[root@First ~]# ip route show
+default via 192.168.1.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.103 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+[root@First ~]# 
+
+[root@hiys nsd1807]#  ls
+docs  ifcfg-eth0  node.xml  readme.txt  vbr.xml
+[root@hiys nsd1807]# git pull
+remote: Counting objects: 4, done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 3 (delta 1), reused 0 (delta 0)
+Unpacking objects: 100% (3/3), done.
+来自 git://124.193.128.166/nsd1807
+   7e523f5..9588ebf  master     -> origin/master
+更新 7e523f5..9588ebf
+Fast-forward
+ grub | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+ create mode 100644 grub
+[root@hiys nsd1807]# ls
+docs  grub  ifcfg-eth0  node.xml  readme.txt  vbr.xml
+[root@hiys nsd1807]# cat grub 
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS1,115200"
+GRUB_DISABLE_RECOVERY="true"
+[root@hiys nsd1807]# 
+
+[root@hiys nsd1807]# cat grub 
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200"
+GRUB_DISABLE_RECOVERY="true"
+[root@hiys nsd1807]# 
+
+[root@First ~]#  vim  /etc/sysconfig/grub 
+[root@First ~]# cat /etc/sysconfig/grub
+#GRUB_TIMEOUT=5
+#GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+#GRUB_DEFAULT=saved
+#GRUB_DISABLE_SUBMENU=true
+#GRUB_TERMINAL_OUTPUT="console"
+#GRUB_CMDLINE_LINUX="rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"
+#GRUB_DISABLE_RECOVERY="true"
+
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200"
+GRUB_DISABLE_RECOVERY="true"
+[root@First ~]# 
+
+[root@First ~]# grub2-mkconfig  -o  /boot/grub2/grub.cfg 
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-3.10.0-693.el7.x86_64
+Found initrd image: /boot/initramfs-3.10.0-693.el7.x86_64.img
+Found linux image: /boot/vmlinuz-0-rescue-3b55d67adb504b96816c71e3d71bab01
+Found initrd image: /boot/initramfs-0-rescue-3b55d67adb504b96816c71e3d71bab01.img
+done
+[root@First ~]# reboot
+Connection to 192.168.1.103 closed by remote host.
+Connection to 192.168.1.103 closed.
+[root@hiys ~]# 
+
+[root@hiys ~]# virsh console centos7xxx
+连接到域 centos7xxx
+换码符为 ^]
+
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+First login: root
+密码：
+Last login: Tue Nov 13 17:37:56 from 192.168.1.254
+[root@First ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.103  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::5054:ff:fefb:51fd  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:fb:51:fd  txqueuelen 1000  (Ethernet)
+        RX packets 110  bytes 8983 (8.7 KiB)
+        RX errors 0  dropped 5  overruns 0  frame 0
+        TX packets 62  bytes 7073 (6.9 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+        ether 52:54:00:9e:cf:1a  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@First ~]# 
+
+
+[root@hiys nsd1807]# git pull
+Already up-to-date.
+[root@hiys nsd1807]# ls
+docs  grub  ifcfg-eth0  node.xml  readme.txt  vbr.xml
+[root@hiys nsd1807]# ls docs/
+NSD_CLOUD_01.pdf
+[root@hiys nsd1807]# ls docs/NSD_CLOUD_01.pdf 
+docs/NSD_CLOUD_01.pdf
+[root@hiys nsd1807]# cp docs/NSD_CLOUD_01.pdf  /root/桌面/
+cp：是否覆盖"/root/桌面/NSD_CLOUD_01.pdf"？ y
+[root@hiys nsd1807]# cat grub 
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200"
+GRUB_DISABLE_RECOVERY="true"
+[root@hiys nsd1807]# 
+[root@hiys nsd1807]# cat ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+#IPADDR="192.168.1.XX"
+#NETMASK="255.255.255.0"
+[root@hiys nsd1807]#  
+[root@hiys nsd1807]# cat node.xml 
+<domain type='kvm'>
+  <name>node</name>
+  <memory unit='KB'>2097152</memory>
+  <currentMemory unit='KB'>2097152</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/node.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys nsd1807]#  
+[root@hiys nsd1807]# ls
+docs  grub  ifcfg-eth0  node.xml  readme.txt  vbr.xml
+[root@hiys nsd1807]# 
+[root@hiys nsd1807]# cat  vbr.xml 
+<network>
+  <name>vbr</name>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <forward mode="nat"/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start="192.168.1.100" end="192.168.1.200"/>
+    </dhcp>
+  </ip>
+</network>
+[root@hiys nsd1807]# cat readme.txt 
+git 软件安装
+yum install -y git
+
+外地校区
+git clone git://124.193.128.166/nsd1807.git
+
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+
+更新(必须进入 git 目录)
+git  pull
+[root@hiys nsd1807]# 
+
+
+
+
+
+
+

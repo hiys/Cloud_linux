@@ -1,0 +1,3100 @@
+
+：离线访问虚拟机问题
+本案例要求可以离线访问虚拟机：
+利用xml文件生成一个新的虚拟机
+利用guestmount实现离线访问虚拟机
+6.1 步骤
+
+实现此案例需要按照如下步骤进行。
+步骤一：用xml生成一个新的虚拟机
+
+[root@room9pc01 ~]# cd /etc/libvirt/qemu/
+[root@room9pc01 qemu]# cp centos7.0.xml  local.xml
+[root@room9pc01 qemu]# vim local.xml 
+<domain type='kvm'>
+  <name>local</name>        //修改名字
+  <memory unit='KiB'>2048000</memory>        //修改内存
+  <currentMemory unit='KiB'>2048000</currentMemory>
+...
+      <source file='/var/lib/libvirt/images/local.img'/>     //img文件位置
+注意：除这些外还要把mac地址删掉，带address字样的全部删除
+[root@room9pc01 ~]# cd /var/lib/libvirt/images/
+[root@room9pc01 images]# qemu-img  create –b node.qcow2 –f qcow2 local.img
+[root@room9pc01 images]# virsh define /etc/libvirt/qemu/local.xml
+[root@room9pc01 images]# virsh start local
+[root@room9pc01 images]# virsh console local
+步骤二：guestmount实现离线访问
+
+基本用法：guestmount -a 虚拟机磁盘路径 -i /挂载点
+-a：指定虚拟磁盘
+-i：挂载点
+
+===========================
+
+iproute2 ip 命令常用备忘
+ip地址管理
+    1.显示ip地址
+        ip a
+        ip address show
+        ip addr show dev eth0
+        ip a sh eth0
+    2.增加删除地址
+        ip address add 192.0.2.1/24 dev eth0
+        ip addr del 192.0.2.2/24 dev eth0
+    3.显示接口统计
+        ip -s link ls eth0
+网卡和链路配置
+    4.显示链路
+        ip link show
+        ip link sh eth0
+    4.修改接口状态
+        ip link set eth0 up
+        ip link s gre01 down
+路由表管理
+    5.显示路由表
+        ip route
+        ip ro show dev gre01
+    6.增加新路由
+        ip route add 10.2.2.128/27 dev gre01
+    7.增加默认路由
+        ip route add default via 192.168.1.1
+    8.修改默认路由
+        ip route chg default via 192.168.1.2
+    9.删除默认路由
+        ip route del default
+隧道配置
+    10.增加删除GRE隧道
+        ip tunnel add gre01 mode gre local 10.1.1.1 remote 20.2.2.1 ttl 255
+        ip tunnel del gre01
+    11.IPIP隧道
+        ip tunl a ipip01 mode ipip local 10.1.1.1 remote 20.2.2.1 ttl 255
+    12.显示隧道
+        ip tunnel show
+    13.显示隧道统计
+        ip -s tunl ls gre01
+邻居和arp表管理
+    13.查看arp表
+        ip neigh show
+    14.手工增加删除arp项
+        ip neighbor add 10.2.2.2 dev eth0
+        ip neigh del 10.2.2.1 dev eth0
+socket统计
+    15.显示当前监听
+        ss -l
+    15.显示当前监听的进程
+        ss -p
+
+#常用命令
+    ip link show                             #显示链路
+    ip addr show                             #显示地址(或ifconfig)
+    ip route show                            #显示路由(route -n)
+    ip neigh show                            #显示arp表(ping 192.168.95.50，如果主机在同一局域网内，直接加到arp表)
+    ip neigh delete 192.168.95.50 dev eth0   #删除arp条目，条目仍然存在状态为stale，下次通信需要确认
+    ip rule show                             #显示缺省规则
+    ip route del default dev eth0            #删除接口路由
+    ip route show table local                #查看本地静态路由
+    ip route show table main                 #查看直连路由
+
+#添加静态路由
+    ip route add 10.0.0.0/24 via 192.168.92.129
+    ip route add 10.10.10.10 via 192.168.92.129
+    
+    ip route add 172.31.100.0/24 dev eno16777736
+    ip route add 172.32.0.2 dev eno16777736
+
+#查看路由表
+    [root@localhost ~]# ip route show table main
+
+#删除
+    ip route del 10.0.0.0/24
+    ip route del 10.10.10.10
+    
+    ip route del 172.31.100.0/24
+    ip route del 172.32.0.2
+
+#再次查看路由表
+    [root@localhost ~]# ip route show table main
+    [root@localhost ~]# ip route show table local
+
+#添加网卡别名
+    ip addr add 192.168.0.11/24 dev eno16777736
+
+#查看下网卡，别名没有产生，而是直接继承
+    [root@localhost ~]# ip addr show eno16777736
+       
+#添加网卡别名并添加标记    label
+ip addr add 192.168.1.2 label eno16777736:0 dev eno16777736
+
+#查看下，多了eno16777736:0
+    ip addr show eno16777736
+     
+    [root@localhost ~]# ip addr add 192.168.55.191/24 label eth0:1 dev eth0
+    [root@localhost ~]# ip addr show
+
+
+===========================================
+CPU配置信息：
+frank@ubuntu:~/test/python$ cat /proc/cpuinfo
+    processor       : 0                                                #系统中逻辑处理核的编号
+    vendor_id       : GenuineIntel                                    #CPU制造商
+    cpu family      : 6                                                #CPU产品系列代号
+    model           : 79                                            #CPU属于其系列中的哪一代的代号
+    model name      : Intel(R) Xeon(R) CPU E5-2630 v4 @ 2.20GHz        #CPU属于的名字及其编号、标称主频
+    stepping        : 1                                                #CPU属于制作更新版本
+    microcode       : 0xb00001f
+    cpu MHz         : 2199.900                                        #CPU的实际使用主频
+    cache size      : 25600 KB                                        #CPU二级缓存大小
+    physical id     : 0                                                #单个CPU的标号
+    siblings        : 20                                            #一个物理CPU中的逻辑核数
+    core id         : 0                                                #当前物理核在其所处CPU中的编号，这个编号不一定连续
+    cpu cores       : 10                                            #一个物理CPU中的物理核数
+    apicid          : 0                                                #用来区分不同逻辑核的编号，系统中每个逻辑核的此编号必然不同，此编号不一定连续
+    initial apicid  : 0
+    fpu             : yes
+    fpu_exception   : yes
+    cpuid level     : 20
+    wp              : yes
+    flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch ida arat epb xsaveopt pln pts dtherm tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm rdseed adx smap
+    bogomips        : 4399.80
+    clflush size    : 64
+    cache_alignment : 64
+    address sizes   : 46 bits physical, 48 bits virtual
+    power management:
+
+物理CPU个数：        cat /proc/cpuinfo |grep "physical id"|sort |uniq|wc -l
+每个CPU物理核数：    cat /proc/cpuinfo |grep "cpu cores"|uniq
+每个CPU逻辑核数：    cat /proc/cpuinfo |grep "siblings"|uniq
+总CPU逻辑核数：        cat /proc/cpuinfo |grep -c "processor"
+我的服务器是两个芯片组，每个芯片组是10核，支持超线程，所以逻辑CPU是40。
+超线程指物理内核+逻辑内核，芯片上只存在一个物理内核，但是这个物理内核可以模拟出一个逻辑内核，于是系统信息就显示了两个内核，一真一假。
+复制代码
+复制代码
+1.查看内存槽数、哪个槽位插了内存，大小是多少
+    frank@ubuntu:~/test$ sudo dmidecode|grep -P -A5 "Memory Device" |grep Size
+        Size: 32 GB
+  ................
+
+2.查看最大支持内存数
+    frank@ubuntu:~/test$ sudo dmidecode -t memory |grep "Maximum Capacity"
+        Maximum Capacity: 3 TB
+        
+3.查看内存速率
+    frank@ubuntu:~/test$ sudo dmidecode|grep -A16 "Memory Device"|grep 'Speed'
+
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
+2
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"| sort| uniq
+physical id	: 0     #单个CPU的标号
+physical id	: 1     #单个CPU的标号
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"| sort
+physical id	: 0
+physical id	: 1
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"
+physical id	: 0
+physical id	: 1
+[root@docker1 ~]# cat /proc/cpuinfo
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz
+stepping	: 3
+microcode	: 0x1
+cpu MHz		: 3191.984
+cache size	: 4096 KB
+physical id	: 0       #单个CPU的标号0
+siblings	: 1       #单个CPU的标号1
+core id		: 0
+cpu cores	: 1
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl eagerfpu pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1
+bogomips	: 6383.96
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 94
+model name	: Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz
+stepping	: 3
+microcode	: 0x1
+cpu MHz		: 3191.984
+cache size	: 4096 KB
+physical id	: 1
+siblings	: 1
+core id		: 0                                                     ★ --虚拟机--★ 
+cpu cores	: 1
+apicid		: 1
+initial apicid	: 1
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl eagerfpu pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1
+bogomips	: 6383.96
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 39 bits physical, 48 bits virtual
+power management:
+
+[root@docker1 ~]# 
+
+==================
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+CentOS7-1708.repo     packagekit-media.repo  RHEL7-extras.repo  rhel7.repo
+NSD-2018-1-12.tar.gz  repo                   RHEL7OSP.repo
+
+[root@hiys ~]# yum clean all >/dev/null && yum repolist |tail -17
+..........................................
+源标识                                    源名称                                               状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+rhel7                            rhel7.4                                   4,986
+repolist: 15,717
+
+[root@hiys ~]# tail -3 /etc/fstab 
+UUID=a1bc4085-ad0a-443c-9d62-00d84a1a2e3c /var/lib/libvirt/images ext4    defaults    1   2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+UUID=1ae681d3-b6db-4609-bed8-f78295a292cb  /javaweb           ext4     defaults    0   0
+
+[root@hiys ~]# tail -3 /etc/rc.local 
+mount  -t  iso9660  -o loop,ro  /var/lib/libvirt/images/iso/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+mount -t iso9660  -o  loop,ro  /var/lib/libvirt/images/iso/RHEL7-extras.iso   /var/ftp/RHEL7-extras/
+mount  -t  iso9660 -o loop,ro  /var/lib/libvirt/images/iso/RHEL7OSP-10.iso  /var/ftp/RHEL7OSP/
+
+[root@hiys ~]# ls /var/ftp/
+CentOS7-1708  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# mkdir  /var/ftp/docker
+
+[root@hiys ~]# ls
+anaconda-ks.cfg                                       nsd1807           图片
+bin                                                   original-ks.cfg   文档
+CentOS7-1708.iso                                      RHEL7-extras.iso  下载
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          RHEL7OSP-10.iso   音乐
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  公共              桌面
+docker_images.zip                                     模板
+initial-setup-ks.cfg                                  视频
+
+[root@hiys ~]# virsh list  --all
+ Id    名称                         状态
+----------------------------------------------------
+ -     nova01                         关闭
+ -     openstack                      关闭
+
+[root@hiys ~]# cd /etc/libvirt/qemu/;ls
+autostart  networks  nova01.xml  openstack.xml
+[root@hiys qemu]# cp openstack.xml  docker1.xml
+[root@hiys qemu]# cp  docker1.xml  docker2.xml
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml
+
+[root@hiys qemu]# > docker1.xml
+[root@hiys qemu]# vim docker1.xml
+[root@hiys qemu]# cat docker1.xml
+<domain type='kvm'>
+  <name>docker1</name>
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/docker1.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-docker1.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# 
+ 
+[root@hiys qemu]# vim docker2.xml
+[root@hiys qemu]# cat docker2.xml
+<domain type='kvm'>
+  <name>docker2</name>
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/docker2.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-docker2.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# cd /var/lib/libvirt/images/;ls
+bin       disk-nova01.img     node.qcow2     tedu-wallpaper-01.png
+conf.d    disk-openstack.img  nova01.img     tedu-wallpaper-weekend.png
+content   exam                openstack.img  vsftpd.conf
+db        iso                 qemu           Weekend.sh
+disk.img  lost+found          Student.sh
+
+[root@hiys images]# qemu-img  create -b node.qcow2 -f qcow2  docker1.img  18G
+Formatting 'docker1.img', fmt=qcow2 size=19327352832 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create -b node.qcow2 -f qcow2  docker2.img  18G
+Formatting 'docker2.img', fmt=qcow2 size=19327352832 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+
+[root@hiys images]# qemu-img  create  -f qcow2  disk-docker1.img  16G
+Formatting 'disk-docker1.img', fmt=qcow2 size=17179869184 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create  -f qcow2  disk-docker2.img  16G
+Formatting 'disk-docker2.img', fmt=qcow2 size=17179869184 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ls
+bin               disk.img            iso            Student.sh
+conf.d            disk-nova01.img     lost+found     tedu-wallpaper-01.png
+content           disk-openstack.img  node.qcow2     tedu-wallpaper-weekend.png
+db                docker1.img         nova01.img     vsftpd.conf
+disk-docker1.img  docker2.img         openstack.img  Weekend.sh
+disk-docker2.img  exam                qemu
+
+[root@hiys images]#  pwd
+/var/lib/libvirt/images
+[root@hiys images]# cd
+[root@hiys ~]# virsh define /etc/libvirt/qemu/docker1.xml 
+定义域 docker1（从 /etc/libvirt/qemu/docker1.xml）
+
+[root@hiys ~]# virsh define /etc/libvirt/qemu/docker2.xml 
+定义域 docker2（从 /etc/libvirt/qemu/docker2.xml）
+
+[root@hiys ~]# virsh start docker1
+域 docker1 已开始
+
+[root@hiys ~]# virsh start docker2
+域 docker2 已开始
+
+[root@hiys ~]# 
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.141  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)
+        RX packets 92  bytes 6561 (6.4 KiB)
+        RX errors 0  dropped 8  overruns 0  frame 0
+        TX packets 16  bytes 1612 (1.5 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@localhost ~]# [  104.269165] random: crng init done
+
+[root@localhost ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  16G  0 disk 
+[root@localhost ~]# echo docker2 > /etc/hostname 
+[root@localhost ~]# reboot
+
+
+
+
+
+~
+[root@localhost ~]# cat /etc/hostname 
+docker1
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.120  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:43:2b:e7  txqueuelen 1000  (Ethernet)
+        RX packets 258  bytes 15923 (15.5 KiB)
+        RX errors 0  dropped 8  overruns 0  frame 0
+        TX packets 26  bytes 2320 (2.2 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@localhost ~]# lsblk 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  16G  0 disk 
+[root@localhost ~]# reboot
+
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+CentOS7-1708.repo     packagekit-media.repo  RHEL7-extras.repo  rhel7.repo
+NSD-2018-1-12.tar.gz  repo                   RHEL7OSP.repo
+[root@hiys ~]# cat /etc/yum.repos.d/CentOS7-1708.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://176.121.213.151/CentOS7-1708/
+enabled=1
+[root@hiys ~]# 
+
+[root@hiys ~]# ls /var/ftp/
+CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+[root@hiys ~]# ls 
+anaconda-ks.cfg                                       nsd1807           图片
+bin                                                   original-ks.cfg   文档
+CentOS7-1708.iso                                      RHEL7-extras.iso  下载
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          RHEL7OSP-10.iso   音乐
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  公共              桌面
+docker_images.zip                                     模板
+initial-setup-ks.cfg                                  视频
+[root@hiys ~]# which createrepo 
+/usr/bin/createrepo
+
+[root@hiys ~]# cp docker-engine-*  /var/ftp/docker/
+[root@hiys ~]# ls /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@hiys ~]# createrepo  /var/ftp/docker/  ## 手动创建 yum 仓库
+
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Spawning worker 2 with 0 pkgs
+Spawning worker 3 with 0 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+[root@hiys ~]# ls /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          repodata
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+[root@hiys ~]# ls /var/ftp/docker/repodata/
+026303f3cf9f568bac1c1891781b5a82942e6c84d6f3446c3613d1a6ace2970c-other.xml.gz
+0ae42294d8fbec52d0ec8b7b31f01e566f6f377b92ef62ea228067795eb8755e-other.sqlite.bz2
+1cf5bbd25933db08f586bdd47f88d58f1c208b232039cdef82d21c2fa806d868-primary.sqlite.bz2
+2fd22c43b9ed4e248e0b8d523a386d6fe1f2b17ac801f64285ded73346274296-primary.xml.gz
+5f6b4af6747c92c905fc1f0095171ec14eb6ba486b1329b52de763230e8d3047-filelists.xml.gz
+ab9fdf7c9e8ec7bb6f48620fdde1377a1e8002d2a0cf585e5bf42b13bb013d70-filelists.sqlite.bz2
+repomd.xml
+[root@hiys ~]# 
+
+
+[root@hiys ~]# ssh -X 192.168.1.120                                       ★ --虚拟机--★ 
+The authenticity of host '192.168.1.120 (192.168.1.120)' can't be established.
+ECDSA key fingerprint is SHA256:v0gcYquUmcYPhE7/4aAJDiFIDmDkeBVHcrX0vW2PSFw.
+ECDSA key fingerprint is MD5:1c:df:9d:c7:f7:d1:3a:6f:ea:39:4e:87:36:e9:66:3a.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.1.120' (ECDSA) to the list of known hosts.
+root@192.168.1.120's password: a
+X11 forwarding request failed on channel 0                                ★ --虚拟机--★ 
+Last login: Mon Nov 19 10:27:53 2018
+[root@docker1 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.120  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:43:2b:e7  txqueuelen 1000  (Ethernet)              ★ --虚拟机--★ 
+        RX packets 200  bytes 15263 (14.9 KiB)
+        RX errors 0  dropped 8  overruns 0  frame 0
+        TX packets 55  bytes 7515 (7.3 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker1 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  16G  0 disk 
+[root@docker1 ~]# 
+[root@docker1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0 
+[root@docker1 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"  ## 禁用NetworkManager
+TYPE="Ethernet"
+
+BOOTPROTO="static"
+IPADDR="192.168.1.10"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@docker1 ~]# systemctl restart network
+
+[root@hiys ~]# ssh -X 192.168.1.10                                        ★ --虚拟机--★ 
+root@192.168.1.10's password: a
+X11 forwarding request failed on channel 0                                ★ --虚拟机--★ 
+Last login: Mon Nov 19 10:30:19 2018 from 192.168.1.254
+[root@docker1 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.10  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:43:2b:e7  txqueuelen 1000  (Ethernet)
+        RX packets 904  bytes 65014 (63.4 KiB)
+        RX errors 0  dropped 40  overruns 0  frame 0
+        TX packets 289  bytes 37772 (36.8 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker1 ~]# 
+
+[root@docker1 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+[root@docker1 ~]# vim /etc/yum.repos.d/local.repo 
+[root@docker1 ~]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/                                 ★ --虚拟机--★ 
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@docker1 ~]# yum clean all >/dev/null && yum repolist 
+已加载插件：fastestmirror
+CentOS7-1708                                                      | 3.6 kB  00:00:00     
+docker                                                            | 2.9 kB  00:00:00     
+(1/3): CentOS7-1708/group_gz                                      | 156 kB  00:00:00     
+(2/3): CentOS7-1708/primary_db                                    | 5.7 MB  00:00:00     
+(3/3): docker/primary_db                                          | 3.4 kB  00:00:00     
+Determining fastest mirrors
+源标识                                    源名称                                    状态
+CentOS7-1708                              CentOS7-1708                              9,591
+docker                                    docker                                        2
+repolist: 9,593
+
+[root@docker1 ~]# yum list |grep docker-engine                            ★ --虚拟机--★ 
+docker-engine.x86_64                     1.12.1-1.el7.centos        docker      
+docker-engine-selinux.noarch             1.12.1-1.el7.centos        docker      
+[root@docker1 ~]# yum -y  install docker-engine
+
+已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                              ★ --虚拟机--★  
+
+作为依赖被安装:
+  audit-libs-python.x86_64 0:2.7.6-3.el7                                                 
+  checkpolicy.x86_64 0:2.5-4.el7                                                         
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                                     
+  libcgroup.x86_64 0:0.41-13.el7                                                         
+  libsemanage-python.x86_64 0:2.5-8.el7                                                  
+  libtool-ltdl.x86_64 0:2.4.2-22.el7_3                                                   
+  policycoreutils-python.x86_64 0:2.5-17.1.el7                                           
+  python-IPy.noarch 0:0.75-6.el7                                                         
+  setools-libs.x86_64 0:3.3.8-1.1.el7                                                    
+
+完毕！
+[root@docker1 ~]# systemctl restart docker
+[root@docker1 ~]# echo $?
+0
+[root@docker1 ~]# systemctl enable docker
+Created symlink from /etc/systemd/system/multi-user.target.wants/docker.service to /usr/lib/systemd/system/docker.service.
+[root@docker1 ~]# ifconfig 
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:1c:7e:3d:7b  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)                                     ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.10  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:43:2b:e7  txqueuelen 1000  (Ethernet)
+        RX packets 3656  bytes 28103141 (26.8 MiB)
+        RX errors 0  dropped 778  overruns 0  frame 0
+        TX packets 1909  bytes 210431 (205.4 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker1 ~]# which docker
+/usr/bin/docker
+[root@docker1 ~]# docker version
+Client:
+ Version:      1.12.1
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   23cf638
+ Built:        
+ OS/Arch:      linux/amd64
+
+Server:
+ Version:      1.12.1
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   23cf638
+ Built:        
+ OS/Arch:      linux/amd64
+[root@docker1 ~]# docker --help
+Usage: docker [OPTIONS] COMMAND [arg...]
+       docker [ --help | -v | --version ]
+
+A self-sufficient runtime for containers.
+
+Options:
+
+  --config=~/.docker              Location of client config files
+  -D, --debug                     Enable debug mode
+  -H, --host=[]                   Daemon socket(s) to connect to
+  -h, --help                      Print usage
+  -l, --log-level=info            Set the logging level
+  --tls                           Use TLS; implied by --tlsverify
+  --tlscacert=~/.docker/ca.pem    Trust certs signed only by this CA
+  --tlscert=~/.docker/cert.pem    Path to TLS certificate file
+  --tlskey=~/.docker/key.pem      Path to TLS key file
+  --tlsverify                     Use TLS and verify the remote
+  -v, --version                   Print version information and quit
+
+Commands:
+    attach    Attach to a running container
+    build     Build an image from a Dockerfile
+    commit    Create a new image from a container's changes
+    cp        Copy files/folders between a container and the local filesystem
+    create    Create a new container
+    diff      Inspect changes on a container's filesystem
+    events    Get real time events from the server
+    exec      Run a command in a running container
+    export    Export a container's filesystem as a tar archive
+    history   Show the history of an image
+    images    List images
+    import    Import the contents from a tarball to create a filesystem image
+    info      Display system-wide information
+    inspect   Return low-level information on a container, image or task
+    kill      Kill one or more running containers
+    load      Load an image from a tar archive or STDIN
+    login     Log in to a Docker registry.
+    logout    Log out from a Docker registry.
+    logs      Fetch the logs of a container
+    network   Manage Docker networks
+    node      Manage Docker Swarm nodes
+    pause     Pause all processes within one or more containers
+    port      List port mappings or a specific mapping for the container
+    ps        List containers
+    pull      Pull an image or a repository from a registry
+    push      Push an image or a repository to a registry
+    rename    Rename a container
+    restart   Restart a container                                         ★ --虚拟机--★ 
+    rm        Remove one or more containers
+    rmi       Remove one or more images
+    run       Run a command in a new container
+    save      Save one or more images to a tar archive (streamed to STDOUT by default)
+    search    Search the Docker Hub for images
+    service   Manage Docker services
+    start     Start one or more stopped containers
+    stats     Display a live stream of container(s) resource usage statistics
+    stop      Stop one or more running containers
+    swarm     Manage Docker Swarm
+    tag       Tag an image into a repository
+    top       Display the running processes of a container
+    unpause   Unpause all processes within one or more containers
+    update    Update configuration of one or more containers
+    version   Show the Docker version information
+    volume    Manage Docker volumes
+    wait      Block until a container stops, then print its exit code
+
+Run 'docker COMMAND --help' for more information on a command.
+
+[root@docker1 ~]#                                                         ★ --虚拟机--★ 
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+[root@docker1 ~]# docker search 
+"docker search" requires exactly 1 argument(s).
+See 'docker search --help'.
+
+Usage:  docker search [OPTIONS] TERM
+
+Search the Docker Hub for images
+
+[root@docker1 ~]# docker search  busybox  # 查找busybox镜像
+
+NAME                        DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+busybox                     Busybox base image.                             1414      [OK]       
+progrium/busybox                                                            68                   [OK]
+hypriot/rpi-busybox-httpd   Raspberry Pi compatible Docker Image with ...   44                   
+radial/busyboxplus          Full-chain, Internet enabled, busybox made...   20                   [OK]
+hypriot/armhf-busybox       Busybox base image for ARM.                     9                    
+arm32v7/busybox             Busybox base image.                             6                    
+yauritux/busybox-curl       Busybox with CURL                               5                    
+armhf/busybox               Busybox base image.                             4                    
+prom/busybox                Prometheus Busybox Docker base images           2                    [OK]
+p7ppc64/busybox             Busybox base image for ppc64.                   2                    
+armel/busybox               Busybox base image.                             2                    
+odise/busybox-curl                                                          2                    [OK]
+s390x/busybox               Busybox base image.                             2                    
+onsi/grace-busybox                                                          2                    
+i386/busybox                Busybox base image.                             2                    
+aarch64/busybox             Busybox base image.                           ★ --虚拟机--★          
+arm64v8/busybox             Busybox base image.                             1                    
+spotify/busybox             Spotify fork of https://hub.docker.com/_/b...   1                    
+ppc64le/busybox             Busybox base image.                             1                    
+amd64/busybox               Busybox base image.                             0                    
+concourse/busyboxplus                                                       0                    
+trollin/busybox                                                             0                    
+sou856099/busybox                                                           0                    
+ggtools/busybox-ubuntu      Busybox ubuntu version with extra goodies       0                    [OK]
+cfgarden/garden-busybox  
+                                                   0                    
+[root@docker1 ~]#  docker  pull busybox   下载镜像
+Using default tag: latest
+latest: Pulling from library/busybox
+90e01955edcd: Pull complete 
+Digest: sha256:2a03a6059f21e150ae84b0973863609494aad70f0a80eaeb64bddd8d92465812
+Status: Downloaded newer image for busybox:latest
+
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+
+[root@docker1 ~]# docker  push  busybox  上传镜像
+
+The push refers to a repository [docker.io/library/busybox]
+8a788232037e: Layer already exists 
+unauthorized: authentication required
+
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+
+[root@docker1 ~]# lsblk 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+
+[root@docker1 ~]# vim /etc/hosts
+[root@docker1 ~]# tail -2 /etc/hosts
+192.168.1.10    docker1
+192.168.1.20    docker2
+
+[root@docker1 ~]# docker images  # 查看镜像
+REPOSITORY          TAG                 IMAGE ID            CREATED       ★ --虚拟机--★ 
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+
+[root@docker1 ~]# docker  save busybox:latest
+Cowardly refusing to save to a terminal. Use the -o flag or redirect.
+
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+
+[root@docker1 ~]# docker  save busybox:latest >busybox.abc  # 导出busybox镜像为busybox.tar
+[root@docker1 ~]# ls                                                      ★ --虚拟机--★ 
+busybox.abc  eip
+
+[root@docker1 ~]# file busybox.abc
+busybox.abc: POSIX tar archive
+
+[root@docker1 ~]# rm  -f busybox.abc
+[root@docker1 ~]# ls
+eip
+[root@docker1 ~]# docker  save busybox:latest >busybox.tar
+[root@docker1 ~]# ls
+busybox.tar  eip
+
+[root@docker1 ~]# file  busybox.tar
+busybox.tar: POSIX tar archive
+
+[root@docker1 ~]# scp busybox.tar 192.168.1.20:/root/
+
+Are you sure you want to continue connecting (yes/no)? yes
+
+root@192.168.1.20's password: a
+busybox.tar                                            100% 1347KB  37.3MB/s   00:00    
+
+[root@docker1 ~]# ls
+busybox.tar  eip
+[root@docker1 ~]# docker  images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+
+[root@docker1 ~]# cp /etc/sysconfig/network-scripts/ifcfg-eth0   \ 
+> /etc/sysconfig/network-scripts/ifcfg-eth1
+
+[root@docker1 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth1
+
+[root@docker1 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth1
+# Generated by dracut initrd                                              ★ --虚拟机--★ 
+DEVICE="eth1"                                                             ★ --虚拟机--★ 
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+
+BOOTPROTO="static"
+IPADDR="192.168.4.10"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@docker1 ~]# ifconfig eth1
+eth1: flags=4098<BROADCAST,MULTICAST>  mtu 1500
+        ether 52:54:00:24:ea:f7  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker1 ~]# systemctl restart network
+[root@docker1 ~]# ifconfig 
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:1c:7e:3d:7b  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.10  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:43:2b:e7  txqueuelen 1000  (Ethernet)
+        RX packets 20988  bytes 288770158 (275.3 MiB)
+        RX errors 0  dropped 778  overruns 0  frame 0
+        TX packets 17857  bytes 3008904 (2.8 MiB)                         ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.10  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:24:ea:f7  txqueuelen 1000  (Ethernet)
+        RX packets 1260  bytes 65628 (64.0 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0                       ★ --虚拟机--★ 
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker1 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@docker1 ~]# 
+
+
+
+===========================  docker2 =================================
+
+[root@hiys ~]# ssh -X 192.168.1.141                                       ★ --虚拟机--★ 
+
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.1.141' (ECDSA) to the list of known hosts.
+root@192.168.1.141's password: a
+
+[root@docker2 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.141  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)              ★ --虚拟机--★ 
+        RX packets 203  bytes 15055 (14.7 KiB)
+        RX errors 0  dropped 7  overruns 0  frame 0
+        TX packets 52  bytes 7141 (6.9 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker2 ~]# lsblk 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  16G  0 disk 
+
+[root@docker2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0 
+[root@docker2 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+
+BOOTPROTO="static"
+IPADDR="192.168.1.20"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@docker2 ~]# systemctl restart network
+
+[root@hiys ~]# ssh -X 192.168.1.20                                        ★ --虚拟机--★ 
+The authenticity of host '192.168.1.20 (192.168.1.20)' can't be established.
+ECDSA key fingerprint is SHA256:v0gcYquUmcYPhE7/4aAJDiFIDmDkeBVHcrX0vW2PSFw.
+ECDSA key fingerprint is MD5:1c:df:9d:c7:f7:d1:3a:6f:ea:39:4e:87:36:e9:66:3a.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.1.20' (ECDSA) to the list of known hosts.
+root@192.168.1.20's password: a
+X11 forwarding request failed on channel 0                                ★ --虚拟机--★ 
+Last login: Mon Nov 19 10:31:01 2018 from 192.168.1.254
+[root@docker2 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.20  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)
+        RX packets 1018  bytes 68866 (67.2 KiB)
+        RX errors 0  dropped 30  overruns 0  frame 0
+        TX packets 296  bytes 37942 (37.0 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker2 ~]# ls /etc/yum.repos.d/
+local.repo                                                                ★ --虚拟机--★ 
+
+[root@docker2 ~]# vim /etc/yum.repos.d/local.repo 
+[root@docker2 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 et★ --虚拟机--★ 
+[root@docker2 ~]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@docker2 ~]# yum clean all >/dev/null && yum repolist |tail -7
+已加载插件：fastestmirror
+Determining fastest mirrors
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+docker                               docker                                    2
+repolist: 9,593
+
+[root@docker2 ~]# yum -y install docker-engine
+
+  验证中      : setools-libs-3.3.8-1.1.el7.x86_64                                  10/10 
+                                                                          ★ --虚拟机--★ 
+已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                                             
+
+作为依赖被安装:
+  audit-libs-python.x86_64 0:2.7.6-3.el7                                                 
+  checkpolicy.x86_64 0:2.5-4.el7                                                         
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                                     
+  libcgroup.x86_64 0:0.41-13.el7                                                         
+  libsemanage-python.x86_64 0:2.5-8.el7                                                  
+  libtool-ltdl.x86_64 0:2.4.2-22.el7_3                                                   
+  policycoreutils-python.x86_64 0:2.5-17.1.el7                                           
+  python-IPy.noarch 0:0.75-6.el7                                                         
+  setools-libs.x86_64 0:3.3.8-1.1.el7                                                    
+
+完毕！
+[root@docker2 ~]# systemctl restart docker
+[root@docker2 ~]# systemctl enable docker
+Created symlink from /etc/systemd/system/multi-user.target.wants/docker.service to /usr/lib/systemd/system/docker.service.
+[root@docker2 ~]# ifconfig 
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:ff:a7:71:4e  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)                                     ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.20  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)
+        RX packets 3497  bytes 28089572 (26.7 MiB)
+        RX errors 0  dropped 617  overruns 0  frame 0
+        TX packets 1879  bytes 207011 (202.1 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker2 ~]# 
+[root@docker2 ~]# docker --help |grep version                             ★ --虚拟机--★ 
+       docker [ --help | -v | --version ]
+  -v, --version                   Print version information and quit
+    version   Show the Docker version information
+
+[root@docker2 ~]# docker version
+Client:
+ Version:      1.12.1
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   23cf638
+ Built:        
+ OS/Arch:      linux/amd64
+
+Server:
+ Version:      1.12.1
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   23cf638
+ Built:        
+ OS/Arch:      linux/amd64
+
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+[root@docker2 ~]# ls
+eip
+[root@docker2 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+
+[root@docker2 ~]# vim /etc/hosts
+[root@docker2 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.10    docker1
+192.168.1.20    docker2
+
+[root@docker2 ~]# 
+[root@docker2 ~]# docker help  images 
+
+Usage:	docker images [OPTIONS] [REPOSITORY[:TAG]]
+
+List images
+
+Options:
+  -a, --all             Show all images (default hides intermediate images)
+      --digests         Show digests
+  -f, --filter value    Filter output based on conditions provided (default [])
+      --format string   Pretty-print images using a Go template
+      --help            Print usage
+      --no-trunc        Don't truncate output
+  -q, --quiet           Only show numeric IDs
+
+[root@docker2 ~]# ls
+busybox.tar  eip
+[root@docker2 ~]# docker  images 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+
+[root@docker2 ~]# docker  load < busybox.tar  # 导入镜像
+8a788232037e: Loading layer  1.37 MB/1.37 MB
+Loaded image: busybox:latest
+
+[root@docker2 ~]# ls
+busybox.tar  eip
+[root@docker2 ~]# docker  images 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+[root@docker2 ~]# 
+ [root@docker2 ~]# cp /etc/sysconfig/network-scripts/ifcfg-eth0  /etc/sysconfig/network-scripts/ifcfg-eth1
+[root@docker2 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth1
+[root@docker2 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth1
+# Generated by dracut initrd
+DEVICE="eth1"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+
+BOOTPROTO="static"
+IPADDR="192.168.4.20"
+PREFIX=24
+GATEWAY=192.168.1.254
+
+[root@docker2 ~]# ifconfig -a
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:ff:a7:71:4e  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.20  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)
+        RX packets 18805  bytes 289263562 (275.8 MiB)
+        RX errors 0  dropped 617  overruns 0  frame 0                     ★ --虚拟机--★ 
+        TX packets 16014  bytes 1443679 (1.3 MiB)                         ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4098<BROADCAST,MULTICAST>  mtu 1500
+        ether 52:54:00:6d:7e:8e  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker2 ~]# systemctl restart network
+[root@docker2 ~]# ifconfig 
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:ff:a7:71:4e  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.20  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)
+        RX packets 18940  bytes 289273178 (275.8 MiB)
+        RX errors 0  dropped 617  overruns 0  frame 0
+        TX packets 16090  bytes 1452863 (1.3 MiB)                         ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.20  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:6d:7e:8e  txqueuelen 1000  (Ethernet)
+        RX packets 1261  bytes 65680 (64.1 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0        ★ --虚拟机--★ 
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker2 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+[root@docker2 ~]# 
+
+
+
+
+
+
+=====================================================
+[root@hiys ~]# ls /var/ftp/
+CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# ls /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          repodata
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@hiys ~]# scp -o StrictHostKeyChecking=no docker_images.zip  root@192.168.1.10:/root/
+root@192.168.1.10's password: a
+docker_images.zip                                         100%  246MB 161.1MB/s   00:01    
+[root@hiys ~]# scp -o StrictHostKeyChecking=no docker_images.zip  root@192.168.1.20:/root/
+root@192.168.1.20's password: a
+docker_images.zip                                         100%  246MB 179.1MB/s   00:01    
+[root@hiys ~]# 
+
+
+========================= docker 1 ===========================
+
+[root@docker1 ~]# docker  images                                          ★ --虚拟机--★ 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago   ★ --虚拟机--★ 
+[root@docker1 ~]# yum list |grep unzip
+unzip.x86_64                             6.0-16.el7                 @anaco★ --虚拟机--★ 
+[root@docker1 ~]# ls
+busybox.tar  docker_images.zip  eip                                       ★ --虚拟机--★ 
+[root@docker1 ~]# yum -y install unzip |tail -4
+已加载插件：fastestmirror
+Loading mirror speeds from cached hostfile
+软件包 unzip-6.0-16.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@docker1 ~]# unzip docker_images.zip 
+Archive:  docker_images.zip
+   creating: docker_images/
+  inflating: docker_images/nginx.tar  
+  inflating: docker_images/redis.tar  
+  inflating: docker_images/centos.tar  
+  inflating: docker_images/registry.tar  
+  inflating: docker_images/ubuntu.tar  
+[root@docker1 ~]# ls
+busybox.tar  docker_images  docker_images.zip  eip
+[root@docker1 ~]# ls docker_images/ |wc -l
+5
+[root@docker1 ~]# ls docker_images/ 
+centos.tar  nginx.tar  redis.tar  registry.tar  ubuntu.tar
+
+[root@docker1 ~]# for i in docker_images/*  # 导入镜像
+> do docker  load < ${i}
+> done
+43e653f84b79: Loading layer 207.2 MB/207.2 MB
+Loaded image: centos:latest
+142a601d9793: Loading layer 128.9 MB/128.9 MB
+40e298e9673a: Loading layer 60.57 MB/60.57 MB
+8d8bfe3cd5e4: Loading layer 3.584 kB/3.584 kB
+Loaded image: nginx:latest                                                ★ --虚拟机--★ 
+..............................................
+Loaded image: redis:latest
+e53f74215d12: Loading layer  5.06 MB/5.06 MB                              ★ --虚拟机--★ 
+.............................
+Loaded image: ubuntu:latest
+
+[root@docker1 ~]# lsblk                                                   ★ --虚拟机--★ 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+[root@docker1 ~]# ifconfig |awk '/inet /{print $2}';route -n 
+172.17.0.1
+192.168.1.10
+192.168.4.10
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+
+[root@docker1 ~]# yum provides dmidecode
+
+1:dmidecode-3.0-5.el7.x86_64 : Tool to analyse BIOS DMI data
+源    ：CentOS7-1708
+
+[root@docker1 ~]# yum -y install dmidecode 
+
+已安装:
+  dmidecode.x86_64 1:3.0-5.el7                                                         
+
+完毕！
+[root@docker1 ~]# rpm -q dmidecode   # 查看最大支持内存数
+dmidecode-3.0-5.el7.x86_64
+[root@docker1 ~]# which dmidecode
+/usr/sbin/dmidecode
+[root@docker1 ~]# dmidecode -t memory |grep "Maximum Capacity"
+	Maximum Capacity: 3815 MB
+
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"| sort| uniq
+physical id	: 0
+physical id	: 1
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
+2
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id" |uniq | wc -l  #查看物理CPU个数
+2
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id" |uniq 
+physical id	: 0
+physical id	: 1
+[root@docker1 ~]# cat /proc/cpuinfo| grep "physical id"
+physical id	: 0
+physical id	: 1
+[root@docker1 ~]#  
+
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker1 ~]# 
+[root@docker1 ~]# docker run  -it  centos:latest  /bin/bash
+
+[root@24e9c2180e91 /]# hostname
+24e9c2180e91
+
+[root@24e9c2180e91 /]# ls 
+anaconda-post.log  dev  home  lib64  mnt  proc  run   srv  tmp  var
+bin                etc  lib   media  opt  root  sbin  sys  usr
+[root@24e9c2180e91 /]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 06:05 ?        00:00:00 /bin/bash
+root        18     1  0 06:07 ?        00:00:00 ps -ef
+
+[root@24e9c2180e91 /]# ip address show
+bash: ip: command not found
+
+[root@24e9c2180e91 /]# cd /etc/yum.repos.d/;ls
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+
+[root@24e9c2180e91 yum.repos.d]# rpm  -q net-tools
+package net-tools is not installed
+
+[root@24e9c2180e91 yum.repos.d]# yum list |grep net-tools
+net-tools.x86_64                          2.0-0.22.20131004git.el7       base  
+ 
+[root@24e9c2180e91 yum.repos.d]# yum clean all >/dev/null && yum repolist 
+..................................
+Trying other mirror.
+Determining fastest mirrors
+ * base: centos.ustc.edu.cn
+ * extras: mirrors.zju.edu.cn
+ * updates: centos.ustc.edu.cn
+repo id                             repo name                             status
+base/7/x86_64                       CentOS-7 - Base                       9911
+extras/7/x86_64                     CentOS-7 - Extras                      434
+updates/7/x86_64                    CentOS-7 - Updates                    1614
+repolist: 11959
+
+[root@24e9c2180e91 yum.repos.d]# yum -y install net-tools
+
+Installed:
+  net-tools.x86_64 0:2.0-0.22.20131004git.el7                                                        
+
+Complete!
+[root@24e9c2180e91 yum.repos.d]# rpm  -q net-tools
+net-tools-2.0-0.22.20131004git.el7.x86_64
+
+[root@24e9c2180e91 yum.repos.d]# yum provides ifconfig
+
+Loaded plugins: fastestmirror, ovl
+Loading mirror speeds from cached hostfile
+ * base: centos.ustc.edu.cn
+ * extras: mirrors.zju.edu.cn
+ * updates: centos.ustc.edu.cn
+base/7/x86_64/filelists_db                                                    | 6.9 MB  00:00:10     
+extras/7/x86_64/filelists_db                                                  | 603 kB  00:00:00     
+updates/7/x86_64/filelists_db                                                 | 3.4 MB  00:00:03     
+net-tools-2.0-0.22.20131004git.el7.x86_64 : Basic networking tools
+Repo        : base
+Matched from:
+Filename    : /sbin/ifconfig
+
+net-tools-2.0-0.22.20131004git.el7.x86_64 : Basic networking tools
+Repo        : @base
+Matched from:
+Filename    : /sbin/ifconfig
+
+net-tools-2.0-0.22.20131004git.el7.x86_64 : Basic networking tools
+Repo        : @base
+Matched from:
+Filename    : /usr/sbin/ifconfig
+
+[root@24e9c2180e91 yum.repos.d]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:2  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+        RX packets 21233  bytes 38739503 (36.9 MiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 16874  bytes 1244291 (1.1 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@24e9c2180e91 yum.repos.d]# yum provides ip
+Loaded plugins: fastestmirror, ovl
+Loading mirror speeds from cached hostfile
+ * base: centos.ustc.edu.cn
+ * extras: mirrors.zju.edu.cn
+ * updates: centos.ustc.edu.cn
+iproute-4.11.0-14.el7.x86_64 : Advanced IP routing and network device configuration tools
+Repo        : base
+Matched from:
+Filename    : /sbin/ip
+
+iproute-4.11.0-14.el7.x86_64 : Advanced IP routing and network device configuration tools
+Repo        : base
+Matched from:
+Filename    : /usr/sbin/ip
+
+[root@24e9c2180e91 yum.repos.d]# yum -y install iproute 
+
+Installed:
+  iproute.x86_64 0:4.11.0-14.el7                                                                     
+
+Dependency Installed:
+  iptables.x86_64 0:1.4.21-24.1.el7_5                     libmnl.x86_64 0:1.0.3-7.el7                
+  libnetfilter_conntrack.x86_64 0:1.0.6-1.el7_3           libnfnetlink.x86_64 0:1.0.1-4.el7          
+
+Complete!
+[root@24e9c2180e91 yum.repos.d]# ip  address show
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+5: eth0@if6: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 172.17.0.2/16 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:acff:fe11:2/64 scope link 
+       valid_lft forever preferred_lft forever
+
+[root@24e9c2180e91 yum.repos.d]# ls
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+
+[root@24e9c2180e91 yum.repos.d]# mkdir repo
+[root@24e9c2180e91 yum.repos.d]# mv *.repo  repo/
+[root@24e9c2180e91 yum.repos.d]# ls
+repo
+[root@24e9c2180e91 yum.repos.d]# pwd 
+/etc/yum.repos.d
+[root@24e9c2180e91 yum.repos.d]# vim  /etc/yum.repos.d/local.repo
+bash: vim: command not found
+
+[root@24e9c2180e91 yum.repos.d]# vi  /etc/yum.repos.d/local.repo
+[root@24e9c2180e91 yum.repos.d]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[root@24e9c2180e91 yum.repos.d]# yum clean all >/dev/null && yum repolist |tail -8
+Loaded plugins: fastestmirror, ovl
+Determining fastest mirrors
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+docker                               docker                                  2
+repolist: 9593
+[root@24e9c2180e91 yum.repos.d]# exit
+
+[root@docker1 ~]# docker run  -it  centos:latest  /bin/bash
+[root@68fb2aaa680e /]# ls /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+[root@68fb2aaa680e /]# rpm  -q net-tools
+package net-tools is not installed
+
+[root@68fb2aaa680e /]# exit
+
+[root@docker1 ~]# docker run -it  nginx:latest  pwd
+/
+
+[root@docker1 ~]# docker run -it  nginx:latest  ls
+bin   dev  home  lib64	mnt  proc  run	 srv  tmp  var
+boot  etc  lib	 media	opt  root  sbin  sys  usr
+
+[root@docker1 ~]# ls
+busybox.tar  docker_images  docker_images.zip  eip
+
+[root@docker1 ~]# ls /                                                                ★ --虚拟机--★ 
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+[root@docker1 ~]# 
+[root@docker1 ~]# docker run -it  nginx:latest  ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 06:50 ?        00:00:00 ps -ef
+
+------------------------------------------
+         debian
+  --------------------------------------
+           debian
+              ubuntu
+              .deb
+--------------------------------
+ yum          apt-get
+ rpm           dpkg
+-----------------------------------------
+
+[root@docker1 ~]# docker run -d  nginx:latest  
+db9120dbba60f749ff0f37cbeb1a0b49dc2d4327e89a640de70a2e0c4d9ba962
+[root@docker1 ~]# echo $?
+0
+[root@docker1 ~]# docker run -d  nginx 
+cf026f5ea5515b66b1158de6efb05f4e63d5876ba47dd72736f05c82eccb9427
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+cf026f5ea551        nginx               "nginx -g 'daemon off"   19 seconds ago      Up 17 seconds       80/tcp, 443/tcp     stoic_lumiere
+db9120dbba60        nginx:latest        "nginx -g 'daemon off"   41 seconds ago      Up 38 seconds       80/tcp, 443/tcp     grave_lovelace
+[root@docker1 ~]# 
+[root@docker1 ~]# docker run -d  nginx 
+cf026f5ea5515b66b1158de6efb05f4e63d5876ba47dd72736f05c82eccb9427
+
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+cf026f5ea551        nginx               "nginx -g 'daemon off"   19 seconds ago      Up 17 seconds       80/tcp, 443/tcp     stoic_lumiere
+db9120dbba60        nginx:latest        "nginx -g 'daemon off"   41 seconds ago      Up 38 seconds       80/tcp, 443/tcp     grave_lovelace
+
+[root@hiys ~]# ssh -X 192.168.1.10                                           ★ --虚拟机--★ 
+root@192.168.1.10's password: 
+X11 forwarding request failed on channel 0
+Last login: Mon Nov 19 10:41:45 2018 from 192.168.1.254                      ★ --虚拟机--★ 
+[root@docker1 ~]# docker ps -q                                               ★ --虚拟机--★ 
+e3239fd2cc0a
+cf026f5ea551                                                                 ★ --虚拟机--★ 
+db9120dbba60
+[root@docker1 ~]# ps -ef |grep nginx                                         ★ --虚拟机--★ 
+root     26038 26024  0 15:04 ?        00:00:00 nginx: master process nginx -g daemon off;
+104      26056 26038  0 15:04 ?        00:00:00 nginx: worker process
+root     26143 26128  0 15:04 ?        00:00:00 nginx: master process nginx -g daemon off;
+104      26162 26143  0 15:04 ?        00:00:00 nginx: worker process
+root     26190  1139  0 15:06 pts/1    00:00:00 docker run -it nginx
+root     26257 26241  0 15:06 pts/0    00:00:00 nginx: master process nginx -g daemon off;
+104      26278 26257  0 15:06 pts/0    00:00:00 nginx: worker process
+root     26323 26281  0 15:09 pts/2    00:00:00 grep --color=auto nginx
+
+[root@docker1 ~]# docker run -it  nginx 
+^C
+
+[root@docker1 ~]# ps -ef |grep nginx
+root     26038 26024  0 15:04 ?        00:00:00 nginx: master process nginx -g daemon off;
+104      26056 26038  0 15:04 ?        00:00:00 nginx: worker process
+root     26143 26128  0 15:04 ?        00:00:00 nginx: master process nginx -g daemon off;
+104      26162 26143  0 15:04 ?        00:00:00 nginx: worker process
+root     26356 26281  0 15:10 pts/2    00:00:00 grep --color=auto nginx
+
+[root@docker1 ~]# pkill -9 nginx
+[root@docker1 ~]# echo $?
+0
+[root@docker1 ~]# ps -ef |grep nginx
+root     26420 26281  0 15:11 pts/2    00:00:00 grep --color=auto nginx
+
+[root@docker1 ~]# which docker
+/usr/bin/docker                                                                       ★ --虚拟机--★ 
+[root@docker1 ~]# yum provides docker
+
+CentOS7-1708/filelists_db                                                     | 6.7 MB  00:00:00     
+docker/filelists_db                                                           | 2.0 kB  00:00:00     
+docker-engine-1.12.1-1.el7.centos.x86_64 : The open-source application container engine
+源    ：docker
+匹配来源：                                                                            ★ --虚拟机--★ 
+文件名    ：/usr/bin/docker
+
+docker-engine-1.12.1-1.el7.centos.x86_64 : The open-source application container engine
+源    ：@docker
+匹配来源：
+文件名    ：/usr/bin/docker
+
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker1 ~]#  docker ps -qa  # 显示所有的容器ID
+e3239fd2cc0a
+cf026f5ea551
+db9120dbba60
+2817ba7f933d
+6e6c877be46a
+6dbd9901d566
+54e57c45b14f
+6b7c5cbaba52
+68fb2aaa680e
+3c5643348a6c
+26c60fe3c2e2
+24e9c2180e91
+[root@docker1 ~]# docker ps -a   ## 显示所有的容器,包括没有启动的
+
+CONTAINER ID        IMAGE        COMMAND                  CREATED             STATUS                     PORTS    NAMES
+e3239fd2cc0a        nginx        "nginx -g 'daemon off"   18 minutes ago      Exited (0) 14 minutes ago           reverent_swanson
+cf026f5ea551        nginx        "nginx -g 'daemon off"   20 minutes ago      Exited (137) 13 minutes ago         stoic_lumiere
+db9120dbba60        nginx:latest  "nginx -g 'daemon off"   20 minutes ago      E★ --虚拟机--★  minutes ago          grave_lovelace
+2817ba7f933d        nginx:latest  "nginx -g 'daemon off"   33 minutes ago      Exited (0) 32 minutes ago          cocky_poincare
+6e6c877be46a        nginx:latest  "ps -ef"                 34 minutes ago      Exited (0) 34 minutes ago          grave_shannon
+6dbd9901d566        nginx:latest  "pwd"                    35 minutes ago      Exited (0) 35 minutes ago          goofy_mcclintock
+54e57c45b14f        nginx:latest  "ls /root/"              35 minutes ago      Exited (0) 35 minutes ago          hopeful_pasteur
+6b7c5cbaba52        nginx:latest  "ls"                     36 minutes ago      Exited (0) 36 minutes ago          cranky_ardinghelli
+68fb2aaa680e        centos:latest  "/bin/bash"              39 minutes ago      Exited (1) 37 minutes ago         trusting_roentgen
+3c5643348a6c        nginx:latest   "nginx -g 'daemon off"   45 minutes ago      Exited (0) 44 minutes ago         suspicious_bose
+26c60fe3c2e2        centos:latest  "/bin/bash"              46 minutes ago      Exited (0) 46 minutes ago         tender_wright
+24e9c2180e91        centos:latest  "/bin/bash"              About an hour ago   Exited (127) 48 minutes ago       zen_bassi
+
+[root@docker1 ~]# docker ps -q  # 只显示容器ID
+
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE      COMMAND     CREATED    STATUS   PORTS    NAMES
+
+[root@docker1 ~]# docker run -d nginx
+108a97faa41d31625430c5ed7a929b041d9e7e2b2c52732971789fe3236b4343
+
+[root@docker1 ~]# docker ps  # 查看后台运行的容器
+CONTAINER ID    IMAGE     COMMAND                CREATED       STATUS        PORTS           NAMES
+108a97faa41d    nginx     "nginx -g 'daemon off" 8 seconds ago Up 6 seconds  80/tcp, 443/tcp hopeful_varahamihira
+
+[root@docker1 ~]# docker ps -q  # 只显示容器ID
+108a97faa41d
+
+[root@docker1 ~]# docker history centos  ## 查看centos镜像历史（制作过程）
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+e934aafc2206        7 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+<missing>           7 months ago        /bin/sh -c #(nop)  LABEL org.label-schema.sch   0 B                 
+<missing>           7 months ago        /bin/sh -c #(nop) ADD file:f755805244a649ecca   198.6 MB   
+         
+[root@docker1 ~]# docker history nginx
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+a5311a310510        2 years ago         /bin/sh -c #(nop)  CMD ["nginx" "-g" "daemon    0 B                 
+<missing>           2 years ago         /bin/sh -c #(nop)  EXPOSE 443/tcp 80/tcp        0 B                 
+<missing>           2 years ago         /bin/sh -c ln -sf /dev/stdout /var/log/nginx/   0 B                 
+<missing>           2 years ago         /bin/sh -c apt-key adv --keyserver hkp://pgp.   58.43 MB            
+<missing>           2 years ago         /bin/sh -c #(nop)  ENV NGINX_VERSION=1.11.5-1   0 B                 
+<missing>           2 years ago         /bin/sh -c #(nop)  MAINTAINER NGINX Docker Ma   0 B                 
+<missing>           2 years ago         /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+<missing>           2 years ago         /bin/sh -c #(nop) ADD file:c6c23585ab140b0b32   123 MB              
+
+       
+[root@docker1 ~]# docker inspect nginx  ## 查看镜像的底层信息
+[
+    {
+        "Id": "sha256:a5311a310510e5eaff3cfbb22b65d9ce11ddc15e266833909551334d48491921",
+        "RepoTags": [
+            "nginx:latest"
+        ],
+        "RepoDigests": [],
+        "Parent": "",
+        "Comment": "",
+        "Created": "2016-10-12T16:59:50.445962996Z",
+        "Container": "f1f3bcad98793842af03dc7cf034661d09e23c92ec8d0334da66c83fc3f1f552",
+        "ContainerConfig": {
+            "Hostname": "383850eeb47b",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.11.5-1~jessie"
+            ],
+            "Cmd": [
+                "/bin/sh",
+                "-c",
+                "#(nop) ",
+                "CMD [\"nginx\" \"-g\" \"daemon off;\"]"
+            ],
+            "ArgsEscaped": true,
+            "Image": "sha256:91d179b509b50a536a70b6b85a5c27a4f2dbb17ae5b382d7f7c49a5d62ef0594",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": [],
+            "Labels": {}
+        },
+        "DockerVersion": "1.12.1",
+        "Author": "NGINX Docker Maintainers \"docker-maint@nginx.com\"",
+        "Config": {
+            "Hostname": "383850eeb47b",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [              ### 注意 环境变量 “Env”
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.11.5-1~jessie"
+            ],
+            "Cmd": [   ## 默认容器启动命令 Cmd
+                "nginx",
+                "-g",
+                "daemon off;"
+            ],
+            "ArgsEscaped": true,
+            "Image": "sha256:91d179b509b50a536a70b6b85a5c27a4f2dbb17ae5b382d7f7c49a5d62ef0594",
+            "Volumes": null,
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": [],
+            "Labels": {}
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 181417015,
+        "VirtualSize": 181417015,                                                     ★ --虚拟机--★ 
+        "GraphDriver": {
+            "Name": "devicemapper",
+            "Data": {
+                "DeviceId": "6",
+                "DeviceName": "docker-253:1-19923010-fc41bd2595550f447f23dae55383efc85944a9fdd1795aa0f5a0ba67a5dc3500",
+                "DeviceSize": "10737418240"
+            }
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:142a601d97936307e75220c35dde0348971a9584c21e7cb42e1f7004005432ab",
+                "sha256:40e298e9673a7338ff124716814cef22c7e11088da01724fe3008474468031c3",
+                "sha256:8d8bfe3cd5e42416ae2d22b3b8699173481c91063aa55f727b0c5283ef0fd414"
+            ]
+        }
+    }
+]
+[root@docker1 ~]#  docker inspect  nginx  ## 查看镜像底层信息
+[...............................
+        "RepoDigests": [],
+        "Parent": "",
+        "Comment": "",
+        "Created": "2016-10-12T16:59:50.445962996Z",
+        "Container": "f1f3bcad98793842af03dc7cf034661d09e23c92ec8d0334da66c83fc3f1f552",
+        "ContainerConfig": {
+            "Hostname": "383850eeb47b",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.11.5-1~jessie"
+            ],
+            "Cmd": [
+                "/bin/sh",
+                "-c",
+                "#(nop) ",
+                "CMD [\"nginx\" \"-g\" \"daemon off;\"]"
+            ],
+  ......................................
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.11.5-1~jessie"
+            ],
+            "Cmd": [
+                "nginx",
+                "-g",
+                "daemon off;"
+            ],
+.......................................
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:142a601d97936307e75220c35dde0348971a9584c21e7cb42e1f7004005432ab",
+                "sha256:40e298e9673a7338ff124716814cef22c7e11088da01724fe3008474468031c3",
+                "sha256:8d8bfe3cd5e42416ae2d22b3b8699173481c91063aa55f727b0c5283ef0fd414"
+            ]
+        }
+    }
+]
+[root@docker1 ~]# 
+
+[root@docker1 ~]# docker ps                                                                       ★ --虚拟机--★ 
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+108a97faa41d        nginx               "nginx -g 'daemon off"   3 hours ago         Up 3 hours          80/tcp, 443/tcp     hopeful_varahamihira
+[root@docker1 ~]# docker stop 108a
+108a
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker1 ~]# docker ps |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+======================= linux 安装容器 启动 httpd  nginx ====================
+
+[root@docker1 ~]# docker search http  # 搜索docker映像
+
+NAME                                 DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+httpd                                The Apache HTTP Server Project                  2159      [OK]       
+haproxy                              HAProxy - The Reliable, High Performance T...   1090      [OK]       
+jruby                                JRuby (http://www.jruby.org) is an impleme...   78        [OK]       
+steveltn/https-portal                A fully automated HTTPS server powered by ...   54                   [OK]
+hypriot/rpi-busybox-httpd            Raspberry Pi compatible Docker Image with ...   44                   
+centos/httpd-24-centos7              Platform for running Apache httpd 2.4 or b...   19           ★ --虚拟机--★ 
+kennethreitz/httpbin                 A simple HTTP service.                          15                   [OK]
+hashicorp/http-echo                  http-echo is an in-memory web server that ...   14                   
+citizenstig/httpbin                  Docker container for httpbin: HTTP Request...   13                   [OK]
+geldim/https-redirect                Very small (4mb) http to https redirector       13                   [OK]
+clue/httpie                          HTTPie is a cURL-like tool for humans. Use...   13                   [OK]
+chrisns/docker-node-sonos-http-api   Docker wrapper for https://github.com/jish...   5                    [OK]
+alpine/httpie                        httpie running in docker alpine (python3+p...   5                    [OK]
+hope/redirect-http-to-https          Small container for redirect. Based on Alpine   4                    [OK]
+tplatform/aws-linux-httpd24-php70    aws-linux-httpd24-php70                         2                    [OK]
+aequitas/http-api-resource           Concourse resource to allow interaction wi...   2                    [OK]
+camptocamp/https-redirect            Docker image that just redirect http to https   2                    [OK]
+shreddedbacon/http-directory-index   Custom concourse resource type to check st...   1                    [OK]
+httpun/httpun                        http://httpun.org                               1                    [OK]
+rackhd/on-http                       Provides HTTP server for RackHD.                1                    [OK]
+articulate/http-to-https             Simple container which just listens on por...   1                    [OK]
+manageiq/httpd                       Container with httpd, built on CentOS for ...   0                    [OK]
+kennship/http-echo                   Echoes HTTP request info as JSON. Useful f...   0                    [OK]
+mprahl/s2i-angular-httpd24           An S2I image for building and running Angu...   0                    [OK]
+cfje/http-resource                   Http Concourse Resource                         0   
+                 
+[root@docker1 ~]# docker pull httpd  ## 下载httpd的docker映像
+Using default tag: latest
+latest: Pulling from library/httpd
+a5a6f2f73cd8: Pull complete 
+ac13924397e3: Pull complete 
+91b81769f14a: Pull complete 
+fec7170426de: Pull complete 
+992c7790d5f3: Pull complete 
+Digest: sha256:9753aabc6b0b8cd0a39733ec13b7aad59e51069ce96d63c6617746272752738e
+Status: Downloaded newer image for httpd:latest
+
+[root@docker1 ~]# docker images   ## 查看本机docker映像
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+httpd               latest              2a51bb06dc8b        3 days ago          131.6 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker1 ~]# pwd
+/root
+[root@docker1 ~]# ls /usr/local/
+bin  etc  games  include  lib  lib64  libexec  sbin  share  src
+
+[root@docker1 ~]# 
+/** -i 交互
+-t 控制台
+-d 后台运行
+-p 本机端口:映射为本docker映像的端口
+--name 为docker容器起的名称
+-v 本机路径:映射为本docker映像的路径
+**/
+                          ## 运行httpd的docker映像成为容器
+[root@docker1 ~]# docker run -itd  -p 80:80  --name datahttpd  -v  /data/:/usr/local/apache2/htdocs/ httpd 
+863cc89eb845d307cf476cc2a90ead1774eff8345d112c3115e8404a2a448e19
+[root@docker1 ~]# echo $?                                                                         ★ --虚拟机--★ 
+0
+[root@docker1 ~]# docker  ps                                                                      ★ --虚拟机--★ 
+CONTAINER ID        IMAGE               COMMAND              CREATED             STATUS              PORTS                NAMES
+863cc89eb845        httpd               "httpd-foreground"   22 seconds ago      Up 19 seconds       0.0.0.0:80->80/tcp   datahttpd
+
+                                                 ## 使用curl查看本机的httpd服务
+[root@docker1 ~]# curl localhost |head -9                                                         ★ --虚拟机--★ 
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed                     ★ --虚拟机--★ 
+100   161  100   161    0     0  32998      0 --:--:-- --:--:-- --:--:-- 40250
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">                                           ★ --虚拟机--★ 
+<html>
+ <head>                                                                                           ★ --虚拟机--★ 
+  <title>Index of /</title>
+ </head>                                                                                          ★ --虚拟机--★ 
+ <body>
+<h1>Index of /</h1>                                                                               ★ --虚拟机--★ 
+<ul></ul>                                                                                         ★ --虚拟机--★ 
+</body></html>
+[root@docker1 ~]# rpm -q elinks
+未安装软件包 elinks 
+[root@docker1 ~]# yum -y install elinks |tail -4
+作为依赖被安装:                                                                                   ★ --虚拟机--★ 
+  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+
+完毕！
+[root@docker1 ~]# elinks -dump localhost 
+ELinks: 没有那个文件或目录
+[root@docker1 ~]# ls /var/www
+ls: 无法访问/var/www: 没有那个文件或目录
+[root@docker1 ~]# ls /
+bin  boot  data  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+
+[root@docker1 ~]# ls /usr/local/
+bin  etc  games  include  lib  lib64  libexec  sbin  share  src
+
+[root@docker1 ~]# ls -ld  /data
+drwxr-xr-x 2 root root 6 11月 19 19:26 /data
+
+[root@docker1 ~]# ls  /data/
+
+[root@docker1 ~]# docker ps |column -t
+CONTAINER     ID     IMAGE               COMMAND  CREATED  STATUS  PORTS  NAMES
+863cc89eb845  httpd  "httpd-foreground"  7        minutes  ago     Up     7      minutes  0.0.0.0:80->80/tcp  datahttpd
+
+[root@docker1 ~]# curl localhost
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+ <head>
+  <title>Index of /</title>
+ </head>
+ <body>
+<h1>Index of /</h1>
+<ul></ul>
+</body></html>
+
+[root@docker1 ~]# netstat -anpult   ## 使用netstat查看运行的端口. 确认docker使用了80端口.
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      669/sshd            
+tcp        0      0 192.168.1.10:22         192.168.1.254:43886     ESTABLISHED 26906/sshd: root@pt 
+tcp        0      0 192.168.1.10:22         192.168.1.254:42868     ESTABLISHED 1137/sshd: root@pts 
+tcp6       0      0 :::80                   :::*                    LISTEN      27327/docker-proxy  
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           455/chronyd     
+
+[root@docker1 ~]# docker ps |column -t
+CONTAINER     ID     IMAGE               COMMAND  CREATED  STATUS  PORTS  NAMES
+863cc89eb845  httpd  "httpd-foreground"  12       minutes  ago     Up     12     minutes  0.0.0.0:80->80/tcp  datahttpd
+
+[root@docker1 ~]# docker stop  863cc89eb845  ## 停止运行容器
+863cc89eb845
+[root@docker1 ~]# docker ps |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+/**
+删除容器
+~# docker rm datahttpd
+datahttpd是容器名称, 或者使用CONTAINER ID的前几位.
+
+删除本机的docker映像
+~# docker rmi IMAGE_ID
+
+ubuntu停止docker服务
+~# service docker stop
+
+ubuntu 16.04卸载docker
+~# apt-get remove docker.io
+**/
+[root@docker1 ~]# netstat -anpult 
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      669/sshd            
+tcp        0      0 192.168.1.10:22         192.168.1.254:43886     ESTABLISHED 26906/sshd: root@pt 
+tcp        0    196 192.168.1.10:22         192.168.1.254:42868     ESTABLISHED 1137/sshd: root@pts 
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           455/chronyd  
+       
+[root@docker1 ~]# ls /
+bin  boot  data  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+
+[root@docker1 ~]# ls /data/
+
+/** -i 交互
+-t 控制台
+-d 后台运行
+-p 本机端口:映射为本docker映像的端口
+--name 为docker容器起的名称
+-v 本机路径:映射为本docker映像的路径
+=== 连接容器attach|exec
+**/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+========================= docker 2 ===========================
+
+
+[root@docker2 ~]# docker  images                                          ★ --虚拟机--★ 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+[root@docker2 ~]# ls
+busybox.tar  docker_images.zip  eip
+[root@docker2 ~]# yum -y install unzip
+已加载插件：fastestmirror
+Loading mirror speeds from cached hostfile
+软件包 unzip-6.0-16.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@docker2 ~]# unzip  docker_images.zip 
+Archive:  docker_images.zip
+   creating: docker_images/
+  inflating: docker_images/nginx.tar  
+  inflating: docker_images/redis.tar  
+  inflating: docker_images/centos.tar  
+  inflating: docker_images/registry.tar  
+  inflating: docker_images/ubuntu.tar  
+[root@docker2 ~]# ls
+busybox.tar  docker_images  docker_images.zip  eip
+[root@docker2 ~]# for i in docker_images/*
+> do
+> docker  load < $i
+> done
+43e653f84b79: Loading layer 207.2 MB/207.2 MB
+Loaded image: centos:latest
+142a601d9793: Loading layer 128.9 MB/128.9 MB
+40e298e9673a: Loading layer 60.57 MB/60.57 MB
+8d8bfe3cd5e4: Loading layer 3.584 kB/3.584 kB
+Loaded image: nginx:latest                                                ★ --虚拟机--★ 
+1cc8aacad4a1: Loading layer 344.6 kB/344.6 kB
+...................................
+Loaded image: ubuntu:latest
+[root@docker2 ~]# lsblk                                                   ★ --虚拟机--★ 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+[root@docker2 ~]# ifconfig |awk '/inet /{print $2}';route -n 
+172.17.0.1
+192.168.1.20
+192.168.4.20
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@docker2 ~]# 
+ 
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker images                                                       ★ --虚拟机--★ 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 ★ --虚拟机--★ 
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker ps -q   ##只显示容器ID ,结果没有任何正在运行的容器，这时候可以成功删除镜像
+
+[root@docker2 ~]# docker ps   ##查看后台运行的容器 , 结果没有任何正在运行的容器，这时候可以成功删除镜像
+
+CONTAINER ID   IMAGE     COMMAND    CREATED    STATUS   PORTS    NAMES
+
+[root@docker2 ~]# 
+
+[root@docker2 ~]# docker rmi nginx  ## nginx为镜像名//删除镜像，启动容器时删除镜像会失败，先删除容器,再删除镜像
+Untagged: nginx:latest
+Deleted: sha256:a5311a310510e5eaff3cfbb22b65d9ce11ddc15e266833909551334d48491921
+Deleted: sha256:793457e70277c832d031ab9923a2820215fb247379880a4d93c17f64812bc531
+Deleted: sha256:5a26610d59c221d133ad969ef3dcedd17a360df70d00e377d5b01c50f55bfa71
+[root@docker2 ~]# echo $?
+0
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]#  docker ps  ## 查看是否有正在运行的容器
+CONTAINER ID        IMAGE        COMMAND     CREATED     STATUS     PORTS     NAMES
+
+[root@docker2 ~]# docker tag busybox:latest  busybox-2:lianjieming2   #修改镜像的标签           ★ --虚拟机--★ 
+[root@docker2 ~]#                                                                    ★ --虚拟机--★ 
+[root@docker2 ~]# docker images                                                      ★ --虚拟机--★ 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker  rmi  busybox-2  ## 删除镜像 报错Error
+Error response from daemon: No such image: busybox-2:latest                          ★ --虚拟机--★ 
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE ★ --虚拟机--★ 
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker tag centos:latest  cen:v1  #修改镜像的标签
+[root@docker2 ~]#                                                                    ★ --虚拟机--★ 
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB
+centos              latest              e934aafc2206        7 months ago        198.6★ --虚拟机--★ 
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker rmi centos  ## 删除镜像centos  成功
+Untagged: centos:latest
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62★ --虚拟机--★ 
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker run -it centos pwd  //启动的时候，因为是用标签标签启动的，所以会重新通过ID下载
+
+Unable to find image 'centos:latest' locally
+latest: Pulling from library/centos
+aeb7866da422: Pull complete 
+Digest: sha256:67dad89757a55bfdfabec8abd0e22f8c7c12a1856514726470228063ed86593b
+Status: Downloaded newer image for centos:latest
+/                                                                                    ★ --虚拟机--★ 
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+centos              latest              75835a67d134        5 weeks ago         200.4★ --虚拟机--★ 
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker run -it cen:v1   //通过新建的标签启动cen:v1
+[root@b8f4ce228152 /]# ls
+anaconda-post.log  dev  home  lib64  mnt  proc  run   srv  tmp  var
+bin                etc  lib   media  opt  root  sbin  sys  usr
+[root@b8f4ce228152 /]# pwd
+/
+[root@b8f4ce228152 /]# echo "hello world"
+hello world
+[root@b8f4ce228152 /]# exit
+exit
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker2 ~]# 
+
+[root@docker2 ~]#  history |tail -5
+   80  systemctl is-active sshd
+   81  cat /usr/lib/systemd/system/sshd.service
+   82  cat  /usr/sbin/sshd
+   83  62;c62;c62;c
+   84   history |tail -5
+[root@docker2 ~]#  history |tail -9
+   77  docker ps
+   78  systemctl is-active sshd
+   79  systemctl stop sshd
+   80  systemctl is-active sshd
+   81  cat /usr/lib/systemd/system/sshd.service
+
+[root@docker2 ~]# docker run -itd  nginx                                             ★ --虚拟机--★ 
+Unable to find image 'nginx:latest' locally
+latest: Pulling from library/nginx
+
+a5a6f2f73cd8: Pull complete 
+67da5fbcb7a0: Pull complete                                                          ★ --虚拟机--★ 
+e82455fa5628: Pull complete 
+Digest: sha256:31b8e90a349d1fce7621f5a5a08e4fc519b634f7d3feb09d53fac9b12aa4d991
+Status: Downloaded newer image for nginx:latest
+3331c32a8f168267494289fb5ebd8a43b8e4d0c07b1285127835e86da75b0570
+
+[root@docker2 ~]# docker images                                                      ★ --虚拟机--★ 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+nginx               latest              e81eb098537d        2 days ago          109.1★ --虚拟机--★ 
+centos              latest              75835a67d134        5 weeks ago         200.4 MB
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154★ --虚拟机--★ 
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62★ --虚拟机--★ 
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26★ --虚拟机--★ 
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+3331c32a8f16        nginx               "nginx -g 'daemon off"   55 seconds ago      Up 52 seconds       80/tcp              j★ --虚拟机--★ 
+[root@docker2 ~]# ifconfig  |head -4                                                 ★ --虚拟机--★ 
+docker0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0                                                               ★ --虚拟机--★ 
+        ether 02:42:ff:a7:71:4e  txqueuelen 0  (Ethernet)
+        RX packets 17  bytes 1148 (1.1 KiB)
+[root@docker2 ~]# curl -i http://172.17.0.1                                                                                   ★ --虚拟机--★ 
+curl: (7) Failed connect to 172.17.0.1:80; 拒绝连接
+[root@docker2 ~]# docker run -itd  nginx                                                                                      ★ --虚拟机--★ 
+7356e8833ad6444a3e7102d7773cf244cbe0189ca3a7807a978f6e43603dc649
+[root@docker2 ~]# curl -i http://172.17.0.1 
+curl: (7) Failed connect to 172.17.0.1:80; 拒绝连接
+
+[root@docker2 ~]# curl -I http://172.17.0.1                                                                                   ★ --虚拟机--★ 
+curl: (7) Failed connect to 172.17.0.1:80; 拒绝连接
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+7356e8833ad6        nginx               "nginx -g 'daemon off"   37 seconds ago      Up 35 seconds       80/tcp              hopeful_newton
+3331c32a8f16        nginx               "nginx -g 'daemon off"   3 minutes ago       Up 3 minutes        80/tcp              jolly_austin
+[root@docker2 ~]# docker stop  7356e8833ad6  ## 7356e8833ad6 是容器ID号  CONTAINER ID 
+7356e8833ad6
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+3331c32a8f16        nginx               "nginx -g 'daemon off"   4 minutes ago       Up 4 minutes        80/tcp              jolly_austin
+[root@docker2 ~]# docker ps -a |grep 7356e8833ad6   ## 7356e8833ad6 是容器ID号  CONTAINER ID
+7356e8833ad6        nginx               "nginx -g 'daemon off"   3 minutes ago       Exited (0) About a minute ago                       hopeful_newton
+
+[root@docker2 ~]# docker start 7356e8833ad6   ## 7356e8833ad6 是容器ID号  CONTAINER ID
+7356e8833ad6
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+7356e8833ad6        nginx               "nginx -g 'daemon off"   4 minutes ago       Up 4 seconds        80/tcp              hopeful_newton
+3331c32a8f16        nginx               "nginx -g 'daemon off"   7 minutes ago       Up 7 minutes        80/tcp              jolly_austin
+
+[root@docker2 ~]#  docker restart 7356e8833ad6
+7356e8833ad6
+
+
+[root@docker2 ~]# docker ps                                                                             ★ --虚拟机--★ 
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS             ★ --虚拟机--★        NAMES
+7356e8833ad6        nginx               "nginx -g 'daemon off"   14 minutes ago      Up 6 minutes        80/tcp              hopeful_newton
+3331c32a8f16        nginx               "nginx -g 'daemon off"   16 minutes ago      Up 16 minutes       80/tcp              jolly_austin
+
+[root@docker2 ~]# docker rm 3331c32a8f16
+Error response from daemon: You cannot remove a running container 3331c32a8f168267494289fb5ebd8a43b8e4d0c07b1285127835e86da75b0570. Stop the container before attempting removal or use -f
+
+[root@docker2 ~]# docker stop 3331c32a8f16
+3331c32a8f16    
+                                                                                        ★ --虚拟机--★ 
+[root@docker2 ~]# docker ps                                                                             ★ --虚拟机--★ 
+CONTAINER ID        IMAGE    COMMAND          CREATED        STATUS             ★ --虚拟机--★        NAMES                                                                                             ★ --虚拟机--★ 
+7356e8833ad6        nginx     "nginx -g 'daemon off"   15 minutes ago   Up 7 minutes    80/tcp     hopeful_newton
+
+[root@docker2 ~]# docker rm  3331c32a8f16
+3331c32a8f16
+[root@docker2 ~]# echo $?
+0
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+nginx               latest              e81eb098537d        2 days ago          109.1 MB                ★ --虚拟机--★ 
+centos              latest              75835a67d134        5 weeks ago         200.4 MB
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB                ★ --虚拟机--★ 
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker ps -qa
+7356e8833ad6
+b8f4ce228152
+972af20d8c5c
+[root@docker2 ~]# docker rm $(docker stop  $(docker ps -qa))
+7356e8833ad6
+b8f4ce228152
+972af20d8c5c
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker2 ~]# 
+
+[root@docker2 ~]# docker run -itd  nginx
+e314286d4c7fd83ecc3efc4cd38b8323a98e2d309e0708177d07ec013aa20023
+[root@docker2 ~]# docker run -itd  centos
+e1fc38547af88e3cf966c3b410aced2570bb9ccf69c86f39d23cf6b91c86ee59
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+e1fc38547af8        centos              "/bin/bash"              14 seconds ago      Up 12 seconds                       ★ --虚拟机--★ ing_euclid
+e314286d4c7f        nginx               "nginx -g 'daemon off"   24 seconds ago      Up 21 seconds       80/tcp              trusting_borg
+[root@docker2 ~]# docker  top  e1fc38547af8
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                26134               26120               0                   17:25               pts/2               00:00:00            /bin/bash
+[root@docker2 ~]# docker run -it  centos
+[root@f8d6fa7e2a26 /]# ps
+  PID TTY          TIME CMD
+    1 ?        00:00:00 bash
+   19 ?        00:00:00 ps
+[root@f8d6fa7e2a26 /]# ps -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 09:27 ?        00:00:00 /bin/bash
+root        20     1  0 09:28 ?        00:00:00 ps -ef
+[root@f8d6fa7e2a26 /]# exit
+exit
+[root@docker2 ~]# 
+
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+e1fc38547af8        centos              "/bin/bash"              6 minutes ago       Up 6 minutes                            condescending_euclid
+e314286d4c7f        nginx               "nginx -g 'daemon off"   6 minutes ago       Up 6 minutes        80/tcp              trusting_borg
+[root@docker2 ~]# which ifconfig
+/usr/sbin/ifconfig
+[root@docker2 ~]# docker exec -it e1fc38547af8 /bin/bash
+[root@e1fc38547af8 /]# ls
+anaconda-post.log  dev  home  lib64  mnt  proc  run   srv  tmp  var
+bin                etc  lib   media  opt  root  sbin  sys  usr
+
+[root@e1fc38547af8 /]# ifconfig
+bash: ifconfig: command not found
+
+[root@e1fc38547af8 /]# yum -y install net-tools |tail -3
+..........................
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+  net-tools.x86_64 0:2.0-0.22.20131004git.el7                                   
+
+Complete!
+[root@e1fc38547af8 /]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.3  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:3  prefixlen 64  scopeid 0x20<link>                              ★ --虚拟机--★ 
+        ether 02:42:ac:11:00:03  txqueuelen 0  (Ethernet)
+.....................
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+........................
+
+[root@e1fc38547af8 /]# pstree -p |head -3
+bash: pstree: command not found
+[root@e1fc38547af8 /]# exit
+exit
+[root@docker2 ~]# pstree -p |head -3
+systemd(1)-+-agetty(675)
+           |-chronyd(448)
+           |-crond(447)
+
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+e1fc38547af8        centos              "/bin/bash"              16 minutes ago      Up 16 minutes                           condescending_euclid
+e314286d4c7f        nginx               "nginx -g 'daemon off"   16 minutes ago      Up 16 minutes       80/tcp              trusting_borg
+[root@docker2 ~]# docker exec -it e1  /bin/bash  ## 连接容器 ，注意e1 是容器id号e1fc38547af8 首部前2位字符
+
+[root@e1fc38547af8 /]# yum provides  pstree
+
+psmisc-22.20-15.el7.x86_64 : Utilities for managing processes on your system
+Repo        : base
+Matched from:
+Filename    : /usr/bin/pstree
+
+
+
+[root@e1fc38547af8 /]# yum -y install psmisc
+
+Installed:
+  psmisc.x86_64 0:22.20-15.el7                                                                                   
+
+Complete!
+
+[root@e1fc38547af8 /]# pstree -p   # 在容器里 ，可以根据需求制定 『上帝』根进程??    
+bash(1)
+[root@e1fc38547af8 /]# 
+
+[root@docker2 ~]# docker top  e1fc38547af8 |column -t  # e1fc38547af8是 容 器 的CONTAINER ID 号，IMAGE 镜像 centos
+UID   PID    PPID   C  STIME  TTY    TIME      CMD
+root  26134  26120  0  17:25  pts/2  00:00:00  /bin/bash
+root  26802  26789  0  17:42  pts/3  00:00:00  /bin/bash
+[root@docker2 ~]# 
+
+
+
+linux 安装容器 启动 httpd  nginx
+
+
+/** -i 交互
+-t 控制台
+-d 后台运行
+-p 本机端口:映射为本docker映像的端口
+--name 为docker容器起的名称
+-v 本机路径:映射为本docker映像的路径
+=== 连接容器attach|exec
+**/
+
+[root@hiys ~]# ssh -X 192.168.1.10                   ★ --虚拟机--★ 
+root@192.168.1.10's password: a
+
+[root@docker1 ~]# netstat -anpult 
+Active Internet connections (servers and established)                                             ★ --虚拟机--★ 
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      702/sshd          ★ --虚拟机--★ 
+tcp        0      0 192.168.1.10:22         192.168.1.254:44780     ESTABLISHED 849/sshd: root@pts/ 
+tcp        0    196 192.168.1.10:22         192.168.1.254:44782     ESTABLISHED 876/sshd: root@pts/ 
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           409/chronyd  
+       
+[root@docker1 ~]# systemctl is-active docker
+active
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+httpd               latest              2a51bb06dc8b        3 days ago          131.6 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker1 ~]# docker ps |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@docker1 ~]# 
+
+Docker在执行时会将相关进程封装到相互隔离的容器(container)中。
+当执行 docker run时，Docker会启动一个进程，
+同时给这个进程分配其独占的文件系统，
+独占的网络资源和以此进程为根进程的进程组。
+在Docker启动container时加载的Image，或许已经定义好了默认的启动进程，
+需要exposer的网络端口和其他在Dockerfile中定义好的资源。
+但使用docker run 都可以重新对这个image进行默认定义。
+
+这就是为什么run命令参数比docker其他命令参数都多的原因。
+
+　　最基本的docker run命令是如下格式：
+
+$ sudo docker run [OPTIONS] IMAGE[:TAG] [COMMAND] [ARG...]
+　　如果需要查看[OPTIONS]的详细使用说明，请参考Docker关于OPTIONS的说明。这里仅简要介绍Run所使用到的参数。
+
+　　OPTIONS总起来说分为两类：
+
+设定操作执行方式：
+决定container的运行方式，前台执行还是后台执行
+设定containerID
+设定network参数
+设定container的CPU和Memory参数
+设定权限(Privileges )和LXC参数
+设定image的默认资源，也就是image使用者可以用此命令来覆盖image开发者在build阶段所设定的默认值。
+　　docker run [OPTIONS]可以让image使用者完全控制container的生命周期，允许image使用者覆盖所有image开发者在执行docker build时所设定的参数，甚至也可以修改本身由Docker所控制的内核级参数。
+
+Operator exclusive options
+
+　　当执行docker run时可以设定的资源如下：
+
+Detached vs Foreground
+Container Identification
+IPC Setting
+Network Settings
+Clean Up (--rm)
+Runtime Constraints on CPU and Memory
+Runtime Privilege, Linux Capabilities, and LXC Configuration
+　　我们依次进行介绍。
+
+　　Detached vs foreground
+
+　　当我们启动一个container时，首先需要确定这个container是运行在前台模式还是运行在后台模式。
+
+-d=false: Detached mode: Run container in the background, print new container id
+　　Detached (-d)
+
+　　如果在docker run 后面追加-d=true或者-d，则containter将会运行在后台模式(Detached mode)。
+
+此时所有I/O数据只能通过网络资源或者共享卷组来进行交互。
+
+因为container不再监听你执行docker run的这个终端命令行窗口。
+但你可以通过执行docker attach 来重新挂载这个container里面。
+
+需要注意，如果你选择执行-d使container进入后台模式，那么将无法配合"--rm"参数。
+
+　　Foregroud
+
+　　如果在docker run后面没有追加-d参数，则container将默认进入前台模式(Foregroud mode)。
+Docker会启动这个container，同时将当前的命令行窗口挂载到container的标准输入，标准输出和标准错误中。
+
+也就是container中所有的输出，你都可以再当前窗口中查看到。
+甚至docker可以虚拟出一个TTY窗口，来执行信号中断。这一切都是可以配置的：
+
+ 
+
+-a=[]          　　　　 : Attach to `STDIN`, `STDOUT` and/or `STDERR`
+-t=false        　　  : Allocate a pseudo-tty
+--sig-proxy=true　: Proxify all received signal to the process (non-TTY mode only)
+-i=false        　　  : Keep STDIN open even if not attached
+
+ 　　如果在执行run命令时没有指定-a，那么docker默认会挂载所有标准数据流，包括输入输出和错误。
+你可以特别指定挂载哪个标准流。
+
+$ sudo docker run -a stdin -a stdout -i -t ubuntu /bin/bash (只挂载标准输入输出)
+ 
+　　对于执行容器内的交互式操作，例如shell脚本。
+我们必须使用 -i -t来申请一个控制台同容器进行数据交互。
+
+但是当通过管道同容器进行交互时，就不能使用-t. 例如下面的命令
+
+echo test | docker run -i busybox cat
+　  Container identification
+
+　　Name (--name)
+
+　　给container命名有三种方式：
+
+　　1. 使用UUID长命名("f78375b1c487e03c9438c729345e54db9d20cfa2ac1fc3494b6eb60872e74778")
+
+　　2. 使用UUID短命令("f78375b1c487")
+
+　　3. 使用Name("evil_ptolemy")
+
+　　这个UUID标示是由Docker deamon来生成的。
+如果你在执行docker run时没有指定 --name，那么deamon会自动生成一个随机数字符串当做UUID。
+
+但是对于一个container来说有个name会非常方便，
+因为你可以当你需要link其它容器时或者其他类似需要区分其它容器时，使用容器名称会简化操作。
+
+无论container运行在前台或者后台，这个名字都是有效的。
+
+　　PID equivalent
+
+　　当你在运行docker时有自动化的要求，那么你可以要求Docker将containerID 输出到你指定的文件中(PIDfile).
+
+这种行为就类似于有些应用程序将自身ID输出到文件中，方便后续脚本操作。
+
+--cidfile="": Write the container ID to the file
+　　Image[:tag]
+
+　　当一个image的名称不足以分辨这个image所代表的含义时，你可以通过tag将版本信息添加到run 命令中来执行特定版本的image。
+例如: docker run ubuntu:14.04
+
+　IPC Settings
+
+　　默认情况下，所有容器都开启了IPC命名空间。
+
+--ipc=""  : Set the IPC mode for the container,
+            'container:<name|id>': reuses another container's IPC namespace
+            'host': use the host's IPC namespace inside the container
+　　IPC(POSIX/SysV IPC)命名空间提供了相互隔离的命名共享内存，信号灯变量和消息队列。
+
+　　共享内存可以提高进程数据交互速度。
+共享内存一般用在database和高性能应用(C/OpenMPI, C++/using boost libraries)上或者金融服务上。
+
+如果需要容器里面部署上述类型的应用，那么就应该在多个容器直接采取共享内存了。
+
+　Network settings
+
+　　默认情况下，所有的container都开启了网络接口，同时可以接受任何外部的数据请求。
+
+--dns=[]         : Set custom dns servers for the container
+--net="bridge"   : Set the Network mode for the container
+                              'bridge': creates a new network stack for the container on the docker bridge
+                              'none': no networking for this container
+                              'container:<name|id>': reuses another container network stack
+                              'host': use the host network stack inside the container
+--add-host=""    : Add a line to /etc/hosts (host:IP)
+--mac-address="" : Sets the container's Ethernet device's MAC address
+
+　　可以通过docker run --net none 来关闭网络接口，此时将关闭所有网络数据的输入输出。
+
+这时，你只能通过STDIN,STDOUT或者files来完成I/O操作了。
+默认情况下，container使用host的DNS设置。
+但是你可以通过--dns来覆盖container内的dns设置。
+同时docker会对containter默认生成一个MAC地址，你可以通过--mac-address 12:34:56:78:9a:bc 来设置你自己的mac地址。
+
+　　以下是网络设置中常用的参数：
+
+none 关闭container内的网络连接
+bridge 通过veth接口来连接contianer 默认选项
+host 允许container使用host的网络堆栈信息。 注意：这种方式将允许container访问host中类似D-BUS之类的系统服务，所以被认为是不安全的。
+container 使用另外一个container的网络堆栈信息。
+　　None：
+
+　　将网络模式设置为none时，这个container将不允许访问任何外部router。
+这个container内部只会有一个loopback接口，而且不存在任何可以访问外部网络的router。
+
+　　Bridge：
+
+　　Docker默认是将container设置为bridge模式。
+此时在host上面讲存在一个docker0的网络接口，同时会针对container创建一对veth接口。
+其中一个veth接口是在host充当网卡桥接作用，另外一个veth接口存在于container的命名空间中，并且指向container的loopback。
+Docker会自动给这个container分配一个IP，并且将container内的数据通过桥接转发到外部。
+
+　　Host：
+
+　　当网络模式设置为host时，这个container将完全共享host的网络堆栈。
+host所有的网络接口将完全对container开放。
+container的主机名也会存在于host的hostname中。
+这时，container所有对外暴露的port和对其它container的link，将完全失效。
+
+　　Container：
+
+　　当网络模式设置为Container时，这个container将完全复用另外一个container的网络堆栈。同时使用时这个container的名称必须要符合下面的格式：--net container:<name|id>.
+
+　　比如当前有一个绑定了本地地址localhost的redis container。如果另外一个container需要复用这个网络堆栈，则需要如下操作：
+
+$ sudo docker run -d --name redis example/redis --bind 127.0.0.1
+$ # use the redis container's network stack to access localhost
+$ sudo docker run --rm -ti --net container:redis example/redis-cli -h 127.0.0.1
+　Managing /etc/hosts
+
+　　当一个container再启动时，在/etc/hosts文件里面将会存在包括localhost在内的一些hostname信息。我们也可以使用--add-host这个参数来动态添加/etc/hosts里面的数据。
+
+复制代码
+$ /docker run -ti --add-host db-static:86.75.30.9 ubuntu cat /etc/hosts
+172.17.0.22     09d03f76bf2c
+fe00::0         ip6-localnet
+ff00::0         ip6-mcastprefix
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+86.75.30.9      db-static
+复制代码
+　Clean up (--rm)
+
+　　默认情况下，每个container在退出时，它的文件系统也会保存下来。这样一方面调试会方便些，因为你可以通过查看日志等方式来确定最终状态。另外一方面，你也可以保存container所产生的数据。但是当你仅仅需要短期的运行一个前台container，这些数据同时不需要保留时。你可能就希望docker能在container结束时自动清理其所产生的数据。
+
+　　这个时候你就需要--rm这个参数了。 注意：--rm 和 -d不能共用！
+
+--rm=false: Automatically remove the container when it exits (incompatible with -d)
+　Security configuration
+
+复制代码
+--security-opt="label:user:USER"   : Set the label user for the container
+--security-opt="label:role:ROLE"   : Set the label role for the container
+--security-opt="label:type:TYPE"   : Set the label type for the container
+--security-opt="label:level:LEVEL" : Set the label level for the container
+--security-opt="label:disable"     : Turn off label confinement for the container
+--secutity-opt="apparmor:PROFILE"  : Set the apparmor profile to be applied 
+                                     to the container
+
+　　你可以通过--security-opt修改container中默认的schema标签。比如说，对于一个MLS系统来说(MLS可能是指Multiple Listing System，本人不确定.)，你可以指定MCS/MLS级别。
+
+　　下面的这些级别将允许多个container共享content。
+
+# docker run --security-opt label:level:s0:c100,c200 -i -t fedora bash
+　　如果是MLS系统，则使用下面的命令：
+
+# docker run --security-opt label:level:TopSecret -i -t rhel7 bash
+　　使用下面的命令可以在container内禁用安全策略：
+
+# docker run --security-opt label:disable -i -t fedora bash
+　　如果你需要在container内执行更为严格的安全策略，那么你可以为这个container指定一个策略替代。比如你可以使用下面的命令来指定container只允许监听apache port
+
+# docker run --security-opt label:type:svirt_apache_t -i -t centos bash
+　　注意：此时，在你的host环境中必须存在一个名为svirt_apache_t的安全策略。
+
+　　
+
+　Runtime constraints on CPU and memory
+
+　　下面的参数可以用来调整container内的性能参数。
+
+-m="": Memory limit (format: <number><optional unit>, where unit = b, k, m or g)
+-c=0 : CPU shares (relative weight)
+　　通过docker run -m 可以很方便的调整container所使用的内存资源。如果host支持swap内存，那么使用-m可以设定比host物理内存还大的值。
+
+　　同样，通过-c 可以调整container的cpu优先级。默认情况下，所有的container享有相同的cpu优先级和cpu调度周期。但你可以通过Docker来通知内核给予某个或某几个container更多的cpu计算周期。
+
+　　默认情况下，使用-c或者--cpu-shares 参数值为0，可以赋予当前活动container 1024个cpu共享周期。这个0值可以针对活动的container进行修改来调整不同的cpu循环周期。
+
+　　比如，我们使用-c或者--cpu-shares =0启动了C0，C1，C2三个container，使用-c/--cpu-shares=512启动了C3.这时，C0，C1，C2可以100%的使用CPU资源(1024)，但C3只能使用50%的CPU资源(512)。如果这个host的OS是时序调度类型的，每个CPU时间片是100微秒，那么C0，C1，C2将完全使用掉这100微秒，而C3只能使用50微秒。
+
+ 
+
+　Runtime privilege, Linux capabilities, and LXC configuration
+
+--cap-add: Add Linux capabilities
+--cap-drop: Drop Linux capabilities
+--privileged=false: Give extended privileges to this container
+--device=[]: Allows you to run devices inside the container without the --privileged flag.
+--lxc-conf=[]: (lxc exec-driver only) Add custom lxc options --lxc-conf="lxc.cgroup.cpuset.cpus = 0,1"
+复制代码
+　　默认情况下，Docker的container是没有特权的。例如不能再container里面再启动一个container。这是因为默认情况下container是不能访问任何其他设备的。但是通过"privileged"，container就拥有了访问任何其他设备的权限。
+
+　　当操作者执行docker run --privileged时，Docker将拥有访问host所有设备的权限，同时Docker也会在apparmor或者selinux做一些设置，使container可以容易的访问那些运行在container外部的设备。你可以访问Docker blog来获取更多关于--privileged的用法。
+
+　　同时，你也可以限制container只能访问一些指定的设备。下面的命令将允许container只访问一些特定设备：
+
+$ sudo docker run --device=/dev/snd:/dev/snd ...
+　　默认情况下，container拥有对设备的读，写，创建设备文件的权限。使用:rwm来配合--device，你可以控制这些权限。
+
+ 
+　　$ sudo docker run --device=/dev/sda:/dev/xvdc --rm -it ubuntu fdisk  /dev/xvdc
+
+    Command (m for help): q
+    $ sudo docker run --device=/dev/sda:/dev/xvdc:r --rm -it ubuntu fdisk  /dev/xvdc
+    You will not be able to write the partition table.
+
+    Command (m for help): q
+
+    $ sudo docker run --device=/dev/sda:/dev/xvdc:w --rm -it ubuntu fdisk  /dev/xvdc
+        crash....
+
+    $ sudo docker run --device=/dev/sda:/dev/xvdc:m --rm -it ubuntu fdisk  /dev/xvdc
+    fdisk: unable to open /dev/xvdc: Operation not permitted
+复制代码
+ 
+
+　　使用--cap-add和--cap-drop，配合--privileged，你可以更细致的控制container。默认使用这两个参数的情况下，container拥有一系列的内核修改权限。这两个参数都支持all值，如果你想让某个container拥有除了MKNOD之外的所有内核权限，那么可以执行下面的命令：
+
+ $ sudo docker run --cap-add=ALL --cap-drop=MKNOD ...
+　　如果需要修改网络接口数据，那么就建议使用--cap-add=NET_ADMIN，而不是使用--privileged。
+
+$ docker run -t -i --rm  ubuntu:14.04 ip link add dummy0 type dummy
+RTNETLINK answers: Operation not permitted
+$ docker run -t -i --rm --cap-add=NET_ADMIN ubuntu:14.04 ip link add dummy0 type dummy
+　　如果要挂载一个FUSE文件系统，那么就需要--cap-add和--device了。
+
+$ docker run --rm -it --cap-add SYS_ADMIN sshfs sshfs sven@10.10.10.20:/home/sven /mnt
+fuse: failed to open /dev/fuse: Operation not permitted
+$ docker run --rm -it --device /dev/fuse sshfs sshfs sven@10.10.10.20:/home/sven /mnt
+fusermount: mount failed: Operation not permitted
+$ docker run --rm -it --cap-add SYS_ADMIN --device /dev/fuse sshfs
+# sshfs sven@10.10.10.20:/home/sven /mnt
+The authenticity of host '10.10.10.20 (10.10.10.20)' can't be established.
+ECDSA key fingerprint is 25:34:85:75:25:b0:17:46:05:19:04:93:b5:dd:5f:c6.
+Are you sure you want to continue connecting (yes/no)? yes
+sven@10.10.10.20's password:
+root@30aa0cfaf1b5:/# ls -la /mnt/src/docker
+total 1516
+drwxrwxr-x 1 1000 1000   4096 Dec  4 06:08 .
+drwxrwxr-x 1 1000 1000   4096 Dec  4 11:46 ..
+-rw-rw-r-- 1 1000 1000     16 Oct  8 00:09 .dockerignore
+-rwxrwxr-x 1 1000 1000    464 Oct  8 00:09 .drone.yml
+drwxrwxr-x 1 1000 1000   4096 Dec  4 06:11 .git
+-rw-rw-r-- 1 1000 1000    461 Dec  4 06:08 .gitignore
+
+　　如果docker启动时选择了lxc-driver，(docker -d --exec-driver=lxc)。那么就可以使用--lxc-conf来设定LXC参数。
+但需要注意的是，未来host上面的docker deamon有可能不会使用LXC，所以这些参数有可能会包含一些没有实现的配置功能。
+那么意味着，操作者在操作这些参数时必须要十分熟悉LXC。
+
+　　特别注意：当你使用--lxc-conf修改container参数后，docker deamon将不再管理这些参数，那么必须由操作者自行进行管理。
+比如说，你使用--lxc-conf修改了container的IP地址，那么在/etc/hosts里面是不会自动体现的，需要你自行维护。
+
+　Overriding Dockerfile image defaults
+
+　　当开发者使用Dockerfile进行build或者使用commit提交container时，开发人员可以设定一些image默认参数。
+
+　　这些参数中，有四个是无法被覆盖的：FROM，MAINTAINER，RUN和ADD。其余参数都可以通过docker run进行覆盖。我们将介绍如何对这些参数进行覆盖。
+
+CMD (Default Command or Options)
+ENTRYPOINT (Default Command to Execute at Runtime)
+EXPOSE (Incoming Ports)
+ENV (Environment Variables)
+VOLUME (Shared Filesystems)
+USER
+WORKDIR
+　　
+
+　CMD (default command or options)
+
+　　
+
+$ sudo docker run [OPTIONS] IMAGE[:TAG] [COMMAND] [ARG...]
+　　这条命令中的COMMAND部分是可选的。因为这个IMAGE在build时，开发人员可能已经设定了默认执行的command。作为操作人员，你可以使用上面命令中新的command来覆盖旧的command。
+
+　　如果image中设定了ENTRYPOINT，那么命令中的CMD也可以作为参数追加到ENTRYPOINT中。
+
+　ENTRYPOINT (default command to execute at runtime)
+
+--entrypoint="": Overwrite the default entrypoint set by the image
+　　这个ENTRYPOINT和COMMAND类似，它指定了当container执行时，需要启动哪些进程。相对COMMAND而言，ENTRYPOINT是比较困难进行覆盖的，这个ENTRYPOINT可以让container设定默认启动行为，所以当container启动时，你可以执行任何一个二进制可执行程序。你也可以通过COMMAND给这个ENTRYPOINT传递参数。但当你需要再container中执行其他进程时，你就可以指定其他ENTRYPOINT了。
+
+　　下面就是一个例子，container可以在启动时自动执行shell，然后启动其它进程。
+
+$ sudo docker run -i -t --entrypoint /bin/bash example/redis
+#or two examples of how to pass more parameters to that ENTRYPOINT:
+$ sudo docker run -i -t --entrypoint /bin/bash example/redis -c ls -l
+$ sudo docker run -i -t --entrypoint /usr/bin/redis-cli example/redis --help
+　　
+
+　EXPOSE (incoming ports)
+
+　　Dockefile在网络方面除了提供一个EXPOSE之外，没有提供其它选项。下面这些参数可以覆盖Dockefile的expose默认值：
+
+--expose=[]: Expose a port or a range of ports from the container
+            without publishing it to your host
+-P=false   : Publish all exposed ports to the host interfaces
+-p=[]      : Publish a container᾿s port to the host (format:
+             ip:hostPort:containerPort | ip::containerPort |
+             hostPort:containerPort | containerPort)
+             (use 'docker port' to see the actual mapping)
+--link=""  : Add link to another container (name:alias)
+复制代码
+　　--expose可以让container接受外部传入的数据。container内监听的port不需要和外部host的port相同。
+比如说在container内部，一个HTTP服务监听在80端口，对应外部host的port就可能是49880.
+
+　　操作人员可以使用--expose，让新的container访问到这个container。具体有三个方式：
+
+　　1. 使用-p来启动container。
+
+　　2. 使用-P来启动container。
+
+　　3. 使用--link来启动container。
+
+　　如果使用-p或者-P，那么container会开发部分端口到host，只要对方可以连接到host，就可以连接到container内部。当使用-P时，docker会在host中随机从49153 和65535之间查找一个未被占用的端口绑定到container。你可以使用docker port来查找这个随机绑定端口。
+
+　　当你使用--link方式时，作为客户端的container可以通过私有网络形式访问到这个container。同时Docker会在客户端的container中设定一些环境变量来记录绑定的IP和PORT。
+
+　　
+
+　ENV (environment variables)
+
+Variable	Value
+HOME	Set based on the value of USER
+HOSTNAME	The hostname associated with the container
+PATH	Includes popular directories, such as :
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+TERM	xterm if the container is allocated a psuedo-TTY
+ 　　当container启动时，会自动在container中初始化这些变量。
+
+　　操作人员可以通过-e来设定任意的环境变量。甚至覆盖已经存在的环境变量，或者是在Dockerfile中通过ENV设定的环境变量。
+
+$ sudo docker run -e "deep=purple" --rm ubuntu /bin/bash -c export
+declare -x HOME="/"
+declare -x HOSTNAME="85bc26a0e200"
+declare -x OLDPWD
+declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+declare -x PWD="/"
+declare -x SHLVL="1"
+declare -x container="lxc"
+declare -x deep="purple"
+
+　　操作人员可以通过-h来设定hostname。也可以使用"--link name:alias"来设定环境变量，当使用--link后，docker将根据后面提供的IP和PORT信息来连接服务端container。下面就是使用redis的例子：
+
+复制代码
+# Start the service container, named redis-name
+$ sudo docker run -d --name redis-name dockerfiles/redis
+4241164edf6f5aca5b0e9e4c9eccd899b0b8080c64c0cd26efe02166c73208f3
+
+# The redis-name container exposed port 6379
+$ sudo docker ps
+CONTAINER ID        IMAGE                      COMMAND                CREATED             STATUS              PORTS               NAMES
+4241164edf6f        $ dockerfiles/redis:latest   /redis-stable/src/re   5 seconds ago       Up 4 seconds        6379/tcp            redis-name
+
+# Note that there are no public ports exposed since we didn᾿t use -p or -P
+$ sudo docker port 4241164edf6f 6379
+2014/01/25 00:55:38 Error: No public port '6379' published for 4241164edf6f
+复制代码
+　　你使用--link后，就可以获取到关于Redis Container的相关信息。
+
+复制代码
+$ sudo docker run --rm --link redis-name:redis_alias --entrypoint /bin/bash dockerfiles/redis -c export
+declare -x HOME="/"
+declare -x HOSTNAME="acda7f7b1cdc"
+declare -x OLDPWD
+declare -x PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+declare -x PWD="/"
+declare -x REDIS_ALIAS_NAME="/distracted_wright/redis"
+declare -x REDIS_ALIAS_PORT="tcp://172.17.0.32:6379"
+declare -x REDIS_ALIAS_PORT_6379_TCP="tcp://172.17.0.32:6379"
+declare -x REDIS_ALIAS_PORT_6379_TCP_ADDR="172.17.0.32"
+declare -x REDIS_ALIAS_PORT_6379_TCP_PORT="6379"
+declare -x REDIS_ALIAS_PORT_6379_TCP_PROTO="tcp"
+declare -x SHLVL="1"
+declare -x container="lxc"
+#And we can use that information to connect from another container as a client:
+$ sudo docker run -i -t --rm --link redis-name:redis_alias --entrypoint /bin/bash dockerfiles/redis -c '/redis-stable/src/redis-cli -h $REDIS_ALIAS_PORT_6379_TCP_ADDR -p $REDIS_ALIAS_PORT_6379_TCP_PORT'
+172.17.0.32:6379>
+复制代码
+　　Docker也会将这个alias的IP地址写入到/etc/hosts文件中。然后你就可以通过别名来访问link后的container。
+
+$ sudo docker run -d --name servicename busybox sleep 30
+$ sudo docker run -i -t --link servicename:servicealias busybox ping -c 1 servicealias
+　　如果你重启了源container(servicename)，相关联的container也会同步更新/etc/hosts。
+
+　VOLUME (shared filesystems)
+
+-v=[]: Create a bind mount with: [host-dir]:[container-dir]:[rw|ro].
+       If "container-dir" is missing, then docker creates a new volume.
+--volumes-from="": Mount all volumes from the given container(s)
+　　关于volume参数，可以再 Managing data in containers 查看详细说明。需要注意的是开发人员可以在Dockerfile中设定多个volume，但是只能由操作人员设置container直接的volume访问。
+
+　USER
+
+　　container中默认的用户是root。但是开发人员创建新的用户之后，这些新用户也是可以使用的。开发人员可以通过Dockerfile的USER设定默认的用户，操作人员可以通过"-u "来覆盖这些参数。
+
+　WORKDIR
+
+ 　　container中默认的工作目录是根目录(/)。开发人员可以通过Dockerfile的WORKDIR来设定默认工作目录，操作人员可以通过"-w"来覆盖默认的工作目录。
+
+ 
+
+
+
+
+
+
+
+
+

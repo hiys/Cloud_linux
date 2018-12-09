@@ -1,0 +1,576 @@
+
+[root@hiys ~]# vim /etc/rc.local
+[root@hiys ~]# source /etc/rc.local
+2018/11/20 19:51:29 *************************************************************
+2018/11/20 19:51:29 ** IntelliJ IDEA License Server                            **
+2018/11/20 19:51:29 ** by: ilanyu                                              **
+2018/11/20 19:51:29 ** http://www.lanyus.com/                                  **
+2018/11/20 19:51:29 ** Alipay donation: lanyu19950316@gmail.com                **
+2018/11/20 19:51:29 ** Please support genuine!!!                               **
+2018/11/20 19:51:29 ** listen on 0.0.0.0:1017...                               **
+2018/11/20 19:51:29 ** You can use http://127.0.0.1:1017 as license server     **
+2018/11/20 19:51:29 *************************************************************
+2018/11/20 19:51:29 listen tcp4 0.0.0.0:1017: bind: address already in use
+mount: /var/lib/libvirt/images/iso/CentOS7-1708.iso 已经挂载
+[1]+  退出 1                /usr/bin/crack_pycharm
+mount: /var/lib/libvirt/images/iso/RHEL7-extras.iso 已经挂载
+mount: /var/lib/libvirt/images/iso/RHEL7OSP-10.iso 已经挂载
+[root@hiys ~]# 
+
+
+[root@hiys ~]# tail -2 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+UUID=1ae681d3-b6db-4609-bed8-f78295a292cb  /javaweb           ext4     defaults    0   0
+
+[root@hiys ~]# tail -3 /etc/rc.local 
+mount  -t  iso9660  -o loop,ro  /var/lib/libvirt/images/iso/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+mount  -t  iso9660  -o loop,ro  /var/lib/libvirt/images/iso/RHEL7-extras.iso   /var/ftp/RHEL7-extras/
+mount  -t  iso9660  -o loop,ro  /var/lib/libvirt/images/iso/RHEL7OSP-10.iso    /var/ftp/RHEL7OSP/
+
+[root@hiys ~]# ls  /var/ftp/
+CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# ls  /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          repodata
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@hiys ~]# ls  /etc/yum.repos.d/
+CentOS7-1708.repo     packagekit-media.repo  RHEL7-extras.repo  rhel7.repo
+NSD-2018-1-12.tar.gz  repo                   RHEL7OSP.repo
+
+[root@hiys ~]# cat /etc/yum.repos.d/CentOS7-1708.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://176.121.213.151/CentOS7-1708/
+enabled=1
+
+[root@hiys ~]# systemctl is-active vsftpd
+active
+[root@hiys ~]# systemctl is-enabled vsftpd
+enabled
+
+[root@hiys ~]# yum clean all >/dev/null  && yum repolist  |tail  -15
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+rhel7                            rhel7.4                                   4,986
+repolist: 15,717
+
+[root@hiys ~]# 
+  delxmlimg(){
+    virsh shutdown $Vname;
+    sleep 4
+    ls    /etc/libvirt/qemu/${Vname}.xml     /var/lib/libvirt/images/${Vname}.img
+    rm -f  /etc/libvirt/qemu/${Vname}.xml  /var/lib/libvirt/images/${Vname}.img
+    ls    /etc/libvirt/qemu/${Vname}.xml     /var/lib/libvirt/images/${Vname}.img
+    rm -f /etc/libvirt/qemu/${Vname}*
+    ls    /etc/libvirt/qemu/${Vname}*
+    echo "delete ${Vname} well done"
+  }
+
+[root@hiys ~]# cd  /etc/libvirt/qemu/
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml  Va1.xml  Va.xml.txt
+
+[root@hiys qemu]# cat Va.xml.txt 
+<domain type='kvm'>
+  <name>Va</name>              ## 修改点 1
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/Va.img'/>   ## 修改点 2
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-Va.img'/>   ## 修改点 3
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# cat  -n  Va.xml.txt  |sed -n '/<name>\|Va.img\|disk-Va.img/p'
+     2	  <name>Va</name>
+    26	      <source file='/var/lib/libvirt/images/Va.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va.img'/>
+
+[root@hiys qemu]# \cp Va.xml.txt  Va2.xml
+
+[root@hiys qemu]# cat  -n  Va2.xml  |sed -n '/<name>\|Va.img\|disk-Va.img/p'
+     2	  <name>Va</name>
+    26	      <source file='/var/lib/libvirt/images/Va.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va.img'/>
+
+[root@hiys qemu]# sed  -i  -e  '/<name>/s/Va/Va2/'  -e  '/\/Va.img/s/Va/Va2/' -e  '/disk-Va.img/s/Va/Va2/' Va2.xml 
+
+[root@hiys qemu]# cat  -n  Va2.xml  |sed -n '/<name>\|Va2.img\|disk-Va2.img/p'
+     2	  <name>Va2</name>
+    26	      <source file='/var/lib/libvirt/images/Va2.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va2.img'/>
+[root@hiys qemu]# cat  Va2.xml 
+<domain type='kvm'>
+  <name>Va2</name>               ## 虚拟机名 Va2 修改点 1
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/Va2.img'/>   ## 磁盘/dev/vda 修改点 2
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-Va2.img'/>  ## 磁盘/dev/vdb 修改点 3
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>   
+      <source bridge='vbr'/>   # 网络接口 eth0
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>  # 网络接口 eth1
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr2'/>   # 网络接口 eth2
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml  Va1.xml  Va2.xml  Va.xml.txt
+[root@hiys qemu]# cd /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# vim vbr.xml     # # 设定为 eth0
+
+<network>
+  <name>vbr</name>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <forward mode="nat"/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'> ## eth0 网关address='192.168.1.254' 
+    <dhcp>
+      <range start="192.168.1.100" end="192.168.1.200"/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# cp vbr.xml  vbr2.xml
+
+[root@hiys networks]# vim vbr2.xml    # # 设定为 eth2
+
+[root@hiys networks]# cat vbr2.xml
+<network>
+  <name>vbr2</name>
+  <forward mode='nat'/>
+  <bridge name='vbr2' stp='on' delay='0'/>
+  <domain name='vbr2'/>
+  <ip address='192.168.3.254' netmask='255.255.255.0'>  ## eth2 网关address='192.168.3.254'
+    <dhcp>
+      <range start='192.168.3.100' end='192.168.3.200'/>
+    </dhcp>
+  </ip>
+</network>
+[root@hiys networks]# virsh net-define vbr2.xml 
+从 vbr2定义网络vbr2.xml
+
+[root@hiys networks]# virsh net-start vbr2
+网络 vbr2 已开始
+
+[root@hiys networks]# virsh net-autostart vbr2   ## 设定为 eth2
+网络vbr2标记为自动启动
+
+[root@hiys networks]# cat private1.xml     ##  # 设定为 eth1
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit private1
+or other application using the libvirt API.
+-->    ##这几行是 自动生成的代码
+
+<network>
+  <name>private1</name>
+  <uuid>559de4a7-724c-4eec-ba19-3c7c2e69b4ad</uuid>  ## 这一行是 自动生成的代码
+  <bridge name='private1' stp='on' delay='0'/>
+  <mac address='52:54:00:37:78:11'/>   ## 这一行是 自动生成的代码
+  <domain name='private1'/>
+  <ip address='192.168.4.254' netmask='255.255.255.0'> ## eth1 网关address='192.168.4.254'
+  </ip>
+</network>
+
+[root@hiys networks]# pwd
+/etc/libvirt/qemu/networks
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr2.xml  vbr.xml
+[root@hiys networks]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr2                 活动     是           是
+
+[root@hiys networks]# ls autostart/
+default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr2.xml  vbr.xml
+
+[root@hiys networks]# cd  /var/lib/libvirt/images/
+[root@hiys images]# ls
+bin               disk-docker2.img    docker1.img  node.qcow2     tedu-wallpaper-01.png
+conf.d            disk.img            docker2.img  nova01.img     tedu-wallpaper-weekend.png
+content           disk-nova01.img     exam         openstack.img  Va1.img
+db                disk-openstack.img  iso          qemu           vsftpd.conf
+disk-docker1.img  disk-Va1.img        lost+found   Student.sh     Weekend.sh
+
+[root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  Va2.img  18G
+
+Formatting 'Va2.img', fmt=qcow2 size=19327352832 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img   create   -f  qcow2  disk-Va2.img  15G
+
+Formatting 'disk-Va2.img', fmt=qcow2 size=16106127360 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ls
+bin               disk-docker2.img    disk-Va2.img  lost+found     Student.sh                  vsftpd.conf
+conf.d            disk.img            docker1.img   node.qcow2     tedu-wallpaper-01.png       Weekend.sh
+content           disk-nova01.img     docker2.img   nova01.img     tedu-wallpaper-weekend.png
+db                disk-openstack.img  exam          openstack.img  Va1.img
+disk-docker1.img  disk-Va1.img        iso           qemu           Va2.img
+
+[root@hiys images]# virsh   define   /etc/libvirt/qemu/Va2.xml 
+定义域 Va2（从 /etc/libvirt/qemu/Va2.xml）
+
+[root@hiys images]# virsh  start  Va2
+域 Va2 已开始
+
+[root@hiys images]# virsh autostart Va2
+域 Va2标记为自动开始
+
+[root@hiys images]# virsh console Va2
+连接到域 Va1
+换码符为 ^]
+            【回车】
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root  #输入 root
+Password: a   #输入a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# echo Va2 >/etc/hostname
+
+[root@localhost ~]# ifconfig  |awk '/inet /&&/192.168.1/{print $2}'
+192.168.1.120
+[root@localhost ~]# shutdown -h now
+
+
+[root@hiys images]# virsh start Va2
+域 Va2 已开始
+
+[root@hiys images]# ssh  -o  StrictHostKeyChecking=no  -X  192.168.1.120
+root@192.168.1.120's password: a
+X11 forwarding request failed on channel 0
+Last login: Tue Nov 20 20:42:56 2018
+[root@Va2 ~]# ifconfig                                                                        ★ --虚拟机--★ 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.120  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:47:d3:1a  txqueuelen 1000  (Ethernet)
+        RX packets 78  bytes 8475 (8.2 KiB)
+        RX errors 0  dropped 8  overruns 0  frame 0
+        TX packets 39  bytes 6263 (6.1 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va2 ~]# cd /etc/sysconfig/network-scripts/                                              ★ --虚拟机--★ 
+[root@Va2 network-scripts]# ls                                                                ★ --虚拟机--★ 
+ifcfg-eth0   ifdown-ippp  ifdown-routes    ifup          ifup-ipv6   ifup-ppp       ifup-tunnel
+ifcfg-lo     ifdown-ipv6  ifdown-sit       ifup-aliases  ifup-isdn   ifup-routes    ifup-wireless
+ifdown       ifdown-isdn  ifdown-Team      ifup-bnep     ifup-plip   ifup-sit       init.ipv6-global
+ifdown-bnep  ifdown-post  ifdown-TeamPort  ifup-eth      ifup-plusb  ifup-Team      network-functions
+ifdown-eth   ifdown-ppp   ifdown-tunnel    ifup-ippp     ifup-post   ifup-TeamPort  network-functions-ipv6
+
+[root@Va2 network-scripts]# cat ifcfg-eth0                                                    ★ --虚拟机--★ 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+
+[root@Va2 network-scripts]# sed  -i  '/BOOTPROTO/cBOOTPROTO="static"\nIPADDR="192.168.1.12"\nPREFIX=24\nGATEWAY=192.168.1.254'  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+[root@Va2 network-scripts]# cat ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.12"
+PREFIX=24
+GATEWAY=192.168.1.254
+
+[root@Va2 network-scripts]# cp ifcfg-eth0  ifcfg-eth1 
+[root@Va2 network-scripts]# cp ifcfg-eth0  ifcfg-eth2
+[root@Va2 network-scripts]# 
+
+[root@Va2 network-scripts]# sed  -i -e 's/eth0/eth1/'  -e '/IPADDR/s/1.12/4.12/'  ifcfg-eth1
+[root@Va2 network-scripts]# cat ifcfg-eth1
+# Generated by dracut initrd
+DEVICE="eth1"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"                                                                               ★ --虚拟机--★ 
+BOOTPROTO="static"
+IPADDR="192.168.4.12"
+PREFIX=24
+GATEWAY=192.168.1.254
+
+[root@Va2 network-scripts]# sed  -i -e 's/eth0/eth2/'  -e  '/IPADDR/s/1.12/3.12/'  ifcfg-eth2
+[root@Va2 network-scripts]# cat ifcfg-eth2
+# Generated by dracut initrd
+DEVICE="eth2"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.3.12"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@Va2 network-scripts]#  systemctl restart network
+
+---------------------------重新再开启一个终端，。。。。。。。。。。。。。。
+
+[root@hiys ~]# cat local.repo.txt 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@hiys ~]# scp -o StrictHostKeyChecking=no  local.repo.txt  192.168.1.12:/etc/yum.repos.d/local.repo
+root@192.168.1.12's password: 
+local.repo.txt                                                             100%  176   121.2KB/s   00:00    
+[root@hiys ~]# 
+--------------------------------  方式 一 ------------------------
+
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no -X 192.168.1.12
+Warning: Permanently added '192.168.1.12' (ECDSA) to the list of known hosts.
+root@192.168.1.12's password: 
+X11 forwarding request failed on channel 0
+Last login: Tue Nov 20 20:47:16 2018 from 192.168.1.254
+[root@Va2 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:47:d3:1a  txqueuelen 1000  (Ethernet)
+        RX packets 2446  bytes 182916 (178.6 KiB)
+        RX errors 0  dropped 85  overruns 0  frame 0
+        TX packets 992  bytes 115392 (112.6 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.12  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:a3:cc:fc  txqueuelen 1000  (Ethernet)
+        RX packets 935  bytes 49036 (47.8 KiB)
+        RX errors 0  dropped 924  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+                                                                                              ★ --虚拟机--★ 
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.3.12  netmask 255.255.255.0  broadcast 192.168.3.255
+        ether 52:54:00:f3:4b:18  txqueuelen 1000  (Ethernet)
+        RX packets 934  bytes 48876 (47.7 KiB)
+        RX errors 0  dropped 924  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va2 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va2 ~]# 
+ [root@Va2 ~]# scp -o StrictHostKeyChecking=no root@192.168.1.254:/root/local.repo.txt  /etc/yum.repos.d/local.repo
+Warning: Permanently added '192.168.1.254' (ECDSA) to the list of known hosts.
+root@192.168.1.254's password: a
+Permission denied, please try again.
+root@192.168.1.254's password: 1
+local.repo.txt                                                             100%  176   236.5KB/s   00:00    
+
+[root@Va2 ~]# ll /etc/yum.repos.d/local.repo
+-rw-r--r--. 1 root root 176 11月 20 21:23 /etc/yum.repos.d/local.repo
+[root@Va2 ~]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]                                                                                ★ --虚拟机--★ 
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@Va2 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va2 ~]# yum clean all >/dev/null && yum repolist |tail -4
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+docker                               docker                                    2
+repolist: 9,593
+
+[root@Va2 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk                                                                ★ --虚拟机--★ 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  15G  0 disk 
+
+[root@Va2 ~]# yum -y install docker-engine |tail -9
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                            
+  libcgroup.x86_64 0:0.41-13.el7                                                
+  libsemanage-python.x86_64 0:2.5-8.el7                                         
+  libtool-ltdl.x86_64 0:2.4.2-22.el7_3                                          
+  policycoreutils-python.x86_64 0:2.5-17.1.el7                                  
+  python-IPy.noarch 0:0.75-6.el7                                                              ★ --虚拟机--★ 
+  setools-libs.x86_64 0:3.3.8-1.1.el7                                           
+
+完毕！
+[root@Va2 ~]# rpm -q docker-engine
+docker-engine-1.12.1-1.el7.centos.x86_64
+[root@Va2 ~]# systemctl restart docker  && systemctl enable docker
+Created symlink from /etc/systemd/system/multi-user.target.wants/docker.service to /usr/lib/systemd/system/docker.service.
+[root@Va2 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   15G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-20971586-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-20971586-pool 252:0    0  100G  0 dm   
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+

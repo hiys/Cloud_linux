@@ -1,0 +1,439 @@
+
+[root@hiys ~]# ifconfig |head -2
+enp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.213.81  netmask 255.255.255.0  broadcast 176.121.213.255
+
+[root@hiys ~]# vim /etc/yum.repos.d/RHEL7OSP.repo 
+
+:%s  /192.168.1.254/176.121.213.81/g  
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+centos.repo  extras.repo           packagekit-media.repo  RHEL7OSP.repo
+ceph.repo    NSD-2018-1-12.tar.gz  repo                   rhel7.repo
+
+[root@hiys ~]# vim /etc/yum.repos.d/centos.repo 
+[root@hiys ~]# cat /etc/yum.repos.d/centos.repo
+[Centos1708]
+name=CentOS-1708
+gpgcheck=0
+baseurl=ftp://176.121.213.81/iso/
+enabled=1
+[root@hiys ~]# 
+
+[root@hiys ~]# vim /etc/yum.repos.d/extras.repo 
+[root@hiys ~]# cat /etc/yum.repos.d/extras.repo
+[RHEL7-extras]
+name=RHEL7-extras
+baseurl=ftp://176.121.213.81/extras
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# vim /etc/yum.repos.d/ceph.repo 
+[root@hiys ~]# cat /etc/yum.repos.d/ceph.repo
+[mon]
+name=mon
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+gpgcheck=0
+baseurl=file:///var/ftp/rhel7/
+enabled=1
+
+[root@hiys ~]# vim /etc/yum.repos.d/RHEL7OSP.repo 
+[root@hiys ~]# cat /etc/yum.repos.d/RHEL7OSP.repo
+[RHEL7OSP-devtools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+enabled=1
+
+[RHEL7OSP-optools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+enabled=1
+
+[RHEL7OSP-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-openstack-10-rpms
+enabled=1
+
+[RHEL7OSP-tools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+pnabled=1
+
+[RHEL7OSP-rhceph-2-mon-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+enabled=1
+
+[RHEL7OSP-rhceph-2-osd-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+enabled=1
+
+[RHEL7OSP-rhceph-2-tools-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-agent-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-installer-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-main-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+gpgcheck=0
+baseurl=ftp://176.121.213.81/RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+enabled=1
+[root@hiys ~]# 
+
+[root@hiys ~]# yum clean all >/dev/null && yum repolist |tail -18
+源标识                           源名称                                    状态
+Centos1708                       CentOS-1708                               9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+mon                              mon                                          41
+osd                              osd                                          28
+rhel7                            rhel7.4                                   4,986
+tools                            tools                                        33
+repolist: 15,819
+[root@hiys ~]# 
+
+[root@hiys ~]# ssh -X 192.168.1.127
+root@192.168.1.127's password: 
+X11 forwarding request failed on channel 0
+Last login: Wed Nov 14 21:43:14 2018 from 192.168.1.254
+
+[root@H127 ~]# yum -y install qemu-kvm libvirt-daemon libvirt-client libvirt-daemon-driver-qemu  |tail -9
+  rpcbind.x86_64 0:0.2.0-42.el7                                                 
+  seabios-bin.noarch 0:1.10.2-3.el7                                             
+  seavgabios-bin.noarch 0:1.10.2-3.el7                                          
+  sgabios-bin.noarch 1:0.20110622svn-4.el7                                      
+  spice-server.x86_64 0:0.12.8-2.el7                                            
+  tcp_wrappers.x86_64 0:7.6-77.el7                                              
+  usbredir.x86_64 0:0.7.1-2.el7                                                 
+
+完毕！
+[root@H127 ~]# rpm -q  qemu-kvm libvirt-daemon libvirt-client libvirt-daemon-driver-qemu  qemu-kvm-1.5.3-141.el7.x86_64
+libvirt-daemon-3.2.0-14.el7.x86_64
+libvirt-client-3.2.0-14.el7.x86_64
+libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64
+
+[root@H127 ~]# ls /etc/yum.repos.d/
+dvd.repo  repo
+[root@H127 ~]# cat /etc/yum.repos.d/dvd.repo 
+[local_repo]
+name=centos1708
+baseurl=ftp://192.168.1.254/iso
+gpgcheck=0
+enabled=1
+
+[root@H127 ~]# vim /etc/ssh/sshd_config
+[root@H127 ~]# sed -n 17p /etc/ssh/sshd_config
+Port 22
+[root@H127 ~]# systemctl restart sshd
+[root@H127 ~]# systemctl enable sshd
+
+[root@H127 ~]# systemctl is-enabled sshd
+enabled
+[root@H127 ~]# systemctl is-active sshd
+active
+[root@H127 ~]# 
+
+root@192.168.1.127's password: 123
+错误：连接到管理程序失败
+错误：读取数据时进入文件终点：Ncat: No such file or directory.: 输入/输出错误
+
+[root@hiys ~]# 
+
+==================
+  共 2 台虚拟机 [ 硬盘 , 配置文件xml ]
+第一台虚拟机  openstack
+     50G 系统盘
+[root@hiys ~]# cd /var/lib/libvirt/images/
+qemuimg create -b node.qcow2  -f  qcow2  openstack.img 50G
+
+     20G  空盘
+qemuimg create  -f  qcow2  disk.img 50G
+
+       2  网卡
+     9G 以上内存
+
+[root@hiys images]# cd /etc/libvirt/qemu/
+
+cp node.xml  openstack.xml
+virsh edit openstack
+virsh define openstack.xml
+cp node.xml   nova01.xml
+virsh edit nova01
+virsh define nova01.xml
+
+<domain type='kvm'>
+  <name>nova01</name>
+  <memory unit='KB'>5000000</memory>
+  <currentMemory unit='KB'>5000000</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+................................
+  </devices>
+</domain>
+第2 台虚拟机  nova01
+[root@hiys ~]# cd /var/lib/libvirt/images/
+qemuimg create -b node.qcow2  -f  qcow2  nova01.img 50G
+
+    50G 系统盘
+     2  网卡
+    4.5G 以上内存
+
+配置ip地址 ifcfg-eth0, ifcfg-eth1
+vim /etc/sysconf/ ..network /ifcfg-eth0
+
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="none"
+#IPADDR="192.168.1.10"
+#NETMASK="255.255.255.0"
+
+vim /etc/sysconf/ ..network /ifcfg-eth1
+
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+#BOOTPROTO="none"
+BOOTPROTO="static"
+#IPADDR="192.168.4.10"
+#NETMASK="255.255.255.0"
+配置 /etc/hosts
+192.168.1.10 openstack
+192.168.1.11 nova01 
+
+配置 /etc/resolv.conf
+nameserver 192.168.1.254
+search     localhost
+
+配置 /etc/chrony.conf
+server gateway iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+
+配置 12yum 源 10731
+vim /etc/yum.repos.d/RHEL7OSP.repo
+ vim /etc/yum.repos.d/extras.repo
+
+shutdown -h now 
+halt  -p
+=============
+[root@hiys ~]#  LANG=zh_CN.UTF-8  halt --help
+halt [OPTIONS...]
+
+Halt the system.
+
+     --help      Show this help
+     --halt      Halt the machine
+  -p --poweroff  Switch off the machine
+     --reboot    Reboot the machine
+  -f --force     Force immediate halt/power-off/reboot
+  -w --wtmp-only Don't halt/power-off/reboot, just write wtmp record
+  -d --no-wtmp   Don't write wtmp record
+     --no-wall   Don't send wall message before halt/power-off/reboot
+[root@hiys ~]# 
+[root@hiys ~]# systemctl is-active NetworkManager
+active
+[root@hiys ~]# systemctl stop NetworkManager
+[root@hiys ~]# 
+
+========================
+/*****************rsync  
+第一台虚拟机  opensack
+ yum -y install  lvm2
+pvcreate /dev/vdb  # 创建物理卷,卷组
+
+vgcreate   cinder-volumes  /dev/vdb
+vgs
+
+yum  -y install qemu-kvm  libvirt-daemon  libvirt-client  
+ libvirt-daemon-driver-qemu python-setuptools
+ 
+yum -y install openstack-packstack  # 只在openstack 上安装
+
+在root下执行
+~ ]# packstack  --gen-answer-file=answer.ini
+~ }#vim answer.ini
+ 11 CONFIG_DEFAULT_PASSWORD=redhat
+42 CONFIG_SWIFT_INSTALL=n
+75 CONFIG_NTP_SERVERS=192.168.1.254
+554 CONFIG_ CINDER_VOLUMES_CREATE=n
+840  CONFIG_NEUTRON_ML2_TYPE_DRIVERS=vxlan,flat  ##vxlan 隔离网络作用,##flat 可使用公共网络
+876  CONFIG_NEUTRON_ML2_VXLAN_GROUP=239.1.1.5    组播地址
+910  CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=physnet1:br-ex      打通 空间
+921  CONFIG_NEUTRON_OVS_BRIDGE__IFACES=br-ex:eth0
+936  CONFIG_NEUTRON_OVS_TUNNEL_IF=eth1
+1179    CONFIG_PROVISION_DEMO=n
+
+packstack  answer-file=answer.ini
+
+第2 台虚拟机  nova01
+
+rpm  --import  RPM-.... ## 这一步模版已经有了,不需要再导入
+yum  -y install qemu-kvm  libvirt-daemon  libvirt-client  
+ libvirt-daemon-driver-qemu python-setuptools
+
+192.168.10
+cd /etc/httpd/conf.d/
+  vim  15
+36
+	ls
+ key
+
+语言s
+admin
+service
+
+=============openstack 虚拟机
+ifconfig 
+
+cd/etcsysconfg/network-scrpts/
+ls
+cat ifcfg-br-ex
+
+后3行ovs-vsctl show
+none  
+OVSBridge
+
+cat ifcfg-eth0
+
+ovs-
+
+Bridge br-ex
+Port "eth0"
+ Interface "eth"
+bridge int
+
+cat keystonerc_admin
+export OS_USERNAME=admin
+export OS_PASSWORD=登陆的密码
+
+
+openstack user list
+ source keystonerc_admin
+openstack user list
+openstack help
+openstack user role 
+
+
+
+
+=======================nova01 虚拟机
+
+vcpu
+2
+内存512
+根硬盘4G
+
+镜像h名称 
+镜像格式qcow2
+
+管理员 网络
+创建网络
+名称 public
+供应商网络类型
+Flat
+物理网络
+nsd1807_wan
+
+up
+
+使用用户身份
+
+创建网络
+网络名称
+lan
+lan_net
+网络地址
+10.10.10.10/24
+子网详情
+
+
+增加子网
+创建子网
+wan
+192.168.1.0/24
+
+网关
+192.168.1.254
+
+新建路由
+路由
+增加接口
+10.10.10.1
+
+点击此处只显示控制台
+
+cat /etc/resolv.conf
+nameserver 192.168.1.254
+search vbr
+
+vim  /etc/nova/nova.conf
+8465  vncserver_proxyclient_address=192.168.1.10
+vim /etc/hosts
+192.168.1.10 
+
+
+
+
+
+
+
+
+
+
+

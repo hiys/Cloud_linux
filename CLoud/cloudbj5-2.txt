@@ -1,0 +1,198 @@
+
+sysctl配置与显示在/proc/sys目录中的内核参数．可以用sysctl来设置或重新设置联网功能，如IP转发、IP碎片去除以及源路由检查等。用户只需要编辑/etc/sysctl.conf文件，即可手工或自动执行由sysctl控制的功能。
+
+    命令格式：
+
+    sysctl [-n] [-e] -w variable=value
+
+    sysctl [-n] [-e] -p <filename> (default /etc/sysctl.conf)
+
+    sysctl [-n] [-e] -a
+
+    常用参数的意义：
+
+    -w   临时改变某个指定参数的值，如
+
+         sysctl -w net.ipv4.ip_forward=1
+
+    -a   显示所有的系统参数
+
+    -p   从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
+
+    如果仅仅是想临时改变某个系统参数的值，可以用两种方法来实现,例如想启用IP路由转发功能：
+
+    1) #echo 1 > /proc/sys/net/ipv4/ip_forward
+
+    2) #sysctl -w net.ipv4.ip_forward=1
+
+    以上两种方法都可能立即开启路由功能，但如果系统重启，或执行了
+
+    # service network restart
+
+ 命令，所设置的值即会丢失，如果想永久保留配置，可以修改/etc/sysctl.conf文件
+
+ 将 net.ipv4.ip_forward=0改为net.ipv4.ip_forward=1
+
+#!/bin/sh
+sed -i '/net.ipv4.ip_forward/ s/\(.*= \).*/\11/' /etc/sysctl.conf
+
+[root@hiys nsd1807]# vim /etc/sysctl.conf 
+
+[root@hiys nsd1807]# cat /etc/sysctl.conf
+
+# sysctl settings are defined through files in
+# /usr/lib/sysctl.d/, /run/sysctl.d/, and /etc/sysctl.d/.
+#
+# Vendors settings live in /usr/lib/sysctl.d/.
+# To override a whole file, create a new file with the same in
+# /etc/sysctl.d/ and put new settings there. To override
+# only specific settings, add a file with a lexically later
+# name in /etc/sysctl.d/ and put new settings there.
+#
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+
+[root@hiys nsd1807]# cat /proc/sys/net/ipv4/ip_forward
+1
+
+[root@hiys nsd1807]# sysctl -w net.ipv4.ip_forward=1 && echo ok
+net.ipv4.ip_forward = 1
+ok
+[root@hiys nsd1807]# 
+
+
+yum install net-tools 
+apachectl
+
+cd /var/www/html
+echo aa > index.html
+curl 172.17.0.3
+
+docker exec -it 2233容器id /bin/bash
+dpkg -L nginx
+
+ls   /etc/default/nginx
+cd /etc/conf.d/
+
+cd /usr/share/nginx/html
+echo hello > index.html
+exit
+curl 172.17.0.2
+docker exec -it  容器id ....
+
+yum -y install pstree
+
+pstree -p 0
+
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker1 ~]# pstree -p 0
+?()─┬─kthreadd(2)─┬─ata_sff(223)
+    │             ├─bioset(22)
+    │             ├─bioset(259)
+    │             ├─bioset(747)
+..............................
+    │             ├─deferwq(64)
+    │             ├─dm-thin(750)
+    │             ├─dm_bufio_cache(746)
+.......................
+    │             ├─kworker/u4:0(6)
+    │             ├─kworker/u4:2(222)
+    │             ├─loop0(740)
+    │             ├─loop1(741)
+.......................................
+    │             ├─xfsaild/vda1(269)
+    │             └─xfsalloc(260)
+    └─systemd(1)─┬─agetty(712)
+                 ├─agetty(713)
+                 ├─anacron(922)
+                 ├─chronyd(435)
+                 ├─crond(483)
+                 ├─dbus-daemon(403)
+                 ├─dockerd(705)─┬─docker-containe(718)─┬─{docker-containe}(721)
+                 │              │                      ├─{docker-containe}(722)
+                 │              │                      ├─{docker-containe}(723)
+                 │              │                      ├─{docker-containe}(724)
+                 │              │                      ├─{docker-containe}(725)
+                 │              │                      ├─{docker-containe}(726)
+                 │              │                      └─{docker-containe}(732)
+                 │              ├─{dockerd}(714)
+                 │              ├─{dockerd}(715)                                 ★ --虚拟机--★ 
+                 │              ├─{dockerd}(716)
+                 │              ├─{dockerd}(717)
+                 │              ├─{dockerd}(719)
+                 │              ├─{dockerd}(720)
+                 │              ├─{dockerd}(729)
+                 │              ├─{dockerd}(730)
+                 │              └─{dockerd}(731)
+                 ├─irqbalance(415)
+                 ├─qemu-ga(400)
+                 ├─rsyslogd(401)─┬─{rsyslogd}(418)
+                 │               └─{rsyslogd}(421)
+                 ├─sshd(704)─┬─sshd(854)───bash(856)───pstree(978)
+                 │           └─sshd(881)───bash(883)
+                 ├─systemd-journal(336)
+                 ├─systemd-logind(402)
+                 └─systemd-udevd(362)
+
+[root@docker1 ~]# 
+
+docker attach 
+
+[root@docker1 ~]# pstree -p 
+systemd(1)─┬─agetty(712)
+           ├─agetty(713)
+           ├─anacron(922)
+           ├─chronyd(435)
+           ├─crond(483)
+           ├─dbus-daemon(403)
+           ├─dockerd(705)─┬─docker-containe(718)─┬─{docker-containe}(721)
+           │              │                      ├─{docker-containe}(722)
+           │              │                      ├─{docker-containe}(723)
+           │              │                      ├─{docker-containe}(724)
+           │              │                      ├─{docker-containe}(725)
+           │              │                      ├─{docker-containe}(726)
+           │              │                      └─{docker-containe}(732)
+           │              ├─{dockerd}(714)
+           │              ├─{dockerd}(715)                                       ★ --虚拟机--★ 
+           │              ├─{dockerd}(716)
+           │              ├─{dockerd}(717)
+           │              ├─{dockerd}(719)
+           │              ├─{dockerd}(720)
+           │              ├─{dockerd}(729)
+           │              ├─{dockerd}(730)
+           │              └─{dockerd}(731)
+           ├─irqbalance(415)
+           ├─qemu-ga(400)
+           ├─rsyslogd(401)─┬─{rsyslogd}(418)
+           │               └─{rsyslogd}(421)
+           ├─sshd(704)─┬─sshd(854)───bash(856)───pstree(1001)
+           │           └─sshd(881)───bash(883)
+           ├─systemd-journal(336)
+           ├─systemd-logind(402)
+           └─systemd-udevd(362)
+[root@docker1 ~]#  
+
+:split
+ vim 分屏幕
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

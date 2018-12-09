@@ -1,0 +1,1383 @@
+
+
+[root@hiys ~]# ls /var/lib/libvirt/images/  ## 磁盘镜像文件--虚拟机的硬盘 .img
+[root@hiys ~]# ll  /var/lib/libvirt/images/node.qcow2   ##模版的源路径
+-rw-r--r-- 1 qemu qemu 1479802880 11月 15 11:02 /var/lib/libvirt/images/node.qcow2
+[root@hiys ~]# 
+
+[root@hiys ~]# ls /etc/libvirt/qemu/   ## 虚拟机配置声明文件XML文件 .xml
+
+[root@hiys ~]# cat /etc/libvirt/qemu/networks/vbr.xml  ## 创建虚拟交换机,虚拟网络vbr
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr</name>
+  <uuid>a0e2dbc9-4d0b-4e6c-9af4-77ce238e3668</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:5e:9d:13'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+[root@hiys ~]# 
+
+
+[root@hiys images]# ifconfig  vbr
+vbr: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
+
+[root@hiys images]# pwd
+/var/lib/libvirt/images
+                 ## 1、创建一个新的磁盘镜像文件
+[root@hiys images]# qemu-img  create  -f  qcow2  node.qcow2  24G
+Formatting 'node.qcow2', fmt=qcow2 size=25769803776 encryption=off cluster_size=65536 lazy_refcounts=off 
+[root@hiys images]# virt-manager 
+[root@hiys images]# 
+
+ 生成虚拟机提供操作系统安装URL :   ftp://176.121.213.81/iso/
+ 
+   内存(M) , RAM: 2048
+          CPU :  2
+
+  选择或创建自定义存储      /var/lib/libvirt/images/node.qcow2 
+
+ [root@hiys images]# ll /var/lib/libvirt/images/node.qcow2 
+-rw-r--r-- 1 root root 197120 11月 14 20:24 /var/lib/libvirt/images/node.qcow2
+[root@hiys images]# lsattr  /var/lib/libvirt/images/node.qcow2
+-------------e-- /var/lib/libvirt/images/node.qcow2
+
+===========   CentOS1708 虚拟机模版 制作===============
+
+[root@H127 ~]# vi /etc/selinux/config 
+[root@H127 ~]# sed -n 7p /etc/selinux/config
+SELINUX=disabled
+
+
+[root@H127 ~]# ls /etc/yum.repos.d/
+dvd.repo  repo
+[root@H127 ~]# vi /etc/yum.repos.d/dvd.repo 
+
+[root@H127 ~]# cat /etc/yum.repos.d/dvd.repo
+[local_repo]
+name=centos1708
+baseurl=ftp://192.168.1.254/iso
+gpgcheck=1
+enabled=1
+[root@H127 ~]# 
+
+[root@H127 ~]# yum clean all >/dev/null && yum repolist |tail -3
+源标识                               源名称                                状态
+local_repo                           centos1708                            9,591
+repolist: 9,591
+[root@H127 ~]# 
+
+
+[root@H127 ~]# yum provides ifconfig
+
+local_repo/filelists_db                                                  | 6.7 MB  00:00:00     
+net-tools-2.0-0.22.20131004git.el7.x86_64 : Basic networking tools
+源    ：@local_repo
+匹配来源：
+文件名    ：/usr/sbin/ifconfig
+
+[root@H127 ~]# yum -y install net-tools |tail -3
+Loading mirror speeds from cached hostfile
+软件包 net-tools-2.0-0.22.20131004git.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@H127 ~]# 
+
+[root@H127 ~]# ifconfig |head -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.127  netmask 255.255.255.0  broadcast 192.168.1.255
+
+
+[root@H127 ~]# yum provides vim git
+
+2:vim-enhanced-7.4.160-2.el7.x86_64 : A version of the VIM editor which includes recent
+                                    : enhancements
+源    ：local_repo
+匹配来源：
+提供    ：vim = 7.4.160-2.el7
+
+git-1.8.3.1-11.el7.x86_64 : Fast Version Control System
+源    ：local_repo
+
+2:vim-enhanced-7.4.160-2.el7.x86_64 : A version of the VIM editor which includes recent
+                                    : enhancements
+源    ：@local_repo
+匹配来源：
+提供    ：vim = 7.4.160-2.el7
+
+git-1.8.3.1-11.el7.x86_64 : Fast Version Control System
+源    ：@local_repo
+
+[root@H127 ~]# yum -y install  vim-enhanced  git |tail -4
+
+软件包 2:vim-enhanced-7.4.160-2.el7.x86_64 已安装并且是最新版本
+软件包 git-1.8.3.1-11.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@H127 ~]# 
+[root@H127 ~]# which yum 
+/usr/bin/yum
+[root@H127 ~]# yum -y remove NetworkManager-* firewalld-* python-firewall |tail -4
+
+[root@H127 ~]# yum -y install lftp net-tools vim-enhanced bridge-utils psmisc
+
+软件包 lftp-4.4.8-8.el7_3.2.x86_64 已安装并且是最新版本
+软件包 net-tools-2.0-0.22.20131004git.el7.x86_64 已安装并且是最新版本
+软件包 2:vim-enhanced-7.4.160-2.el7.x86_64 已安装并且是最新版本
+软件包 bridge-utils-1.5-9.el7.x86_64 已安装并且是最新版本
+软件包 psmisc-22.20-15.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@H127 ~]# 
+[root@hiys ~]# ls /var/ftp/iso/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+[root@hiys ~]# ls /var/ftp/iso/RPM-GPG-KEY-CentOS-7 
+/var/ftp/iso/RPM-GPG-KEY-CentOS-7
+
+[root@H127 ~]# rpm  --import ftp://192.168.1.254/iso/RPM-GPG-KEY-CentOS-7  ## 导入公钥 方式一
+[root@H127 ~]# echo $?
+0
+[root@H127 ~]# lftp 192.168.1.254      ## 导入公钥 方式 2
+lftp 192.168.1.254:~> ls
+dr-xr-xr-x   13 0        0            2048 Jun 01  2017 RHEL7OSP
+dr-xr-xr-x    5 0        0            2048 Nov 14  2016 ceph
+dr-xr-xr-x    4 0        0            2048 Mar 08  2017 extras
+drwxr-xr-x    8 0        0            2048 Sep 05  2017 iso
+-rw-r--r--    1 0        0        1246101504 Nov 14 01:59 node.qcow2
+drwxr-xr-x    2 0        0            4096 Aug 03  2017 pub
+dr-xr-xr-x    9 0        0            4096 Jul 11  2017 rhel7
+drwxrwxrwx    2 0        0            4096 Mar 10  2018 share
+lftp 192.168.1.254:/> pwd
+ftp://192.168.1.254/
+lftp 192.168.1.254:/> cd iso/
+lftp 192.168.1.254:/iso> ls
+..........................................
+drwxrwxr-x    2 0        0         1585152 Sep 05  2017 Packages
+-rw-rw-r--    3 0        0            1690 Dec 09  2015 RPM-GPG-KEY-CentOS-7
+-rw-rw-r--    3 0        0            1690 Dec 09  2015 RPM-GPG-KEY-CentOS-Testing-7
+-r--r--r--    1 0        0            2883 Sep 06  2017 TRANS.TBL
+drwxr-xr-x    3 0        0            2048 Sep 06  2017 images
+drwxr-xr-x    2 0        0            2048 Sep 05  2017 isolinux
+drwxrwxr-x    2 0        0            4096 Sep 05  2017 repodata
+lftp 192.168.1.254:/iso> get RPM-GPG-KEY-CentOS-7
+1690 bytes transferred
+lftp 192.168.1.254:/iso> exit
+[root@H127 ~]# rpm  --import  RPM-GPG-KEY-CentOS-7    ## 导入公钥 方式2
+[root@H127 ~]# 
+ [root@H127 ~]# echo $?
+0
+[root@H127 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0   ifdown-isdn      ifup          ifup-plip      ifup-tunnel
+ifcfg-lo     ifdown-post      ifup-aliases  ifup-plusb     ifup-wireless
+ifdown       ifdown-ppp       ifup-bnep     ifup-post      init.ipv6-global
+ifdown-bnep  ifdown-routes    ifup-eth      ifup-ppp       network-functions
+ifdown-eth   ifdown-sit       ifup-ib       ifup-routes    network-functions-ipv6
+ifdown-ib    ifdown-Team      ifup-ippp     ifup-sit
+ifdown-ippp  ifdown-TeamPort  ifup-ipv6     ifup-Team
+ifdown-ipv6  ifdown-tunnel    ifup-isdn     ifup-TeamPort
+[root@H127 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.127  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::5054:ff:feae:7032  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:ae:70:32  txqueuelen 1000  (Ethernet)
+        RX packets 6725  bytes 13635152 (13.0 MiB)
+        RX errors 0  dropped 4  overruns 0  frame 0
+        TX packets 1726  bytes 167398 (163.4 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@H127 ~]# 
+[root@H127 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0   # ）配置网卡
+
+交换文件 "/etc/sysconfig/network-scripts/.ifcfg-eth0.swp" 已存在！
+以只读方式打开([O]), 直接编辑((E)), 恢复((R)), 删除交换文件((D)), 退出((Q)), 中止((A)): d
+
+[root@H127 ~]# ls /etc/sysconfig/network-scripts/ -a
+....................................
+ifcfg-eth0       ifdown-ippp  ifdown-Team      ifup-ib    ifup-ppp       init.ipv6-global
+.ifcfg-eth0.swp  ifdown-ipv6  ifdown-TeamPort  ifup-ippp  ifup-routes    network-functions
+ifcfg-lo         ifdown-isdn  ifdown-tunnel    ifup-ipv6  ifup-sit       network-functions-ipv6
+........................
+[root@H127 ~]# rm  /etc/sysconfig/network-scripts/.ifcfg-eth0.swp 
+rm：是否删除普通文件 "/etc/sysconfig/network-scripts/.ifcfg-eth0.swp"？y
+
+[root@H127 ~]# ls /etc/sysconfig/network-scripts/ -a
+.            ifdown-ib      ifdown-sit       ifup-eth    ifup-post      ifup-wireless
+..           ifdown-ippp    ifdown-Team      ifup-ib     ifup-ppp       init.ipv6-global
+ifcfg-eth0   ifdown-ipv6    ifdown-TeamPort  ifup-ippp   ifup-routes    network-functions
+ifcfg-lo     ifdown-isdn    ifdown-tunnel    ifup-ipv6   ifup-sit       network-functions-ipv6
+ifdown       ifdown-post    ifup             ifup-isdn   ifup-Team
+ifdown-bnep  ifdown-ppp     ifup-aliases     ifup-plip   ifup-TeamPort
+ifdown-eth   ifdown-routes  ifup-bnep        ifup-plusb  ifup-tunnel
+[root@H127 ~]# 
+[root@H127 ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth0   # ）配置网卡
+
+[root@H127 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+#NAME="eth0"
+
+DEVICE="eth0"
+
+#HWADDR="52:54:00:ae:70:32"
+
+ONBOOT=yes
+
+#NETBOOT=yes
+#UUID="19dd97f7-7fe5-4b2d-920b-21fecce593ce"
+
+IPV6INIT=no
+BOOTPROTO=dhcp
+TYPE=Ethernet
+NM_CONTROLLED="no"   ## 禁用NetworkManager
+
+#IPADDR="192.168.1.XX"
+##NETMASK="255.255.255.0"
+[root@H127 ~]# 
+/***********
+安装操作系统时，自动生成的网卡配置文件，
+/etc/sysconfig/network-scripts/ifcfg-eth0
+里面有如下的参数：
+NM_CONTROLLED=yes
+说明 Network manger服务缺省情况下是启动的,
+当系统管理员按以前的习惯，在远程连接的终端上，修改 ifcfg-eth0文件时，
+网络可能立即中断，
+导致远程连接死机，
+无法进行任何操作。
+NM_CONTROLLED是network manger的参数，它是实时生效的，修改后无需要重启网络服务（或网卡），
+如果NM_CONTROLLED=yes，当你修改ifcfg-ethx的文件内容时，如果内容不完全正确，有很大概率导致网络中断。
+对于服务器、工作站、集群、虚拟机来说，一般都要把 NetworkManager 服务关掉：
+
+#service NetworkManager status
+NetworkManager (pid  1634) is running...
+#service NetworkManager stop
+Stopping NetworkManager daemon:                            [  OK  ]
+#chkconfig NetworkManager off
+#chkconfig --list | grep NetworkManager
+NetworkManager 	0:off	1:off	2:off	3:off	4:off	5:off	6:off
+
+同时，修改 /etc/sysconfig/network-scripts/ifcfg-eth0 等文件：
+NM_CONTROLLED=no
+--------------------- 
+***************/
+                                     ##禁用空路由
+[root@H127 ~]# vim /etc/sysconfig/network
+[root@H127 ~]# cat /etc/sysconfig/network
+# Created by anaconda
+NOZEROCONF="yes"
+[root@H127 ~]# 
+
+[root@H127 ~]# vim /etc/default/grub
+
+[root@H127 ~]# cat /etc/default/grub
+
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+#GRUB_TERMINAL_OUTPUT="console"
+GRUB_TERMINAL="serial console"
+
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200n8"
+
+#GRUB_CMDLINE_LINUX="rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb quiet"
+GRUB_DISABLE_LINUX_UUID="true"  ##禁止使用UUID
+GRUB_ENABLE_LINUX_LABEL="true"
+GRUB_DISABLE_RECOVERY="true"
+[root@H127 ~]# 
+
+[root@H127 ~]# ls /boot/grub2/
+device.map  fonts  grub.cfg  grubenv  i386-pc  locale
+
+[root@H127 ~]# wc -l /boot/grub2/grub.cfg
+141 /boot/grub2/grub.cfg
+[root@H127 ~]# 
+
+[root@H127 ~]# which grub2-mkconfig
+/usr/sbin/grub2-mkconfig
+
+[root@H127 ~]# yum provides grub2-mkconfig
+   
+1:grub2-tools-2.02-0.64.el7.centos.x86_64 : Support tools for GRUB.
+源    ：local_repo
+匹配来源：
+文件名    ：/usr/sbin/grub2-mkconfig
+
+1:grub2-tools-2.02-0.64.el7.centos.x86_64 : Support tools for GRUB.
+源    ：@anaconda
+匹配来源：
+文件名    ：/usr/sbin/grub2-mkconfig
+
+[root@H127 ~]# rpm -q grub2-tools
+grub2-tools-2.02-0.64.el7.centos.x86_64
+[root@H127 ~]# 
+[root@H127 ~]# ll /boot/grub2/grub.cfg 
+-rw-r--r--. 1 root root 4103 11月 14 21:09 /boot/grub2/grub.cfg
+
+[root@H127 ~]# grub2-mk
+grub2-mkconfig         grub2-mklayout         grub2-mkrelpath        
+grub2-mkfont           grub2-mknetdir         grub2-mkrescue         
+grub2-mkimage          grub2-mkpasswd-pbkdf2  grub2-mkstandalone  
+   
+[root@H127 ~]# grub2-mkconfig  -o  /boot/grub2/grub.cfg  ## ）重新生成grub.cfg
+
+[root@H127 ~]# ll /boot/grub2/grub.cfg
+-rw-r--r--. 1 root root 4343 11月 15 13:12 /boot/grub2/grub.cfg
+[root@H127 ~]# wc -l /boot/grub2/grub.cfg
+143 /boot/grub2/grub.cfg
+
+[root@H127 ~]# lsblk
+    ............... 
+[root@H127 ~]# blkid
+............在文件 /etc/fstab中 把UUID 改成 /dev/vda1 ,或 /dev/sda1 具体看blkid行首显示的结果
+
+[root@H127 ~]# yum -y install cloud-utils-growpart  ## 安装扩展分区软件
+.............
+已安装:
+  cloud-utils-growpart.noarch 0:0.29-2.el7                                                      
+
+完毕！
+[root@H127 ~]# rpm -q cloud-utils-growpart
+cloud-utils-growpart-0.29-2.el7.noarch
+[root@H127 ~]# 
+
+[root@H127 ~]# which growpart
+/usr/bin/growpart
+[root@H127 ~]# ll /usr/bin/growpart 
+-rwxr-xr-x 1 root root 21428 8月   4 2017 /usr/bin/growpart
+[root@H127 ~]# lsblk
+NAME            MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda             252:0    0  24G  0 disk 
+├─vda1          252:1    0   1G  0 part /boot
+└─vda2          252:2    0  23G  0 part 
+  ├─centos-root 253:0    0  21G  0 lvm  /
+  └─centos-swap 253:1    0   2G  0 lvm  [SWAP]
+[root@H127 ~]# 
+
+[root@H127 ~]# yum -y install cloud-utils-growpart  ## 安装扩展分区软件
+
+[root@H127 ~]# growpart 
+growpart disk partition
+   rewrite partition table so that partition takes up all the space it can
+   options:
+    -h | --help       print Usage and exit
+         --fudge F    if part could be resized, but change would be
+                      less than 'F' bytes, do not resize (default: 1048576)
+    -N | --dry-run    only report what would be done, show new 'sfdisk -d'
+    -v | --verbose    increase verbosity / debug
+    -u | --update  R  update the the kernel partition table info after growing
+                      this requires kernel support and 'partx --update'
+                      R is one of:
+                       - 'auto'  : [default] update partition if possible
+                       - 'force' : try despite sanity checks (fail on failure)
+                       - 'off'   : do not attempt
+                       - 'on'    : fail if sanity checks indicate no support
+
+   Example:
+    - growpart /dev/sda 1
+      Resize partition 1 on /dev/sda
+must supply disk and partition-number
+[root@H127 ~]# 
+
+                      第一次开机自动扩容【英语环境LANG=en_US.UTF-8】
+
+[root@H127 ~]# /usr/bin/growpart  /dev/vda  1  ## 给/dev/vda的第1个分区扩容。
+
+[root@H127 ~]# tail -2 /etc/fstab
+UUID=7ccf7f19-ea8e-4144-a2c3-8ede202d51c8 /boot  xfs     defaults        0 0
+/dev/mapper/centos-swap             swap         swap    defaults        0 0
+[root@H127 ~]# 
+
+[root@H127 ~]# ll /usr/sbin/xfs_growfs  
+-rwxr-xr-x. 1 root root 335104 8月   4 2017 /usr/sbin/xfs_growfs
+[root@H127 ~]# /usr/sbin/xfs_growfs  /  # 文件系统扩容
+meta-data=/dev/mapper/centos-root isize=512    agcount=4, agsize=1375744 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0 spinodes=0
+data     =                       bsize=4096   blocks=5502976, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal               bsize=4096   blocks=2687, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@H127 ~]# echo $?
+0
+[root@H127 ~]# 
+
+[root@H127 ~]# yum -y install cloud-* |tail -9
+  python-markupsafe.x86_64 0:0.11-10.el7                                        
+  python-prettytable.noarch 0:0.7.2-3.el7                                       
+  python-requests.noarch 0:2.6.0-1.el7_1                                        
+  python-setuptools.noarch 0:0.9.8-7.el7                                        
+  python-six.noarch 0:1.9.0-2.el7                                               
+  python-urllib3.noarch 0:1.10.2-3.el7                                          
+  setools-libs.x86_64 0:3.3.8-1.1.el7                                           
+
+完毕！
+[root@H127 ~]# rpm -qa |grep cloud-
+cloud-utils-growpart-0.29-2.el7.noarch
+cloud-init-0.7.9-9.el7.centos.2.x86_64
+
+[root@H127 ~]# shutdown -h now
+Connection to 192.168.1.127 closed by remote host.
+Connection to 192.168.1.127 closed.
+[root@hiys ~]# 
+
+关闭虚拟机后执行信息清理工作//真机上面操作，CentOS1708 为虚拟机名称
+
+[root@hiys ~]# which virt-sysprep 
+/usr/bin/virt-sysprep
+[root@hiys ~]# virt-sysprep  -d CentOS1708
+[   0.0] Examining the guest ...
+........................................
+[  19.0] Performing "yum-uuid" ...
+[  19.0] Performing "customize" ...
+[  19.0] Setting a random seed
+[  19.6] Performing "lvm-uuids" ...
+[root@hiys ~]# echo $?
+0
+
+======== 以上操作虚拟机模版 制作完成，注意grub2-mkconfig   -o  /boot/grub2/grub.cfg 之后在/etc/fstab 文件中 ，修改uuid 为 /dev/vda1 或/dev/sda1 ==================
+
+[root@hiys ~]# rpm -q bind bind-chroot
+BDB2053 Freeing read locks for locker 0xa5: 11226/140680041953344
+BDB2053 Freeing read locks for locker 0xa7: 11226/140680041953344
+BDB2053 Freeing read locks for locker 0xa8: 11226/140680041953344
+BDB2053 Freeing read locks for locker 0xa9: 11226/140680041953344
+bind-9.9.4-50.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+[root@hiys ~]# echo $?
+0
+                      ============== 配置DNS（真机操作）======================
+
+[root@hiys ~]# vim /etc/named.conf
+ 12 options {
+ 13         listen-on port 53 { 192.168.1.254; };
+ 14 //      listen-on-v6 port 53 { ::1; };
+ 15         directory       "/var/named";
+ 16         dump-file       "/var/named/data/cache_dump.db";
+ 17         statistics-file "/var/named/data/named_stats.txt";
+ 18         memstatistics-file "/var/named/data/named_mem_stats.txt";
+ 19         allow-query     { any; };
+ 20         forwarders   { 114.114.114.114; };  # /转发dns,真机的服务器地址
+
+ 31         recursion yes;
+ 32 
+ 33         dnssec-enable no;
+ 34         dnssec-validation no;
+
+
+[root@hiys ~]# systemctl start named && systemctl enable named
+Created symlink from /etc/systemd/system/multi-user.target.wants/named.service to /usr/lib/systemd/system/named.service.
+[root@hiys ~]# systemctl is-active named
+active
+[root@hiys ~]# systemctl is-enabled  named
+enabled
+[root@hiys ~]# 
+[root@hiys ~]# which dig
+/usr/bin/dig
+[root@hiys ~]# dig ntp.aliyun.com
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-50.el7 <<>> ntp.aliyun.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 27156
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 3, ADDITIONAL: 7
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;ntp.aliyun.com.			IN	A
+
+;; ANSWER SECTION:
+ntp.aliyun.com.		31	IN	A	203.107.6.88
+
+;; AUTHORITY SECTION:
+aliyun.com.		75938	IN	NS	ns4.aliyun.com.
+aliyun.com.		75938	IN	NS	ns5.aliyun.com.
+aliyun.com.		75938	IN	NS	ns3.aliyun.com.
+
+;; ADDITIONAL SECTION:
+ns3.aliyun.com.		67800	IN	A	106.11.35.29
+ns3.aliyun.com.		67800	IN	A	106.11.35.30
+ns4.aliyun.com.		67800	IN	A	42.156.241.248
+ns4.aliyun.com.		67800	IN	A	140.205.71.248
+ns5.aliyun.com.		67800	IN	A	198.11.138.248
+ns5.aliyun.com.		67800	IN	A	140.205.2.187
+
+;; Query time: 28 msec
+;; SERVER: 176.121.0.100#53(176.121.0.100)
+;; WHEN: 四 11月 15 13:59:31 CST 2018
+;; MSG SIZE  rcvd: 209
+
+[root@hiys ~]# echo $?
+0
+[root@hiys ~]# 
+
+[root@hiys ~]# rpm -q chrony
+chrony-3.1-2.el7.centos.x86_64
+
+[root@hiys ~]# vim /etc/chrony.conf 
+
+[root@hiys ~]# sed -n 3,9p /etc/chrony.conf
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+server  ntp.aliyun.com iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+
+[root@hiys ~]# systemctl is-active chronyd
+active
+[root@hiys ~]# systemctl is-enabled chronyd
+enabled
+[root@hiys ~]# chronyc sources  -v    # 查看时间同步源* 203.107.6.88
+210 Number of sources = 1
+
+  .-- Source mode  '^' = server, '=' = peer, '#' = local clock.
+ / .- Source state '*' = current synced, '+' = combined , '-' = not combined,
+| /   '?' = unreachable, 'x' = time may be in error, '~' = time too variable.
+||                                                 .- xxxx [ yyyy ] +/- zzzz
+||      Reachability register (octal) -.           |  xxxx = adjusted offset,
+||      Log2(Polling interval) --.      |          |  yyyy = measured offset,
+||                                \     |          |  zzzz = estimated error.
+||                                 |    |           \
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^* 203.107.6.88                  2  10   377   273  +3034us[+3635us] +/-   32ms
+[root@hiys ~]# 
+[root@hiys ~]# cd /var/lib/libvirt/images/            -------- [ 1 ]
+[root@hiys images]# ls
+bin     content  exam  lost+found  qemu        tedu-wallpaper-01.png       vsftpd.conf
+conf.d  db       iso   node.qcow2  Student.sh  tedu-wallpaper-weekend.png  Weekend.sh
+[root@hiys images]# 
+
+[root@hiys images]# qemu-img  create -b node.qcow2 -f qcow2 openstack.img 50G -------- [ 2 ]
+Formatting 'openstack.img', fmt=qcow2 size=53687091200 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ll node.qcow2 
+-rw-r--r-- 1 root root 1507721216 11月 15 13:40 node.qcow2
+[root@hiys images]# 
+[root@hiys images]# qemu-img create -b node.qcow2 -f qcow2  nova01.img  50G
+
+Formatting 'nova01.img', fmt=qcow2 size=53687091200 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img create   -f qcow2  disk.img  20G
+
+Formatting 'disk.img', fmt=qcow2 size=21474836480 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ls
+
+bin      db        iso         nova01.img     Student.sh                  vsftpd.conf
+conf.d   disk.img  lost+found  openstack.img  tedu-wallpaper-01.png       Weekend.sh
+content  exam      node.qcow2  qemu           tedu-wallpaper-weekend.png
+
+[root@hiys images]# 
+[root@hiys images]# cd /etc/libvirt/qemu/    ------ [ 3 ]
+[root@hiys qemu]# ls
+autostart  CentOS1708.xml  networks
+[root@hiys qemu]# vim node.xml
+
+[root@hiys qemu]# cp node.xml  openstack.xml ------ [ 3 ]
+
+[root@hiys qemu]# cp node.xml  nova01.xml  ------ [ 3 ]
+[root@hiys qemu]# 
+
+[root@hiys qemu]# vim openstack.xml ------ [ 4 ]
+[root@hiys qemu]# cat openstack.xml
+<domain type='kvm'>
+  <name>openstack</name>
+  <memory unit='KB'>9600000</memory>
+  <currentMemory unit='KB'>9600000</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/openstack.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# 
+
+[root@hiys qemu]# ls
+autostart  CentOS1708.xml  networks  node.xml  nova01.xml  openstack.xml
+
+[root@hiys qemu]# vim nova01.xml  ------ [ 4 ]
+
+[root@hiys qemu]# cat nova01.xml
+<domain type='kvm'>
+  <name>nova01</name>
+  <memory unit='KB'>5000000</memory>
+  <currentMemory unit='KB'>5000000</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/nova01.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# 
+[root@hiys qemu]# virsh create  openstack.xml  ------ [ 5 ]
+域 openstack 被创建（从 openstack.xml）
+
+[root@hiys qemu]# virsh create nova01.xml ------ [ 5 ]
+域 nova01 被创建（从 nova01.xml）
+
+[root@hiys qemu]# virsh list
+ Id    名称                         状态
+----------------------------------------------------
+ 3     openstack                      running
+ 4     nova01                         running
+==========================================================
+[root@hiys images]# ll /etc/libvirt/qemu/networks/node.qcow2 
+-rw-r--r-- 1 root root 1246101504 11月 14 10:34 /etc/libvirt/qemu/networks/node.qcow2
+
+[root@hiys images]# ls /etc/libvirt/qemu/networks/
+autostart    node.qcow2  private1.xml  public1.xml  rhce.xml
+default.xml  node.xml    private2.xml  public2.xml  vbr.xml
+[root@hiys images]# 
+
+[root@hiys images]# cp /etc/libvirt/qemu/networks/node.qcow2  .
+[root@hiys images]# ls
+bin     content  exam  lost+found  qemu        tedu-wallpaper-01.png       vsftpd.conf
+conf.d  db       iso   node.qcow2  Student.sh  tedu-wallpaper-weekend.png  Weekend.sh
+[root@hiys images]# 
+
+
+[root@hiys images]# qemu-img  create -b node.qcow2 -f qcow2 openstack.img 50G
+
+/***********[root@hiys images]# ll node.qcow2 
+-rw-r--r-- 1 root root 1507721216 11月 15 13:40 node.qcow2
+*******************/
+
+[root@hiys images]# qemu-img create -b node.qcow2 -f qcow2  nova01.img  50G
+
+
+[root@hiys images]# qemu-img create   -f qcow2  disk.img  20G
+
+[root@hiys images]# ls /etc/libvirt/qemu/
+autostart  networks  node.xml  nova01.xml  openstack.xml
+[root@hiys images]# 
+[root@hiys images]# vim  /etc/libvirt/qemu/openstack.xml 
+[root@hiys images]# vim  /etc/libvirt/qemu/nova01.xml 
+[root@hiys images]# 
+[root@hiys images]# cd /etc/libvirt/qemu/
+[root@hiys qemu]# ls
+autostart  networks  node.xml  nova01.xml  openstack.xml
+
+[root@hiys qemu]# virsh create  openstack.xml
+域 openstack 被创建（从 openstack.xml）
+
+[root@hiys qemu]# virsh create  nova01.xml 
+域 nova01 被创建（从 nova01.xml）
+
+[root@hiys qemu]# virsh list
+ Id    名称                         状态
+----------------------------------------------------
+ 8     openstack                      running
+ 9     nova01                         running
+
+[root@hiys qemu]# virsh list  --all
+ Id    名称                         状态
+----------------------------------------------------
+ 8     openstack                      running
+ 9     nova01                         running
+
+###### root--- mima ----a---##########
+
+[root@hiys qemu]# 
+[root@hiys ~]# cd nsd1807/
+[root@hiys nsd1807]# cat readme.txt 
+git 软件安装
+yum install -y git
+
+外地校区
+git clone git://124.193.128.166/nsd1807.git
+
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+
+更新(必须进入 git 目录)
+git  pull
+[root@hiys nsd1807]# git pull
+.........................
+[root@hiys nsd1807]# ls
+docs  grub  ifcfg-eth0  node.xml  openstack  readme.txt  vbr.xml
+[root@hiys nsd1807]# ls openstack/
+install-11-15.txt  nova01.xml  openstack.xml  readme.txt
+
+[root@localhost ~]# cat eip
+#!/usr/bin/python
+import os, sys
+
+def conf_ip(ip):
+    iplist = []
+    f = open("/etc/sysconfig/network-scripts/ifcfg-eth0", "r+")
+    for i in f:
+        iplist.append('BOOTPROTO="static"\n' if 'BOOTPROTO=' in i else i)
+    iplist.extend(['IPADDR="192.168.1.{0}"\n'.format(ip),'NETMASK="255.255.255.0"\n','GATEWAY="192.168.1.254"\n'])
+    f.seek(0,0)
+    f.writelines(iplist)
+    f.truncate()
+    f.close()
+if  __name__ == '__main__':
+    if  len(sys.argv) == 2 and sys.argv[1].isdigit():
+        conf_ip(sys.argv[1])
+        os.remove(sys.argv[0])
+[root@localhost ~]# 
+
+=================两台虚拟机配置静态ip ====：域名解析 =====================
+
+================== openstack ===================
+[root@hiys ~]# ssh -X 192.168.1.120
+
+[root@localhost ~]# cd /etc/sysconfig/network-scripts/
+
+[root@localhost network-scripts]# vim ifcfg-eth0 
+
+[root@localhost network-scripts]# cat ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.10"
+NETMASK="255.255.255.0"
+#PREFIX=24
+GATEWAY=192.168.1.254
+
+[root@localhost network-scripts]# echo openstack > /etc/hostname 
+[root@localhost network-scripts]# systemctl restart network
+
+[root@hiys ~]# virsh define /etc/libvirt/qemu/openstack.xml
+定义域 openstack（从 /etc/libvirt/qemu/openstack.xml）
+
+[root@hiys ~]# virsh start openstack
+域 openstack 已开始
+
+[root@hiys ~]# ssh -X 192.168.1.10  
+
+ [root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.10"
+GATEWAY=192.168.1.254
+PREFIX=24
+[root@openstack ~]# 
+[root@hiys ~]# ls /var/ftp/iso/RPM-GPG-KEY-CentOS-7 
+/var/ftp/iso/RPM-GPG-KEY-CentOS-7
+[root@hiys ~]# 
+
+
+================== nova01 =====================
+
+[root@localhost ~]# cd /etc/sysconfig/network-scripts/
+[root@localhost network-scripts]# ls
+ifcfg-eth0   ifdown-ipv6    ifdown-Team      ifup-eth    ifup-post      ifup-tunnel
+ifcfg-lo     ifdown-isdn    ifdown-TeamPort  ifup-ippp   ifup-ppp       ifup-wireless
+.....................................
+
+[root@localhost network-scripts]# vim  ifcfg-eth0              ★ --虚拟机--★ 
+[root@localhost network-scripts]# cat ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.11"
+NETMASK="255.255.255.0"
+GATEWAY=192.168.1.254
+[root@localhost network-scripts]# reboot
+
+[root@hiys ~]# ssh -X 192.168.1.11
+
+[root@nova01 ~]# hostname
+nova01
+[root@nova01 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"                                                               ★ --虚拟机--★ 
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.11"
+NETMASK="255.255.255.0"
+GATEWAY=192.168.1.254                                                            ★ --虚拟机--★ 
+[root@nova01 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+.............................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+.......................................
+[root@nova01 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+[root@nova01 ~]# 
+
+
+
+
+================== openstack ===================
+[root@openstack ~]# vim /etc/hosts             ★ --虚拟机--★ 
+[root@openstack ~]# tail -2 /etc/hosts
+192.168.1.10    openstack
+192.168.1.11    nova01
+
+[root@openstack ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1{print $2}'
+192.168.1.10
+127.0.0.1
+Gateway
+192.168.1.254
+0.0.0.0
+[root@openstack ~]# ping -c1 -i0.2 -w1 nova01
+PING nova01 (192.168.1.11) 56(84) bytes of data.
+64 bytes from nova01 (192.168.1.11): icmp_seq=1 ttl=255 time=0.396 ms
+
+--- nova01 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.396/0.396/0.396/0.000 ms
+[root@openstack ~]# 
+
+[root@openstack ~]# vim /etc/resolv.conf 
+
+[root@openstack ~]# cat /etc/resolv.conf
+
+; generated by /usr/sbin/dhclient-script
+nameserver 192.168.1.254
+search localhost  #zhu yi bu shi "vbr"
+[root@openstack ~]# lsblk 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  50G  0 disk 
+└─vda1 253:1    0  50G  0 part /
+vdb    253:16   0  20G  0 disk 
+[root@openstack ~]# 
+
+[root@openstack ~]# vim /etc/yum.repos.d/local.repo
+[root@openstack ~]# cat /etc/yum.repos.d/local.repo
+[Centos1708]
+name=CentOS-1708
+gpgcheck=1
+baseurl=ftp://192.168.1.254/iso/
+enabled=1
+
+[RHEL7-extras]
+name=RHEL7-extras
+baseurl=ftp://192.168.1.254/extras
+gpgcheck=0
+enabled=1
+
+[RHEL7OSP-devtools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+enabled=1
+
+[RHEL7OSP-optools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+enabled=1
+
+[RHEL7OSP-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-rpms
+enabled=1
+
+[RHEL7OSP-tools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+pnabled=1
+
+[RHEL7OSP-rhceph-2-mon-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+enabled=1
+
+[RHEL7OSP-rhceph-2-osd-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+enabled=1
+                                                                                 ★ --虚拟机--★ 
+[RHEL7OSP-rhceph-2-tools-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms                                  ★ --虚拟机--★ 
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-agent-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-installer-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-main-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+enabled=1
+[root@openstack ~]# ls /etc/yum.repos.d/
+local.repo
+[root@openstack ~]# yum clean all >/dev/null && yum repolist |tail -14
+源标识                           源名称                                    状态
+Centos1708                       CentOS-1708                               9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+repolist: 10,731
+[root@openstack ~]# 
+ 
+[root@openstack ~]# scp -o StrictHostKeyChecking=no /etc/yum.repos.d/local.repo 192.168.1.11:/etc/yum.repos.d/
+root@192.168.1.11's password: 
+local.repo                                                    100% 1884     5.7MB/s   00:00    
+[root@openstack ~]# 
+
+[root@room9pc01 networks]# virsh -c qemu:///system attach-interface openstack bridge private1 --model virtio
+Interface attached successfully    //添加成功
+ [root@openstack ~]# cd /etc/sysconfig/network-scripts
+[root@openstack network-scripts]# cp ifcfg-eth0  ifcfg-eth1
+[root@openstack network-scripts]# vim ifcfg-eth1
+# Generated by dracut initrd
+DEVICE="eth1"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.4.10"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@openstack network-scripts]# systemctl restart network
+
+[root@openstack network-scripts]# ping -c1 -i0.2 -w1 192.168.4.254 #ce shi ok
+
+[root@hiys ~]# ls /var/lib/libvirt/images/  ## 磁盘镜像文件--虚拟机的硬盘 .img
+[root@hiys ~]# ll  /var/lib/libvirt/images/node.qcow2   ##模版的源路径
+-rw-r--r-- 1 qemu qemu 1479802880 11月 15 11:02 /var/lib/libvirt/images/node.qcow2
+
+[root@hiys ~]# ls /etc/libvirt/qemu/   ## 虚拟机配置声明文件XML文件 .xml
+
+[root@hiys ~]# cat /etc/libvirt/qemu/networks/vbr.xml  ## 创建虚拟交换机,虚拟网络vbr
+
+
+配置卷组（openstack主机上面操作）
+[root@hiys ~]# cd /var/lib/libvirt/images/
+[root@hiys images]# ls
+
+bin      db        iso         nova01.img     Student.sh                  vsftpd.conf
+conf.d   disk.img  lost+found  openstack.img  tedu-wallpaper-01.png       Weekend.sh
+content  exam      node.qcow2  qemu           tedu-wallpaper-weekend.png
+
+[root@room9pc01 images]# qemu-img  create -f qcow2 disk.img 20G
+
+Formatting 'disk.img', fmt=qcow2 size=53687091200 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+==================  ke yi yong ci fangshi tian jia renyi duoge cipan gei xu ni ji
+
+[root@room9pc01 networks]# virsh -c qemu:///system attach-disk openstack \
+ /var/lib/libvirt/images/disk.img vdb --subdriver qcow2 --sourcetype file
+
+Disk attached successfully        //添加成功
+
+[root@openstack ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  50G  0 disk 
+└─vda1 253:1    0  50G  0 part /
+vdb    253:16   0  20G  0 disk 
+
+[root@openstack ~]# yum -y install lvm2 
+
+启动LVM的metadata服务并且设置该服务随系统启动：
+[root@openstack ~]# rpm -q lvm2
+lvm2-2.02.171-8.el7.x86_64
+[root@openstack ~]# systemctl enable lvm2-lvmetad
+Created symlink from /etc/systemd/system/sysinit.target.wants/lvm2-lvmetad.service to /usr/lib/systemd/system/lvm2-lvmetad.service.
+[root@openstack ~]# systemctl start lvm2-lvmetad
+[root@openstack ~]# echo $?
+0
+[root@openstack ~]# 
+
+[root@openstack ~]# pvcreate /dev/vdb 
+[root@openstack ~]# vgcreate cinder-volumes /dev/vdb
+
+  Volume group "cinder-volumes" successfully created
+[root@openstack ~]# vgs
+  VG             #PV #LV #SN Attr   VSize   VFree  
+  cinder-volumes   1   0   0 wz--n- <20.00g <20.00g
+[root@openstack ~]# 
+
+
+
+4）安装openstack的依赖包（openstack.tedu.cn和nova.tedu.cn主机上面
+一、安装虚拟化平台
+安装必备软件：
+qemu-kvm //为 kvm 提供底层仿真支持
+libvirt-daemon //守护进程,管理虚拟机
+libvirt-client //用户端软件,提供客户端管理命令
+libvirt-daemon-driver-qemu //libvirtd 连接 qemu 的驱动
+
+安装openstack的依赖包（openstack.tedu.cn和nova.tedu.cn主机上面
+[root@openstack ~]# yum install -y qemu-kvm libvirt-client libvirt-daemon libvirt-daemon-driver-qemu python-setuptools 
+
+[root@openstack ~]# yum -y remove NetworkManager-* firewalld-* python-firewall 
+Loaded plugins: fastestmirror
+No Match for argument: NetworkManager-*
+No Match for argument: firewalld-*
+No Match for argument: python-firewall
+No Packages marked for removal
+[root@openstack ~]# 
+[root@nova ~]# yum install -y qemu-kvm libvirt-client libvirt-daemon libvirt-daemon-driver-qemu python-setuptools
+
+
+
+
+
+
+
+
+
+
+================== nova01 =====================
+
+[root@nova01 ~]# vim /etc/hosts                                                  ★ --虚拟机--★ 
+[root@nova01 ~]# tail -n 2 /etc/hosts
+192.168.1.10    openstack                                                        ★ --虚拟机--★ 
+192.168.1.11    nova01
+[root@nova01 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1{print $2}'
+192.168.1.11
+127.0.0.1
+Gateway
+192.168.1.254
+0.0.0.0
+[root@nova01 ~]# ping -c2 -i0.2 -w1 openstack
+
+[root@nova01 ~]# ping -c2 -i0.2 -w1  nova01
+
+[root@nova01 ~]# vim /etc/resolv.conf 
+[root@nova01 ~]# cat /etc/resolv.conf
+
+; generated by /usr/sbin/dhclient-script
+nameserver 192.168.1.254
+search localhost  #zhu yi bu shi "vbr"
+[root@nova01 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  50G  0 disk 
+└─vda1 253:1    0  50G  0 part /
+[root@nova01 ~]# 
+
+[root@nova01 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@nova01 ~]# cat /etc/yum.repos.d/local.repo 
+[Centos1708]
+name=CentOS-1708
+gpgcheck=1
+baseurl=ftp://192.168.1.254/iso/
+enabled=1
+
+[RHEL7-extras]
+name=RHEL7-extras
+baseurl=ftp://192.168.1.254/extras
+gpgcheck=0
+enabled=1
+
+[RHEL7OSP-devtools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-devtools-rpms
+enabled=1
+
+[RHEL7OSP-optools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-optools-rpms
+enabled=1
+
+[RHEL7OSP-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-rpms
+enabled=1
+
+[RHEL7OSP-tools-rpms]
+name=RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-openstack-10-tools-rpms
+pnabled=1
+
+[RHEL7OSP-rhceph-2-mon-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms
+enabled=1
+
+[RHEL7OSP-rhceph-2-osd-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms
+enabled=1
+                                                                                 ★ --虚拟机--★ 
+[RHEL7OSP-rhceph-2-tools-rpms]
+name=RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhceph-2-tools-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-agent-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-agent-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-installer-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+gpgcheck=0                                                                       ★ --虚拟机--★ 
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-installer-rpms
+enabled=1
+
+[RHEL7OSP-rhscon-2-main-rpms]
+name=RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+gpgcheck=0
+baseurl=ftp://192.168.1.254/RHEL7OSP/rhel-7-server-rhscon-2-main-rpms
+enabled=1
+[root@nova01 ~]# yum clean all >/dev/null && yum  repolist |tail -14
+源标识                           源名称                                    状态
+Centos1708                       CentOS-1708                               9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+repolist: 10,731
+[root@nova01 ~]# 
+
+[root@room9pc01 networks]# virsh -c qemu:///system attach-interface nova bridge private1 --model virtio
+Interface attached successfully    //添加成功
+[root@nova ~]# cd /etc/sysconfig/network-scripts
+[root@nova network-scripts]# cp ifcfg-eth0 ifcfg-eth1
+[root@nova network-scripts]# vim ifcfg-eth1
+# Generated by dracut initrd
+DEVICE="eth1"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.4.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@nova network-scripts]# systemctl restart network
+
+[root@nova network-scripts]# ping -c1 -i0.2 -w1 192.168.4.254 #ce shi ok
+
+[root@nova01 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  50G  0 disk 
+└─vda1 253:1    0  50G  0 part /
+[root@nova01 ~]# 
+[root@nova01 ~]# yum -y remove NetworkManager-* firewalld-* python-firewall 
+Loaded plugins: fastestmirror
+No Match for argument: NetworkManager-*
+No Match for argument: firewalld-*
+No Match for argument: python-firewall
+No Packages marked for removal
+[root@nova01 ~]# 
+
+[root@nova ~]# yum install -y qemu-kvm libvirt-client libvirt-daemon libvirt-daemon-driver-qemu python-setuptools
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+官方网站：http://chrony.tuxfamily.org/
+cmdallow / cmddeny - 跟上面相类似，只是你可以指定哪个IP地址或哪台主机可以通过chronyd使用控制命令。
+
+ ===================== 配置NTP时间同步（真机操作） ===========
+
+
+[root@hiys ~]# rpm -q chrony
+chrony-3.1-2.el7.centos.x86_64
+[root@hiys ~]# vim /etc/chrony.conf
+[root@hiys ~]# sed -n 3,10p /etc/chrony.conf
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+server  ntp.aliyun.com iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+cmdallow 127.0.0.1
+[root@hiys ~]# systemctl restart chronyd
+[root@hiys ~]# systemctl is-enabled chronyd
+enabled
+[root@hiys ~]# netstat -npult |grep chronyd
+udp        0      0 0.0.0.0:123             0.0.0.0:*                           20170/chronyd       
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           20170/chronyd       
+udp6       0      0 ::1:323                 :::*                                20170/chronyd       
+[root@hiys ~]# chronyc sources  -v |tail -2   //出现*号代表NTP时间可用
+===============================================================================
+^* 203.107.6.88                  2   6    17    65   -610us[-1082us] +/-   33ms
+[root@hiys ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

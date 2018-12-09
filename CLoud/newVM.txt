@@ -1,0 +1,645 @@
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+CentOS7-1708.repo     packagekit-media.repo  RHEL7-extras.repo  rhel7.repo
+NSD-2018-1-12.tar.gz  repo                   RHEL7OSP.repo
+
+[root@hiys ~]# yum  clean all >/dev/null && yum repolist |tail -15
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+rhel7                            rhel7.4                                   4,986
+repolist: 15,717
+
+[root@hiys ~]# tail -2 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+UUID=1ae681d3-b6db-4609-bed8-f78295a292cb  /javaweb           ext4     defaults    0   0
+
+[root@hiys ~]# tail -3 /etc/rc.local 
+mount  -t  iso9660  -o loop,ro  /var/lib/libvirt/images/iso/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+mount -t iso9660  -o  loop,ro  /var/lib/libvirt/images/iso/RHEL7-extras.iso   /var/ftp/RHEL7-extras/
+mount  -t  iso9660 -o loop,ro  /var/lib/libvirt/images/iso/RHEL7OSP-10.iso  /var/ftp/RHEL7OSP/
+
+[root@hiys ~]# ls /var/ftp/
+CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# ls /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          repodata
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@hiys ~]# cd /etc/libvirt/qemu/
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml 
+
+[root@hiys qemu]# vim Va.xml.txt
+
+[root@hiys qemu]# cat Va.xml.txt
+<domain type='kvm'>
+  <name>Va</name>             ## 修改点 1
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/Va.img'/>  ## 修改点 2 
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-Va.img'/>  ## 修改点 3
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml  Va.xml.txt
+[root@hiys qemu]# 
+[root@hiys ~]# virsh autostart  nova01 --disable
+域 nova01取消标记为自动开始
+
+[root@hiys ~]# virsh autostart  openstack  --disable
+域 openstack取消标记为自动开始
+
+[root@hiys ~]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+
+[root@hiys ~]# 
+[root@hiys qemu]# cat -n Va.xml.txt  |sed -n '/<name>\|Va.img\|disk-Va.img/p'
+     2	  <name>Va</name>
+    26	      <source file='/var/lib/libvirt/images/Va.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va.img'/>
+[root@hiys qemu]# 
+多点编辑：e 命令
+# sed -e ’1,5d’ -e ‘s/test/check/’ example　
+(-e)选项允许在同一行里执行多条命令。
+
+# sed –expression=’s/test/check/’ –expression=’/love/d’ example　
+一个比-e更好的命令是–expression。它能给sed表达式赋值。
+
+[root@hiys qemu]# cat -n Va.xml.txt  |sed -n  -e  '/<name>/s/Va/Va1/p'  -e '/\/Va.img/s/Va/Va1/p'  -e '/disk-Va.img/s/Va/Va1/p' 
+     2	  <name>Va1</name>
+    26	      <source file='/var/lib/libvirt/images/Va1.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va1.img'/>
+[root@hiys qemu]# 
+[root@hiys qemu]# \cp Va.xml.txt  Va1.xml 
+[root@hiys qemu]#  cat -n Va1.xml  |sed -n '/<name>\|Va.img\|disk-Va.img/p'
+     2	  <name>Va</name>
+    26	      <source file='/var/lib/libvirt/images/Va.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va.img'/>
+
+[root@hiys qemu]# sed -i  -e  '/<name>/s/Va/Va1/'  -e  '/\/Va.img/s/Va/Va1/'  -e '/disk-Va.img/s/Va/Va1/'  Va1.xml
+
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml  Va1.xml  Va.xml.txt
+[root@hiys qemu]# cat Va1.xml 
+<domain type='kvm'>
+  <name>Va1</name>
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/Va1.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-Va1.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+
+[root@hiys qemu]#  cat -n Va1.xml  |sed -n '/<name>\|Va1.img\|disk-Va1.img/p'
+     2	  <name>Va1</name>
+    26	      <source file='/var/lib/libvirt/images/Va1.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va1.img'/>
+
+[root@hiys qemu]#  pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# ls
+autostart  docker1.xml  docker2.xml  networks  nova01.xml  openstack.xml  Va1.xml  Va.xml.txt
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+
+[root@hiys qemu]# cd /etc/libvirt/qemu/networks/
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+[root@hiys networks]# cp vbr.xml  vbr2.xml
+[root@hiys networks]# vim vbr2.xml
+[root@hiys networks]# cat vbr2.xml
+<network>
+  <name>vbr2</name>
+  <forward mode='nat'/>
+  <bridge name='vbr2' stp='on' delay='0'/>
+  <domain name='vbr2'/>
+  <ip address='192.168.3.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.3.100' end='192.168.3.200'/>
+    </dhcp>
+  </ip>
+</network>
+[root@hiys networks]# virsh net-define vbr2.xml 
+从 vbr2定义网络vbr2.xml
+
+[root@hiys networks]# virsh net-start vbr2
+网络 vbr2 已开始
+
+[root@hiys networks]# virsh net-autostart vbr2
+网络vbr2标记为自动启动
+
+[root@hiys networks]# ifconfig vbr ;ifconfig vbr2
+vbr: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:b9:be:6c  txqueuelen 1000  (Ethernet)
+        RX packets 28419  bytes 2205493 (2.1 MiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 38752  bytes 110169236 (105.0 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+vbr2: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.3.254  netmask 255.255.255.0  broadcast 192.168.3.255
+        ether 52:54:00:d0:34:45  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@hiys networks]# pwd
+/etc/libvirt/qemu/networks
+
+[root@hiys networks]# ls
+autostart    private1.xml  public1.xml  rhce.xml  vbr.xml
+default.xml  private2.xml  public2.xml  vbr2.xml
+
+[root@hiys networks]# cd /var/lib/libvirt/images/
+
+[root@hiys images]# ls
+bin               disk.img            iso            Student.sh
+conf.d            disk-nova01.img     lost+found     tedu-wallpaper-01.png
+content           disk-openstack.img  node.qcow2     tedu-wallpaper-weekend.png
+db                docker1.img         nova01.img     vsftpd.conf
+disk-docker1.img  docker2.img         openstack.img  Weekend.sh
+disk-docker2.img  exam                qemu
+
+[root@hiys images]# qemu-img  create -b node.qcow2  -f qcow2  Va1.img  18G
+
+[root@hiys images]# virsh define /etc/libvirt/qemu/Va1.xml 
+定义域 Va1（从 /etc/libvirt/qemu/Va1.xml）
+
+[root@hiys images]# qemu-img  create   -f qcow2  disk-Va1.img  16G
+
+
+[root@hiys images]# ls
+bin               disk-docker2.img    docker1.img  node.qcow2     tedu-wallpaper-01.png
+conf.d            disk.img            docker2.img  nova01.img     tedu-wallpaper-weekend.png
+content           disk-nova01.img     exam         openstack.img  Va1.img
+db                disk-openstack.img  iso          qemu           vsftpd.conf
+disk-docker1.img  disk-Va1.img        lost+found   Student.sh     Weekend.sh
+
+[root@hiys images]# virsh start Va1
+域 Va1 已开始
+
+[root@hiys images]# 
+
+[root@hiys images]# virsh console Va1
+连接到域 Va1
+换码符为 ^]
+
+     【回车】
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# 
+[root@localhost ~]# echo Va1 >/etc/hostname 
+[root@localhost ~]# ifconfig  |awk '/inet /{print $2}'
+192.168.1.120
+127.0.0.1
+[root@localhost ~]# ifconfig  |awk '/inet /&&/192.168.1/{print $2}'
+192.168.1.120
+[root@localhost ~]# shutdown -h now
+
+[root@hiys images]# virsh list --all
+ Id    名称                         状态
+----------------------------------------------------
+ 3     docker2                        running
+ 4     docker1                        running
+ -     nova01                         关闭
+ -     openstack                      关闭
+ -     Va1                            关闭
+
+[root@hiys images]# virsh start Va1
+域 Va1 已开始
+
+[root@hiys images]# ssh -X 192.168.1.120
+root@192.168.1.120's password: a
+X11 forwarding request failed on channel 0
+Last login: Tue Nov 20 17:41:59 2018
+[root@Va1 ~]# 
+[root@Va1 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  16G  0 disk 
+[root@Va1 ~]# ifconfig                                                                           ★ --虚拟机--★ 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.120  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:4e:53:7b  txqueuelen 1000  (Ethernet)
+        RX packets 180  bytes 14901 (14.5 KiB)
+        RX errors 0  dropped 7  overruns 0  frame 0
+        TX packets 75  bytes 9803 (9.5 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va1 ~]# 
+ 
+
+[root@localhost ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+
+/*********[root@localhost ~]#  sed -i '/BOOTPROTO/d'  /etc/sysconfig/network-scripts/ifcfg-eth0 
+[root@localhost ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0  
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+ [root@localhost ~]#  echo -e 'BOOTPROTO="static"\nIPADDR="192.168.1.20"\nPREFIX=24\nGATEWAY=192.168.1.254' >>  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+[root@localhost ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR=192.168.1.20
+PREFIX=24
+GATEWAY=192.168.1.254
+***************************/
+
+
+[root@Va1 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+[root@Va1 ~]# 
+
+[root@Va1 ~]# sed -n '/BOOTPROTO/cBOOTPROTO="static"\nIPADDR="192.168.1.11"\nPREFIX=24\nGATEWAY=192.168.1.254' /etc/sysconfig/network-scripts/ifcfg-eth0
+BOOTPROTO="static"
+IPADDR="192.168.1.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+
+[root@Va1 ~]# sed  -i  '/BOOTPROTO/cBOOTPROTO="static"\nIPADDR="192.168.1.11"\nPREFIX=24\nGATEWAY=192.168.1.254'  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+[root@Va1 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+
+[[root@Va1 ~]# cd /etc/sysconfig/network-scripts/                                                        ★ --虚拟机--★ 
+[root@Va1 network-scripts]# cp ifcfg-eth0  ifcfg-eth1
+
+[root@Va1 network-scripts]# sed -i -e 's/eth0/eth1/'   -e  '/IPADDR/s/1.11/4.11/'  ifcfg-eth1
+[root@Va1 network-scripts]# cat ifcfg-eth1
+# Generated by dracut initrd
+DEVICE="eth1"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.4.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+
+[root@Va1 network-scripts]# cp ifcfg-eth0  ifcfg-eth2
+[root@Va1 network-scripts]# sed -i -e 's/eth0/eth2/'   -e  '/IPADDR/s/1.11/3.11/'  ifcfg-eth2
+
+[root@Va1 network-scripts]# cat ifcfg-eth2
+# Generated by dracut initrd
+DEVICE="eth2"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.3.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@Va1 network-scripts]# systemctl restart network
+
+[root@hiys ~]# vim  local.repo.txt
+
+[root@hiys ~]# cat local.repo.txt
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@hiys ~]# scp -o StrictHostKeyChecking=no  local.repo.txt  192.168.1.11:/etc/yum.repos.d/local.repo
+root@192.168.1.11's password: 
+local.repo.txt                                                        100%  176   152.1KB/s   00:00    
+[root@hiys ~]# 
+
+[root@hiys ~]# ssh -X 192.168.1.11                                                       ★ --虚拟机--★ 
+root@192.168.1.11's password: a
+
+[root@Va1 ~]# cat /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@Va1 ~]# yum clean all >/dev/null && yum repolist |tail -4
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+docker                               docker                                    2
+repolist: 9,593
+[root@Va1 ~]# 
+
+[root@Va1 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:4e:53:7b  txqueuelen 1000  (Ethernet)
+        RX packets 5572  bytes 6565179 (6.2 MiB)
+        RX errors 0  dropped 523  overruns 0  frame 0
+        TX packets 1844  bytes 197184 (192.5 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.11  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:c6:96:b8  txqueuelen 1000  (Ethernet)
+        RX packets 1770  bytes 92456 (90.2 KiB)
+        RX errors 0  dropped 1759  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+                                                                                         ★ --虚拟机--★ 
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.3.11  netmask 255.255.255.0  broadcast 192.168.3.255
+        ether 52:54:00:70:67:9a  txqueuelen 1000  (Ethernet)
+        RX packets 1767  bytes 92192 (90.0 KiB)
+        RX errors 0  dropped 1757  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+                                                                                         ★ --虚拟机--★ 
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)                                                    ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va1 ~]# ls /etc/sysconfig/network-scripts/
+ifcfg-eth0   ifdown-ippp    ifdown-Team      ifup-ippp   ifup-routes       network-functions
+ifcfg-eth1   ifdown-ipv6    ifdown-TeamPort  ifup-ipv6   ifup-sit          network-functions-ipv6
+ifcfg-eth2   ifdown-isdn    ifdown-tunnel    ifup-isdn   ifup-Team
+ifcfg-lo     ifdown-post    ifup             ifup-plip   ifup-TeamPort
+ifdown       ifdown-ppp     ifup-aliases     ifup-plusb  ifup-tunnel
+ifdown-bnep  ifdown-routes  ifup-bnep        ifup-post   ifup-wireless
+ifdown-eth   ifdown-sit     ifup-eth         ifup-ppp    init.ipv6-global
+[root@Va1 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va1 ~]# 
+
+[root@Va1 ~]# lsblk                                                                      ★ --虚拟机--★ 
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  18G  0 disk 
+└─vda1 253:1    0  18G  0 part /
+vdb    253:16   0  16G  0 disk 
+[root@Va1 ~]# yum -y install docker-engine
+...............
+已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                                                            
+
+作为依赖被安装:
+  audit-libs-python.x86_64 0:2.7.6-3.el7                    checkpolicy.x86_64 0:2.5-4.el7             
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos        libcgroup.x86_64 0:0.41-13.el★ --虚拟机--★ 
+  libsemanage-python.x86_64 0:2.5-8.el7                     libtool-ltdl.x86_64 0:2.4.2-22.el7_3       
+  policycoreutils-python.x86_64 0:2.5-17.1.el7              python-IPy.noarch 0:0.75-6.el7             
+  setools-libs.x86_64 0:3.3.8-1.1.el7                      
+
+完毕！
+[root@Va1 ~]# systemctl enable docker && systemctl restart docker
+Created symlink from /etc/systemd/system/multi-user.target.wants/docker.service to /usr/lib/systemd/system/docker.service.
+[root@Va1 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT                         ★ --虚拟机--★ 
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+[root@Va1 ~]# cat /etc/fstab                                                             ★ --虚拟机--★ 
+
+#
+# /etc/fstab
+# Created by anaconda on Mon May 28 19:45:28 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/vda1		/	xfs	defaults		0 0
+[root@Va1 ~]# df -hT
+文件系统       类型      容量  已用  可用 已用% 挂载点
+/dev/vda1      xfs        18G  1.2G   17G    7% /
+devtmpfs       devtmpfs  1.8G     0  1.8G    0% /dev
+tmpfs          tmpfs     1.8G     0  1.8G    0% /dev/shm
+tmpfs          tmpfs     1.8G  8.4M  1.8G    1% /run
+tmpfs          tmpfs     1.8G     0  1.8G    0% /sys/fs/cgroup
+tmpfs          tmpfs     352M     0  352M    0% /run/user/0
+[root@Va1 ~]#  which docker                                                               ★ --虚拟机--★ 
+/usr/bin/docker
+[root@Va1 ~]# docker version                                                             ★ --虚拟机--★ 
+Client:
+ Version:      1.12.1
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   23cf638
+ Built:        
+ OS/Arch:      linux/amd64
+
+Server:
+ Version:      1.12.1
+ API version:  1.24
+ Go version:   go1.6.3
+ Git commit:   23cf638
+ Built:        
+ OS/Arch:      linux/amd64
+[root@Va1 ~]# docker --help |grep exec
+    exec      Run a command in a running container
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

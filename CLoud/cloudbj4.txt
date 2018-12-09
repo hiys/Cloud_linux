@@ -1,0 +1,945 @@
+
+				OSI参考模型(七层框架)
+              [5]  应用层         |<----------协议------->|	       应用层   (计算机)       APDU
+                HTTP  FTP  TFTP  SMTP  SNMP   DNS
+                      上层数据
+     6 接口      
+                表示层         |-----------协议-----------|          表示层          PPDU
+     5 接口
+ 	        会话层         |------------协议----------|          会话层          SPDU
+4  接口      
+      	      [4]  传输层         <--------协议------------->        传输层     (防火墙)   TPDU 数据段
+                TCP      UDP
+                  TCP头部     上层数据
+3  接口
+       	   [3] 网络层          <----------协议------------>       网络层   (路由器)   报文   数据包
+                ICMP    IGMP    IP    ARP  RARP
+                    IP头部   TCP头部     上层数据
+2  接口
+            [2] 数据链路层      <--------协议---------->         数据链路层   (交换机)  帧   数据帧
+            MAC头部  IP头部   TCP头部     上层数据
+1  接口   
+             [1] 物理层		<--------协议----------->	      物理层   (网卡)   比特bit  比特流
+
+   层            主机A                              主机B        数据单元
+---------------------------------------------------------------------------------------------------------------------------
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+private1:   inet 192.168.4  .254  --eth0
+private2:   inet 192.168.2  .254  --eth1
+public1:    inet 201.1  .1  .254  --eth2
+public2:    inet 201.1  .2  .254  --eth3
+rhce:       inet 172.25 .254.250 
+rhce:0:     inet 172.25 .0  .250
+virbr0:     inet 192.168.122.1 
+
+[root@hiys ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@hiys ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+baseurl=file:///var/ftp/rhel7/
+gpgcheck=0
+enabled=1
+[root@hiys ~]# ls /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  repo  rhel7.repo
+
+[root@hiys ~]# ls /var/ftp/rhel7/
+addons  extra_files.json  isolinux    Packages                 RPM-GPG-KEY-redhat-release
+EFI     GPL               LiveOS      repodata                 TRANS.TBL
+EULA    images            media.repo  RPM-GPG-KEY-redhat-beta
+
+[root@hiys ~]# blkid  /dev/sda
+/dev/sda: PTTYPE="dos" 
+
+[root@hiys ~]# blkid /dev/sda1
+/dev/sda1: UUID="a1bc4085-ad0a-443c-9d62-00d84a1a2e3c" TYPE="ext4" 
+
+[root@hiys ~]# blkid /dev/sda2
+/dev/sda2: UUID="987e8693-eb61-4a69-9531-0ed377b321ad" TYPE="ext4" 
+
+[root@hiys ~]# blkid /dev/sr0
+
+[root@hiys ~]# blkid /dev/loop0
+/dev/loop0: UUID="2017-07-11-01-39-24-00" LABEL="RHEL-7.4 Server.x86_64" TYPE="iso9660" PTTYPE="dos" 
+
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sr0     11:0    1  1024M  0 rom  
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+
+[root@hiys ~]# yum clean all >/dev/null && yum repolist  |tail -3
+
+源标识                               源名称                                状态
+rhel7                                rhel7.4                               4,986
+repolist: 4,986
+
+[root@hiys ~]# yum -y install git
+已安装:
+  git.x86_64 0:1.8.3.1-11.el7                                                                    
+
+作为依赖被安装:
+  perl-Error.noarch 1:0.17020-2.el7                 perl-Git.noarch 0:1.8.3.1-11.el7            
+  perl-TermReadKey.x86_64 0:2.30-20.el7            
+
+完毕！
+[root@hiys ~]# git clone  git://124.193.128.166/nsd1807.git
+正克隆到 'nsd1807'...
+remote: Counting objects: 57, done.
+remote: Compressing objects: 100% (54/54), done.
+remote: Total 57 (delta 21), reused 0 (delta 0)
+接收对象中: 100% (57/57), 8.72 MiB | 196.00 KiB/s, done.
+处理 delta 中: 100% (21/21), done.
+
+[root@hiys ~]# cd nsd1807/
+[root@hiys nsd1807]# ls
+docs  grub  ifcfg-eth0  node.xml  openstack  readme.txt  vbr.xml
+
+[root@hiys nsd1807]# cp -r *  '/root/桌面/CLoud' 
+
+[root@hiys nsd1807]# cat readme.txt 
+git 软件安装
+yum install -y git
+
+外地校区
+git clone git://124.193.128.166/nsd1807.git
+
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+
+更新(必须进入 git 目录)
+git  pull
+[root@hiys nsd1807]# 
+=====================================
+[root@hiys ~]# blkid /dev/sda
+/dev/sda: PTTYPE="dos" 
+[root@hiys ~]# fdisk  /dev/sda 
+命令(输入 m 获取帮助)：n
+Partition type:
+   p   primary (2 primary, 0 extended, 2 free)
+   e   extended
+Select (default p): p
+分区号 (3,4，默认 3)：3
+起始 扇区 (671090688-1953525167，默认为 671090688)：
+将使用默认值 671090688
+Last 扇区, +扇区 or +size{K,M,G} (671090688-1953525167，默认为 1953525167)：+122G
+分区 3 已设置为 Linux 类型，大小设为 122 GiB
+
+命令(输入 m 获取帮助)：p
+
+磁盘标签类型：dos
+磁盘标识符：0x000a0f68
+
+   设备 Boot      Start         End      Blocks   Id  System
+/dev/sda1            2048   419432447   209715200   83  Linux
+/dev/sda2   *   419432448   671090687   125829120   83  Linux
+/dev/sda3       671090688   926943231   127926272   83  Linux
+
+命令(输入 m 获取帮助)：w
+
+正在同步磁盘。
+[root@hiys ~]# partprobe 
+
+[root@hiys ~]# lsblk
+
+[root@hiys ~]# mkdir /javaweb
+
+[root@hiys ~]# blkid /dev/sda
+/dev/sda: PTTYPE="dos" 
+
+[root@hiys ~]# blkid /dev/sda1
+/dev/sda1: UUID="a1bc4085-ad0a-443c-9d62-00d84a1a2e3c" TYPE="ext4"
+ 
+[root@hiys ~]# blkid /dev/sda2
+/dev/sda2: UUID="987e8693-eb61-4a69-9531-0ed377b321ad" TYPE="ext4" 
+
+[root@hiys ~]# blkid /dev/sda3
+
+[root@hiys ~]# mkfs.ext4 /dev/sda3
+........................
+
+[root@hiys ~]# blkid /dev/sda3
+/dev/sda3: UUID="1ae681d3-b6db-4609-bed8-f78295a292cb" TYPE="ext4" 
+
+[root@hiys ~]# ls /javaweb/
+
+[root@hiys ~]# vim /etc/fstab 
+
+[root@hiys ~]# mount -a
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+
+[root@hiys ~]# ls /javaweb/
+lost+found
+[root@hiys ~]# ls /javaweb/lost+found/
+ 
+[root@hiys ~]# df -hT
+文件系统       类型      容量  已用  可用 已用% 挂载点
+/dev/sda2      ext4      118G   31G   82G   28% /
+devtmpfs       devtmpfs  7.8G     0  7.8G    0% /dev
+tmpfs          tmpfs     7.8G   44M  7.7G    1% /dev/shm
+tmpfs          tmpfs     7.8G  9.0M  7.8G    1% /run
+tmpfs          tmpfs     7.8G     0  7.8G    0% /sys/fs/cgroup
+/dev/sda1      ext4      197G   35G  153G   19% /var/lib/libvirt/images
+/dev/loop0     iso9660   3.8G  3.8G     0  100% /var/ftp/rhel7
+tmpfs          tmpfs     1.6G   56K  1.6G    1% /run/user/0
+/dev/sda3      ext4      120G   61M  114G    1% /javaweb
+
+[root@hiys ~]# ls /
+bin   content  etc   iso      lib    lost+found  mnt  proc    root  sbin  sys  usr
+boot  dev      home  javaweb  lib64  media       opt  public  run   srv   tmp  var
+
+[root@hiys ~]# tail -5 /etc/fstab 
+#
+UUID=987e8693-eb61-4a69-9531-0ed377b321ad /                       ext4    defaults    1   1
+UUID=a1bc4085-ad0a-443c-9d62-00d84a1a2e3c /var/lib/libvirt/images ext4    defaults    1   2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+UUID=1ae681d3-b6db-4609-bed8-f78295a292cb  /javaweb           ext4     defaults    0   0
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  repo  rhel7.repo
+
+[root@hiys ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+baseurl=file:///var/ftp/rhel7/
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# ll /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 3月  10 2018 /etc/rc.local -> rc.d/rc.local
+
+[root@hiys ~]# ll /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 498 3月  11 2018 /etc/rc.d/rc.local
+
+[root@hiys ~]# tail -3 /etc/rc.d/rc.local
+
+touch /var/lock/subsys/local
+/usr/bin/crack_pycharm &
+
+[root@hiys ~]# tail -3 /etc/rc.local 
+
+touch /var/lock/subsys/local
+/usr/bin/crack_pycharm &
+
+[root@hiys ~]# tail -2 /etc/bashrc  ##  开机自动执行命令
+
+/usr/sbin/ifconfig rhce:0 172.25.0.250
+echo  1  | passwd --stdin root &> /dev/null
+
+/**************************** 举例 ，模拟 试验 ********
+[root@hiys ~]# vim /etc/rc.local  ## 编辑 /etc/rc.local 文件，增加启动项；
+[root@hiys ~]# tail -2 /etc/rc.local 
+
+# nginx start
+/usr/local/nginx/sbin/nginx
+****************************************/
+
+[root@hiys ~]# uname  -a   #查看Linux内核版本命令
+
+Linux hiys 3.10.0-693.el7.x86_64 #1 SMP Tue Aug 22 21:09:27 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+[root@hiys ~]# egrep -o 'svm|vmx' /proc/cpuinfo  ##查看电脑是否支持 虚拟化
+vmx
+vmx
+vmx
+vmx
+[root@hiys ~]# yum -y install qemu-kvm libvirt-client libvirt-daemon libvirt-daemon-driver-qemu  python-setuptools
+
+软件包 10:qemu-kvm-1.5.3-141.el7.x86_64 已安装并且是最新版本
+软件包 libvirt-client-3.2.0-14.el7.x86_64 已安装并且是最新版本
+软件包 libvirt-daemon-3.2.0-14.el7.x86_64 已安装并且是最新版本
+软件包 libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64 已安装并且是最新版本
+软件包 python-setuptools-0.9.8-7.el7.noarch 已安装并且是最新版本
+无须任何处理
+
+[root@hiys ~]# rpm -q  qemu-kvm libvirt-client libvirt-daemon libvirt-daemon-driver-qemu  python-setuptools
+
+qemu-kvm-1.5.3-141.el7.x86_64
+libvirt-client-3.2.0-14.el7.x86_64
+libvirt-daemon-3.2.0-14.el7.x86_64
+libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64
+python-setuptools-0.9.8-7.el7.noarch
+
+
+[root@hiys ~]# rpm -q virt-manager 
+
+virt-manager-1.4.1-7.el7.noarch
+
+[root@hiys ~]# virsh nodeinfo
+
+CPU 型号：        x86_64
+CPU：               4
+CPU 频率：        963 MHz
+CPU socket：        1
+每个 socket 的内核数： 4
+每个内核的线程数： 1
+NUMA 单元：       1
+内存大小：      16687548 KiB
+
+[root@hiys ~]# virsh net-list
+ 
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+
+[root@hiys ~]# virsh net-list --all
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+
+[root@hiys ~]# virsh list --all
+ Id    名称                         状态
+----------------------------------------------------
+
+[root@hiys ~]# virsh  --help |grep net-
+    net-autostart                  自动开始网络
+    net-create                     从一个 XML 文件创建一个网络
+    net-define                     define an inactive persistent virtual network or modify an existing persistent one from an XML file
+    net-destroy                    销毁（停止）网络
+    net-dhcp-leases                print lease info for a given network
+    net-dumpxml                    XML 中的网络信息
+    net-edit                       为网络编辑 XML 配置
+    net-event                      Network Events
+    net-info                       网络信息
+    net-list                       列出网络
+    net-name                       把一个网络UUID 转换为网络名
+    net-start                      开始一个(以前定义的)不活跃的网络
+    net-undefine                   undefine a persistent network
+    net-update                     更新现有网络配置的部分
+    net-uuid                       把一个网络名转换为网络UUID
+
+
+[root@hiys ~]# LANG=en_US.UTF-8  virsh start  --help
+...................................
+
+[root@hiys ~]# LANG=zh_CN.UTF-8  virsh autostart  --help
+  NAME
+    autostart - 自动开始一个域
+
+  SYNOPSIS
+    autostart <domain> [--disable]
+
+  DESCRIPTION
+    设置一个域在启动时自动开始.
+
+  OPTIONS
+    [--domain] <string>  域名，id 或 uuid
+    --disable        禁止自动启动
+
+
+[root@hiys ~]# LANG=en_US.UTF-8 virsh autostart --help
+  NAME
+    autostart - autostart a domain
+
+  SYNOPSIS
+    autostart <domain> [--disable]
+
+  DESCRIPTION
+    Configure a domain to be automatically started at boot.
+
+  OPTIONS
+    [--domain] <string>  domain name, id or uuid
+    --disable        disable autostarting
+
+
+[root@hiys ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<5{print $2}'
+176.121.213.151
+127.0.0.1
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+172.25.254.250
+172.25.0.250
+192.168.122.1
+Gateway
+176.121.213.1
+0.0.0.0
+
+[root@hiys ~]# route -n
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         176.121.213.1   0.0.0.0         UG    100    0        0 enp2s0
+172.25.0.0      0.0.0.0         255.255.0.0     U     0      0        0 rhce
+172.25.254.0    0.0.0.0         255.255.255.0   U     0      0        0 rhce
+176.121.213.0   0.0.0.0         255.255.255.0   U     100    0        0 enp2s0
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 private2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 private1
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+201.1.1.0       0.0.0.0         255.255.255.0   U     0      0        0 public1
+201.1.2.0       0.0.0.0         255.255.255.0   U     0      0        0 public2
+
+[root@hiys ~]# ifconfig 
+enp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.213.151  netmask 255.255.255.0  broadcast 176.121.213.255
+        inet6 fe80::1e1b:dff:fe54:282  prefixlen 64  scopeid 0x20<link>
+        ether 1c:1b:0d:54:02:82  txqueuelen 1000  (Ethernet)
+..................................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+......................................................
+
+private1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.4.254  netmask 255.255.255.0  broadcast 192.168.4.255
+....................................................
+
+private2: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.2.254  netmask 255.255.255.0  broadcast 192.168.2.255
+.................................................
+
+public1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 201.1.1.254  netmask 255.255.255.0  broadcast 201.1.1.255
+............................................
+
+public2: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 201.1.2.254  netmask 255.255.255.0  broadcast 201.1.2.255
+............................................
+
+rhce: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.25.254.250  netmask 255.255.255.0  broadcast 172.25.254.255
+..................................................
+rhce:0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.25.0.250  netmask 255.255.0.0  broadcast 172.25.255.255
+        ether 52:54:00:45:6a:61  txqueuelen 1000  (Ethernet)
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+..........................
+
+[root@hiys ~]# cat /etc/resolv.conf
+# Generated by NetworkManager
+nameserver 176.121.0.100
+
+[root@hiys ~]# vim /etc/hosts
+
+[root@hiys ~]# tail -2 /etc/hosts
+172.25.254.250  foundation0 foundation0.example.com rhgls.domain254.example.com
+176.121.213.151  hiys
+
+[root@hiys ~]# hostname
+hiys
+[root@hiys ~]# ping -c1 -i0.2 -w1 hiys
+
+PING hiys (176.121.213.151) 56(84) bytes of data.
+64 bytes from hiys (176.121.213.151): icmp_seq=1 ttl=64 time=0.022 ms
+
+--- hiys ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.022/0.022/0.022/0.000 ms
+
+
+[root@hiys ~]# yum -y install bind-chroot bind 
+已安装:
+  bind.x86_64 32:9.9.4-50.el7                 bind-chroot.x86_64 32:9.9.4-50.el7                
+
+完毕！
+[root@hiys ~]# rpm -q bind bind-chroot
+bind-9.9.4-50.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+[root@hiys ~]# systemctl start named
+[root@hiys ~]# systemctl enable  named
+Created symlink from /etc/systemd/system/multi-user.target.wants/named.service to /usr/lib/systemd/system/named.service.
+
+[root@hiys ~]# nslookup hiys
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+** server can't find hiys: NXDOMAIN
+
+[root@hiys ~]# cd /etc/libvirt/qemu/;ls  # ## 虚拟机配置声明文件XML文件 .xml
+networks
+
+[root@hiys qemu]# ls  /etc/libvirt/qemu
+qemu/            qemu.conf        qemu-lockd.conf  
+
+[root@hiys ~]# ls /etc/libvirt/qemu/   ## 虚拟机配置声明文件XML文件 .xml
+
+[root@hiys qemu]# ls  /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/   ## 磁盘镜像文件--虚拟机的硬盘 .img
+
+bin     content  exam  lost+found  Student.sh             tedu-wallpaper-weekend.png  Weekend.sh
+conf.d  db       iso   qemu        tedu-wallpaper-01.png  vsftpd.conf
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/qemu/
+networks  win2008.xml
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/qemu/networks/autostart/
+private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+[root@hiys ~]# 
+
+[root@hiys qemu]# cd /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# vim vbr.xml
+[root@hiys networks]# cat vbr.xml
+<network>
+ <name>vbr</name>
+ <bridge  name='vbr' stop='on' delay='0'/>
+ <domain  name='vbr'/>
+ <forward mode="nat"/>
+ <ip  address='192.168.1.254'  netmask='255.255.255.0'>
+  <dhcp>
+   <range  start="192.168.1.100"  end="192.168.1.200"/>
+  </dhcp>
+ </ip>
+</network>
+
+[root@hiys networks]# virsh net-define vbr.xml 
+从 vbr定义网络vbr.xml
+
+[root@hiys networks]# virsh net-start vbr
+网络 vbr 已开始
+
+[root@hiys networks]# virsh net-autostart vbr  //设置 开机自起
+网络vbr标记为自动启动
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+
+[root@hiys networks]# ls autostart/
+default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+
+[root@hiys networks]# cat vbr.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr</name>
+  <uuid>4687cb6a-45a9-4a36-bb21-7cc0a74fccaa</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:b9:be:6c'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# ifconfig vbr
+
+vbr: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:b9:be:6c  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@hiys networks]# ifconfig |head -4
+
+enp2s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.213.151  netmask 255.255.255.0  broadcast 176.121.213.255
+        inet6 fe80::1e1b:dff:fe54:282  prefixlen 64  scopeid 0x20<link>
+        ether 1c:1b:0d:54:02:82  txqueuelen 1000  (Ethernet)
+
+[root@hiys networks]# sed -n '/<mac address=/p'  default.xml 
+  <mac address='52:54:00:c8:58:d3'/>
+
+[root@hiys networks]# sed -n '/<mac address=/p'  vbr.xml 
+  <mac address='52:54:00:b9:be:6c'/>
+
+[root@hiys networks]# virsh net-list
+
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+
+[root@hiys networks]# 
+ 
+[root@hiys ~]# ls /etc/libvirt/qemu/   ## 虚拟机配置声明文件XML文件 .xml
+
+ [root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# ls
+networks
+[root@hiys qemu]# vim openstack.xml
+[root@hiys qemu]# cat openstack.xml
+<domain type='kvm'>
+  <name>openstack</name>
+  <memory unit='KB'>9800000</memory>
+  <currentMemory unit='KB'>9800000</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+
+            ## 注意 <source file='//后端盘路径.qcow2'/>
+  ## <source file='/var/lib/libvirt/images/rhel7.2.qcow2'/>   
+## [root@hiys images]# qemu-img  create -b  node.qcow2  -f  qcow2  openstack.img  50G
+## [root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  nova01.img   50G
+## [root@hiys ~]#  ls /var/lib/libvirt/images/   ## 磁盘镜像文件--虚拟机的硬盘 .img
+
+      <source file='/var/lib/libvirt/images/openstack.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys qemu]# 
+
+
+[root@hiys qemu]# vim nova01.xml
+[root@hiys qemu]# cat nova01.xml
+<domain type='kvm'>
+  <name>nova01</name>
+  <memory unit='KB'>5000000</memory>
+  <currentMemory unit='KB'>5000000</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>   
+
+            ## 注意 <source file='//后端盘路径.qcow2'/>
+  ## <source file='/var/lib/libvirt/images/rhel7.2.qcow2'/>   
+## [root@hiys images]# qemu-img  create -b  node.qcow2  -f  qcow2  openstack.img  50G
+## [root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  nova01.img   50G
+## [root@hiys ~]#  ls /var/lib/libvirt/images/   ## 磁盘镜像文件--虚拟机的硬盘 .img
+
+      <source file='/var/lib/libvirt/images/nova01.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+
+[root@hiys qemu]# ls     ## 虚拟机配置声明文件XML文件 .xml
+networks  nova01.xml  openstack.xml
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# virsh create openstack.xml 
+域 openstack 被创建（从 openstack.xml）
+
+[root@hiys qemu]# virsh shutdown openstack
+域 openstack 被关闭
+
+[root@hiys qemu]# virsh  define  openstack.xml 
+定义域 openstack（从 openstack.xml）
+
+[root@hiys qemu]# virsh define  nova01.xml 
+定义域 nova01（从 nova01.xml）
+
+[root@hiys qemu]# virsh start   openstack
+域 openstack 已开始
+
+[root@hiys qemu]# virsh autostart openstack
+域 openstack标记为自动开始
+
+[root@hiys qemu]# virsh start nova01
+域 nova01 已开始
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# ls  /etc/libvirt/qemu/autostart/
+openstack.xml
+[root@hiys qemu]# ls 
+autostart  networks  nova01.xml  openstack.xml
+[root@hiys qemu]# ls /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+[root@hiys qemu]# ls /etc/libvirt/qemu/networks/autostart/
+default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+[root@hiys qemu]# virsh start nova01
+错误：域已经活跃
+
+[root@hiys qemu]# virsh autostart  nova01
+域 nova01标记为自动开始
+
+[root@hiys qemu]# ls  /etc/libvirt/qemu/autostart/
+nova01.xml  openstack.xml
+[root@hiys qemu]# 
+
+
+=============================
+ 
+[root@hiys ~]# cd /var/lib/libvirt/images/
+
+[root@hiys images]# cp '/root/桌面/CLoud/node.qcow2'  .
+[root@hiys images]# ls
+bin     content  exam  lost+found  qemu        tedu-wallpaper-01.png       vsftpd.conf
+conf.d  db       iso   node.qcow2  Student.sh  tedu-wallpaper-weekend.png  Weekend.sh
+
+[root@hiys images]# ll node.qcow2 
+
+-rwxr----- 1 root root 1246101504 11月 16 20:55 node.qcow2
+
+[root@hiys images]# which qemu-img 
+/usr/bin/qemu-img
+                                ## -b 使用后端模板文件node.qcow2
+[root@hiys images]# qemu-img  create -b  node.qcow2  -f  qcow2  openstack.img  50G
+
+Formatting 'openstack.img', fmt=qcow2 size=53687091200 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  nova01.img   50G
+
+Formatting 'nova01.img', fmt=qcow2 size=53687091200 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create  -f qcow2  disk.img  20G
+
+Formatting 'disk.img', fmt=qcow2 size=21474836480 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ls
+bin      db        iso         nova01.img     Student.sh                  vsftpd.conf
+conf.d   disk.img  lost+found  openstack.img  tedu-wallpaper-01.png       Weekend.sh
+content  exam      node.qcow2  qemu           tedu-wallpaper-weekend.png
+
+[root@hiys images]# du -sh disk.img 
+196K	disk.img
+[root@hiys images]# du -sh  nova01.img 
+196K	nova01.img
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/qemu/
+networks  win2008.xml
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys ~]#  ls /var/lib/libvirt/images/qemu/networks/autostart/
+private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+======================= openstack ===============
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# hostname
+localhost
+[root@localhost ~]# echo openstack > /etc/hostname 
+[root@localhost ~]# cat /etc/hostname
+openstack
+
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.187  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:50:dc:6c  txqueuelen 1000  (Ethernet)
+        RX packets 887  bytes 50225 (49.0 KiB)
+        RX errors 0  dropped 10  overruns 0  frame 0
+        TX packets 34  bytes 2956 (2.8 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@localhost ~]# echo 1 |passwd  --stdin root
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+[root@localhost ~]# reboot
+
+
+
+
+
+ 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+================================= nova01 ============================
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: 
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# echo nova01 > /etc/hostname 
+[root@localhost ~]# cat /etc/hostname
+nova01
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.129  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:3d:dc:00  txqueuelen 1000  (Ethernet)
+        RX packets 850  bytes 48591 (47.4 KiB)
+        RX errors 0  dropped 11  overruns 0  frame 0
+        TX packets 35  bytes 2998 (2.9 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@localhost ~]# echo 1 |passwd --stdin root
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+[root@localhost ~]# reboot
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

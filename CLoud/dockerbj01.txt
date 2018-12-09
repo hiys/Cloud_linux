@@ -1,0 +1,1015 @@
+
+
+
+[root@docker1 ~]# docker images                                                  ★ --虚拟机--★ 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+nginx               latest              e81eb098537d        3 days ago          109.1 MB
+httpd               latest              2a51bb06dc8b        4 days ago          131.6 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+<none>              <none>              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker1 ~]# docker run -it centos
+
+[root@28acd89553db /]# ls /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+
+[root@28acd89553db /]# yum -y install net-tools psmisc iproute vim |tail -6
+。。。。。。。。。。。。。。。。。。。。。。。。。
+ Package    : centos-release-7-4.1708.el7.centos.x86_64 (@CentOS)
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+  perl-threads-shared.x86_64 0:1.43-6.el7                                       
+  vim-common.x86_64 2:7.4.160-4.el7                                             
+  vim-filesystem.x86_64 2:7.4.160-4.el7                                         
+  which.x86_64 0:2.20-7.el7                                                     
+
+Complete!
+[root@28acd89553db /]# 
+/**
+[root@docker1 ~]# docker ps |column -t
+CONTAINER     ID      IMAGE        COMMAND  CREATED  STATUS  PORTS  NAMES
+28acd89553db  centos  "/bin/bash"  5        minutes  ago     Up     5      minutes  compassionate_sinoussi
+[root@docker1 ~]# 
+**/
+docker commit 28ac  myos:latest
+docker  commit  CONTAINER-id name:label
+
+[root@28acd89553db /]# ls /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+[root@28acd89553db /]# rm -f /etc/yum.repos.d/*
+[root@28acd89553db /]# vim /etc/yum.repos.d/local.repo
+
+[root@28acd89553db /]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[root@28acd89553db /]# yum clean all >/dev/null && yum repolist |tail -5
+Determining fastest mirrors
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+docker                               docker                                  2
+repolist: 9593
+[root@28acd89553db /]# history
+    1  ls /etc/yum.repos.d/
+    2  yum -y install net-tools psmisc iproute vim |tail -6
+    3  ls /etc/yum.repos.d/
+    4  rm -f /etc/yum.repos.d/*
+    5  vim /etc/yum.repos.d/local.repo
+    6  cat /etc/yum.repos.d/local.repo
+    7  yum clean all >/dev/null && yum repolist |tail -5
+    8  history
+[root@28acd89553db /]# history -c
+[root@28acd89553db /]# history
+    1  history
+[root@28acd89553db /]#  exit
+exit
+[root@docker1 ~]# docker ps
+CONTAINER ID   IMAGE     COMMAND    CREATED      STATUS    PORTS    NAMES
+
+[root@docker1 ~]# docker ps -a |head -3
+CONTAINER ID   IMAGE          COMMAND                  CREATED             STATUS                          PORTS   NAMES
+28acd89553db   centos         "/bin/bash"              17 minutes ago      Exited (0) About a minute ago           compassionate_sinoussi
+b46dd5bcb53a   nginx:latest   "nginx -g 'daemon off"   13 hours ago        Exited (0) 12 hours ago                 grave_lalande
+
+[root@docker1 ~]# docker commit 28acd89 myos:latest
+sha256:5ea9d031143c6bebb839cf0fc9281ad34f516ff0b4d00f421b13cc90f210077e
+
+[root@docker1 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+myos                latest              5ea9d031143c        20 seconds ago      391.1 MB
+nginx               latest              e81eb098537d        3 days ago          109.1 MB
+httpd               latest              2a51bb06dc8b        4 days ago          131.6 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+<none>              <none>              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker1 ~]#  docker run -it  myos
+
+[root@d5fc44517ff8 /]# pstr
+pstree      pstree.x11  pstruct     
+
+[root@d5fc44517ff8 /]# pstree -p
+bash(1)---pstree(16)
+[root@d5fc44517ff8 /]# pstree -p 0
+?()---bash(1)---pstree(17)
+[root@d5fc44517ff8 /]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:2  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8  bytes 648 (648.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@d5fc44517ff8 /]# pwd
+/
+[root@d5fc44517ff8 /]# ls
+anaconda-post.log  bin  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+[root@d5fc44517ff8 /]# ls /etc/yum.repos.d/
+local.repo
+[root@d5fc44517ff8 /]# cat /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[root@d5fc44517ff8 /]#  exit
+exit
+[root@docker1 ~]# mkdir abc
+
+[root@docker1 ~]# cd abc/
+
+[root@docker1 abc]# touch Dockerfile
+
+[root@docker1 ~]# cp /etc/yum.repos.d/local.repo  abc/
+
+[root@docker1 abc]# vim Dockerfile
+[root@docker1 abc]# cat Dockerfile
+FROM  centos:latest
+RUN   rm  -f  /etc/yum.repos.d/*.repo
+ADD   local.repo  /etc/yum.repos.d/local.repo
+RUN   yum -y install vim net-tools psmisc iproute  elinks >/dev/null &&  yum clean all
+RUN   rpm -q  vim net-tools psmisc iproute  elinks
+
+[root@docker1 abc]# ls 
+Dockerfile  local.repo
+
+[root@docker1 abc]# docker build  -t  myos:abc   .
+
+Sending build context to Docker daemon 3.072 kB
+Step 1 : FROM centos:latest
+ ---> e934aafc2206
+Step 2 : RUN rm  -f  /etc/yum.repos.d/*.repo
+ ---> Running in e73b3c6d102d
+ ---> 01103a60d5e1
+Removing intermediate container e73b3c6d102d
+Step 3 : ADD local.repo /etc/yum.repos.d/local.repo
+ ---> 4ae6ec66c2b6
+Removing intermediate container 01e1f1b91052
+Step 4 : RUN yum -y install vim net-tools psmisc iproute  elinks >/dev/null &&  yum clean all       ★ --虚拟机--★ 
+ ---> Running in 8bba09f4d4da
+Loaded plugins: fastestmirror, ovl
+Cleaning repos: CentOS7-1708 docker                                                                 ★ --虚拟机--★ 
+Cleaning up everything
+Maybe you want: rm -rf /var/cache/yum, to also free up space taken by orphaned data from disabled or removed repos
+Cleaning up list of fastest mirrors
+ ---> 9d00bfcb3d1d
+Removing intermediate container 8bba09f4d4da
+Step 5 : RUN rpm -q  vim net-tools psmisc iproute  elinks
+ ---> Running in f2164ed88a93
+package vim is not installed
+net-tools-2.0-0.22.20131004git.el7.x86_64
+psmisc-22.20-15.el7.x86_64
+iproute-3.10.0-87.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64                                                                    ★ --虚拟机--★ 
+The command '/bin/sh -c rpm -q  vim net-tools psmisc iproute  elinks' returned a non-zero code: 1
+
+[root@docker1 abc]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker1 abc]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+<none>              <none>              9d00bfcb3d1d        41 seconds ago      286.9 MB
+myos                latest              5ea9d031143c        33 minutes ago      391.1 MB
+nginx               latest              e81eb098537d        3 days ago          109.1 MB
+httpd               latest              2a51bb06dc8b        4 days ago          131.6 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+centos              latest              e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+<none>              <none>              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker1 abc]# 
+
+
+["ls","-a","-l"]
+yum search openssh
+yum install -y openssh
+
+id root
+echo a |passwd  --stdin root
+
+cat /usr/lib/systemd/system/sshd.service
+cat /etc/sysconfig/sshd
+
+sshd-keygen
+yum provides  /etc/rc.d/init.d/functions
+yum install -y initscripts
+
+sshd-keygen
+/usr/sbin/sshd  -D
+再开第二个终端 
+ssh 172.17.0.2
+ss -ltun
+pstree -p
+
+[root@docker1 abc]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker1 abc]# docker ps -a |head -4                                                                               ★ --虚拟机--★ 
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                      PORTS               NAMES
+f2164ed88a93        9d00bfcb3d1d        "/bin/sh -c 'rpm -q  "   5 minutes ago       Exited (1) 5 minutes ago                        kickass_goldberg
+d5fc44517ff8        myos                "/bin/bash"              36 minutes ago      Exited (0) 14 minutes ago                       ecstatic_kilby
+28acd89553db        centos              "/bin/bash"              About an hour ago   Exited (0) 49 minutes ago                       compassionate_sinoussi
+[root@docker1 abc]# cd                                                                                                  ★ --虚拟机--★ 
+[root@docker1 ~]# mkdir aaa
+[root@docker1 ~]# cd aaa
+[root@docker1 aaa]# touch Dockerfile
+[root@docker1 aaa]# vim Dockerfile
+
+[root@docker1 aaa]# cat Dockerfile
+FROM  myos:latest
+CMD   ["/usr/bin/python"]
+
+  ## docker build  -t  镜像名  Dockerfile 文件所在目录
+[root@docker1 aaa]# docker build  -t  myos:python   .
+
+Sending build context to Docker daemon 2.048 kB                                                                         ★ --虚拟机--★ 
+Step 1 : FROM myos:latest                                                                                               ★ --虚拟机--★ 
+ ---> 5ea9d031143c
+Step 2 : CMD /usr/bin/python                                                                                            ★ --虚拟机--★ 
+ ---> Running in 06ba90c51816                                                                                           ★ --虚拟机--★ 
+ ---> ab07d210fd6c                                                                                                      ★ --虚拟机--★ 
+Removing intermediate container 06ba90c51816
+Successfully built ab07d210fd6c
+[root@docker1 aaa]# python
+Python 2.7.5 (default, Aug  4 2017, 00:39:18) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-16)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> exit                                                                                                                ★ --虚拟机--★ 
+Use exit() or Ctrl-D (i.e. EOF) to exit
+>>> quit
+Use quit() or Ctrl-D (i.e. EOF) to exit
+>>>  Ctrl + D 退出
+[root@docker1 aaa]# cd
+[root@docker1 ~]# ls
+aaa  abc  busybox.tar  docker_images  docker_images.zip  eip
+
+[root@docker1 ~]# touch  Dockerfile
+
+[root@docker1 ~]# vim Dockerfile
+
+[root@docker1 ~]# cat Dockerfile
+
+FROM   myos:latest
+RUN  yum  install -y openssh-server  initscripts
+RUN  echo a |passwd --stdin root
+RUN  sshd-keygen
+ENV  EnvironmentFile=/etc/sysconfig/sshd
+CMD  ["/usr/sbin/sshd","-D"]
+
+[root@docker1 ~]# docker build  -t myos:sshd  .
+
+Sending build context to Docker daemon 963.8 MB
+Step 1 : FROM myos:latest
+ ---> 5ea9d031143c
+Step 2 : RUN yum  install -y openssh-server  initscripts
+ ---> Running in b525e5fbac45
+。。。。。。。。。。。。。。。。。。。。。。。。。。
+Installed:
+  initscripts.x86_64 0:9.49.39-1.el7    openssh-server.x86_64 0:7.4p1-11.el7   
+
+Dependency Installed:
+  fipscheck.x86_64 0:1.4.1-6.el7        fipscheck-lib.x86_64 0:1.4.1-6.el7     
+  openssh.x86_64 0:7.4p1-11.el7         sysvinit-tools.x86_64 0:2.88-14.dsf.el7
+  tcp_wrappers-libs.x86_64 0:7.6-77.el7
+
+Complete!
+ ---> ef0e16915b42
+Removing intermediate container b525e5fbac45
+Step 3 : RUN echo a |passwd --stdin root
+ ---> Running in 2f6d49a2fb36
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+ ---> dde05f973894
+Removing intermediate container 2f6d49a2fb36                                                                            ★ --虚拟机--★ 
+Step 4 : RUN sshd-keygen
+ ---> Running in f4e3d0573ad2                                                                                           ★ --虚拟机--★ 
+Generating SSH2 RSA host key: [  OK  ]
+Generating SSH2 ECDSA host key: [  OK  ]                                                                                ★ --虚拟机--★ 
+Generating SSH2 ED25519 host key: [  OK  ]
+ ---> 14c272adc119
+Removing intermediate container f4e3d0573ad2
+Step 5 : ENV EnvironmentFile /etc/sysconfig/sshd                                                                        ★ --虚拟机--★ 
+ ---> Running in b5d91d8f5501
+ ---> 99066342a092
+Removing intermediate container b5d91d8f5501
+Step 6 : CMD /usr/sbin/sshd -D
+ ---> Running in bc25d0bae46a
+ ---> 4af4655d64fd
+Removing intermediate container bc25d0bae46a
+Successfully built 4af4655d64fd
+
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+
+[root@docker1 ~]# docker  run  -itd myos:sshd
+c3c659220be05c1a545feb40e0ffcf1dccbd2c2c64fd9429dfe9566ee5410656
+
+[root@docker1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND               CREATED             STATUS              PORTS               NAMES
+c3c659220be0        myos:sshd           "/usr/sbin/sshd -D"   6 seconds ago       Up 4 seconds                            elegant_hopper
+[root@docker1 ~]# 
+[root@docker1 ~]# ls
+aaa  abc  busybox.tar  Dockerfile  docker_images  docker_images.zip  eip
+
+[root@docker1 ~]# vim Dockerfile 
+
+[root@docker1 ~]# cat Dockerfile
+
+FROM   myos:latest
+RUN  yum  install -y openssh-server  initscripts
+RUN  echo a |passwd --stdin root
+RUN  sshd-keygen
+ENV  EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE  22
+CMD  ["/usr/sbin/sshd","-D"]
+
+[root@docker1 ~]# 
+
+
+docker rm  $(docker ps -a))
+
+docker buidl -t  myos:sshd  .
+
+
+
+
+docker  run  -itd  myos:sshd
+
+
+1 制作一个docker 的apache 镜像
+
+2 制作一个 容器sshd httpd 双服务
+可以通过 ssh 更改 默认首页
+
+
+
+
+
+
+
+
+[root@docker2 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@docker2 ~]# cat /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1                                                                                           ★ --虚拟机--★ 
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+nginx               latest              e81eb098537d        3 days ago          109.1 MB
+centos              latest              75835a67d134        5 weeks ago         200.4 MB
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker2 ~]# docker  run  -it centos
+[root@2f75ad6e5175 /]# ls /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+[root@2f75ad6e5175 /]# rm -f /etc/yum.repos.d/*
+[root@2f75ad6e5175 /]# vim /etc/yum.repos.d/local.repo
+bash: vim: command not found
+[root@2f75ad6e5175 /]# vi /etc/yum.repos.d/local.repo
+[root@2f75ad6e5175 /]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[root@2f75ad6e5175 /]# yum clean all >/dev/null && yum repolist |tail -4
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+docker                               docker                                  2
+repolist: 9593
+[root@2f75ad6e5175 /]# yum -y install vim net-tools psmisc iproute elinks |tail -4
+
+  vim-filesystem.x86_64 2:7.4.160-2.el7                                         
+  which.x86_64 0:2.20-7.el7                                                     
+
+Complete!
+[root@2f75ad6e5175 /]# rpm -q  vim net-tools psmisc iproute elinks 
+package vim is not installed
+net-tools-2.0-0.22.20131004git.el7.x86_64
+psmisc-22.20-15.el7.x86_64
+iproute-3.10.0-87.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+[root@2f75ad6e5175 /]# history 
+    1  ls /etc/yum.repos.d/
+    2  rm -f /etc/yum.repos.d/*
+    3  vim /etc/yum.repos.d/local.repo
+    4  vi /etc/yum.repos.d/local.repo
+    5  cat /etc/yum.repos.d/local.repo
+    6  yum clean all >/dev/null && yum repolist |tail -4
+    7  yum -y install vim net-tools psmisc iproute elinks |tail -4
+    8  rpm -q  vim net-tools psmisc iproute elinks 
+    9  history 
+[root@2f75ad6e5175 /]# history  -c
+[root@2f75ad6e5175 /]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:2  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)                                           ★ --虚拟机--★ 
+        RX packets 1446  bytes 31684573 (30.2 MiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1277  bytes 92255 (90.0 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@2f75ad6e5175 /]# exit
+exit
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker2 ~]# docker ps -a |head -3
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                          PORTS               NAMES
+2f75ad6e5175        centos              "/bin/bash"              5 minutes ago       Exited (0) Abou★ --虚拟机--★                        compassionate_poincare
+f8d6fa7e2a26        centos              "/bin/bash"              16 hours ago        Exited (0) 16 hours ago                             mad_cori
+[root@docker2 ~]# docker commit  2f75a myos:latest
+sha256:974f728ebc76e989b105accab644683b576f9a47f2bbc753cbc9ae1a557a9727
+
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+myos                latest              974f728ebc76        8 seconds ago       326.6 MB
+nginx               latest              e81eb098537d        3 days ago          109.1 MB
+centos              latest              75835a67d134        5 weeks ago         200.4 MB
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker2 ~]# 
+[root@docker2 ~]# touch Dockerfile
+[root@docker2 ~]# ls
+busybox.tar  Dockerfile  docker_images  docker_images.zip  eip
+[root@docker2 ~]# vim  Dockerfile 
+[root@docker2 ~]# cat Dockerfile
+FROM   myos:latest
+RUN    yum  install -y openssh-server  initscripts >/dev/null
+RUN    echo  a |passwd --stdin root
+RUN    sshd-keygen
+ENV    EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE  22
+CMD     ["/usr/sbin/sshd","-D"]
+[root@docker2 ~]# docker  build  -t  myos:sshd  .
+
+Sending build context to Docker daemon 963.8 MB
+Step 1 : FROM myos:latest
+ ---> 974f728ebc76
+Step 2 : RUN yum  install -y openssh-server  initscripts >/dev/null
+ ---> Running in 68a0bba73b4c
+ ---> 23e13a3fb197
+Removing intermediate container 68a0bba73b4c
+Step 3 : RUN echo  a |passwd --stdin root
+ ---> Running in c7c663c1148a
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+ ---> 2d07069aedc8
+Removing intermediate container c7c663c1148a
+Step 4 : RUN sshd-keygen
+ ---> Running in 363e72cf3ce4
+Generating SSH2 RSA host key: [  OK  ]
+Generating SSH2 ECDSA host key: [  OK  ]                                                                ★ --虚拟机--★ 
+Generating SSH2 ED25519 host key: [  OK  ]
+ ---> 05d8601da1bd
+Removing intermediate container 363e72cf3ce4
+Step 5 : ENV EnvironmentFile /etc/sysconfig/sshd
+ ---> Running in 16901dd3c765
+ ---> e2d8e6df7aec
+Removing intermediate container 16901dd3c765
+Step 6 : EXPOSE 22
+ ---> Running in cee2c8d31cad
+ ---> f747e8e3ab4e
+Removing intermediate container cee2c8d31cad
+Step 7 : CMD /usr/sbin/sshd -D
+ ---> Running in f03b2fcaeaa5
+ ---> 3be68a9a6906
+Removing intermediate container f03b2fcaeaa5
+Successfully built 3be68a9a6906
+
+[root@docker2 ~]# 
+[root@docker2 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker2 ~]# docker ps -a |head -3
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                         PORTS               NAMES                                                             ★ --虚拟机--★ 
+2f75ad6e5175        centos              "/bin/bash"              About an hour ago   Exited (0) About an hour ago                       compassionate_poincare                                                             ★ --虚拟机--★ 
+f8d6fa7e2a26        centos              "/bin/bash"              18 hours ago        Exited (0) 18 hours ago                            mad_cori
+[root@docker2 ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+myos                sshd                3be68a9a6906        2 minutes ago       352.3 MB                ★ --虚拟机--★ 
+myos                latest              974f728ebc76        About an hour ago   326.6 MB
+nginx               latest              e81eb098537d        3 days ago          109.1 MB
+centos              latest              75835a67d134        5 weeks ago         200.4 MB
+busybox-2           lianjieming2        59788edf1f3e        6 weeks ago         1.154 MB
+busybox             latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu              latest              452a96d81c30        6 months ago        79.62 MB
+cen                 v1                  e934aafc2206        7 months ago        198.6 MB                ★ --虚拟机--★ 
+registry            latest              d1fd7d86a825        10 months ago       33.26 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@docker2 ~]# docker  run  -itd  myos:sshd
+61fc33396c9ac74e5f1d3083e325230b34330b7b4640683c26009227c9871338
+
+[root@docker2 ~]# docker ps -a |head -6
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                         PORTS               NAMES
+61fc33396c9a        myos:sshd           "/usr/sbin/sshd -D"      48 seconds ago      Up 46 seconds                  22/tcp              admiring_leavitt
+2f75ad6e5175        centos              "/bin/bash"              About an hour ago   Exited (0) About an hour ago                       compassionate_poincare
+f8d6fa7e2a26        centos              "/bin/bash"              18 hours ago        Exited (0) 18 hours ago                            mad_cori
+e1fc38547af8        centos              "/bin/bash"              18 hours ago        Exited (0) 14 hours ago                            condescending_euclid
+e314286d4c7f        nginx               "nginx -g 'daemon off"   18 hours ago        Exited (0) 14 hours ago                            trusting_borg
+[root@docker2 ~]# 
+
+cd xx/
+docker run -it 
+yum -y install httpd sshd
+cd /var/www/html/
+echo Hllo >index.html
+cat /usr/lib/systemd/
+/usr/sbin/httpd 
+#OPTIONS=
+
+vim Dockfile
+FROM myos:latest
+RUN yum -y install httpd
+WORKDIR  cd /var/www/html/
+ENV EnvironmentFile=/etc/sysconfig/httpd
+RUN  echo Hello >index.html
+EXPOSE 80
+EXPOSE 443
+CMD  ["/usr/sbin/httpd","-DFOREGROUND"]
+ docker build  -t  myos:httpd  .
+
+docker run  -itd myos:httpd
+docker ps
+curl -i  172.17.0.3
+
+======================
+cd ooxx
+ls
+vim DockerFile
+
+FROM      myos:sshd
+RUN       yum -y install httpd
+WORKDIR   /var/www/html/
+ENV EnvironmentFile=/etc/sysconfig/httpd
+RUN  echo Hello >index.html
+EXPOSE 80
+EXPOSE 443
+ADD  run.sh   /etc/rc.d/init.d/run.sh
+CMD  ["/etc/rc.d/init.d/run.sh"]
+
+vim  run.sh
+#!/bin/bash
+/usr/sbin/sshd -D &
+/usr/sbin/httpd  -DFOREGROUND
+------------------dforeground
+
+docker run  -itd myos:ooxx  .
+================
+
+curl -i 172.17.0.4
+
+pstree -p 0
+cd /var/www/html
+ls
+echo Hello boy >index.html
+
+自定义 私有仓库
+
+
+[root@docker1 ~]# ls /etc/docker/                                                       ★ --虚拟机--★ 
+key.json
+[root@docker1 ~]# cd /etc/docker/                                                       ★ --虚拟机--★ 
+[root@docker1 docker]# vim daemon.json
+[root@docker1 docker]# cat daemon.json
+{                                                                                       ★ --虚拟机--★ 
+ "insecure-registries" : ["192.168.1.10:5000"]                                          ★ --虚拟机--★ 
+}
+[root@docker1 docker]# docker ps                                                        ★ --虚拟机--★ 
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+5d60ab5d5b92        nginx               "nginx -g 'daemon off"   3 hours ago         Up 3 hours          80/tcp              sleepy_golick
+c3c659220be0        myos:sshd           "/usr/sbin/sshd -D"      3 hours ago         Up ★ --虚拟机--★                        elegant_hopper
+[root@docker1 docker]# docker stop 5d
+5d
+[root@docker1 docker]# docker stop c3
+c3
+[root@docker1 docker]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker1 docker]# systemctl restart docker
+
+[root@docker1 docker]# docker run -itd -p 5000:5000  registry
+664285d6cd2d2b3f73336beb1b02783b72200f7b9c9a84081fdc4c9ea703de05
+
+[root@docker1 docker]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+664285d6cd2d        registry            "/entrypoint.sh /etc/"   6 seconds ago       Up 3 seconds        0.0.0.0:5000->5000/tcp   lonely_banach
+[root@docker1 docker]# 
+[root@docker1 docker]# curl http://192.168.1.10:5000/v2/
+
+[root@docker1 docker]# docker tag  busybox:latest   192.168.1.10:5000/busybox:latest
+
+[root@docker1 docker]# echo $?
+0
+http://192.168.1.10:5000/v2/
+{}
+[root@docker1 docker]#  curl http://192.168.1.10:5000/v2/
+{}[root@docker1 docker]# docker push 192.168.1.10:5000/busybox:latest
+
+The push refers to a repository [192.168.1.10:5000/busybox]
+8a788232037e: Pushed                                                                        ★ --虚拟机--★ 
+latest: digest: sha256:e6565c8273423e967c96b5178139e95bee4bd6564700948bb756921c916b4fbe size: 527
+[root@docker1 docker]# docker images
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+myos                        sshd                4af4655d64fd        4 hours ago         414.6 MB
+myos                        python              ab07d210fd6c        4 hours ago         391.★ --虚拟机--★ 
+<none>                      <none>              9d00bfcb3d1d        4 hours ago         286.9 MB
+myos                        latest              5ea9d031143c        5 hours ago         391.1 MB
+nginx                       latest              e81eb098537d        3 days ago          109.1 MB
+httpd                       latest              2a51bb06dc8b        4 days ago          131.6 MB
+192.168.1.10:5000/busybox   latest              59788edf1f3e        6 weeks ago         1.154 MB
+busybox                     latest              59788edf1f3e        6 weeks ago         1.154 MB
+ubuntu                      latest              452a96d81c30        6 months ago        79.62 MB
+centos                      latest              e934aafc2206        7 months ago        198.6 MB
+registry                    latest              d1fd7d86a825        10 months ago       33.26 MB
+<none>                      <none>              a5311a310510        2 years ago         181.★ --虚拟机--★ 
+redis                       latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@docker1 docker]# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+664285d6cd2d        registry            "/entrypoint.sh /etc/"   19 minutes ago      Up 19 minutes       0.0.0.0:5000->5000/tcp   lonely_banach
+[root@docker1 docker]# docker run -it 192.168.1.10:5000/busybox:latest
+/ # ls
+bin   dev   etc   home  proc  root  sys   tmp   usr   var
+/ # pwd
+/
+/ # ls /etc/yum.repos.d/
+ls: /etc/yum.repos.d/: No such file or directory
+/ # ls /etc/ |wc -l
+9
+/ # exit
+[root@docker1 docker]# 
+
+
+for i in latest  python httpd sshd ooxx 
+do 
+docker tag myos:${i}  192.168.1.10:5000/myos:${i}
+docker  push 192.168.1.10
+
+
+scp  docker1:/etc/docker/daemon.json  docker2:/etc/docker/
+在 虚拟机 docker2 -------------
+
+
+yum repolist 
+
+ssh 172.17.0.2
+pstree -p
+
+
+http://192.168.1.10:5000/v2/_catalog
+{"repositories":["busybox"]}
+
+http://192.168.1.10:5000/v2/myos/tags/list
+
+{"errors":[{"code":"NAME_UNKNOWN","message":"repository name not known to registry","detail":{"name":"myos"}}]}
+
+[root@docker1 docker]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+  └─docker-253:1-19923010-85a0f0db26fe88ac3d75d24cd781b6bba35d856f449110ed57a40928c1a213b5
+                             252:1    0   10G  0 dm   /var/lib/docker/devicemapper/mnt/85a0f0db26fe88ac3d75
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-19923010-pool 252:0    0  100G  0 dm   
+  └─docker-253:1-19923010-85a0f0db26fe88ac3d75d24cd781b6bba35d856f449110ed57a40928c1a213b5
+                             252:1    0   10G  0 dm   /var/lib/docker/devicemapper/mnt/85a0f0db26fe88ac3d75
+[root@docker1 docker]# docker run -ti myos
+[root@e5a5f189edc3 /]# lsblk
+lsblk: dm-0: failed to get device path
+lsblk: dm-1: failed to get device path
+lsblk: dm-2: failed to get device path
+lsblk: dm-0: failed to get device path
+lsblk: dm-0: failed to get device path
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    253:0    0   18G  0 disk 
+`-vda1 253:1    0   18G  0 part /etc/hosts
+vdb    253:16   0   16G  0 disk 
+loop0    7:0    0  100G  0 loop 
+loop1    7:1    0    2G  0 loop 
+[root@e5a5f189edc3 /]# 
+
+  187  docker images
+  188  docker ps
+  189  docker stop 61
+  190  docker ps
+  191  docker images
+  192  clear
+  193  mkdir /var/webroot
+  194  cd /var/webroot
+  195  vim fi
+  196  cat fi
+  197  vim fi
+  198  cat fi
+  199  yum -y install tree >/dev/null
+  200  tree
+
+
+
+1安装一台NFS 服务器 共享一个目录
+2docker1 mount nfs 的共享目录
+ 并且把这个目录映射进容器1 （nginx)
+3 docker2 mount nfs 的共享目录
+ 并且把这个目录映射进容器 2 （httpd）
+实现nginx 和httpd 共享一个web 主页
+ 在 docker1
+yum install nfs-utils
+reboot
+ssh 192.168.1.10
+vim /etc/hosts
+/var/webroot  *(rw)
+
+tail -1 /etc/passwd
+
+vim /etc/hosts
+/var/webroot  *(rw)
+mkdir /var/webroot
+
+systemctl restart nfs
+
+exportfs  -avr
+mount -t nfs 192.168.1.10:/var/webroot/ /mnt
+
+
+mount -t nfs 192.168.1.10:/var/webroot/ /mnt
+
+的 docker run  -itd 
+
+在docker2 
+yum install nfs-utils
+
+mount -t nfs  192.168.11.10:/var/webroot  /var/webroot
+
+docker run  -itd -v  /var/webroot:/var/www/html  192.168.1.11:5000/myos:httpd
+
+docker
+
+curl -i 172.17.0.2
+
+echo Hell >/var/webroot/index.html
+
+
+
+
+
+ifconfig 
+
+
+lo:flags
+veth58cf101:
+
+docker ps
+docker stop ID
+
+cd /etc/sysconfig/network-scripts/
+vim ifcfg-eth0
+
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR=192.168.1.12
+PREFIX=24
+GATEWAY=192.168.1.254
+
+systemctl restart network
+ifconfig eth0:1 up
+
+cp ifcfg-eth0  ifcfg-br0
+vim ifcfg-br0
+TYPE="Bridge"
+BOOTPROTO="static"
+IPADDR=192.168.1.13
+
+yum -y install bridge
+
+systemctl restart network
+
+ifconfig br0 down
+systemctl restart network
+
+[root@docker2 ~]# docker network list
+NETWORK ID          NAME                DRIVER              SCOPE
+e441b47ea27b        bridge              bridge              local               
+33132c5d3c1c        host                host                local               
+21f8da1f8dab        none                null                local               
+[root@docker2 ~]# 
+
+[root@docker2 ~]# docker network --help                                                     ★ --虚拟机--★ 
+
+Usage:	docker network COMMAND
+
+Manage Docker networks
+
+Options:                                                                                    ★ --虚拟机--★ 
+      --help   Print usage
+
+Commands:
+  connect     Connect a container to a network
+  create      Create a network
+  disconnect  Disconnect a container from a network
+  inspect     Display detailed information on one or more networks
+  ls          List networks
+  rm          Remove one or more networks
+
+Run 'docker network COMMAND --help' for more information on a command.
+[root@docker2 ~]# docker network create --help |grep "\-\-subnet"
+      --subnet value         Subnet in CIDR format that represents a network segment (default [])
+[root@docker2 ~]# docker network create --subnet  10.10.10.0/24  docker1
+39af5304864befd7dad8b07a167897eadc81ec36df2ad107d38a7c0d956a0641
+[root@docker2 ~]# docker network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e441b47ea27b        bridge              bridge              local               
+39af5304864b        docker1             bridge              local               
+33132c5d3c1c        host                host                local               
+21f8da1f8dab        none                null                local               
+[root@docker2 ~]# ifconfig 
+br-39af5304864b: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 10.10.10.1  netmask 255.255.255.0  broadcast 0.0.0.0
+        ether 02:42:81:fd:1a:4b  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:7f:23:8b:20  txqueuelen 0  (Ethernet)
+        RX packets 1450  bytes 84847 (82.8 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1595  bytes 33296187 (31.7 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.20  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:08:10:1f  txqueuelen 1000  (Ethernet)
+        RX packets 38222  bytes 35590746 (33.9 MiB)                                         ★ --虚拟机--★ 
+        RX errors 0  dropped 13  overruns 0  frame 0
+        TX packets 39097  bytes 9107080 (8.6 MiB)                                           ★ --虚拟机--★ 
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+                                                                                            ★ --虚拟机--★ 
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.20  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:6d:7e:8e  txqueuelen 1000  (Ethernet)
+        RX packets 15374  bytes 802534 (783.7 KiB)
+        RX errors 0  dropped 13  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@docker2 ~]# docker run  -itd  --network docker1  myos
+f340737333d22c22e2282e4cfb402d2e11bb47df1faf3d1a85cb6b142a8a5c72
+[root@docker2 ~]# docker run  -itd  --network docker1  myos
+a177b0534cdcda58665e8ccd9b22087aecbd726f88cf74433ca70cc935f74044
+[root@docker2 ~]# docker  exec  -it f3 /bin/bash                                            ★ --虚拟机--★ 
+[root@f340737333d2 /]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.10.2  netmask 255.255.255.0  broadcast 0.0.0.0
+        inet6 fe80::42:aff:fe0a:a02  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:0a:0a:0a:02  txqueuelen 0  (Ethernet)
+        RX packets 8  bytes 648 (648.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8  bytes 648 (648.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@f340737333d2 /]# exit
+exit
+[root@docker2 ~]# docker  exec  -it a1  /bin/bash
+[root@a177b0534cdc /]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.10.3  netmask 255.255.255.0  broadcast 0.0.0.0
+        inet6 fe80::42:aff:fe0a:a03  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:0a:0a:0a:03  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8  bytes 648 (648.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@a177b0534cdc /]# pin  
+pinentry         pinentry-curses  ping             ping6            pinky            
+          
+[root@a177b0534cdc /]# ping  -c2 10.10.10.2
+PING 10.10.10.2 (10.10.10.2) 56(84) bytes of data.
+64 bytes from 10.10.10.2: icmp_seq=1 ttl=255 time=0.084 ms
+64 bytes from 10.10.10.2: icmp_seq=2 ttl=255 time=0.081 ms
+
+--- 10.10.10.2 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1000ms
+rtt min/avg/max/mdev = 0.081/0.082/0.084/0.009 ms
+
+[root@a177b0534cdc /]# exit
+exit
+[root@docker2 ~]# 
+
+
+[root@docker1 docker]# docker  run -itd  -p  80:80  -v /var/webroot:/var/www/html myos:httpd
+
+docker run 
+
+[root@docker2 ~]# curl  -i 192.168.1.10
+
+## 课外扩展 k8s  openstack
+
+
+
+
+
+
+

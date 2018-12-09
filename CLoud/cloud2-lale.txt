@@ -1,0 +1,287 @@
+
+
+===========First 虚拟机=========
+
+
+cd /var/ftp/
+rpm --import RPM-GPG-KEY-CentOS-7
+
+yum -y install rsync
+修改 /etc/default/grub
+
+grub2-mkconfig   -o  /boot/grub2/grub.cfg
+
+lsblk
+
+blkid
+/dev/sda1:UUID="xxxqqxxxxx---xx" TYPE="xfs"
+
+
+yum  install -y cloud-utils-growpart
+
+清理日志文件信息
+关闭虚拟机
+真机 执行 virt-sysprep  -d node
+
+
+============自定义虚拟机 ===================
+[root@hiys ~]# cd /var/lib/libvirt/images/
+[root@hiys images]# qemu-img create -b node.qcow2  -f qcow2  node1.img  16G^C
+[root@hiys images]# cd /root/nsd1807/
+[root@hiys nsd1807]# sed  's,node,node1,' node.xml >/etc/libvirt/qemu/node1.xml^C
+[root@hiys nsd1807]# virsh define  /etc/libvirt/qemu/node1.xml^C
+[root@hiys nsd1807]# virsh start ndoe1^C
+[root@hiys nsd1807]# virsh console node1^C
+[root@hiys nsd1807]# 
+
+===========虚拟机 =============
+ 分区扩容 LANG=en_US.UTF-8
+lsblk
+
+/usr/bin/growpart  /dev/vda  1
+lsblk
+
+文件系统扩容
+/usr/sbin/xfs_growfs   /
+
+echo "
+asf
+asdfasdf
+asdf
+IPADDR="192.168.1.$1"
+
+自动扩容的脚本  -------------/etc/rc.local 开机自动扩容
+自动配置静态ip的脚本
+ ./eip 100
+reboot
+
+cat /etc/sysconfig/network-scripts/ifcfg-eth0
+netstat -ltnu
+
+ps -efww |grep chronyd
+
+systemctl stop chronyd
+
+克隆虚拟机的脚本
+
+================= 真机  ========================
+
+[root@hiys ~]# cd /var/lib/libvirt/images/
+[root@hiys images]# virsh list
+ Id    名称                         状态
+----------------------------------------------------
+
+[root@hiys images]# guestmount -a node1.img  -i  /mnt/^C
+[root@hiys images]# ls /mnt/
+[root@hiys images]# cd /mnt/
+[root@hiys mnt]# chroot /mnt/
+chroot: failed to run command ‘/bin/bash’: No such file or directory
+[root@hiys mnt]# exit^C
+[root@hiys mnt]# ls /usr/local/bin/title
+
+[root@hiys mnt]# ls /usr/local/bin/
+2to3         clone-auto7  easy_install-3.6  pip3.6    python3.6          python3-config
+2to3-3.6     clone-vm     idle3             pydoc3    python3.6-config   pyvenv
+charm        clone-vm6    idle3.6           pydoc3.6  python3.6m         pyvenv-3.6
+clone-auto6  clone-vm7    pip3              python3   python3.6m-config  rht-vmctl
+[root@hiys mnt]# ls /usr/local/bin/title
+
+[root@hiys mnt]# cd
+[root@hiys ~]# umount  /mnt/
+
+[root@hiys ~]# 
+
+[root@hiys ~]# systemctl stop NetworkManager
+[root@hiys ~]# ls /etc/yum.repos.d/
+centos.repo  extras.repo           packagekit-media.repo  rhel7.repo
+ceph.repo    NSD-2018-1-12.tar.gz  repo
+[root@hiys ~]# ls  /var/lib/libvirt/images/iso/
+CentOS7-1708.iso                    RHEL7OSP-10.iso
+CentOS-7-x86_64-DVD-1708.iso        rhel-server-6.7-x86_64-dvd.iso
+lost+found                          rhel-server-7.4-x86_64-dvd.iso
+rhcs2.0-rhosp9-20161113-x86_64.iso  Win10_Pro_X64_zh_CN.iso
+RHEL7-extras.iso
+[root@hiys ~]# 
+
+============  真机 ==============
+yum -y install bind bind-chroot
+
+man named.conf
+vim /etc/named.conf
+
+options {
+  listen-on port 53  { 192.168.1.254; };
+//listen-on-v6 port 53 {::1;};
+allow-query  {any;};
+directroy  "/var/named";
+ dump-file
+forwarders {114.114.114.114;};
+dnssec-enable no;
+dnssec-validation no;
+systemct restadrt named
+
+dig  
+
+----------------真机 ==============
+yum install -y chrony
+vim /etc/chrony.conf
+server ntp.aliyun.com iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+
+chronyc sources  -v
+
+systemctl restart chronyd
+
+
+虚拟机 1 --------------------hostname   openstack
+openstack nova
+内存 9.5G
+硬盘 系统 50G
+硬盘 非系统空盘 20G
+网卡1  vbr
+网卡2 private1
+
+cd /var/lib/libvirt/images/
+qemu-img create -f qcow2 disk.img 20G
+virsh edit openstack
+
+virsh edit openstack
+<name>openstyack</name>
+<uuid>
+<memory unit='Kib'   9848
+
+复制<disk tye='file' device='disk'>
+<source file='     images/disk.img'
+<target dev='vdb' bus='virtio'/>
+</disk>
+
+复制<interface type='bridge'>
+  <source bridge='private1'>
+
+virsh start  openstack
+
+free -m
+
+虚拟机 2 nova --------hostname nova01
+内存 5.0G
+硬盘 系统 50G
+
+网卡1  vbr
+网卡2 private1
+
+virsh edit
+
+ifconfig -a
+~]#./eip 10
+
+
+reboot
+
+
+虚拟机 3 nova --hostname nova2
+
+
+
+
+
+vim /etc/hosts
+192.168.1.10 openstack
+192.168.1.11  nova01
+
+cd  /etc/sysconfig/network-scripts/;ls
+cp ifcfg-eth0  ifcfg-eth1
+vim  ifcfg-eth1
+
+DEVICE="eth1"
+ONBOOT="yes"
+
+
+虚拟机已经创建
+openstack
+nova01
+
+virsh edit openstack
+<memory unit='KiB'> 9848000
+
+
+cd /var/lib/libvirt/images/
+qemu-img create -f qcow2 disk.img 20G
+
+virsh edit openstack
+
+复制<disk tye='file' device='disk'>
+
+
+ <address
+</disk>
+粘贴<disk
+  <source file='     images/disk.img'
+<target dev='vdb' bus='virtio'/>
+
+virsh edit openstack
+
+<interface  
+<source brideg='private1'>
+
+images]#qemu-img create -b node.qcow2 -f qcow2 openstack.img 50G
+images]#qemu-img 
+
+virsh edit nova01
+
+<address type------------删除
+
+
+virsh start oepnstack
+virsh start nova01
+进入虚拟机
+virsh cobnsole openstack
+设ip地址
+ssh 192.168.1.10
+free -g
+free -m
+lsblk
+vda  50G
+vda1  50G  /
+vdb  20G
+vim /etc/hosts
+
+192.168.1.10 openstack
+192.168.1.11  nova01
+
+ssh 
+ifconfig
+
+
+openstack ~]# cat /etc/resolv.conf
+nameserver 192.168.1.254
+
+ping ww.baidu.com
+
+~]#chronyc source -v
+
+
+10731
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,73 @@
+配置 openstack 环境
+1、安装一台 CentOS-1708 的虚拟机，最小安装
+2、配置 yum 并导入 CentOS-1708 的数字签名公钥
+3、禁用 selinux
+4、卸载 NetworkManager 服务
+5、卸载 firewalld
+
+以该机器为模版，创建3台虚拟机
+openstack   8G内存         192.168.1.10
+nova01        6G 内存        192.168.1.20
+ntp              1G 内存        192.168.1.253
+
+yum install net-tools
+sestatus
+iptables-save
+
+创建 dns 服务器
+创建时间服务器
+server time.windows.com iburst
+bindacqaddress 0.0.0.0
+allow 0/0
+
+nat 伪装虚拟机访问网络
+for i in mangle security raw nat filter;do
+     iptables -t ${i} -F
+     iptables -t ${i} -X
+     rmmod iptable_${i}
+done
+sysctl -w net.ipv4.ip_forward=1
+ETH=$(ip route show|awk '{if($1=="default" && $2=="via")print $5}')
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o ${ETH} -j MASQUERADE
+
+配置完成以后 安装依赖软件包
+qemu-kvm 
+libvirt-client 
+libvirt-daemon 
+libvirt-daemon-driver-qemu
+iproute
+net-tools
+bridge-utils
+vim-enhanced
+
+openstack 需要使用块设备，这里要给 openstack 添加一个块设备
+qemu-img create -f qcow2 disk.img 100G
+virsh -c qemu:///system attach-disk node9 /var/lib/libvirt/images/disk.img sdb --subdriver qcow2 --sourcetype file
+
+在虚拟机里为 openstack 准备卷
+yum install lvm2
+pvcreate /dev/sdb
+vgcreate  cinder-volumes  /dev/sdb
+
+可以通过 vgs 查看
+
+安装 packstack 
+yum install openstack-packstack  python-setuptools
+
+创建应答文件
+packstack --gen-answer-file answer.ini
+
+编辑应答文件
+11：CONFIG_DEFAULT_PASSWORD=redhat
+42：CONFIG_SWIFT_INSTALL=n
+75：CONFIG_NTP_SERVERS=192.168.1.253
+554：CONFIG_CINDER_VOLUMES_CREATE=n
+840：CONFIG_NEUTRON_ML2_TYPE_DRIVERS=flat,vxlan
+876：CONFIG_NEUTRON_ML2_VXLAN_GROUP=239.1.1.5
+910：CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS=physnet1:br-ex
+921：CONFIG_NEUTRON_OVS_BRIDGE_IFACES=br-ex:eth0
+936：CONFIG_NEUTRON_OVS_TUNNEL_IF=eth1
+1179：CONFIG_PROVISION_DEMO=n
+
+安装 openstack
+packstack --answer-file=answer.ini
