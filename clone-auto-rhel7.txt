@@ -1,0 +1,1613 @@
+
+[root@room9pc10 ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 465.8G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part 
+[root@room9pc10 ~]# ls  /mnt/
+
+[root@room9pc10 ~]# mount.ntfs-3g   /dev/sdb1  /mnt/
+
+[root@room9pc10 ~]# ls  /mnt/
+......................
+ISO-RPM-TAR-ZIP
+...................
+
+[root@room9pc10 ~]# du  -sh  /mnt/
+91G	/mnt/
+
+[root@room9pc10 ~]# ls  /mnt/ISO-RPM-TAR-ZIP/*.iso
+
+/mnt/ISO-RPM-TAR-ZIP/CentOS7-1708.iso
+/mnt/ISO-RPM-TAR-ZIP/CentOS-7-x86_64-DVD-1708.iso
+/mnt/ISO-RPM-TAR-ZIP/CentOS-7-x86_64-DVD-1804.iso
+/mnt/ISO-RPM-TAR-ZIP/EMOS_1.6_x86_64.iso
+/mnt/ISO-RPM-TAR-ZIP/rhcs2.0-rhosp9-20161113-x86_64.iso
+/mnt/ISO-RPM-TAR-ZIP/RHEL7-extras.iso
+/mnt/ISO-RPM-TAR-ZIP/RHEL7OSP-10.iso
+/mnt/ISO-RPM-TAR-ZIP/RHEL7OSP-8.0-20160421-x86_64.iso
+/mnt/ISO-RPM-TAR-ZIP/rhel-server-6.7-x86_64-dvd.iso
+/mnt/ISO-RPM-TAR-ZIP/rhel-server-7.4-x86_64-dvd.iso
+
+[root@room9pc10 ~]# ls  /mnt/NSD-2018-1-12/clone.tar.gz 
+/mnt/NSD-2018-1-12/clone.tar.gz
+
+[root@room9pc10 HIYS]# ls clone.tar.gz 
+clone.tar.gz
+[root@room9pc10 HIYS]# mkdir  clone
+
+[root@room9pc10 HIYS]# tar  -xf clone.tar.gz  -C  clone/
+tar: 从成员名中删除开头的“/”
+[root@room9pc10 HIYS]# ls  clone/
+usr
+[root@room9pc10 HIYS]# ls  clone/usr/
+local
+[root@room9pc10 HIYS]# ls  clone/usr/local/
+bin
+[root@room9pc10 HIYS]# ls  clone/usr/local/bin/
+charm  clone-auto6  clone-auto7  clone-vm  clone-vm6  clone-vm7  rht-vmctl
+
+[root@room9pc10 ~]# ll   /var/lib/libvirt/images/.rh7_template.img  
+-rw------- 1 qemu qemu 3904503808 3月  19 2018 /var/lib/libvirt/images/.rh7_template.img
+
+[root@room9pc10 ~]# du  -sh  /var/lib/libvirt/images/.rh7_template.img
+3.7G	/var/lib/libvirt/images/.rh7_template.img
+
+[root@room9pc10 ~]# ls   /var/lib/libvirt/images/  -a
+.               db            qemu                        .rh6_template.img  Student.sh                  .win
+..              .desktop.xml  .rh254-classroom-vda.qcow2  .rh7_template.img  tedu-wallpaper-01.png       win10.qcow2
+bin             exam          .rh254-desktop-vda.qcow2    .rhel6.xml         tedu-wallpaper-weekend.png  .win2008.img
+.classroom.xml  iso           .rh254-desktop-vdb.qcow2    .rhel7.xml         vsftpd.conf                 .win2008.xml
+conf.d          lost+found    .rh254-server-vda.qcow2     server.qcow2       w10.qcow2                   win-clone.img
+content         node.img      .rh254-server-vdb.qcow2     .server.xml        Weekend.sh                  win.img
+
+[root@room9pc10 ~]# du  -sh  /var/lib/libvirt/images/.rh7_template.img 
+3.7G	/var/lib/libvirt/images/.rh7_template.img
+
+[root@room9pc10 ~]# du  -sh  /var/lib/libvirt/images/.rh6_template.img 
+798M	/var/lib/libvirt/images/.rh6_template.img
+
+[root@room9pc10 ~]# cp  /var/lib/libvirt/images/.rh6_template.img   /mnt/
+
+[root@room9pc10 ~]# mv   /mnt/.rh6_template.img   /mnt/rh6_template.img
+
+[root@room9pc10 ~]# ll  /mnt/rh6_template.img
+-rwxrwxrwx 1 root root 836108288 12月  9 13:23 /mnt/rh6_template.img
+
+[root@room9pc10 ~]# ll  /var/lib/libvirt/images/.rh6_template.img   
+-rw-r--r-- 1 qemu qemu 836108288 1月  10 2018 /var/lib/libvirt/images/.rh6_template.img
+
+[root@room9pc10 ~]# cp  /var/lib/libvirt/images/.rh7_template.img    /mnt/rh7_template.img
+
+[root@room9pc10 ~]# ll  /var/lib/libvirt/images/.rh7_template.img   
+-rw------- 1 qemu qemu 3904503808 3月  19 2018 /var/lib/libvirt/images/.rh7_template.img
+
+[root@room9pc10 ~]# ll  /mnt/rh7_template.img
+-rwxrwxrwx 1 root root 3904503808 12月  9 13:28 /mnt/rh7_template.img
+
+[root@room9pc10 ~]# du  -sh   /mnt/rh7_template.img
+3.7G	/mnt/rh7_template.img
+
+
+[root@room9pc10 ~]# cat  /var/lib/libvirt/images/.rhel6.xml 
+<domain type='kvm'>
+  <name>rh6_template</name>
+  <memory unit='KiB'>1048576</memory>
+  <currentMemory unit='KiB'>1048576</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='rhel6.6.0'>hvm</type>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none'/>
+      <source file='/var/lib/libvirt/images/rh6_template.img'/>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </disk>
+    <disk type='block' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='hdc' bus='ide'/>
+      <readonly/>
+      <address type='drive' controller='0' bus='1' target='0' unit='0'/>
+    </disk>
+    <controller type='usb' index='0' model='ich9-ehci1'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci1'>
+      <master startport='0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci2'>
+      <master startport='2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci3'>
+      <master startport='4'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+    </controller>
+    <controller type='ide' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    <interface type='network'>
+      <source network='private1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='private2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes' keymap='en-us'/>
+    <sound model='ich6'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='cirrus' vram='9216' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+
+[root@room9pc10 ~]# 
+
+
+[root@room9pc10 ~]# cat -n  /var/lib/libvirt/images/.rhel6.xml 
+     1	<domain type='kvm'>
+     2	  <name>rh6_template</name>
+     3	  <memory unit='KiB'>1048576</memory>
+     4	  <currentMemory unit='KiB'>1048576</currentMemory>
+     5	  <vcpu placement='static'>1</vcpu>
+     6	  <os>
+     7	    <type arch='x86_64' machine='rhel6.6.0'>hvm</type>
+     8	    <boot dev='hd'/>
+     9	  </os>
+    10	  <features>
+    11	    <acpi/>
+    12	    <apic/>
+    13	    <pae/>
+    14	  </features>
+    15	  <clock offset='utc'/>
+    16	  <on_poweroff>destroy</on_poweroff>
+    17	  <on_reboot>restart</on_reboot>
+    18	  <on_crash>restart</on_crash>
+    19	  <devices>
+    20	    <emulator>/usr/libexec/qemu-kvm</emulator>
+    21	    <disk type='file' device='disk'>
+    22	      <driver name='qemu' type='qcow2' cache='none'/>
+    23	      <source file='/var/lib/libvirt/images/rh6_template.img'/>
+    24	      <target dev='vda' bus='virtio'/>
+    25	      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    26	    </disk>
+    27	    <disk type='block' device='cdrom'>
+    28	      <driver name='qemu' type='raw'/>
+    29	      <target dev='hdc' bus='ide'/>
+    30	      <readonly/>
+    31	      <address type='drive' controller='0' bus='1' target='0' unit='0'/>
+    32	    </disk>
+    33	    <controller type='usb' index='0' model='ich9-ehci1'>
+    34	      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+    35	    </controller>
+    36	    <controller type='usb' index='0' model='ich9-uhci1'>
+    37	      <master startport='0'/>
+    38	      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+    39	    </controller>
+    40	    <controller type='usb' index='0' model='ich9-uhci2'>
+    41	      <master startport='2'/>
+    42	      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+    43	    </controller>
+    44	    <controller type='usb' index='0' model='ich9-uhci3'>
+    45	      <master startport='4'/>
+    46	      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+    47	    </controller>
+    48	    <controller type='ide' index='0'>
+    49	      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    50	    </controller>
+    51	    <interface type='network'>
+    52	      <source network='private1'/>
+    53	      <model type='virtio'/>
+    54	      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    55	    </interface>
+
+/********* virsh edit  虚拟机名 *** 注意编辑的时候  mac 地址 删除 **** 系统自动重新生成 mac 地址
+    <interface type='bridge'>
+      <mac address='52:54:00:70:ce:0e'/>  # mac 地址 删除
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/> ##总线地址 删除
+    </interface>
+********************************************************/
+
+    56	    <interface type='network'>
+    57	      <source network='private2'/>
+    58	      <model type='virtio'/>
+    59	      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    60	    </interface>
+    61	    <interface type='network'>
+    62	      <source network='public1'/>
+    63	      <model type='virtio'/>
+    64	      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    65	    </interface>
+    66	    <interface type='network'>
+    67	      <source network='public2'/>
+    68	      <model type='virtio'/>
+    69	      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    70	    </interface>
+    71	    <serial type='pty'>
+    72	      <target port='0'/>
+    73	    </serial>
+    74	    <console type='pty'>
+    75	      <target type='serial' port='0'/>
+    76	    </console>
+    77	    <input type='tablet' bus='usb'/>
+    78	    <input type='mouse' bus='ps2'/>
+    79	    <graphics type='vnc' port='-1' autoport='yes' keymap='en-us'/>
+    80	    <sound model='ich6'>
+    81	      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    82	    </sound>
+    83	    <video>
+    84	      <model type='cirrus' vram='9216' heads='1'/>
+    85	      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    86	    </video>
+    87	    <memballoon model='virtio'>
+    88	      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    89	    </memballoon>
+    90	  </devices>
+    91	</domain>
+    92	
+[root@room9pc10 ~]# 
+
+/********* virsh edit  虚拟机名 *** 注意编辑的时候  mac 地址 删除 **** 系统自动重新生成 mac 地址
+    <interface type='bridge'>
+      <mac address='52:54:00:70:ce:0e'/>  # mac 地址 删除
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/> ##总线地址 删除
+    </interface>
+********************************************************/
+
+[root@room9pc10 ~]# cat -n  /var/lib/libvirt/images/.rhel7.xml 
+     1	<!--
+     2	WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+     3	OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+     4	  virsh edit rhel7.1
+     5	or other application using the libvirt API.
+     6	-->
+     7	
+     8	<domain type='kvm'>
+     9	  <name>rh7_template</name>
+    10	  <memory unit='KiB'>1048576</memory>
+    11	  <currentMemory unit='KiB'>1048576</currentMemory>
+    12	  <vcpu placement='static'>1</vcpu>
+    13	  <os>
+    14	    <type arch='x86_64' machine='pc-i440fx-rhel7.0.0'>hvm</type>
+    15	  </os>
+    16	  <features>
+    17	    <acpi/>
+    18	    <apic/>
+    19	  </features>
+    20	    <cpu mode='host-model'>
+    21	      <model fallback='allow'/>
+    22	  </cpu>
+    23	  <clock offset='utc'>
+    24	    <timer name='rtc' tickpolicy='catchup'/>
+    25	    <timer name='pit' tickpolicy='delay'/>
+    26	    <timer name='hpet' present='no'/>
+    27	  </clock>
+    28	  <on_poweroff>destroy</on_poweroff>
+    29	  <on_reboot>restart</on_reboot>
+    30	  <on_crash>restart</on_crash>
+    31	  <pm>
+    32	    <suspend-to-mem enabled='no'/>
+    33	    <suspend-to-disk enabled='no'/>
+    34	  </pm>
+    35	  <devices>
+    36	    <emulator>/usr/libexec/qemu-kvm</emulator>
+    37	    <disk type='file' device='disk'>
+    38	      <driver name='qemu' type='qcow2'/>
+    39	      <source file='/var/lib/libvirt/images/rh7_template.img'/>
+    40	      <target dev='vda' bus='virtio'/>
+    41	      <boot order='1'/>
+    42	      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    43	    </disk>
+    44	    <disk type='file' device='cdrom'>
+    45	      <driver name='qemu' type='raw'/>
+    46	      <target dev='hda' bus='ide'/>
+    47	      <readonly/>
+    48	      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    49	    </disk>
+    50	    <controller type='usb' index='0' model='ich9-ehci1'>
+    51	      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x7'/>
+    52	    </controller>
+    53	    <controller type='usb' index='0' model='ich9-uhci1'>
+    54	      <master startport='0'/>
+    55	      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0' multifunction='on'/>
+    56	    </controller>
+    57	    <controller type='usb' index='0' model='ich9-uhci2'>
+    58	      <master startport='2'/>
+    59	      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x1'/>
+    60	    </controller>
+    61	    <controller type='usb' index='0' model='ich9-uhci3'>
+    62	      <master startport='4'/>
+    63	      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x2'/>
+    64	    </controller>
+    65	    <controller type='pci' index='0' model='pci-root'/>
+    66	    <controller type='ide' index='0'>
+    67	      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    68	    </controller>
+    69	    <controller type='virtio-serial' index='0'>
+    70	      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    71	    </controller>
+    72	    <interface type='network'>
+    73	      <source network='private1'/>
+    74	      <model type='virtio'/>
+    75	      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    76	    </interface>
+    77	    <interface type='network'>
+    78	      <source network='private2'/>
+    79	      <model type='virtio'/>
+    80	      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    81	    </interface>
+    82	    <interface type='network'>
+    83	      <source network='public1'/>
+    84	      <model type='virtio'/>
+    85	      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    86	    </interface>
+    87	    <interface type='network'>
+    88	      <source network='public2'/>
+    89	      <model type='virtio'/>
+    90	      <address type='pci' domain='0x0000' bus='0x00' slot='0x0b' function='0x0'/>
+    91	    </interface>
+    92	    <serial type='pty'>
+    93	      <target port='0'/>
+    94	    </serial>
+    95	    <console type='pty'>
+    96	      <target type='serial' port='0'/>
+    97	    </console>
+    98	    <input type='tablet' bus='usb'/>
+    99	    <input type='mouse' bus='ps2'/>
+   100	    <input type='keyboard' bus='ps2'/>
+   101	    <graphics type='spice' autoport='yes'>
+   102	      <image compression='off'/>
+   103	    </graphics>
+   104	    <sound model='ich6'>
+   105	      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+   106	    </sound>
+   107	    <video>
+   108	      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
+   109	      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+   110	    </video>
+   111	    <redirdev bus='usb' type='spicevmc'>
+   112	    </redirdev>
+   113	    <redirdev bus='usb' type='spicevmc'>
+   114	    </redirdev>
+   115	    <memballoon model='virtio'>
+   116	      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+   117	    </memballoon>
+   118	  </devices>
+   119	</domain>
+
+/********* virsh edit  虚拟机名 *** 注意编辑的时候  mac 地址 删除 **** 系统自动重新生成 mac 地址
+    <interface type='bridge'>
+      <mac address='52:54:00:70:ce:0e'/>  # mac 地址 删除
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/> ##总线地址 删除
+    </interface>
+********************************************************/
+
+=====================  /var/lib/libvirt/images/.rhel7.xml  ==================================
+
+[root@room9pc10 ~]# cat   /var/lib/libvirt/images/.rhel7.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh edit rhel7.1
+or other application using the libvirt API.
+-->
+
+<domain type='kvm'>
+  <name>rh7_template</name>
+  <memory unit='KiB'>1048576</memory>
+  <currentMemory unit='KiB'>1048576</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-i440fx-rhel7.0.0'>hvm</type>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+    <cpu mode='host-model'>
+      <model fallback='allow'/>
+  </cpu>
+  <clock offset='utc'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <pm>
+    <suspend-to-mem enabled='no'/>
+    <suspend-to-disk enabled='no'/>
+  </pm>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/rh7_template.img'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='hda' bus='ide'/>
+      <readonly/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
+    <controller type='usb' index='0' model='ich9-ehci1'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x7'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci1'>
+      <master startport='0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci2'>
+      <master startport='2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x1'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci3'>
+      <master startport='4'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pci-root'/>
+    <controller type='ide' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    <controller type='virtio-serial' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </controller>
+    <interface type='network'>
+      <source network='private1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='private2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0b' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='spice' autoport='yes'>
+      <image compression='off'/>
+    </graphics>
+    <sound model='ich6'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <redirdev bus='usb' type='spicevmc'>
+    </redirdev>
+    <redirdev bus='usb' type='spicevmc'>
+    </redirdev>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+[root@room9pc10 ~]# 
+
+[root@room9pc10 HIYS]# ls  clone/usr/local/bin/
+charm  clone-auto6  clone-auto7  clone-vm  clone-vm6  clone-vm7  rht-vmctl
+
+[root@room9pc10 ~]# ls  /usr/local/bin/
+2to3         clone-auto7  easy_install-3.6  pip3.6    python3.6          python3-config
+2to3-3.6     clone-vm     idle3             pydoc3    python3.6-config   pyvenv
+charm        clone-vm6    idle3.6           pydoc3.6  python3.6m         pyvenv-3.6
+clone-auto6  clone-vm7    pip3              python3   python3.6m-config  rht-vmctl
+
+========================  /usr/local/bin/clone-auto6 ==============================
+
+[root@room9pc10 ~]# cat   /usr/local/bin/clone-auto6
+#!/bin/bash
+
+BASEVM=rh6_template
+IMG_DIR=/var/lib/libvirt/images
+#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+#if [ $ROOM -le 9 ];then
+#ROOM=0$ROOM
+#fi
+#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+
+read -p "number of vms: " number
+if [[ ! "$number" =~ ^[0-9]+$ ]]; then
+    echo "you must input a number."
+    exit 1
+fi
+
+if [ $number -le 0 -o $number -gt 9 ]; then
+    echo "number out of range(1~9)."
+    exit 2
+fi
+VMNUM=$number
+if [ $VMNUM -le 9 ];then
+VMNUM=0$VMNUM
+fi
+
+counter=0
+vms=0
+num=$(virsh  list --all | grep rh6  | wc -l)
+if [ $num -ge 9 ];then
+  echo -e "\033[31m You already have 9 virtual machines \033[0m"
+  exit 3
+fi
+
+while [ $vms -lt $number ]
+do
+    let counter++
+    newvm=rh6_node${counter}
+    if [ -f ${IMG_DIR}/${newvm}.img ]; then
+        continue
+    fi
+    
+    qemu-img create -f qcow2 -b ${IMG_DIR}/.rh6_template.img ${IMG_DIR}/${newvm}.img &> /dev/null
+    
+    cat /var/lib/libvirt/images/.rhel6.xml > /tmp/myvm.xml
+    sed -i "/<name>${BASEVM}/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+#    sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    sed -i "/${BASEVM}\.img/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+#    sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/a3/${n}/" /tmp/myvm.xml
+
+#    sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/b3/${n}/" /tmp/myvm.xml
+
+#    sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/c3/${n}/" /tmp/myvm.xml
+#
+#    sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/d3/${n}/" /tmp/myvm.xml
+
+    virsh define /tmp/myvm.xml &> /dev/null
+    echo -e "created ${newvm}\t\t\t\t\t\033[32;1m[Done]\033[0m"
+    let vms++
+
+done
+
+========================  /usr/local/bin/clone-auto7  ====================
+
+
+[root@room9pc10 ~]# cat   /usr/local/bin/clone-auto7 
+#!/bin/bash
+
+BASEVM=rh7_template
+IMG_DIR=/var/lib/libvirt/images
+#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+#if [ $ROOM -le 9 ];then
+#ROOM=0$ROOM
+#fi
+#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+
+read -p "number of vms: " number
+if [[ ! "$number" =~ ^[0-9]+$ ]]; then
+    echo "you must input a number."
+    exit 1
+fi
+
+if [ $number -le 0 -o $number -gt 9 ]; then
+    echo "number out of range(1~9)."
+    exit 2
+fi
+VMNUM=$number
+if [ $VMNUM -le 9 ];then
+VMNUM=0$VMNUM
+fi
+
+counter=0
+vms=0
+num=$(virsh  list --all | grep rh7  | wc -l)
+if [ $num -ge 9 ];then
+  echo -e "\033[31m You already have 9 virtual machines \033[0m"
+  exit 3
+fi
+
+while [ $vms -lt $number ]
+do
+    let counter++
+    newvm=rh7_node${counter}
+    if [ -f ${IMG_DIR}/${newvm}.img ]; then
+        continue
+    fi
+    
+    qemu-img create -f qcow2 -b ${IMG_DIR}/.rh7_template.img ${IMG_DIR}/${newvm}.img &> /dev/null
+    
+    cat /var/lib/libvirt/images/.rhel7.xml > /tmp/myvm.xml
+    sed -i "/<name>${BASEVM}/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+#    sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    sed -i "/${BASEVM}\.img/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+#    sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/a3/${n}/" /tmp/myvm.xml
+#
+#    sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/b3/${n}/" /tmp/myvm.xml
+#
+#    sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/c3/${n}/" /tmp/myvm.xml
+#
+#    sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+#    sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+#    n=$(echo "obase=16;$counter" | bc)
+#    sed -i "/mac /s/d3/${n}/" /tmp/myvm.xml
+
+    virsh define /tmp/myvm.xml &> /dev/null
+    echo -e "created ${newvm}\t\t\t\t\t\033[32;1m[Done]\033[0m"
+    let vms++
+
+done
+[root@room9pc10 ~]# cat  -n  /usr/local/bin/clone-auto7 
+     1	#!/bin/bash
+     2	
+     3	BASEVM=rh7_template
+     4	IMG_DIR=/var/lib/libvirt/images
+     5	#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+     6	#if [ $ROOM -le 9 ];then
+     7	#ROOM=0$ROOM
+     8	#fi
+     9	#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+    10	
+    11	read -p "number of vms: " number
+    12	if [[ ! "$number" =~ ^[0-9]+$ ]]; then
+    13	    echo "you must input a number."
+    14	    exit 1
+    15	fi
+    16	
+    17	if [ $number -le 0 -o $number -gt 9 ]; then
+    18	    echo "number out of range(1~9)."
+    19	    exit 2
+    20	fi
+    21	VMNUM=$number
+    22	if [ $VMNUM -le 9 ];then
+    23	VMNUM=0$VMNUM
+    24	fi
+    25	
+    26	counter=0
+    27	vms=0
+    28	num=$(virsh  list --all | grep rh7  | wc -l)
+    29	if [ $num -ge 9 ];then
+    30	  echo -e "\033[31m You already have 9 virtual machines \033[0m"
+    31	  exit 3
+    32	fi
+    33	
+    34	while [ $vms -lt $number ]
+    35	do
+    36	    let counter++
+    37	    newvm=rh7_node${counter}
+    38	    if [ -f ${IMG_DIR}/${newvm}.img ]; then
+    39	        continue
+    40	    fi
+    41	    
+    42	    qemu-img create -f qcow2 -b ${IMG_DIR}/.rh7_template.img ${IMG_DIR}/${newvm}.img &> /dev/null
+    43	    
+    44	    cat /var/lib/libvirt/images/.rhel7.xml > /tmp/myvm.xml
+    45	    sed -i "/<name>${BASEVM}/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+    46	#    sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    47	    sed -i "/${BASEVM}\.img/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+    48	#    sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+    49	#    sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+    50	#    n=$(echo "obase=16;$counter" | bc)
+    51	#    sed -i "/mac /s/a3/${n}/" /tmp/myvm.xml
+    52	#
+    53	#    sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+    54	#    sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+    55	#    n=$(echo "obase=16;$counter" | bc)
+    56	#    sed -i "/mac /s/b3/${n}/" /tmp/myvm.xml
+    57	#
+    58	#    sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+    59	#    sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+    60	#    n=$(echo "obase=16;$counter" | bc)
+    61	#    sed -i "/mac /s/c3/${n}/" /tmp/myvm.xml
+    62	#
+    63	#    sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+    64	#    sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+    65	#    n=$(echo "obase=16;$counter" | bc)
+    66	#    sed -i "/mac /s/d3/${n}/" /tmp/myvm.xml
+    67	
+    68	    virsh define /tmp/myvm.xml &> /dev/null
+    69	    echo -e "created ${newvm}\t\t\t\t\t\033[32;1m[Done]\033[0m"
+    70	    let vms++
+    71	
+    72	done
+
+=========================   /usr/local/bin/clone-auto6 ====================================
+
+[root@room9pc10 ~]# cat  -n  /usr/local/bin/clone-auto6
+     1	#!/bin/bash
+     2	
+     3	BASEVM=rh6_template
+     4	IMG_DIR=/var/lib/libvirt/images
+     5	#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+     6	#if [ $ROOM -le 9 ];then
+     7	#ROOM=0$ROOM
+     8	#fi
+     9	#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+    10	
+    11	read -p "number of vms: " number
+    12	if [[ ! "$number" =~ ^[0-9]+$ ]]; then
+    13	    echo "you must input a number."
+    14	    exit 1
+    15	fi
+    16	
+    17	if [ $number -le 0 -o $number -gt 9 ]; then
+    18	    echo "number out of range(1~9)."
+    19	    exit 2
+    20	fi
+    21	VMNUM=$number
+    22	if [ $VMNUM -le 9 ];then
+    23	VMNUM=0$VMNUM
+    24	fi
+    25	
+    26	counter=0
+    27	vms=0
+    28	num=$(virsh  list --all | grep rh6  | wc -l)
+    29	if [ $num -ge 9 ];then
+    30	  echo -e "\033[31m You already have 9 virtual machines \033[0m"
+    31	  exit 3
+    32	fi
+    33	
+    34	while [ $vms -lt $number ]
+    35	do
+    36	    let counter++
+    37	    newvm=rh6_node${counter}
+    38	    if [ -f ${IMG_DIR}/${newvm}.img ]; then
+    39	        continue
+    40	    fi
+    41	    
+    42	    qemu-img create -f qcow2 -b ${IMG_DIR}/.rh6_template.img ${IMG_DIR}/${newvm}.img &> /dev/null
+    43	    
+    44	    cat /var/lib/libvirt/images/.rhel6.xml > /tmp/myvm.xml
+    45	    sed -i "/<name>${BASEVM}/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+    46	#    sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    47	    sed -i "/${BASEVM}\.img/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+    48	#    sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+    49	#    sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+    50	#    n=$(echo "obase=16;$counter" | bc)
+    51	#    sed -i "/mac /s/a3/${n}/" /tmp/myvm.xml
+    52	
+    53	#    sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+    54	#    sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+    55	#    n=$(echo "obase=16;$counter" | bc)
+    56	#    sed -i "/mac /s/b3/${n}/" /tmp/myvm.xml
+    57	
+    58	#    sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+    59	#    sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+    60	#    n=$(echo "obase=16;$counter" | bc)
+    61	#    sed -i "/mac /s/c3/${n}/" /tmp/myvm.xml
+    62	#
+    63	#    sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+    64	#    sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+    65	#    n=$(echo "obase=16;$counter" | bc)
+    66	#    sed -i "/mac /s/d3/${n}/" /tmp/myvm.xml
+    67	
+    68	    virsh define /tmp/myvm.xml &> /dev/null
+    69	    echo -e "created ${newvm}\t\t\t\t\t\033[32;1m[Done]\033[0m"
+    70	    let vms++
+    71	
+    72	done
+[root@room9pc10 ~]# 
+
+
+[root@room9pc10 HIYS]# ls  clone/usr/local/bin/
+charm  clone-auto6  clone-auto7  clone-vm  clone-vm6  clone-vm7  rht-vmctl
+
+============================ 
+
+[root@room9pc10 ~]# ls  /usr/local/bin/
+2to3         clone-auto7  easy_install-3.6  pip3.6    python3.6          python3-config
+2to3-3.6     clone-vm     idle3             pydoc3    python3.6-config   pyvenv
+charm        clone-vm6    idle3.6           pydoc3.6  python3.6m         pyvenv-3.6
+clone-auto6  clone-vm7    pip3              python3   python3.6m-config  rht-vmctl
+
+========================== /usr/local/bin/clone-vm6 ================================
+
+[root@room9pc10 ~]# cat  /usr/local/bin/clone-vm6 
+#!/bin/bash
+# exit code: 
+#    65 -> user input nothing
+#    66 -> user input is not a number
+#    67 -> user input out of range
+#    68 -> vm disk image exists
+
+IMG_DIR=/var/lib/libvirt/images
+BASEVM=rh6_template
+#ROOM=`cat /etc/hostname  | sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+#if [ $ROOM -lt 9 ];then
+#ROOM=0$ROOM
+#fi
+#IP=$(hostname | cut -b 8-9)
+read -p "Enter VM number: " VMNUM
+if [ $VMNUM -lt 9 ];then
+VMNUM=0$VMNUM
+fi
+
+
+if [ -z "${VMNUM}" ]; then
+    echo "You must input a number."
+    exit 65
+elif [ $(echo ${VMNUM}*1 | bc) = 0 ]; then
+    echo "You must input a number."
+    exit 66
+elif [ ${VMNUM} -lt 1 -o ${VMNUM} -gt 99 ]; then
+    echo "Input out of range"
+    exit 67
+fi
+
+NEWVM=rh6_node${VMNUM}
+
+if [ -e $IMG_DIR/${NEWVM}.img ]; then
+    echo "File exists."
+    exit 68
+fi
+
+echo -en "Creating Virtual Machine disk image......\t"
+qemu-img create -f qcow2 -b $IMG_DIR/.${BASEVM}.img $IMG_DIR/${NEWVM}.img &> /dev/null
+echo -e "\e[32;1m[OK]\e[0m"
+
+#virsh dumpxml ${BASEVM} > /tmp/myvm.xml
+cat /var/lib/libvirt/images/.rhel6.xml > /tmp/myvm.xml
+sed -i "/<name>${BASEVM}/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+#sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+sed -i "/${BASEVM}\.img/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+
+#sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/a3/${VMNUM}/" /tmp/myvm.xml
+#
+#sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/b3/${VMNUM}/" /tmp/myvm.xml
+#
+#sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/c3/${VMNUM}/" /tmp/myvm.xml
+#
+#sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/d3/${VMNUM}/" /tmp/myvm.xml
+#
+echo -en "Defining new virtual machine......\t\t"
+virsh define /tmp/myvm.xml &> /dev/null
+echo -e "\e[32;1m[OK]\e[0m"
+
+[root@room9pc10 ~]# 
+====================== /usr/local/bin/clone-vm6  =============================
+
+[root@room9pc10 ~]# cat  -n  /usr/local/bin/clone-vm6 
+     1	#!/bin/bash
+     2	# exit code: 
+     3	#    65 -> user input nothing
+     4	#    66 -> user input is not a number
+     5	#    67 -> user input out of range
+     6	#    68 -> vm disk image exists
+     7	
+     8	IMG_DIR=/var/lib/libvirt/images
+     9	BASEVM=rh6_template
+    10	#ROOM=`cat /etc/hostname  | sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+    11	#if [ $ROOM -lt 9 ];then
+    12	#ROOM=0$ROOM
+    13	#fi
+    14	#IP=$(hostname | cut -b 8-9)
+    15	read -p "Enter VM number: " VMNUM
+    16	if [ $VMNUM -lt 9 ];then
+    17	VMNUM=0$VMNUM
+    18	fi
+    19	
+    20	
+    21	if [ -z "${VMNUM}" ]; then
+    22	    echo "You must input a number."
+    23	    exit 65
+    24	elif [ $(echo ${VMNUM}*1 | bc) = 0 ]; then
+    25	    echo "You must input a number."
+    26	    exit 66
+    27	elif [ ${VMNUM} -lt 1 -o ${VMNUM} -gt 99 ]; then
+    28	    echo "Input out of range"
+    29	    exit 67
+    30	fi
+    31	
+    32	NEWVM=rh6_node${VMNUM}
+    33	
+    34	if [ -e $IMG_DIR/${NEWVM}.img ]; then
+    35	    echo "File exists."
+    36	    exit 68
+    37	fi
+    38	
+    39	echo -en "Creating Virtual Machine disk image......\t"
+    40	qemu-img create -f qcow2 -b $IMG_DIR/.${BASEVM}.img $IMG_DIR/${NEWVM}.img &> /dev/null
+    41	echo -e "\e[32;1m[OK]\e[0m"
+    42	
+    43	#virsh dumpxml ${BASEVM} > /tmp/myvm.xml
+    44	cat /var/lib/libvirt/images/.rhel6.xml > /tmp/myvm.xml
+    45	sed -i "/<name>${BASEVM}/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+    46	#sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    47	sed -i "/${BASEVM}\.img/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+    48	
+    49	#sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+    50	#sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+    51	#sed -i "/mac /s/a3/${VMNUM}/" /tmp/myvm.xml
+    52	#
+    53	#sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+    54	#sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+    55	#sed -i "/mac /s/b3/${VMNUM}/" /tmp/myvm.xml
+    56	#
+    57	#sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+    58	#sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+    59	#sed -i "/mac /s/c3/${VMNUM}/" /tmp/myvm.xml
+    60	#
+    61	#sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+    62	#sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+    63	#sed -i "/mac /s/d3/${VMNUM}/" /tmp/myvm.xml
+    64	#
+    65	echo -en "Defining new virtual machine......\t\t"
+    66	virsh define /tmp/myvm.xml &> /dev/null
+    67	echo -e "\e[32;1m[OK]\e[0m"
+
+======================== /usr/local/bin/clone-vm7  ===============================
+
+[root@room9pc10 ~]# cat  -n  /usr/local/bin/clone-vm7 
+     1	#!/bin/bash
+     2	# exit code: 
+     3	#    65 -> user input nothing
+     4	#    66 -> user input is not a number
+     5	#    67 -> user input out of range
+     6	#    68 -> vm disk image exists
+     7	
+     8	IMG_DIR=/var/lib/libvirt/images
+     9	BASEVM=rh7_template
+    10	#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+    11	#if [ $ROOM -le 9 ];then
+    12	#ROOM=0$ROOM
+    13	#fi
+    14	#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+    15	read -p "Enter VM number: " VMNUM
+    16	if [ $VMNUM -le 9 ];then
+    17	VMNUM=0$VMNUM
+    18	fi
+    19	
+    20	
+    21	if [ -z "${VMNUM}" ]; then
+    22	    echo "You must input a number."
+    23	    exit 65
+    24	elif [ $(echo ${VMNUM}*1 | bc) = 0 ]; then
+    25	    echo "You must input a number."
+    26	    exit 66
+    27	elif [ ${VMNUM} -lt 1 -o ${VMNUM} -gt 99 ]; then
+    28	    echo "Input out of range"
+    29	    exit 67
+    30	fi
+    31	
+    32	NEWVM=rh7_node${VMNUM}
+    33	
+    34	if [ -e $IMG_DIR/${NEWVM}.img ]; then
+    35	    echo "File exists."
+    36	    exit 68
+    37	fi
+    38	
+    39	echo -en "Creating Virtual Machine disk image......\t"
+    40	qemu-img create -f qcow2 -b $IMG_DIR/.${BASEVM}.img $IMG_DIR/${NEWVM}.img &> /dev/null
+    41	echo -e "\e[32;1m[OK]\e[0m"
+    42	
+    43	#virsh dumpxml ${BASEVM} > /tmp/myvm.xml
+    44	cat /var/lib/libvirt/images/.rhel7.xml > /tmp/myvm.xml
+    45	sed -i "/<name>${BASEVM}/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+    46	#sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+    47	sed -i "/${BASEVM}\.img/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+    48	
+    49	#sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+    50	#sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+    51	#sed -i "/mac /s/a3/${VMNUM}/" /tmp/myvm.xml
+    52	#
+    53	#sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+    54	#sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+    55	#sed -i "/mac /s/b3/${VMNUM}/" /tmp/myvm.xml
+    56	#
+    57	#sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+    58	#sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+    59	#sed -i "/mac /s/c3/${VMNUM}/" /tmp/myvm.xml
+    60	#
+    61	#sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+    62	#sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+    63	#sed -i "/mac /s/d3/${VMNUM}/" /tmp/myvm.xml
+    64	
+    65	echo -en "Defining new virtual machine......\t\t"
+    66	virsh define /tmp/myvm.xml &> /dev/null
+    67	echo -e "\e[32;1m[OK]\e[0m"
+
+============================== /usr/local/bin/clone-vm7  ======================
+
+[root@room9pc10 ~]# cat    /usr/local/bin/clone-vm7 
+#!/bin/bash
+# exit code: 
+#    65 -> user input nothing
+#    66 -> user input is not a number
+#    67 -> user input out of range
+#    68 -> vm disk image exists
+
+IMG_DIR=/var/lib/libvirt/images
+BASEVM=rh7_template
+#ROOM=`sed  -n "1p" /etc/hostname |  sed -r 's/(room)([0-9]{1,})(.*)/\2/'`
+#if [ $ROOM -le 9 ];then
+#ROOM=0$ROOM
+#fi
+#IP=`sed  -n "1p" /etc/hostname |   sed -r 's/(.*)([0-9]+)(.*)/\2/'`
+read -p "Enter VM number: " VMNUM
+if [ $VMNUM -le 9 ];then
+VMNUM=0$VMNUM
+fi
+
+
+if [ -z "${VMNUM}" ]; then
+    echo "You must input a number."
+    exit 65
+elif [ $(echo ${VMNUM}*1 | bc) = 0 ]; then
+    echo "You must input a number."
+    exit 66
+elif [ ${VMNUM} -lt 1 -o ${VMNUM} -gt 99 ]; then
+    echo "Input out of range"
+    exit 67
+fi
+
+NEWVM=rh7_node${VMNUM}
+
+if [ -e $IMG_DIR/${NEWVM}.img ]; then
+    echo "File exists."
+    exit 68
+fi
+
+echo -en "Creating Virtual Machine disk image......\t"
+qemu-img create -f qcow2 -b $IMG_DIR/.${BASEVM}.img $IMG_DIR/${NEWVM}.img &> /dev/null
+echo -e "\e[32;1m[OK]\e[0m"
+
+#virsh dumpxml ${BASEVM} > /tmp/myvm.xml
+cat /var/lib/libvirt/images/.rhel7.xml > /tmp/myvm.xml
+sed -i "/<name>${BASEVM}/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+#sed -i "/uuid/s/<uuid>.*<\/uuid>/<uuid>$(uuidgen)<\/uuid>/" /tmp/myvm.xml
+sed -i "/${BASEVM}\.img/s/${BASEVM}/${NEWVM}/" /tmp/myvm.xml
+
+#sed -i "/mac /s/a1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/a2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/a3/${VMNUM}/" /tmp/myvm.xml
+#
+#sed -i "/mac /s/b1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/b2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/b3/${VMNUM}/" /tmp/myvm.xml
+#
+#sed -i "/mac /s/c1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/c2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/c3/${VMNUM}/" /tmp/myvm.xml
+#
+#sed -i "/mac /s/d1/${ROOM}/" /tmp/myvm.xml
+#sed -i "/mac /s/d2/${IP}/" /tmp/myvm.xml
+#sed -i "/mac /s/d3/${VMNUM}/" /tmp/myvm.xml
+
+echo -en "Defining new virtual machine......\t\t"
+virsh define /tmp/myvm.xml &> /dev/null
+echo -e "\e[32;1m[OK]\e[0m"
+
+[root@room9pc10 ~]# 
+
+[root@room9pc10 HIYS]# ls  clone/usr/local/bin/
+charm  clone-auto6  clone-auto7  clone-vm  clone-vm6  clone-vm7  rht-vmctl
+
+========================== /usr/local/bin/clone-vm =================================
+
+[root@room9pc10 ~]# cat  /usr/local/bin/clone-vm
+#!/bin/bash
+echo -e "\033[36m正确的命令为： \033[0m"
+echo -e "\033[32m  clone-vm6 \033[0m\033[34m 可以快速产生一台RHEL6虚拟机 \033[0m"
+echo -e "\033[32m  clone-vm7 \033[0m\033[34m 可以快速产生一台RHEL7虚拟机 \033[0m"
+echo -e "\033[32m  clone-auto6 \033[0m\033[34m 可以快速产生多台RHEL6虚拟机 \033[0m"
+echo -e "\033[32m  clone-auto7 \033[0m\033[34m 可以快速产生多台RHEL7虚拟机 \033[0m"
+
+============================ /usr/local/bin/rht-vmctl  ==========================
+
+[root@room9pc10 ~]# cat  /usr/local/bin/rht-vmctl 
+#!/bin/bash
+echo2(){
+abc01=`virsh list --all | grep $vm | awk '{print $2}'` 
+abc02=`virsh list --all | grep $vm | awk '{print $3}'` 
+ if [ $abc02 == running ];then
+  echo -e $abc01  "\e[32;1m[running]\e[0m"
+ else
+   echo -e $abc01 "\033[31m[shutdown]\033[0m"
+
+ fi
+}
+##################################################################
+help(){
+echo " Usage: rht-vmctl  VMCMD   VMNAME  
+  where VMCMD is one of:
+    start      - obtain and start up VMNAME
+    stop       - stop a running VMNAME
+    poweroff   - if running, force stop VMNAME
+    reset      - poweroff, return to saved or original state, start VMNAME
+    status     - display libvirt status of VMNAME 
+  where VMNAME is one of: 
+    classroom
+    server
+    desktop "
+}
+#########################################################
+IMG_DIR=/var/lib/libvirt/images/
+
+virdef(){
+virsh define /root/.$1  &> /dev/null
+echo -e "$2 \e[32;1m[OK]\e[0m"
+}
+
+#######################################################
+create(){
+qemu-img create -f qcow2 -b $IMG_DIR/.$1  $IMG_DIR/$2 &> /dev/null
+}
+###########################################################
+rmimg(){
+if [ -e $IMG_DIR/$1 ]; then
+    rm -rf $IMG_DIR/$1
+fi
+}
+##################################################
+undef(){
+id=`virsh dominfo $1 2> /dev/null | grep running`
+if  [ -n "$id"  ];then
+        /usr/bin/virsh destroy $1 &> /dev/null
+fi
+virsh undefine $1 &>/dev/null
+}
+########################################################
+classroom(){
+undef classroom
+rmimg rh254-classroom-vda.ovl
+create rh254-classroom-vda.qcow2 rh254-classroom-vda.ovl
+virdef classroom.xml classroom
+virsh start classroom
+}                        
+#################################################################
+server(){
+undef server
+rmimg rh254-server-vda.ovl
+rmimg rh254-server-vdb.ovl
+create rh254-server-vda.qcow2 rh254-server-vda.ovl
+create rh254-server-vdb.qcow2 rh254-server-vdb.ovl
+virdef server.xml server
+virsh start server
+}
+###################################################################
+desktop(){
+undef desktop
+rmimg rh254-desktop-vda.ovl
+rmimg rh254-desktop-vdb.ovl
+create rh254-desktop-vda.qcow2 rh254-desktop-vda.ovl
+create rh254-desktop-vdb.qcow2 rh254-desktop-vdb.ovl
+virdef desktop.xml desktop
+virsh start desktop
+}
+################################################################
+if [ -z $1 ] || [ -z $2 ];then
+  help
+elif [ $2 == 'classroom' ];then 
+  case $1 in
+   start)
+   virsh start $2 ;;
+   stop)
+   virsh  shutdown $2 ;;  
+   poweroff)
+   virsh destroy $2 ;;
+   status)
+   vm=$2
+   echo2 ;;
+   reset)
+  classroom ;;
+  *)
+   help ;;   
+  esac
+elif [ $2 == 'server' ];then 
+  case $1 in
+   start)
+   virsh start $2 ;;
+   stop)
+   virsh  shutdown $2 ;;  
+   poweroff)
+   virsh destroy $2 ;;
+   status)
+   vm=$2
+   echo2  ;;   
+   reset)
+  server ;;
+  *)
+   help ;;   
+  esac
+elif [ $2 == 'desktop' ];then 
+  case $1 in
+   start)
+   virsh start $2 ;;
+   stop)
+   virsh  shutdown $2 ;;  
+   poweroff)
+   virsh destroy $2 ;;
+   status)
+   vm=$2
+   echo2 ;;   
+   reset)
+  desktop ;;
+  *)
+   help ;;   
+  esac
+else  
+   help
+fi
+
+=============================/usr/local/bin/rht-vmctl  =============================
+
+[root@room9pc10 ~]# cat  -n  /usr/local/bin/rht-vmctl 
+     1	#!/bin/bash
+     2	echo2(){
+     3	abc01=`virsh list --all | grep $vm | awk '{print $2}'` 
+     4	abc02=`virsh list --all | grep $vm | awk '{print $3}'` 
+     5	 if [ $abc02 == running ];then
+     6	  echo -e $abc01  "\e[32;1m[running]\e[0m"
+     7	 else
+     8	   echo -e $abc01 "\033[31m[shutdown]\033[0m"
+     9	
+    10	 fi
+    11	}
+    12	##################################################################
+    13	help(){
+    14	echo " Usage: rht-vmctl  VMCMD   VMNAME  
+    15	  where VMCMD is one of:
+    16	    start      - obtain and start up VMNAME
+    17	    stop       - stop a running VMNAME
+    18	    poweroff   - if running, force stop VMNAME
+    19	    reset      - poweroff, return to saved or original state, start VMNAME
+    20	    status     - display libvirt status of VMNAME 
+    21	  where VMNAME is one of: 
+    22	    classroom
+    23	    server
+    24	    desktop "
+    25	}
+    26	#########################################################
+    27	IMG_DIR=/var/lib/libvirt/images/
+    28	
+    29	virdef(){
+    30	virsh define /root/.$1  &> /dev/null
+    31	echo -e "$2 \e[32;1m[OK]\e[0m"
+    32	}
+    33	
+    34	#######################################################
+    35	create(){
+    36	qemu-img create -f qcow2 -b $IMG_DIR/.$1  $IMG_DIR/$2 &> /dev/null
+    37	}
+    38	###########################################################
+    39	rmimg(){
+    40	if [ -e $IMG_DIR/$1 ]; then
+    41	    rm -rf $IMG_DIR/$1
+    42	fi
+    43	}
+    44	##################################################
+    45	undef(){
+    46	id=`virsh dominfo $1 2> /dev/null | grep running`
+    47	if  [ -n "$id"  ];then
+    48	        /usr/bin/virsh destroy $1 &> /dev/null
+    49	fi
+    50	virsh undefine $1 &>/dev/null
+    51	}
+    52	########################################################
+    53	classroom(){
+    54	undef classroom
+    55	rmimg rh254-classroom-vda.ovl
+    56	create rh254-classroom-vda.qcow2 rh254-classroom-vda.ovl
+    57	virdef classroom.xml classroom
+    58	virsh start classroom
+    59	}                        
+    60	#################################################################
+    61	server(){
+    62	undef server
+    63	rmimg rh254-server-vda.ovl
+    64	rmimg rh254-server-vdb.ovl
+    65	create rh254-server-vda.qcow2 rh254-server-vda.ovl
+    66	create rh254-server-vdb.qcow2 rh254-server-vdb.ovl
+    67	virdef server.xml server
+    68	virsh start server
+    69	}
+    70	###################################################################
+    71	desktop(){
+    72	undef desktop
+    73	rmimg rh254-desktop-vda.ovl
+    74	rmimg rh254-desktop-vdb.ovl
+    75	create rh254-desktop-vda.qcow2 rh254-desktop-vda.ovl
+    76	create rh254-desktop-vdb.qcow2 rh254-desktop-vdb.ovl
+    77	virdef desktop.xml desktop
+    78	virsh start desktop
+    79	}
+    80	################################################################
+    81	if [ -z $1 ] || [ -z $2 ];then
+    82	  help
+    83	elif [ $2 == 'classroom' ];then 
+    84	  case $1 in
+    85	   start)
+    86	   virsh start $2 ;;
+    87	   stop)
+    88	   virsh  shutdown $2 ;;  
+    89	   poweroff)
+    90	   virsh destroy $2 ;;
+    91	   status)
+    92	   vm=$2
+    93	   echo2 ;;
+    94	   reset)
+    95	  classroom ;;
+    96	  *)
+    97	   help ;;   
+    98	  esac
+    99	elif [ $2 == 'server' ];then 
+   100	  case $1 in
+   101	   start)
+   102	   virsh start $2 ;;
+   103	   stop)
+   104	   virsh  shutdown $2 ;;  
+   105	   poweroff)
+   106	   virsh destroy $2 ;;
+   107	   status)
+   108	   vm=$2
+   109	   echo2  ;;   
+   110	   reset)
+   111	  server ;;
+   112	  *)
+   113	   help ;;   
+   114	  esac
+   115	elif [ $2 == 'desktop' ];then 
+   116	  case $1 in
+   117	   start)
+   118	   virsh start $2 ;;
+   119	   stop)
+   120	   virsh  shutdown $2 ;;  
+   121	   poweroff)
+   122	   virsh destroy $2 ;;
+   123	   status)
+   124	   vm=$2
+   125	   echo2 ;;   
+   126	   reset)
+   127	  desktop ;;
+   128	  *)
+   129	   help ;;   
+   130	  esac
+   131	else  
+   132	   help
+   133	fi
+[root@room9pc10 ~]# 
+
+[root@room9pc10 ~]# ll  /usr/local/bin/clone-vm7
+lrwxrwxrwx 1 root root 37 3月  19 2018 /usr/local/bin/clone-vm7 -> /var/lib/libvirt/images/bin/clone-vm7
+
+[root@room9pc10 ~]# ls   /var/lib/libvirt/images/bin/
+charm  clone-auto6  clone-auto7  clone-vm  clone-vm6  clone-vm7  rht-vmctl
+
+[root@room9pc10 ~]# ls  /usr/local/bin/
+2to3         clone-auto7  easy_install-3.6  pip3.6    python3.6          python3-config
+2to3-3.6     clone-vm     idle3             pydoc3    python3.6-config   pyvenv
+charm        clone-vm6    idle3.6           pydoc3.6  python3.6m         pyvenv-3.6
+clone-auto6  clone-vm7    pip3              python3   python3.6m-config  rht-vmctl
+
+
+[root@room9pc10 ~]# cat  -n  /var/lib/libvirt/images/bin/rht-vmctl 
+     1	#!/bin/bash
+     2	echo2(){
+     3	abc01=`virsh list --all | grep $vm | awk '{print $2}'` 
+     4	abc02=`virsh list --all | grep $vm | awk '{print $3}'` 
+     5	 if [ $abc02 == running ];then
+     6	  echo -e $abc01  "\e[32;1m[running]\e[0m"
+     7	 else
+     8	   echo -e $abc01 "\033[31m[shutdown]\033[0m"
+     9	
+    10	 fi
+    11	}
+    12	##################################################################
+    13	help(){
+    14	echo " Usage: rht-vmctl  VMCMD   VMNAME  
+    15	  where VMCMD is one of:
+    16	    start      - obtain and start up VMNAME
+    17	    stop       - stop a running VMNAME
+    18	    poweroff   - if running, force stop VMNAME
+    19	    reset      - poweroff, return to saved or original state, start VMNAME
+    20	    status     - display libvirt status of VMNAME 
+    21	  where VMNAME is one of: 
+    22	    classroom
+    23	    server
+    24	    desktop "
+    25	}
+    26	#########################################################
+    27	IMG_DIR=/var/lib/libvirt/images/
+    28	
+    29	virdef(){
+    30	virsh define /root/.$1  &> /dev/null
+    31	echo -e "$2 \e[32;1m[OK]\e[0m"
+    32	}
+    33	
+    34	#######################################################
+    35	create(){
+    36	qemu-img create -f qcow2 -b $IMG_DIR/.$1  $IMG_DIR/$2 &> /dev/null
+    37	}
+    38	###########################################################
+    39	rmimg(){
+    40	if [ -e $IMG_DIR/$1 ]; then
+    41	    rm -rf $IMG_DIR/$1
+    42	fi
+    43	}
+    44	##################################################
+    45	undef(){
+    46	id=`virsh dominfo $1 2> /dev/null | grep running`
+    47	if  [ -n "$id"  ];then
+    48	        /usr/bin/virsh destroy $1 &> /dev/null
+    49	fi
+    50	virsh undefine $1 &>/dev/null
+    51	}
+    52	########################################################
+    53	classroom(){
+    54	undef classroom
+    55	rmimg rh254-classroom-vda.ovl
+    56	create rh254-classroom-vda.qcow2 rh254-classroom-vda.ovl
+    57	virdef classroom.xml classroom
+    58	virsh start classroom
+    59	}                        
+    60	#################################################################
+    61	server(){
+    62	undef server
+    63	rmimg rh254-server-vda.ovl
+    64	rmimg rh254-server-vdb.ovl
+    65	create rh254-server-vda.qcow2 rh254-server-vda.ovl
+    66	create rh254-server-vdb.qcow2 rh254-server-vdb.ovl
+    67	virdef server.xml server
+    68	virsh start server
+    69	}
+    70	###################################################################
+    71	desktop(){
+    72	undef desktop
+    73	rmimg rh254-desktop-vda.ovl
+    74	rmimg rh254-desktop-vdb.ovl
+    75	create rh254-desktop-vda.qcow2 rh254-desktop-vda.ovl
+    76	create rh254-desktop-vdb.qcow2 rh254-desktop-vdb.ovl
+    77	virdef desktop.xml desktop
+    78	virsh start desktop
+    79	}
+    80	################################################################
+    81	if [ -z $1 ] || [ -z $2 ];then
+    82	  help
+    83	elif [ $2 == 'classroom' ];then 
+    84	  case $1 in
+    85	   start)
+    86	   virsh start $2 ;;
+    87	   stop)
+    88	   virsh  shutdown $2 ;;  
+    89	   poweroff)
+    90	   virsh destroy $2 ;;
+    91	   status)
+    92	   vm=$2
+    93	   echo2 ;;
+    94	   reset)
+    95	  classroom ;;
+    96	  *)
+    97	   help ;;   
+    98	  esac
+    99	elif [ $2 == 'server' ];then 
+   100	  case $1 in
+   101	   start)
+   102	   virsh start $2 ;;
+   103	   stop)
+   104	   virsh  shutdown $2 ;;  
+   105	   poweroff)
+   106	   virsh destroy $2 ;;
+   107	   status)
+   108	   vm=$2
+   109	   echo2  ;;   
+   110	   reset)
+   111	  server ;;
+   112	  *)
+   113	   help ;;   
+   114	  esac
+   115	elif [ $2 == 'desktop' ];then 
+   116	  case $1 in
+   117	   start)
+   118	   virsh start $2 ;;
+   119	   stop)
+   120	   virsh  shutdown $2 ;;  
+   121	   poweroff)
+   122	   virsh destroy $2 ;;
+   123	   status)
+   124	   vm=$2
+   125	   echo2 ;;   
+   126	   reset)
+   127	  desktop ;;
+   128	  *)
+   129	   help ;;   
+   130	  esac
+   131	else  
+   132	   help
+   133	fi
+[root@room9pc10 ~]# 
+
+
+
+
+
+
+
+
+

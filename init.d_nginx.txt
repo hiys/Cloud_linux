@@ -1,0 +1,338 @@
+默认启动
+/usr/local/nginx/sbin/nginx
+读取默认路径的配置文件
+指定配置文件的启动方式
+/usr/local/nginx/sbin/nginx -c /tmp/nginx.conf
+另指定安装目录的启动方式
+/usr/local/nginx/sbin/nginx -p /usr/local/nginx
+另行指定全局配置项的启动方式
+/usr/local/nginx/sbin/nginx -g "pid /var/nginx/test.pid"
+把pid文件写到/var/nginx/test.pid中
+要求不能与nginx.conf中的配置项冲突
+执行其他命令的时候，也要把-g参数带上，
+否则可能出现配置项不匹配的情形
+
+使运行中的nginx重读配置项并生效
+/usr/local/nginx/sbin/nginx -s reload
+先检查新的配置项是否正确，然后以quit方式关闭，再重启
+
+平滑升级Nginx  ----siguser2  sigquit
+升级步骤：
+（1）kill -s SIGUSER2 <nginx master pid>
+运行中的nginx会将pid文件重命名，在nginx.pid重命名为nginx.pid.oldbin
+（2）启动新版本的nginx
+（3）通过kill命令向旧版本的master进程发送SIGQUIT信号
+---------------------------------------------------------
+1 systemcel enable nginx.service设置开机启动即可。 
+在这里我是用源码编译安装的，所以要手动创建nginx.service服务文件。
+开机没有登陆情况下就能运行的程序，存在系统服务（system）里，
+即：/lib/systemd/system/
+1.在系统服务目录里创建nginx.service文件
+vi /lib/systemd/system/nginx.service内容如下
+=====================================
+[Unit]
+Description=nginx      #Description:描述服务
+After=network.target   #After:描述服务类别
+[Service]
+Type=forking          #Type=forking是后台运行的形式
+ExecStart=/usr/local/nginx/sbin/nginx
+ExecReload=/usr/local/nginx/sbin/nginx -s reload
+ExecStop=/usr/local/nginx/sbin/nginx -s quit
+PrivateTmp=true      #PrivateTmp=True表示给服务分配独立的临时空间
+[Install]
+WantedBy=multi-user.target #可设置为多用户，即系统运行级别为3
+===================================
+[Unit]:服务的说明
+Description : 服务的简单描述
+Documentation ： 服务文档
+Before、After:定义启动顺序。
+Before=xxx.service,代表本服务在xxx.service启动之前启动。
+After=xxx.service,代表本服务在xxx.service之后启动。
+Requires：这个单元启动了，它需要的单元也会被启动；
+它需要的单元被停止了，这个单元也停止了。
+Wants：推荐使用。
+这个单元启动了，它需要的单元也会被启动；
+它需要的单元被停止了，对本单元没有影响。
+[Service]服务运行参数的设置
+Type=simple（默认值）：systemd认为该服务将立即启动。
+服务进程不会fork。
+如果该服务要启动其他服务，不要使用此类型启动，
+除非该服务是socket激活型。
+
+Type=forking：systemd认为当该服务进程fork，且父进程退出后服务启动成功。
+对于常规的守护进程（daemon），
+除非你确定此启动方式无法满足需求，使用此类型启动即可。
+使用此启动类型应同时指定 PIDFile=，
+以便systemd能够跟踪服务的主进程。
+
+Type=oneshot：这一选项适用于只执行一项任务、随后立即退出的服务。
+可能需要同时设置 RemainAfterExit=yes 
+使得 systemd 在服务进程退出之后仍然认为服务处于激活状态。
+Type=notify：与 Type=simple 相同，
+但约定服务会在就绪后向 systemd 发送一个信号。
+这一通知的实现由 libsystemd-daemon.so 提供。
+
+Type=dbus：若以此方式启动，
+当指定的 BusName 出现在DBus系统总线上时，systemd认为服务就绪。
+Type=idle: systemd会等待所有任务(Jobs)处理完成后，才开始执行idle类型的单元。
+除此之外，其他行为和Type=simple 类似。
+
+PIDFile：pid文件路径
+ExecStart：指定启动单元的命令或者脚本，
+ExecStartPre和ExecStartPost节指定在ExecStart之前或者之后用户自定义执行的脚本。
+Type=oneshot允许指定多个希望顺序执行的用户自定义命令。
+
+ExecStart为服务的具体运行命令
+ExecReload为重启命令
+ExecStop为停止命令
+Restart：这个选项如果被允许，服务重启的时候进程会退出，
+会通过systemctl命令执行清除并重启的操作。
+
+注意：[Service]的启动、重启、停止命令全部要求使用绝对路径
+
+[Install]运行级别下服务安装的相关设置，
+Alias：为单元提供一个空间分离的附加名字。
+RequiredBy：单元被允许运行需要的一系列依赖单元，
+RequiredBy列表从Require获得依赖信息。
+
+WantBy：单元被允许运行需要的弱依赖性单元，
+Wantby从Want列表获得依赖信息。
+Also：指出和单元一起安装或者被协助的单元。
+DefaultInstance：实例单元的限制，这个选项指定如果单元被允许运行默认的实例。
+保存退出。
+2.设置开机启动1systemctl enable nginx.service
+3.其他命令启动nginx服务1systemctl start nginx.service　
+设置开机自启动1systemctl enable nginx.service
+停止开机自启动1systemctl disable nginx.service
+查看服务当前状态1systemctl status nginx.service
+重新启动服务1systemctl restart nginx.service　
+查看所有已启动的服务
+1systemctl list-units --type=service            
+
+[root@client ~]# vim /lib/systemd/system/nginx.service
+[root@client ~]# cat /lib/systemd/system/nginx.service
+[Unit]
+Description=nginx
+After=network.target  
+[Service]
+Type=forking
+ExecStart=/usr/local/nginx/sbin/nginx
+ExecReload=/usr/local/nginx/sbin/nginx -s reload
+ExecStop=/usr/local/nginx/sbin/nginx -s quit
+##ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true  
+[Install]
+WantedBy=multi-user.target
+[root@client ~]# nginx  -s
+  -s signal     : send signal to a master process: 
+stop, quit, reopen, reload
+  [root@web1 ~]# nginx -h
+Options:
+  -?,-h         : this help
+  -v            : show version and exit
+  -V            : show version and configure options then exit
+  -t            : test configuration and exit
+  -T            : test configuration, dump it and exit
+  -q            : suppress non-error messages during configuration testing
+  -s signal     : send signal to a master process: stop, quit, reopen, reload
+  -p prefix     : set prefix path (default: /usr/local/nginx/)
+  -c filename   : set configuration file (default: conf/nginx.conf)
+  -g directives : set global directives out of configuration file
+=======================
+[root@client ~]# ss -anputl |grep nginx
+[root@client ~]# vim /lib/systemd/system/nginx.service 
+[root@client ~]# cat /lib/systemd/system/nginx.service
+[Unit]
+Description=nginx
+After=network.target
+[Service]
+Type=forking
+ExecStart=/usr/local/nginx/sbin/nginx
+ExecReload=/usr/local/nginx/sbin/nginx  -s  reload
+ExecStop=/usr/local/nginx/sbin/nginx  -s  quit
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+[root@client ~]# ll /lib/systemd/system/nginx.service
+-rw-r--r--. 1 root root 258 10月  5 15:22 /lib/systemd/system/nginx.service
+[root@client ~]# systemctl is-active nginx
+unknown
+[root@client ~]# systemctl is-enabled nginx
+disabled
+[root@client ~]# systemctl start nginx
+[root@client ~]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      1674/nginx: master  
+[root@client ~]# systemctl enable nginx
+Created symlink from /etc/systemd/system/multi-user.target.wants/nginx.service to /usr/lib/systemd/system/nginx.service.
+
+[root@client ~]# netstat -anptul |grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      1674/nginx: master  
+[root@client ~]# cat /usr/local/nginx/logs/nginx.pid 
+1674
+[root@client ~]# systemctl reload nginx
+[root@client ~]# cat /usr/local/nginx/logs/nginx.pid 
+1674 
+[root@client ~]# reboot
+[root@client ~]# netstat -anputl |grep nginx
+tcp    0   0 0.0.0.0:80   0.0.0.0:*    LISTEN  1037/nginx: master  
+[root@client ~]# systemctl status nginx |sed -n 3p
+   Active: active (running) since 五 2018-10-05 15:38:39 CST; 5min ago
+[root@client ~]# systemctl is-enabled nginx
+enabled
+[root@client ~]# cat /usr/local/nginx/logs/nginx.pid 
+1037
+[root@client ~]# systemctl restart nginx.service 
+------------#注意重启 nginx.pid 发生改变,  重载 nginx.pid 无变化
+[root@client ~]# cat /usr/local/nginx/logs/nginx.pid 
+1741
+[root@client ~]# netstat -anputl |grep nginx
+tcp     0     0 0.0.0.0:80    0.0.0.0:*     LISTEN      1741/nginx: master  
+[root@client ~]# /usr/local/nginx/sbin/nginx  -t  #测试配置信息是否有错误
+.............
+[root@client ~]# cd /usr/local/nginx/sbin/
+[root@client sbin]# nginx  -t #测试配置信息是否有错误
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+[root@client sbin]# 
+[root@client ~]# nginx -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: c..... test is successful
+/**在测试配置阶段不输出信息
+/usr/local/nginx/sbin/nginx -t -q
+不把error级别以下的信息输出到屏幕
+**/
+[root@client ~]# nginx -t -q
+[root@client ~]# echo $?
+0
+[root@client ~]# vim /usr/local/nginx/logs/access.log 
+/**日志文件回滚
+/usr/local/nginx/sbin/nginx -s reopen
+重新打开日志文件
+***/
+[root@client ~]# nginx  -s reopen
+[root@client ~]# echo $?
+0
+
+ [root@client ~]# nginx -s quit
+/**“优雅”地停止服务
+/usr/local/nginx/sbin/nginx -s quit
+区别：
+stop时，worker进程与master进程收到信号后立刻跳出循环，退出进程；
+quit时，首先关闭监听端口，停止接收新的连接，然后把当前正在处理的连接全部处理完，最后退出进程。
+**/
+[root@client ~]# ss -anptul |grep nginx
+ /***指定配置文件的启动方式 -c 配置文件路径
+[root@client ~]# nginx -c /usr/local/nginx/conf/nginx.conf
+[root@client ~]# ss -anptul |grep nginx
+tcp   LISTEN   0   128  *:80 *:*   users:(("nginx",pid=1965,fd=6),("nginx",pid=1964,fd=6)) 
+
+[root@proxy ~]# /usr/local/nginx/sbin/nginx  -s quit
+[root@proxy ~]# ss -anputl |grep nginx
+[root@proxy ~]# /usr/local/nginx/sbin/nginx  -t  -c  /usr/local/nginx/conf/nginx.conf
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+[root@proxy ~]# echo $?
+0
+[root@proxy ~]# ss -anputl |grep nginx
+[root@proxy ~]# /usr/local/nginx/sbin/nginx  -c  /usr/local/nginx/conf/nginx.conf
+[root@proxy ~]# ss -anputl |grep nginx
+tcp   LISTEN   0  128  *:80    *:*    users:(("nginx",pid=6442,fd=6),("nginx",pid=6441,fd=6))
+[root@proxy ~]# 
+[root@web2 ~]# which kill
+/usr/bin/kill
+[root@web2 ~]# ll /bin/kill
+-rwxr-xr-x. 1 root root 29448 6月   1 2017 /bin/kill
+[root@web2 ~]# ll /usr/bin/kill
+-rwxr-xr-x. 1 root root 29448 6月   1 2017 /usr/bin/kill
+[root@web2 ~]# cat /usr/local/nginx/logs/nginx.pid 
+4935
+[root@web2 ~]# /usr/bin/kill  -s  HUP  `cat /usr/local/nginx/logs/nginx.pid`
+/****kill  -s   指定发送的信号.  信号可以以 信号名 或数字的方式给定.
+[root@web2 ~]# echo $?
+0
+[root@web2 ~]# ss -anputl |grep nginx
+tcp  LISTEN  0   128    *:80   *:*   users:(("nginx",pid=10504,fd=6),("nginx",pid=4935,fd=6))
+[root@web2 ~]# /usr/bin/kill  -s  HUP  `cat /usr/local/nginx/logs/nginx.pid`
+[root@web2 ~]# ss -anputl |grep nginx
+tcp  LISTEN  0  128   *:80  *:*   users:(("nginx",pid=10509,fd=6),("nginx",pid=4935,fd=6))
+[root@web2 ~]# cat /usr/local/nginx/logs/nginx.pid 
+4935
+======================
+
+[root@web1 ~]# vim /lib/systemd/system/nginx.service
+
+/*****[root@web1 ~]# cat /lib/systemd/system/nginx.service
+[Unit]
+Description=nginx
+After=network.target  
+[Service]
+Type=forking
+PIDFile=/usr/local/nginx/logs/nginx.pid
+ExecStartPre=/usr/local/nginx/sbin/nginx  -t  -c  /usr/local/nginx/conf/nginx.conf
+ExecStart=/usr/local/nginx/sbin/nginx  -c  /usr/local/nginx/conf/nginx.conf
+#ExecReload=/usr/local/nginx/sbin/nginx -s reload
+#ExecReload=/usr/bin/kill  -s  HUP  `cat /usr/local/nginx/logs/nginx.pid`
+ExecStop=/usr/local/nginx/sbin/nginx -s quit
+PrivateTmp=true  
+[Install]
+WantedBy=multi-user.target
+*******************/
+
+[root@web1 ~]# cat /lib/systemd/system/nginx.service 
+[Unit]
+Description=nginx
+After=network.target  
+[Service]
+Type=forking
+PIDFile=/usr/local/nginx/logs/nginx.pid
+ExecStartPre=/usr/local/nginx/sbin/nginx  -t  -c  /usr/local/nginx/conf/nginx.conf
+ExecStart=/usr/local/nginx/sbin/nginx  -c  /usr/local/nginx/conf/nginx.conf
+#ExecReload=/usr/local/nginx/sbin/nginx -s reload
+ExecReload=/usr/bin/kill  -s  HUP   $MAINPID
+ExecStop=/usr/local/nginx/sbin/nginx -s quit
+PrivateTmp=true  
+[Install]
+WantedBy=multi-user.target
+[root@web1 ~]# 
+
+[root@web1 ~]# systemctl enable nginx.service 
+Created symlink from /etc/systemd/system/multi-user.target.wants/nginx.service to /usr/lib/systemd/system/nginx.service.
+
+[root@web1 ~]# ll /etc/systemd/system/multi-user.target.wants/nginx.service 
+lrwxrwxrwx. 1 root root 37 10月  5 17:13 /etc/systemd/system/multi-user.target.wants/nginx.service -> /usr/lib/systemd/system/nginx.service
+
+[root@web1 ~]# ll /usr/lib/systemd/system/nginx.service 
+-rw-r--r--. 1 root root 497 10月  5 17:09 /usr/lib/systemd/system/nginx.service
+
+[root@web1 ~]# cat /usr/lib/systemd/system/nginx.service 
+[Unit]
+Description=nginx
+After=network.target  
+[Service]
+Type=forking
+PIDFile=/usr/local/nginx/logs/nginx.pid
+ExecStartPre=/usr/local/nginx/sbin/nginx  -t  -c  /usr/local/nginx/conf/nginx.conf
+ExecStart=/usr/local/nginx/sbin/nginx  -c  /usr/local/nginx/conf/nginx.conf
+#ExecReload=/usr/local/nginx/sbin/nginx -s reload
+ExecReload=/usr/bin/kill  -s  HUP   $MAINPID
+ExecStop=/usr/local/nginx/sbin/nginx -s quit
+PrivateTmp=true  
+[Install]
+WantedBy=multi-user.target
+  
+[root@web1 ~]# reboot
+
+[root@room9pc01 ~]# ssh -X 192.168.2.100
+[root@web1 ~]# systemctl status nginx |sed -n 3p
+   Active: active (running) since 五 2018-10-05 17:34:20 CST; 3min 19s ago
+[root@web1 ~]# systemctl reload nginx
+[root@web1 ~]# systemctl restart nginx
+[root@web1 ~]# systemctl status nginx
+[root@web1 ~]# systemctl stop nginx
+[root@web1 ~]# systemctl status nginx
+[root@web1 ~]# systemctl start nginx
+[root@web1 ~]# systemctl status nginx
+
+
+
+				
