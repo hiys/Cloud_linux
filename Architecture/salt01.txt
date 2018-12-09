@@ -1,0 +1,180 @@
+安装 6 台虚拟机
+192.168.4.10  ---  master
+192.168.4.11  ---  node1
+192.168.4.12  ---  node2
+192.168.4.13  ---  node3
+192.168.4.14  ---  node4
+192.168.4.15  ---  node5
+
+把 saltstack 的安装 rpm 部署到 yum 源
+解压 salt.tar 到 ftp 目录
+createrepo  .
+
+在所有机器上添加 salt yum 源地址
+
+安装 master
+yum clean all
+yum install salt-master
+systemctl enable salt-master
+
+node{1..5} 安装 minion
+yum clean all
+yum install salt-minion
+systemctl enable salt-minion
+
+#----------------------------------------------------------#
+master:
+  安装  salt-master
+  配置 /etc/salt/master
+  启动 salt-master
+
+node:
+  安装  salt-minion
+  配置 /etc/salt/minion
+  master: master ip
+  id: node name
+  启动  salt-minion
+
+#----------------------------------------------------------#
+master:
+   查看
+   salt-key -L
+
+   删除
+   salt-key -d nodename 
+
+   添加
+   salt-key -a nodename
+   添加所有
+   salt-key -A -y
+
+   删除所有
+   salt-key -D
+  
+   测试所有主机连通性
+   salt '*' test.ping
+
+   在任意主机上执行指令
+   salt 'node1' cmd.run 'ifconfig'
+   salt '*' cmd.run 'uptime'
+
+   \d 匹配一个数字  \d+ 匹配 1..n 个数字
+   salt -E "node\d" test.ping  
+
+   L 列表 后面跟随主机的名称，用 “，”分割
+   salt -L "node1,node3,node5" test.ping
+
+   使用分组
+   配置  /etc/salt/master
+nodegroups:
+  group1: 'L@node4,node5'
+   重启 salt-master
+   salt -N group1 test.ping
+   
+   通过 IP 掩码分组匹配
+   salt -S "192.168.4.13" test.ping
+   salt -S "192.168.4.0/24" test.ping
+
+   文件分发
+   mkdir -p /srv/salt/files
+   cd /srv/salt/files
+   创建要分发到节点的文件 testfile
+   执行分发指令
+｛指令｝ ｛目标主机匹配模式｝｛模块.指令｝｛源文件地址｝   ｛目标文件地址｝
+   salt         -N group1              cp.get_file salt://files/testfile /var/tmp/f1
+
+  验证
+   salt -N group1 cmd.run 'md5sum /var/tmp/*'
+
+  查看模块，功能和使用方法
+  列出所有模块
+  salt 'node1' sys.list_modules
+
+  列出模块所有的方法
+  salt 'node1' sys.list_functions test
+
+  查看模块帮助
+  salt 'node1' sys.doc test
+  
+  拷贝文件（相当于 ssh 到目的主机执行 cp）
+  salt -L 'node1,node2' file.copy /etc/passwd /var/tmp/passwd
+  拷贝文件夹
+  salt -L 'node1,node2' file.copy /etc/selinux /var/tmp/selinux recurse=True
+  验证结果：
+  salt '*' cmd.run 'tree -L 2 /var/tmp'
+
+  添加用户
+  salt 'node3' user.add zhang3 2000
+
+grains 模块
+  查看 节点 grains 的所有信息
+  salt 'node1' grains.items
+  
+  在节点上定义角色，配置节点上的 /etc/salt/minion 
+grains:
+  role: webserver
+
+grains:
+  deployment: datacenter4
+
+  配置完以后要重启节点 salt-minion 服务
+  查看角色
+  salt '*' grains.item role
+  salt '*' grains.item deployment
+
+  通过 grains 查看节点系统是什么
+  salt '*' grains.item os
+  查看系统ip网卡信息
+  salt '*' grains.item ip4_interfaces
+  查询主机名
+  salt '*' grains.item fqdn
+
+  客户端的 grains 配置文件修改后，必须重启服务或刷新后才有效
+  重启服务
+  systemctl restart salt-minion
+  刷新服务
+  salt '*' saltutil.sync_grains
+
+pillar 模块
+  修改 master 上的 pillar 相关配置  /etc/salt/master
+pillar_roots:
+  base:
+    - /srv/pillar
+  创建 pillar root 的根目录
+  mkdir -p /var/pillar
+
+  pillar 的数据组织是使用 sls 的文件，入口文件是 top.sls
+base:
+  'node3':
+    - data
+    - users
+
+data.sls 文件
+appname: website
+flow:
+  maxconn: 3000
+  maxmem: 6G
+
+users文件夹下默认的 init.sls 文件
+users:
+  zhang3: 2000
+  li4: 2001
+
+  数据同步
+  salt '*' saltutil.refresh_pillar
+
+  获取所有pillar数据
+  salt '*' pillar.items
+
+  获取指定的数据
+  salt '*' pillar.item appname
+
+  根据 pillar 定义的数据匹配主机，执行
+  salt -I 'appname:website' test.ping
+
+  jinja 模版
+  在state文件中使用"- template: jinja"声明使用 jinja 模版
+  在模版中变量是使用 {{name}} 表示
+  模版中支持循环，判断语句，使用格式
+  {% if ... %} ... ...  {%endif%}
+  {%for ...%} ... ... {%endfor%}

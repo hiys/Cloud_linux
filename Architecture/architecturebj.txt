@@ -1,0 +1,2751 @@
+
+https://www.linuxidc.com/Linux/2016-08/133846.htm
+
+下载CentOS
+
+CentOS官网：https://www.centos.org/ 
+CentOS官方下载地址：https://www.centos.org/download/
+
+CentOS官网上，提供了三种ISO镜像文件的下载：
+
+DVD ISO：标准安装版，一般下载这个就可以了（推荐）
+Everything ISO：对完整版安装盘的软件进行补充，集成所有软件。（包含CentOS7的一套完整的软件包，可以用来安装系统或者填充本地镜像）
+Minimal ISO：迷你版，小巧、安装快速、自带的软件少
+
+CentOS主要镜像文件类型介绍
+常见的镜像文件类型主要有以下几种：
+       DVD ISO：普通光盘完整安装版镜像，可离线安装到计算机硬盘上，包含大量的常用软件，一般选择这种镜像类型即可。
+
+       Everything ISO：包含了完整安装版的内容，并对其进行补充，集成了所 有软件。
+
+       Minimal ISO：这个版本为精简版的镜像，可以安装一个基本的CentOS系 统，包含了可启动系统基本所需的最小安装包。
+       LiveCD/DVD ISO: 是一个光盘Centos系统，可通过光盘直接在电脑上启动系统，也可以将系统安装到计算机上使用，部分内容还需要再次下载。根据系统桌面不同live版的又可分为LiveGNOME ISO、LiveKDE ISO种。
+       Netinstal：在线安装版本，启动后需要联网边下载边安装。 
+
+ 一】  https://www.centos.org/
+
+主页的各项信息：
+顶部是菜单栏，一共有5项：
+       Get CentOS：链接到CentOS的下载页面。
+       About：链接到CentOS的一些细节介绍。
+       Community：链接到CentOS社区，里边可以分享交流相关信息、提交B ug等。
+       Documentation：链接到CentOS文档信息，包括帮助文档和版本指导手册等。
+       Help：链接到CentOS的常见问题解决方法和帮助信息。
+中间则是是CentOS计划的简介，主要介绍了它的一些服务和功能：
+       CentOS是一个社区驱动型软件，专注于提供一个强大的开原生态系统。他对用户提供一致可管理平台；
+对开源社区提供大量资源来构建、测试和维护代码；为供应商如亚马逊、谷歌等提供可用镜像服务；也为自托管云通用云镜像。
+最后是一些更新信息的提示。
+
+简介下有个以醒目的大字写着"Get CentOS Now"的橘黄色功能项：
+
+       通过点击它可以直接跳转到CentOS的镜像下载页面，
+同上边菜单栏的Get CentOS，可以说对新手非常友好，可以方便的进入下载界面。
+
+底部又有三个栏目：Around CentOS、News&Events、Sponsorship
+       Around CentOS：有关CentOS的周边信息（这里现在没有内容）
+       News&Evetns：主要是一些官方活动或信息的通告。
+       Sponsorship：主要为CentOS官方的一些赞助商信息。
+2 】
+                                            “ 立即获取CentOS ” 即可进入CentOS镜像下载主页面
+  进入镜像下载主页：直接点击官方主页中的"Get CentOS Now" 选项，即可进入CentOS镜像下载主页面
+
+3 】下载主页面中，中间主界面由三栏组成：
+       第一栏主要提供最新版CentOS 7.x 镜像的下载信息，
+其中"DVD ISO"、"Everything ISO"、"Minimal ISO"分别对应其不同的镜像文件类型，
+点击这些功能项，即可链接到到相应类型的镜像文件下载目录。
+下边还有四行信息，
+分别是镜像种子下载的链接、关于如何校检镜像文件的链接、其它镜像文件下载目录的链接、镜像发行和更新信息的链接。
+
+DVD ISO Everything ISO Minimal ISO
+
+也可以通过Torrent获得ISO 。
+如何 验证 你的iso
+如果以上不适合您， 可能会有替代下载。
+该 发行说明 不断更新，包括问题，并从用户的反馈意见。
+
+       第二栏提供了云镜像或容器镜像文件的相关下载信息。
+需要云端还是容器图像？
+亚马逊网络服务
+Docker注册表
+
+       第三栏则是提供了其它镜像下载的链接，从中可以找到你需要的具体某个版本的镜像下载信息。
+更多下载选择
+如果您正在寻找特定的（或地理上的本地）镜子，请查看我们 的当前镜子列表
+要查看镜像的状态，请访问 mirror-status.centos.org
+
+下载主页面的底部又由两大板块组成：
+
+旧版本Older Versions"
+不再支持旧版CentOS。出于历史目的，CentOS保留旧版本的存档。如果您完全确定需要旧版本， 请点击此处»
+
+需要来源？"Need the Source"
+为了帮助减轻主镜像网络的工作负载，源rpms不与二进制包保持在同一个树中。如果您需要用于构建CentOS的源包，您可以在我们的库vault.centos.org中找到它们 »
+
+       左边为"Older Versions"，为老版本下载区，你可以通过点击"then click here"链接进入老版本（CentOS 7.x以下版本）镜像文件的下载目录。
+       右边为"Need the Source"，为系统源文件下载区，这里你可以通过点击链接"vault.centos.org"进入系统源文件的下载目录，进入后可以找到各个系统镜像版本对应的系统源文件。
+       由于新老版本下载流程有所不同，接下来分别介绍一下两种版本的下载步骤。
+
+2、最新  版本  系统  镜像 下载 （指CentOS 7.x系列版本）
+
+     通过以上步骤，我们了解了CentOS的基本下载主页面，接下来我们以CentOS 7镜像的下载为例，介绍以下新版本镜像的下载流程：
+
+1)、选择下载镜像文件类型：这里我们以"DVD ISO"的下载为例进行说明，其它类型的下载类似。在上述下载主界面中，选择"DVD ISO"标准镜像文件功能项：
+
+http://isoredirect.centos.org/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-1804.iso
+
+进入对应文件类型下载目录：点击后，进入对应镜像文件下载目录
+
+下载目录界面分为两个主要的资源区：一个是Actual Country，表示当前所在国家资源区；另一个是Nearby Countries，表示附近国家资源区，每个资源下边又有本区的不同站点的资源，站点镜像信息中详细表示了镜像文件的地址、类型及版本号等信息。一般选择当前国家资源区的站点下载，获取资源速度比较快。
+
+:“actual countr”和“nearby count”的区别是:
+
+Actual Country指“实际国家”,可以解释为您此刻所在的国家,即“本国”;
+
+Nearby Countries指“附近国家”
+
+CentOS的
+ 网站上的CentOS： CentOS.org | 邮件列表 | 镜像列表 | IRC | 论坛 | 臭虫 | 捐
+
+为了节省可用的有限带宽，ISO镜像无法从mirror.centos.org下载
+
+。您所在地区的以下镜像应提供ISO映像：
+
+http ：//mirrors.cn99.com/centos/7.5.1804/isos /x86_64/CentOS-7-x86_64-DVD-1804.iso 
+
+...............http://mirrors.neusoft.edu.cn/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-1611.iso
+     它表示了这个文件是 http://mirrors.neusoft.edu.cn/ 站点下目录下，
+     版本为7  的  64位  CentOS ISO 镜像文件，  要下载的镜像文件名
+    即为"CentOS-7-x86_64-DVD-1611.iso"，其中1611即为最新镜像的版本号。
+。。。。。。。。。。。。。。。。。。。。。。。。。。。。。
+http://mirrors.163.com/centos/7.5.1804/isos/x86_64/CentOS-7-x86_64-DVD-1804.iso 
+
+http://mirrors.huaweicloud.com/centos/7.5.1804/isos/x86_64 /CentOS-7-x86_64-DVD-1804.iso  ## 点击此链接
+..........单击链接，浏览器左下角就弹出下载框开始自动下载，然后耐心等待下载完成即可（文件大小为4.1GB，建议在网络良好的环境下下载）。
+
+http://mirrors.aliyun.com/centos/7.5.1804/isos/x86_64/CentOS-7 -x86_64-DVD-1804.iso更远的
+
+
+http://isoredirect.centos.org/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-1804.iso
+
+/root/下载/未确认 292193.crdownload  #正在下载中
+
+
+architecture
+n.	体系结构; 建筑学; 建筑风格; （总体、层次） 结构;
+[例句]He studied classical architecture and design in Rome.
+他在罗马学习了古典建筑学和设计。
+	复数：architectures
+
+docker
+n. 码头工人
+物件
+  码头工人
+而出色的码头工人（Docker）的出现解决了这一问题。它（Docker）使得货物装载到集装箱（容器）这一过程变得轻而易举。
+基于917个网页-相关网页
+  容器
+  容器技术
+  船坞工人
+
+git  clone git://github.com/ansible/ansible.git
+yum  install python-setuptools  python-devel
+python  setup.py  build
+python  setup.py  install
+
+
+https://www.centos.org/
+
+https://mirrors.centos.org/centos
+
+
+
+2G内存 2 cpu  16G 硬盘
+
+
+
+[root@hiys qemu]# ls
+autostart    docker2.xml  nova01.xml     Va1.xml  Va3.xml  Va5.xml  Va.xml.txt
+docker1.xml  networks     openstack.xml  Va2.xml  Va4.xml  Va6.xml
+
+[root@hiys qemu]# sed  -i  -e '/<name>/s/Va/Va3/'  \
+> -e  '/\/Va.img/s/Va/Va3/'  -e  '/disk-Va.img/s/Va/Va3/' Va3.xml 
+
+[root@hiys qemu]# cat -n Va3.xml  |sed -n '/<name>\|Va3.img\|disk-Va3.img/p'
+     2	  <name>Va3</name>
+    26	      <source file='/var/lib/libvirt/images/Va3.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va3.img'/>
+
+[root@hiys qemu]# sed  -i  -e '/<name>/s/Va/Va4/'  -e  '/\/Va.img/s/Va/Va4/'  -e  '/disk-Va.img/s/Va/Va4/' Va4.xml 
+
+[root@hiys qemu]# sed  -i  -e '/<name>/s/Va/Va5/'  -e  '/\/Va.img/s/Va/Va5/'  -e  '/disk-Va.img/s/Va/Va5/' Va5.xml 
+
+[root@hiys qemu]# sed  -i  -e '/<name>/s/Va/Va6/'  -e  '/\/Va.img/s/Va/Va6/'  -e  '/disk-Va.img/s/Va/Va6/' Va6.xml 
+
+[root@hiys qemu]# cat -n Va4.xml  |sed -n '/<name>\|Va4.img\|disk-Va4.img/p'    
+     2	  <name>Va4</name>
+    26	      <source file='/var/lib/libvirt/images/Va4.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va4.img'/>
+
+[root@hiys qemu]# cat -n Va5.xml  |sed -n '/<name>\|Va5.img\|disk-Va5.img/p'
+     2	  <name>Va5</name>
+    26	      <source file='/var/lib/libvirt/images/Va5.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va5.img'/>
+
+[root@hiys qemu]# cat -n Va6.xml  |sed -n '/<name>\|Va6.img\|disk-Va6.img/p'
+     2	  <name>Va6</name>
+    26	      <source file='/var/lib/libvirt/images/Va6.img'/>
+    31	      <source file='/var/lib/libvirt/images/disk-Va6.img'/>
+
+
+[root@hiys qemu]# sed  -n   '/<memory/p;/<currentMemory/p' Va6.xml
+  <memory unit='GB'>2</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+[root@hiys qemu]# 
+
+[root@hiys qemu]#  sed  -n   '/<memory/p;/<currentMemory/p' Va5.xml
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>4</currentMemory>
+[root@hiys qemu]#  sed  -i   '/<memory/s/4/2/;/<currentMemory/s/4/2/' Va5.xml
+[root@hiys qemu]#  sed  -n   '/<memory/p;/<currentMemory/p' Va5.xml
+  <memory unit='GB'>2</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+[root@hiys qemu]# 
+
+[root@hiys qemu]#  sed  -i   '/<memory/s/4/2/;/<currentMemory/s/4/2/' Va4.xml
+[root@hiys qemu]#  sed  -i   '/<memory/s/4/2/;/<currentMemory/s/4/2/' Va3.xml
+
+[root@hiys qemu]#  sed  -n   '/<memory/p;/<currentMemory/p' Va4.xml
+  <memory unit='GB'>2</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+
+[root@hiys qemu]#  sed  -n   '/<memory/p;/<currentMemory/p' Va3.xml
+  <memory unit='GB'>2</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+[root@hiys qemu]# 
+
+
+[root@hiys qemu]# cd /var/lib/libvirt/images/
+[root@hiys images]# ls
+bin               disk-nova01.img     iso            tedu-wallpaper-01.png
+conf.d            disk-openstack.img  lost+found     tedu-wallpaper-weekend.png
+content           disk-Va1.img        node.qcow2     Va1.img
+db                disk-Va2.img        nova01.img     Va2.img
+disk-docker1.img  docker1.img         openstack.img  vsftpd.conf
+disk-docker2.img  docker2.img         qemu           Weekend.sh
+disk.img          exam                Student.sh
+
+[root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  Va3.img  16G
+Formatting 'Va3.img', fmt=qcow2 size=17179869184 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  Va4.img  16G
+Formatting 'Va4.img', fmt=qcow2 size=17179869184 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  Va5.img  16G
+Formatting 'Va5.img', fmt=qcow2 size=17179869184 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create  -b  node.qcow2  -f qcow2  Va6.img  16G
+Formatting 'Va6.img', fmt=qcow2 size=17179869184 backing_file='node.qcow2' encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create    -f qcow2  disk-Va6.img  12G
+Formatting 'disk-Va6.img', fmt=qcow2 size=12884901888 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create    -f qcow2  disk-Va5.img  12G
+Formatting 'disk-Va5.img', fmt=qcow2 size=12884901888 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create    -f qcow2  disk-Va4.img  12G
+Formatting 'disk-Va4.img', fmt=qcow2 size=12884901888 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# qemu-img  create    -f qcow2  disk-Va3.img  12G
+Formatting 'disk-Va3.img', fmt=qcow2 size=12884901888 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ls
+bin                 disk-Va1.img  iso                         Va1.img
+conf.d              disk-Va2.img  lost+found                  Va2.img
+content             disk-Va3.img  node.qcow2                  Va3.img
+db                  disk-Va4.img  nova01.img                  Va4.img
+disk-docker1.img    disk-Va5.img  openstack.img               Va5.img
+disk-docker2.img    disk-Va6.img  qemu                        Va6.img
+disk.img            docker1.img   Student.sh                  vsftpd.conf
+disk-nova01.img     docker2.img   tedu-wallpaper-01.png       Weekend.sh
+disk-openstack.img  exam          tedu-wallpaper-weekend.png
+[root@hiys images]# 
+[root@hiys images]# virsh define /etc/libvirt/qemu/Va3.xml 
+定义域 Va3（从 /etc/libvirt/qemu/Va3.xml）
+
+[root@hiys images]# virsh define /etc/libvirt/qemu/Va4.xml 
+定义域 Va4（从 /etc/libvirt/qemu/Va4.xml）
+
+[root@hiys images]# virsh define /etc/libvirt/qemu/Va5.xml 
+定义域 Va5（从 /etc/libvirt/qemu/Va5.xml）
+
+[root@hiys images]# virsh define /etc/libvirt/qemu/Va6.xml 
+定义域 Va6（从 /etc/libvirt/qemu/Va6.xml）
+
+[root@hiys images]# virsh start Va3
+域 Va3 已开始
+
+[root@hiys images]# virsh start Va4
+域 Va4 已开始
+
+[root@hiys images]# virsh start Va5
+域 Va5 已开始
+
+[root@hiys images]# virsh start Va6
+域 Va6 已开始
+
+[root@hiys images]# 
+
+[root@hiys ~]# ssh -X 192.168.1.120                                                   ★ --虚★ --虚拟机--★ 
+root@192.168.1.120's password: a
+X11 forwarding request failed on channel 0
+Last login: Wed Nov 21 10:28:28 2018
+[root@localhost ~]# cat /etc/hostname 
+Va3
+[root@localhost ~]# cd /etc/sysconfig/network-scripts/
+[root@localhost network-scripts]# ls
+ifcfg-eth0   ifdown-ipv6    ifdown-Team      ifup-eth    ifup-post      ifup-tunnel         ★ --虚拟机--★ 
+ifcfg-lo     ifdown-isdn    ifdown-TeamPort  ifup-ippp   ifup-ppp       ifup-wireless
+ifdown       ifdown-post    ifdown-tunnel    ifup-ipv6   ifup-routes    init.ipv6-global
+ifdown-bnep  ifdown-ppp     ifup             ifup-isdn   ifup-sit       network-functions
+ifdown-eth   ifdown-routes  ifup-aliases     ifup-plip   ifup-Team      network-functions-ipv6
+ifdown-ippp  ifdown-sit     ifup-bnep        ifup-plusb  ifup-TeamPort
+[root@localhost network-scripts]# cat ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+[root@localhost network-scripts]#  sed  -i  '/BOOTPROTO/cBOOTPROTO="static"\nIPADDR="192.168.1.13"\nPREFIX=24\nGATEWAY=192.168.1.254'  ifcfg-eth0 
+[root@localhost network-scripts]# cat ifcfg-eth0 
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.13"
+PPREFIX=24
+GATEWAY=192.168.1.254
+[root@localhost network-scripts]# 
+[root@localhost network-scripts]# cp ifcfg-eth0 ifcfg-eth1                                  ★ --虚拟机--★ 
+[root@localhost network-scripts]# cp ifcfg-eth0 ifcfg-eth2
+/********[root@localhost network-scripts]# sed -i 's/eth0/eth2/;/IPADDR/s/1.15/3.15/' ifcfg-eth2     ★ --虚拟机--★ 
+[root@localhost network-scripts]# cat ifcfg-eth2
+# Generated by dracut initrd
+DEVICE="eth2"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.3.15"
+PREFIX=24
+GATEWAY=192.168.1.254         
+********************************/
+
+
+[root@localhost network-scripts]# sed  -i -e 's/eth0/eth1/'  -e '/IPADDR/s/1.13/4.13/'  ifcfg-eth1
+[root@localhost network-scripts]# sed  -i -e 's/eth0/eth2/'  -e '/IPADDR/s/1.13/3.13/'  ifcfg-eth2
+[root@localhost network-scripts]# cat ifcfg-eth2                                            ★ --虚拟机--★ 
+# Generated by dracut initrd
+DEVICE="eth2"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"                                                                     ★ --虚拟机--★ 
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.3.13"
+PPREFIX=24
+GATEWAY=192.168.1.254
+[root@localhost network-scripts]# cat ifcfg-eth1
+# Generated by dracut initrd
+DEVICE="eth1"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.4.13"
+PPREFIX=24
+GATEWAY=192.168.1.254
+[root@localhost network-scripts]# scp -o StrictHostKeyChecking=no root@192.168.1.254:/root/local.repo.txt  /etc/yum.repos.d/local.repo
+Warning: Permanently added '192.168.1.254' (ECDSA) to the list of known hosts.
+root@192.168.1.254's password: 1
+local.repo.txt                                                           100%  176    25.3KB/s   00:00 
+   
+[root@localhost network-scripts]# yum clean all >/dev/null && yum repolist |tail -4
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+docker                               docker                                    2
+repolist: 9,593
+[root@localhost network-scripts]# systemctl restart network
+
+[root@hiys ~]# ssh -X 192.168.1.11                                                     ★ --虚拟机--★ 
+root@192.168.1.11's password: 
+X11 forwarding request failed on channel 0
+Last login: Tue Nov 20 19:21:51 2018 from 192.168.1.254
+[root@Va1 ~]# ifconfig 
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:4c:ba:cf:29  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:4e:53:7b  txqueuelen 1000  (Ethernet)
+        RX packets 3871  bytes 210767 (205.8 KiB)
+        RX errors 0  dropped 15  overruns 0  frame 0
+        TX packets 250  bytes 20833 (20.3 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.4.11  netmask 255.255.255.0  broadcast 192.168.4.255
+        ether 52:54:00:c6:96:b8  txqueuelen 1000  (Ethernet)                           ★ --虚拟机--★ 
+        RX packets 3398  bytes 177426 (173.2 KiB)
+        RX errors 0  dropped 15  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+         ★ --虚拟机--★ 
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.3.11  netmask 255.255.255.0  broadcast 192.168.3.255
+        ether 52:54:00:70:67:9a  txqueuelen 1000  (Ethernet)
+        RX packets 3398  bytes 177426 (173.2 KiB)
+        RX errors 0  dropped 15  overruns 0  frame 0
+        TX packets 5  bytes 210 (210.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536         ★ --虚拟机--★ 
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>         ★ --虚拟机--★ 
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va1 ~]# yum clean all >/dev/null && yum repolist |tail -4
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+docker                               docker                                    2
+repolist: 9,593
+[root@Va1 ~]# lsblk         ★ --虚拟机--★ 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+[root@Va1 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va1 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd         ★ --虚拟机--★ 
+DEVICE="eth0"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.1.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@Va1 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth1
+# Generated by dracut initrd         ★ --虚拟机--★ 
+DEVICE="eth1"                                                                      ★ --虚拟机--★ 
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.4.11"
+PREFIX=24
+GATEWAY=192.168.1.254                                                              ★ --虚拟机--★ 
+[root@Va1 ~]# cat /etc/sysconfig/network-scripts/ifcfg-eth2
+# Generated by dracut initrd
+DEVICE="eth2"
+ONBOOT="yes"
+IPV6INIT="no"
+IPV4_FAILURE_FATAL="no"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="static"
+IPADDR="192.168.3.11"
+PREFIX=24
+GATEWAY=192.168.1.254
+[root@Va1 ~]# vim /etc/hosts
+[root@Va1 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6                                                                ★ --虚拟机--★ 
+[root@Va1 ~]# for i in  192.168.1.1{1..6}
+> do 
+> scp  -o  StrictHostKeyChecking=no /etc/hosts   root@${i}:/etc/
+> done
+Warning: Permanently added '192.168.1.11' (ECDSA) to the list of known hosts.
+root@192.168.1.11's password: 
+hosts                                                           100%  271     2.1MB/s   00:00    
+Warning: Permanently added '192.168.1.12' (ECDSA) to the list of known hosts.
+root@192.168.1.12's password: 
+hosts                                                           100%  271   536.6KB/s   00:00    
+Warning: Permanently added '192.168.1.13' (ECDSA) to the list of known hosts.
+root@192.168.1.13's password: 
+hosts                                                           100%  271   628.4KB/s   00:00    
+Warning: Permanently added '192.168.1.14' (ECDSA) to the list of known hosts.
+root@192.168.1.14's password: 
+hosts                                                           100%  271   189.3KB/s   00:00    
+Warning: Permanently added '192.168.1.15' (ECDSA) to the list of known hosts.
+root@192.168.1.15's password: 
+hosts                                                           100%  271   196.0KB/s   00:00    
+Warning: Permanently added '192.168.1.16' (ECDSA) to the list of known hosts.
+root@192.168.1.16's password: 
+hosts                                                           100%  271   522.2KB/s   00:00    
+[root@Va1 ~]# 
+
+
+[root@hiys ~]# tar  -xf ansible.tar.gz 
+
+[root@hiys ~]# ls ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm         python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+python-paramiko-2.1.1-2.el7.noarch.rpm
+
+[root@hiys ~]# mkdir /var/ftp/ansible
+
+[root@hiys ~]# ls /var/ftp/
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# unzip ansible.zip  -d /var/ftp/ansible/
+Archive:  ansible.zip
+  inflating: /var/ftp/ansible/python-httplib2-0.9.2-1.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/python-paramiko-2.1.1-2.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/python-passlib-1.6.5-2.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/python2-jmespath-0.9.0-3.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/sshpass-1.06-2.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-2.4.1.0-1.el7.noarch.rpm 
+ 
+[root@hiys ~]# unzip ansible-devel.zip  -d /var/ftp/ansible/
+Archive:  ansible-devel.zip
+   creating: /var/ftp/ansible/ansible-devel/
+  inflating: /var/ftp/ansible/ansible-devel/openssl-1.0.2k-8.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/openssl-libs-1.0.2k-8.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python-cffi-1.6.0-5.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python-idna-2.4-1.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python-ipaddress-1.0.16-2.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python2-cryptography-1.7.2-1.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python2-pyasn1-0.1.9-7.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python2-pyasn1-modules-0.1.9-7.el7.noarch.rpm  
+
+
+[root@hiys ~]# mv ansible/*  /var/ftp/ansible/
+mv：是否覆盖"/var/ftp/ansible/ansible-2.4.1.0-1.el7.noarch.rpm"？ n
+mv：是否覆盖"/var/ftp/ansible/python2-jmespath-0.9.0-3.el7.noarch.rpm"？ n
+mv：是否覆盖"/var/ftp/ansible/python-httplib2-0.9.2-1.el7.noarch.rpm"？ n
+mv：是否覆盖"/var/ftp/ansible/python-paramiko-2.1.1-2.el7.noarch.rpm"？ n
+mv：是否覆盖"/var/ftp/ansible/python-passlib-1.6.5-2.el7.noarch.rpm"？ n
+mv：是否覆盖"/var/ftp/ansible/sshpass-1.06-2.el7.x86_64.rpm"？ n
+
+[root@hiys ~]# ls /var/ftp/ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm         python-paramiko-2.1.1-2.el7.noarch.rpm
+ansible-devel                            python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@hiys ~]# ls /var/ftp/ansible/ansible-devel/
+openssl-1.0.2k-8.el7.x86_64.rpm              python2-pyasn1-modules-0.1.9-7.el7.noarch.rpm
+openssl-libs-1.0.2k-8.el7.x86_64.rpm         python-cffi-1.6.0-5.el7.x86_64.rpm
+python2-cryptography-1.7.2-1.el7.x86_64.rpm  python-idna-2.4-1.el7.noarch.rpm
+python2-pyasn1-0.1.9-7.el7.noarch.rpm        python-ipaddress-1.0.16-2.el7.noarch.rpm
+
+[root@hiys ~]# cd /var/ftp/ansible/
+
+[root@hiys ansible]# ls
+ansible-2.4.1.0-1.el7.noarch.rpm         python-paramiko-2.1.1-2.el7.noarch.rpm
+ansible-devel                            python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@hiys ansible]# 
+
+[root@hiys ansible]# createrepo  --update  .  ## 更新yum 仓库
+
+Spawning worker 0 with 4 pkgs
+Spawning worker 1 with 4 pkgs
+Spawning worker 2 with 3 pkgs
+Spawning worker 3 with 3 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+[root@hiys ansible]# pwd
+/var/ftp/ansible
+[root@hiys ansible]# 
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+CentOS7-1708.repo     packagekit-media.repo  RHEL7-extras.repo  rhel7.repo
+NSD-2018-1-12.tar.gz  repo                   RHEL7OSP.repo
+
+[root@hiys ~]# vim /etc/yum.repos.d/ansible.repo
+[root@hiys ~]# cat /etc/yum.repos.d/ansible.repo
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# ls /var/ftp/ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm         python-paramiko-2.1.1-2.el7.noarch.rpm
+ansible-devel                            python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+
+[root@hiys ~]# yum clean all >/dev/null && yum repolist |tail -16
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+ansible                          ansible                                      14
+rhel7                            rhel7.4                                   4,986
+repolist: 15,731
+
+[root@hiys ~]# 
+[root@hiys ~]# ls /var/ftp/
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# ls /var/ftp/ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm         python-paramiko-2.1.1-2.el7.noarch.rpm
+ansible-devel                            python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@hiys ~]# ls /var/ftp/ansible/ansible-devel/
+openssl-1.0.2k-8.el7.x86_64.rpm              python2-pyasn1-modules-0.1.9-7.el7.noarch.rpm
+openssl-libs-1.0.2k-8.el7.x86_64.rpm         python-cffi-1.6.0-5.el7.x86_64.rpm
+python2-cryptography-1.7.2-1.el7.x86_64.rpm  python-idna-2.4-1.el7.noarch.rpm
+python2-pyasn1-0.1.9-7.el7.noarch.rpm        python-ipaddress-1.0.16-2.el7.noarch.rpm
+
+[root@hiys ~]# ls /var/ftp/ansible/repodata/
+05b356ac0470205962a7a0410b91aa9d53f8895f52812db316db2dbf0106662e-other.sqlite.bz2
+35afca37b45b91fd8b8b82ad49b814d20c8303143d6dc38ef60694d578ae56cc-other.xml.gz
+3dce74a8221e8e6b9e6ca53b088c8c2c5dbdd2ee292d820c8b0ef5f5890f02ed-filelists.xml.gz
+4afd53ac8f60ba5d7ed7117fa5253b94a9ce33a5ca0bcf364f8cf26c0dc71398-filelists.sqlite.bz2
+64f3eccd94e73421eb109a0d5b57e5059d25bf3ab4f212562b165469262b212e-primary.sqlite.bz2
+7290696a8066e325f8a08d02a0e842b8069f278dacd038fd02b2bda7fa2b0311-primary.xml.gz
+repomd.xml
+[root@hiys ~]# 
+
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+
+[root@Va1 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va1 ~]# vim /etc/yum.repos.d/local.repo 
+[root@Va1 ~]# cat /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708                                                                       ★ --虚拟机--★ 
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0                                                                              ★ --虚拟机--★ 
+enabled=1
+[root@Va1 ~]# yum clean all >/dev/null && yum repolist |tail -6
+Determining fastest mirrors
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va1 ~]# for i in 192.168.1.1{2..6}
+> do
+> scp -o StrictHostKeyChecking=no /etc/yum.repos.d/local.repo  root@${i}:/etc/yum.repos.d/
+> done
+root@192.168.1.12's password: 
+local.repo                                                           100%  257   211.0KB/s   00:00    
+root@192.168.1.13's password: 
+local.repo                                                           100%  257   406.5KB/s   00:00    
+root@192.168.1.14's password: 
+local.repo                                                           100%  257   180.3KB/s   00:00    
+root@192.168.1.15's password: 
+local.repo                                                           100%  257   464.2KB/s   00:00    
+root@192.168.1.16's password: 
+local.repo                                                           100%  257   170.8KB/s   00:00    
+[root@Va1 ~]# yum -y install ansible 
+
+
+已安装:
+  ansible.noarch 0:2.4.1.0-1.el7                                                                       
+
+作为依赖被安装:
+  PyYAML.x86_64 0:3.10-11.el7                                  libyaml.x86_64 0:0.1.4-11★ --虚拟机--★  
+  python-babel.noarch 0:0.9.6-8.el7                            python-backports.x86_64 0:1.0-8.el7     
+  python-backports-ssl_match_hostname.noarch 0:3.4.0.2-4.el7   python-cffi.x86_64 0:1.6.0-5.el7        
+  python-enum34.noarch 0:1.0.4-1.el7                           python-httplib2.noarch 0:0.9.2-1.el7    
+  python-idna.noarch 0:2.4-1.el7                               python-ipaddress.noarch 0:1.0.16-2.el7  
+  python-jinja2.noarch 0:2.7.2-2.el7                           python-markupsafe.x86_64 0:0.11-10.el7  
+  python-paramiko.noarch 0:2.1.1-2.el7                         python-passlib.noarch 0:1.6.5-2.el7     
+  python-ply.noarch 0:3.4-11.el7                               python-pycparser.noarch 0:2.14-1.el7    
+  python-setuptools.noarch 0:0.9.8-7.el7                       python-six.noarch 0:1.9.0-2.el7         
+  python2-cryptography.x86_64 0:1.7.2-1.el7                    python2-jmespath.noarch 0:0.9.0-3.el7   
+  python2-pyasn1.noarch 0:0.1.9-7.el7                          sshpass.x86_64 0:1.06-2.el7             
+
+完毕！
+[root@Va1 ~]# rpm -q ansible
+ansible-2.4.1.0-1.el7.noarch
+
+[root@Va1 ~]# ansible  --version
+
+ansible 2.4.1.0
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, Aug  4 2017, 00:39:18) [GCC 4.8.5 20150623 (Red Hat 4.8.5-16)]
+
+
+[root@Va1 ~]# cd /etc/ansible/
+
+/****
+• 安装完成以后验证
+– ansible -version
+
+一.ad-hoc
+1.主机管理
+• 安装好了 Ansible 之后就可以开始一些简单的任务了
+• Ansible配置文件查找顺序
+– 首先检测 ANSIBLE_CONFIG 变量定义的配置文件
+– 其次检查当前目彔下的 ./ansible.cfg 文件
+– 再次检查当前用户家目彔下 ~/ansible.cfg 文件
+– 最后检查 /etc/ansible/ansible.cfg 文件
+• /etc/ansible/ansible.cfg 默认配置文件路径
+• ansible.cfg 配置文件
+– inventory 是定义托管主机地址配置文件
+– 首先编辑 /etc/ansible/hosts 文件,写入一些进程主机的地址。
+• 格式
+– # 表示注释
+[组名称]
+主机名称或ip地址,登彔用户名,密码、端口等信息
+• 测试
+– ansible [组名称] --list-hosts
+***/
+
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# /bin/ls  -l  /bin/l
+last               less               linux64            logger             lsinitrd
+lastb              lessecho           linux-boot-prober  login              lsipc
+lastlog            lesskey            ln                 loginctl           lslocks
+lchfn              lesspipe.sh        loadkeys           logname            lslogins
+lchsh              lexgrog            loadunimap         look               lsns
+ld                 lftp               locale             ls                 lsscsi
+ld.bfd             lftpget            localectl          lsattr             ltrace
+ldd                link               localedef          lsblk              lua
+ld.gold            linux32            locate             lscpu              luac
+
+[root@Va1 ansible]# /bin/ls  -l  /bin/ls
+-rwxr-xr-x. 1 root root 117656 11月  6 2016 /bin/ls
+[root@Va1 ansible]# which set
+/usr/bin/which: no set in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+
+[root@Va1 ansible]# ls
+
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# pwd
+/etc/ansible
+
+[root@Va1 ansible]# vim  /etc/ansible/ansible.cfg 
+ 
+ 10 [defaults]  //组名称
+
+14 inventory      = /etc/ansible/hosts     //指定分组文件路径，主机的分组文件hosts
+
+ 58 roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+
+61 host_key_checking = False  #开启ssh不验证yes，不检测主机的sshkey，在第一次连接的时候不用输入yes
+
+449 [colors]
+       //组名称，selinux的相关选项在这个下面配置
+...
+449 [colors]       //组名称，colors的相关选项在这个下面配置
+...
+[root@Va1 ansible]# sed -n  '14p;61p' /etc/ansible/ansible.cfg
+inventory      = /etc/ansible/hosts
+host_key_checking = False
+
+[root@Va1 ansible]# vim  /etc/ansible/hosts 
+
+[root@Va1 ansible]# cat -n  /etc/ansible/hosts  |tail -8
+    44	[web]
+    45	Va[2:3]
+    46	
+    47	[db]                                                                            ★ --虚拟机--★ 
+    48	Va[4:5]
+    49	
+    50	[other]
+    51	Va6
+[root@Va1 ansible]# ansible  web  --list-host
+  hosts (2):
+    Va2
+    Va3
+[root@Va1 ansible]# ansible db  --list-host
+  hosts (2):
+    Va4
+    Va5
+[root@Va1 ansible]# ansible other  --list-host
+  hosts (1):
+    Va6
+[root@Va1 ansible]# ansible  all  --list-host
+  hosts (5):
+    Va2
+    Va3
+    Va6
+    Va4
+    Va5
+[root@Va1 ansible]# ansible  Va6  -m ping  ## //测试是否可以连接，若失败颜色为红色UNREACHABLE!
+Va6 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Warning: Permanently added 'va6' (ECDSA) to the list of known hosts.\r\nPermission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+[root@Va1 ansible]# vim hosts 
+[root@Va1 ansible]# pwd
+/etc/ansible
+[root@Va1 ansible]# cat -n /etc/ansible/hosts |tail -3  
+    49	
+    50	[other]
+    51	Va6  ansible_ssh_user="root" ansible_ssh_pass="a"
+
+[root@Va1 ansible]# ansible Va6  -m ping  ## //测试是否可以连接，若成功颜色为 淡绿 色SUCCESS 
+Va6 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+[root@Va1 ansible]# pwd                                                                 ★ --虚拟机--★ 
+/etc/ansible
+
+[root@Va1 ansible]# vim  /etc/ansible/hosts 
+
+[root@Va1 ansible]# sed -n 44,50p /etc/ansible/hosts
+[web]
+Va[2:3]
+
+[web:vars]    # /web组:变量(vars不改)，web组的多台机器共用一个用户名和密码
+ansible_ssh_user="root"
+ansible_ssh_pass="a"
+
+[root@Va1 ansible]# ansible web  -m ping ## 测试是否可以连接，若成功颜色为 淡绿 色SUCCESS
+Va3 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 ansible]# pwd
+/etc/ansible                                                                            ★ --虚拟机--★ 
+[root@Va1 ansible]# vim  /etc/ansible/hosts 
+[root@Va1 ansible]# cat -n /etc/ansible/hosts  |tail -7
+    57	[app:children]  #//指定子分组(app可改:children不改)，web，db是提前分好的组
+    58	web
+    59	db
+    60	
+    61	[app:vars]   # app 组:变量(vars不改)，app子分组 的多台机器共用一个用户名和密码
+    62	ansible_ssh_user="root"
+    63	ansible_ssh_pass="a"
+[root@Va1 ansible]# ansible
+ansible               ansible-console-2     ansible-galaxy-2      ansible-pull
+ansible-2             ansible-console-2.7   ansible-galaxy-2.7    ansible-pull-2
+ansible-2.7           ansible-doc           ansible-inventory     ansible-pull-2.7
+ansible-config        ansible-doc-2         ansible-playbook      ansible-vault
+ansible-connection    ansible-doc-2.7       ansible-playbook-2    ansible-vault-2
+ansible-console       ansible-galaxy        ansible-playbook-2.7  ansible-vault-2.7
+[root@Va1 ansible]# ansible app  --list-host
+  hosts (4):
+    Va2
+    Va3
+    Va4                                                                                 ★ --虚拟机--★ 
+    Va5
+[root@Va1 ansible]# ansible app -m ping  ## 测试是否可以连接，若成功颜色为 淡绿 色SUCCESS
+Va3 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+
+[root@Va1 ansible]# 自定义的ansible文件只在当前路径生效
+
+[root@Va1 ansible]# pwd
+/etc/ansible
+[root@Va1 ansible]# cd                                                                  ★ --虚拟机--★ 
+[root@Va1 ~]# mkdir aaa                                                                 ★ --虚拟机--★ 
+[root@Va1 ~]# cd /root/aaa/
+[root@Va1 aaa]# vim myhost
+[root@Va1 aaa]# cat  /root/aaa/myhost 
+[app1]
+Va2
+Va4
+
+[app2]
+Va3
+Va5
+
+[app:children]
+app1
+app2                                                                                    ★ --虚拟机--★ 
+                                                                                        ★ --虚拟机--★ 
+[app:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="a"
+                                                                                        ★ --虚拟机--★ 
+[other]
+Va6                                                                                     ★ --虚拟机--★ 
+[root@Va1 aaa]# touch ansible.cfg
+
+[root@Va1 aaa]# egrep  -v '^#|^$'  /etc/ansible/ansible.cfg 
+[defaults]
+inventory      = /etc/ansible/hosts
+
+roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+
+host_key_checking = False
+
+[inventory]
+[privilege_escalation]
+[paramiko_connection]
+[ssh_connection]
+[persistent_connection]
+[accelerate]
+[selinux]
+[colors]
+[diff]
+
+[root@Va1 aaa]# vim  ansible.cfg 
+[root@Va1 aaa]# cat  ansible.cfg
+
+[defaults]
+inventory      = /root/aaa/myhost
+host_key_checking = False
+
+[root@Va1 aaa]# ls
+ansible.cfg  myhost
+
+[root@Va1 aaa]# ansible  app1  -m ping   ## 测试是否可以连接，若成功颜色为 淡绿 色SUCCESS
+Va4 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"                                                                      ★ --虚拟机--★ 
+}                                                                                       ★ --虚拟机--★ 
+[root@Va1 aaa]# ansible  app  -m ping
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}                                                                                       ★ --虚拟机--★ 
+Va4 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 aaa]# cd 
+[root@Va1 ~]# ansible  app1  --list-host  ##  切换到别的目录，测试失败,显示紫色
+
+ [WARNING]: Could not match supplied host pattern, ignoring: app1
+
+ [WARNING]: No hosts matched, nothing to do
+
+  hosts (0):
+
+[root@Va1 ~]# cd aaa/
+[root@Va1 aaa]# ls
+ansible.cfg  myhost
+[root@Va1 aaa]# vim  host.sh
+[root@Va1 aaa]# cat  host.sh  ## 有问题待研究
+#!/bin/bash
+echo '                                                                                  ★ --虚拟机--★ 
+{
+  "aa" : {
+       "hosts" : ["Va2","Va3"],
+       "vars" : {
+          "ansible_ssh_user" : "root",
+          "ansible_ssh_pass" : "a"
+       }
+  },
+  "bb" : ["Va4","Va5","Va6"]
+}'
+[root@Va1 aaa]# . host.sh
+
+{
+  "aa" : {
+       "hosts" : ["Va2","Va3"],
+       "vars" : {
+          "ansible_ssh_user" : "root",
+          "ansible_ssh_pass" : "a"
+       }
+  },
+  "bb" : ["Va4","Va5","Va6"]
+}
+
+[root@Va1 aaa]# 
+
+[root@Va1 aaa]# vim  my.sh 
+
+[root@Va1 aaa]# cat  my.sh
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+                "ansible_ssh_pass": "a"}
+ },
+}' 
+
+[root@Va1 aaa]# ls
+ansible.cfg  myhost  my.sh
+
+[root@Va1 aaa]# cat  ansible.cfg                                                        ★ --虚拟机--★ 
+[defaults]
+inventory      =   my.sh                                                                ★ --虚拟机--★ 
+host_key_checking = False                                                               ★ --虚拟机--★ 
+
+[root@Va1 aaa]# cat myhost 
+[app1]
+Va2
+Va4
+
+[app2]
+Va3
+Va5
+
+[app:children]                                                                          ★ --虚拟机--★ 
+app1
+app2
+
+[app:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="a"
+
+[other]
+Va6
+[root@Va1 aaa]# ls
+ansible.cfg  myhost  my.sh                                                              ★ --虚拟机--★ 
+[root@Va1 aaa]# chmod 777  my.sh 
+[root@Va1 aaa]# ./my.sh 
+
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+                "ansible_ssh_pass": "a"}
+ },
+}
+[root@Va1 aaa]# ansible  aa  -m  ping
+192.168.1.15 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+192.168.1.16 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 aaa]# 
+[root@Va1 aaa]# pwd                                                                          ★ --虚拟机--★ 
+/root/aaa
+[root@Va1 aaa]# ls
+ansible.cfg  myhost  my.sh
+[root@Va1 aaa]# 
+================================
+[root@Va1 aaa]# pwd                                                                          ★ --虚拟机--★ 
+/root/aaa
+[root@Va1 aaa]# ls
+ansible.cfg  myhost  my.sh                                                                   ★ --虚拟机--★ 
+[root@Va1 aaa]# ansible  app  -m  command  -a  'uptime'     
+                                                                       ★ --虚拟机--★ 
+ [WARNING]: Could not match supplied host pattern, ignoring: app
+
+ [WARNING]: No hosts matched, nothing to do
+                                                                                             ★ --虚拟机--★ 
+[root@Va1 aaa]# ls
+ansible.cfg  myhost  my.sh
+
+[root@Va1 aaa]# ansible  aa  -m  command  -a  'uptime'
+192.168.1.16 | SUCCESS | rc=0 >>                                                             ★ --虚拟机--★ 
+ 20:57:27 up  7:45,  2 users,  load average: 0.00, 0.01, 0.05
+
+192.168.1.15 | SUCCESS | rc=0 >>
+ 20:57:27 up  7:54,  2 users,  load average: 0.00, 0.01, 0.05
+
+[root@Va1 aaa]# cat  ansible.cfg 
+[defaults]
+inventory      =   my.sh
+host_key_checking = False
+
+[root@Va1 aaa]# vim ansible.cfg 
+
+[root@Va1 aaa]# cat  ansible.cfg
+[defaults]
+inventory      =   myhost                                                                    ★ --虚拟机--★ 
+host_key_checking = False
+
+[root@Va1 aaa]# ansible  aa  -m  command  -a  'uptime'                                       ★ --虚拟机--★ 
+
+ [WARNING]: Could not match supplied host pattern, ignoring: aa
+                                                                                             ★ --虚拟机--★ 
+ [WARNING]: No hosts matched, nothing to do
+
+[root@Va1 aaa]# ansible  app  -m  command  -a  'uptime'  ## 查看负载
+
+Va4 | SUCCESS | rc=0 >>
+ 20:58:36 up  9:30,  2 users,  load average: 0.00, 0.01, 0.05
+
+Va3 | SUCCESS | rc=0 >>
+ 20:58:36 up  9:36,  2 users,  load average: 0.00, 0.01, 0.05
+
+Va5 | SUCCESS | rc=0 >>
+ 20:58:36 up  7:56,  2 users,  load average: 0.00, 0.01, 0.05                                ★ --虚拟机--★ 
+
+Va2 | SUCCESS | rc=0 >>
+ 20:58:36 up 11:03,  2 users,  load average: 0.00, 0.01, 0.05
+
+[root@Va1 aaa]# ls
+ansible.cfg  myhost  my.sh
+
+[root@Va1 aaa]# cat my.sh 
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+                "ansible_ssh_pass": "a"}
+ },
+}'              
+                                                                             ★ --虚拟机--★ 
+[root@Va1 aaa]# cat myhost 
+[app1]
+Va2
+Va4
+
+[app2]
+Va3
+Va5
+
+[app:children]
+app1
+app2
+
+[app:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="a"
+
+[other]
+Va6
+
+[root@Va1 aaa]# 
+[root@Va1 aaa]# ansible  app -m  command  -a  'date +%F\ %T'  ## 查看时间
+Va3 | SUCCESS | rc=0 >>
+2018-11-21 21:03:25
+
+Va4 | SUCCESS | rc=0 >>
+2018-11-21 21:03:25
+
+Va2 | SUCCESS | rc=0 >>
+2018-11-21 21:03:25
+
+Va5 | SUCCESS | rc=0 >>
+2018-11-21 21:03:25
+
+[root@Va1 aaa]# 
+
+==========================================
+
+[root@Va1 aaa]# cd                                                                           ★ --虚拟机--★ 
+[root@Va1 ~]# cd /root/.ssh/
+[root@Va1 .ssh]# ls
+known_hosts
+[root@Va1 .ssh]# vim  /etc/ansible/hosts 
+
+[root@Va1 .ssh]# sed -n '43,$p'  /etc/ansible/hosts                                          ★ --虚拟机--★ 
+## db-[99:101]-node.example.com
+[web]
+Va[2:3]
+
+#[web:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+
+[db]
+Va[4:5]
+
+[other]
+Va6 
+# ansible_ssh_user="root" ansible_ssh_pass="a"
+
+[app:children]
+web
+db
+
+#[app:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+[root@Va1 .ssh]# ansible  all  -m ping  //直接ping会报错
+Va2 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+Va4 | UNREACHABLE! => {
+    "changed": false,                                                                        ★ --虚拟机--★ 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+Va6 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+Va5 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+Va3 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,★ --虚拟机--★ c,password).\r\n", 
+    "unreachable": true                                                                      ★ --虚拟机--★ 
+}
+[root@Va1 .ssh]# ssh-keygen   -t  rsa  -b  2048  -N ''        //创建密钥       ★ --虚拟机--★ 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): ## 这里不需要输入操作，直接回车
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:n+WVa44Wk80XrgqmjrrbG7nXjbf1t4yWkEIBxWIBXCA root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+|   E.o++=.       |
+|    .. o o       |
+|      . . .      |
+|         .     o |
+|        S   o++ .|
+|      .  o *+.oo.|
+|     o  .o* o+=. |
+|    . +.oo.ooB+ .|
+|   ++=+o  .+=..+o|
++----[SHA256]-----+
+[root@Va1 .ssh]# ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(< /root/.ssh/id_rsa.pub)'" -k^C
+
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+                                            ## 给所有主机部署密钥
+[root@Va1 .ssh]# ansible  all  -m  authorized_key  -a  \
+> "user=root  exclusive=true  manage_dir=true  key='$(<  /root/.ssh/id_rsa.pub)'"  -k
+
+SSH password: a ## //输入密码
+Va2 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present", 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+Va6 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present", 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+Va3 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present", 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+Va4 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present",                                                                      ★ --虚拟机--★ 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+Va5 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present", 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+[root@Va1 .ssh]# ansible  all  -m ping   //成功
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false,                                                                         ★ --虚拟机--★ 
+    "ping": "pong"
+}                                                                                            ★ --虚拟机--★ 
+Va3 | SUCCESS => {
+    "changed": false, 
+    "failed": false,                                                                         ★ --虚拟机--★ 
+    "ping": "pong"
+}                                                                                            ★ --虚拟机--★ 
+Va5 | SUCCESS => {
+    "changed": false, 
+    "failed": false,                                                                         ★ --虚拟机--★ 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va6 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 .ssh]# ssh Va2    //不需要输入密码,可以直接登陆
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va2 ~]# exit
+登出
+Connection to va2 closed.
+[root@Va1 .ssh]# ssh Va6
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va6 ~]# exit
+登出
+Connection to va6 closed.
+[root@Va1 .ssh]# 
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+
+[root@Va2 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+[root@Va2 ~]#  yum clean all >/dev/null && yum repolist |tail -6
+Determining fastest mirrors
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va2 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va2 ~]# yum -y install  ansible 
+
+
+
+
+
+
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+[root@Va3 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+[root@Va3 ~]#  yum clean all >/dev/null && yum repolist |tail -6
+Determining fastest mirrors
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va3 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va3 ~]# yum -y install  ansible 
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+  --------真机 ------------
+createrepo  .
+
+createrepo  --update  .
+
+ssh cache uptime
+
+ansible cache  -m ping  -k
+
+SSH  password : 
+
+[root@docker1 ~]# sysctl -a |grep  net.ipv4.icmp_echo_ignore_all
+net.ipv4.icmp_echo_ignore_all = 0  ##=0 启用ping
+sysctl: reading key "net.ipv6.conf.all.stable_secret"
+sysctl: reading key "net.ipv6.conf.default.stable_secret"
+sysctl: reading key "net.ipv6.conf.docker0.stable_secret"
+sysctl: reading key "net.ipv6.conf.eth0.stable_secret"
+sysctl: reading key "net.ipv6.conf.eth1.stable_secret"
+sysctl: reading key "net.ipv6.conf.lo.stable_secret"
+[root@docker1 ~]# sysctl -w   net.ipv4.icmp_echo_ignore_all=1
+net.ipv4.icmp_echo_ignore_all = 1  #禁用 ping
+[root@docker1 ~]# sysctl -a |grep  net.ipv4.icmp_echo_ignore_all
+net.ipv4.icmp_echo_ignore_all = 1
+sysctl: reading key "net.ipv6.conf.all.stable_secret"
+sysctl: reading key "net.ipv6.conf.default.stable_secret"
+sysctl: reading key "net.ipv6.conf.docker0.stable_secret"
+sysctl: reading key "net.ipv6.conf.eth0.stable_secret"
+sysctl: reading key "net.ipv6.conf.eth1.stable_secret"
+sysctl: reading key "net.ipv6.conf.lo.stable_secret"
+[root@docker1 ~]# 
+
+
+ansible  cache -k  -m  ping
+
+在虚拟机里操作
+systemctl stop sshd
+
+ls /root/.ansible/cp/
+rm -f  /root/.ansible/cp/* 断开ssh 连接
+
+systemctl restart sshd
+ls /root/.ansible/cp/  文件有效超时 3-5分钟自动消失
+86342434ca3****
+
+
+ansible]#  vim hosts
+
+[web]
+web[1:2]
+
+[mysql]
+#db1 ansible_ssh_usr="root" ansible_ssh_pass="a"
+#db2 ansible_ssh_usr="root" ansible_ssh_pass="a"
+
+
+
+[other]
+cache
+
+[app:children]
+web
+mysql
+
+[app:vars]
+ansible_ssh_usr="root"
+
+ansible_ssh_pass="a"
+
+mkdir  /var/myansible
+cd  /var/myansible
+ls
+
+touch ansible.cfg
+grep -v
+vim ansible.cfg
+[defaults]
+inventory  = myhosts
+host_key_checking = False
+
+vim myhosts
+[app1]
+web1
+db1
+
+[app2]
+web2
+de2
+cache
+ansible app1 --list-hosts
+
+ansible app2  --list-hosts
+
+ansible  mysql  --list-hosts
+ 在不同的文件夹 不同 ansible 配置
+
+vim test.sh
+#!/bin/bash
+echo  '
+{
+   "aa" : {
+            "hosts" : ["web1", "web2"],
+            "vars" : {
+                 "ansible_ssh_user" : "root",
+                 "ansible_ssh_pass" : "a"
+                  }
+             },
+   "bb" : ["db1","db2","cache"]
+}'
+.  test.sh
+
+
+
+python
+
+import json
+hosts = {}
+hosts["abc"] = ["web1","db1"]
+hosts["bcd"] =
+
+json.dumps(host)
+'{"bcd": ["web2","db2"],"
+
+ansible  主机或分组名称 -m  模块名称 -a  模块的参数
+
+ansible  web     -m   ping 
+ansible  web     -m   ping    -a  ""
+
+~]# ansible  web   -m  command  -a  'uptime'
+
+ansible  web  -m  command  -a  ''
+
+vim /etc/ansible/hosts
+cd /root/.ssh/
+ls
+
+ls 
+id_rsa.pub
+
+
+~]# ansible  all   -m  authorized_key  -a  "user=root  exclusive=true  manage_dir=true  key='$(< /root/.ssh/id_rsa.pub)'"  -k
+
+ssh web1
+
+ansible-doc  -l |wc -l ## 模块数
+
+ansible-doc  模块名
+ansible-doc  modulename
+
+ansible  all -m command  -a 
+
+ansible cache  -m  command  -a  'echo aa |passwd --stdin root'
+
+ssh  192.168.1.12
+
+
+pstree  -p
+
+systemd (1) --sshd(628)--sshd(4364)--bash(4367)--pstree(4397)
+
+
+/bin/ls  -l  /bin/ls
+
+ansible cache  -m command  -a  'set'  # 报错找不到
+
+
+ansible cache  -m command  -a  'ps  -ef  |grep sshd'
+
+ansible cache  -m  shell -a  'ps  -ef  |grep sshd'
+
+ansible  cache  -m shell -a  'cd  /tmp'
+
+ansible  cache  -m shell -a  'chdir=tmp  pwd'
+
+ansible  cache  -m  raw  -a  'chdir=/tmp  pwd'
+
+command   默认【建议，没办法的时候使用，少用】
+
+raw    实用性广泛 ，不支持chdir
+
+shell  万能
+
+使用 shell 模块为web1，db1 添加用户z3，并设置密码
+
+cd  /var/myansible/
+
+ansible aap1  --list-hosts
+
+ansible  app
+给 web  组 添加用户 li4 要求 li4 与z3 不能同时出现在同一台主机上
+
+vim  adduer
+#!/bin/bash
+
+if  ! $(id z3  &>/dev/null);then
+
+  useradd li4
+echo "aa" |passwd  --stdin root
+fi
+
+
+ansible web  -m  script  -a  'adduer'
+
+ansible  web  -m  shell  -a  'id z3'
+
+
+src=/root/ 不包含root文件夹本身，只包含包含root文件夹之下的所有子文件（夹）
+src=/root  包含root文件夹本身
+
+##vim /etc/resolv.conf
+##sern=vername 114.114.114.114
+
+ansible all  -m  copy  -a  'src=/etc/resolv.conf  dest=/etc/resolv.conf'
+
+ansible  all -m shell  -a 
+
+ansible  all  -m  lineinfile  -a  'path=/etc/resolv.conf    regexp=".*(\.114){3}"    line="nameserver  8.8.8.8"'
+
+cat /etc/resolv.conf
+
+ansible  all  -m  replace  -a  'path=/etc/resolv.conf    regexp="8.8$"    replace="4.4"'
+
+ansible  all  -m  replace  -a  'path=/etc/resolv.conf    regexp="^(nameserver).*"    replace="\1 192.168.1.254"' ## \1 表示第一个组合字符串 nameserver
+
+
+ssh cache    远程
+ansible   cache  -m  yum  -a  'name=lftp  state=removed'
+
+ansible   cache  -m  yum  -a  'name=lftp,tree  state=install'
+
+
+ss   -ltun
+systemctl is-enabled chronyd
+systemctl is-active  chronyd
+
+ansible  cache -m service  -a  'name=chronyd state=stopped  enabled=no'
+
+systemctl is-enabled chronyd
+systemctl is-active  chronyd
+
+ansible  cache -m service  -a  'name=chronyd state=started  enabled=yes'
+
+
+ansible  all -m  setup |grep ansible_os_family
+
+
+ctrl + shift + d
+
+ansible cache -m  setup  -a
+
+在web 上练习 安装Apache 修改监听端口8080
+
+
+
+
+安装ansible
+• ansible 可以基于源码运行
+• 源码安装
+– pip,需要配置扩展软件包源 extras
+– git
+yum install epel-release
+yum install git python2-pip
+
+– pip安装依赖模块
+pip install paramiko PyYAML Jinja2 httplib2 six
+• ansible 源码下载
+– git clone git://github.com/ansible/ansible.git
+– yum install python-setuptools python-devel
+– python setup.py build
+– python setup.py install
+• pip 方式安装
+– pip install ansible
+• yum 扩展源安装简单,自劢解决依赖关系(推荐)
+– http://mirror.centos.org/.../.../extras/
+– yum install ansible
+
+
+• inventory 参数说明
+– ansible_ssh_host
+– 将要连接的进程主机名.不你想要设定的主机的别名不
+同的话,可通过此变量设置.
+– ansible_ssh_port
+– ssh端口号.如果不是默认的端口号,通过此变量设置.
+– ansible_ssh_user
+– 默认的 ssh 用户名
+– ansible_ssh_pass
+– ssh 密码(这种方式并不安全,我们强烈建议使用 --ask-
+pass 或 SSH 密钥)
+– ansible_sudo_pass
+– sudo 密码(建议使用 --ask-sudo-pass)
+– ansible_sudo_exe (new in version 1.8)
+– sudo 命令路径(适用于1.8及以上版本)
+– ansible_connection
+– 不主机的连接类型.比如:local, ssh 或者 paramiko.
+Ansible 1.2 以前默认使用 paramiko.1.2 以后默认使
+用 'smart','smart' 方式会根据是否支持
+ControlPersist, 来判断'ssh' 方式是否可行.
+– ansible_ssh_private_key_file
+– ssh 使用的私钥文件.适用有有多个密钥,而你不想使用
+SSH 代理的情况.
+
+– ansible_shell_type
+– 目标系统的shell类型.默认情况下,命令的执行使用 'sh'
+语法,可设置为 'csh' 或 'fish'.
+– ansible_python_interpreter
+– 目标主机的 python 路径.适用于的情况: 系统中有多个
+Python, 或者命令路径不是"/usr/bin/python”
+
+vim /etc/ansible/hosts 
+[web]
+web11
+192.168.4.12 ansible_ssh_user="root" ansible_ssh_pass="123456" #或者192.168.4.[11:12] 
+[db]
+db[1:2] #连续可以用此方法
+[cache]
+192.168.4.15
+[wd:children] #集合2个组
+web
+db
+
+[db:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="123456"
+ansible_ssh_port="22"
+
+:wq
+ansible web --list-host #查看定义的组
+
+ansible wd -m ping #测试连通
+vim /etc/ansibleansible.cfg 
+61 host_key_checking = False #开启ssh不验证yes
+
+自定义配置文件
+mkdir /root/myansible #随便一个文件夹
+cd /root/myansible
+vim ansible.cfg
+[defaults]
+inventory = myhost #定义分组文件
+:wq
+
+vim myhost #编辑分组文件
+[aa]
+web1
+web2
+[bb] 
+db1
+db2
+
+:wq
+
+ansible aa --list-hosts #在当前文件夹下执行查看分组
+
+动态主机
+无限可能
+– Ansible Inventory实际上是包含静态Inventory和动
+态Inventory两部分,静态Inventory指的是在文件
+/etc/ansible/hosts中指定的主机和组,Dynamic
+Inventory指通过外部脚本获取主机列表,并按照
+ansible 所要求的格式返回给ansilbe命令的。
+• json
+– JSON的全称是”JavaScript Object Notation”,意
+思是JavaScript对象表示法,它是一种基于文本,独立
+于语言的轻量级数据交换格式。
+
+• 注意事项:
+– 1、主机部分必须是列表格式的;
+– 2、hostdata行,其中的"hosts" 部分可以省略,但如
+果使用时,必须是"hosts"
+
+• 脚本输出主机列表
+#!/usr/bin/python
+import json
+hostlist = {}
+hostlist["bb"] = ["192.168.1.15", "192.168.1.16"]
+hostlist["192.168.1.13"] = {
+"ansible_ssh_user":"root","ansible_ssh_pass":"pwd"
+}
+hostlist["aa"] = {
+"hosts" : ["192.168.1.11", "192.168.1.12"],
+"vars" : {
+"ansible_ssh_user":"root","ansible_ssh_pass":"pwd"
+}
+}
+print( json.dumps(hostlist))
+
+• 脚本输出样例
+{
+"aa" : {
+"hosts" : ["192.168.1.11", "192.168.1.12"],
+"vars" : {
+"ansible_ssh_user" : "root",
+"ansible_ssh_pass" : "pwd"
+}
+},
+"bb" : ["192.168.1.15", "192.168.1.16"],
+"192.168.1.13": { "ansible_ssh_user" : "root",
+"ansible_ssh_pass" : "pwd"}
+}
+
+vim ansible.cfg
+[defaults]
+inventory = myhost.py #指定脚本返回JSON格式
+
+ansible命令基础
+• ansible <host-pattern> [options]
+– host-pattern 主机或定义的分组
+– -M 指定模块路径
+– -m 使用模块,默认 command 模块
+– -a or --args 模块参数
+– -i inventory 文件路径,或可执行脚本
+– -k 使用交互式登彔密码
+– -e 定义变量
+– -v 详细信息,-vvvv 开启 debug 模式
+• 列出要执行的主机,不执行任何操作
+– ansible all --list-hosts
+• 批量检测主机
+– ansible all -m ping
+• 批量执行命令
+– ansible all -m command -a 'id' -k
+
+2.批量执行
+ansible命令基础
+ansible <host-patter> [options]
+
+-host-pattern
+
+ansible all -m command -a "id" -k #所有机器使用用command模块，执行id命令，-K 交互输入密码
+ansible all -m copy -a "src=./2.txt dest=/tmp/" -k #批量复制
+
+批量部署证书文件
+
+批量部署证书文件
+• 每次交互输入密码比较麻烦
+• 密码写入配置文件安全性很差
+• 不同主机不同密码,配置文件要上天
+• 使用 key 方式认证,是一个不错的选择
+• 给所有主机部署公钥
+– ansible all -m authorized_key -a "user=root
+exclusive=true manage_dir=true key='$(<
+/root/.ssh/authorized_keys)'" -k -v
+
+• 报错
+– "msg": "Using a SSH password instead of a key is
+not possible because Host Key checking is
+enabled and sshpass does not support this.
+Please add this host's fingerprint to your
+known_hosts file to manage this host."
+– 解决方法:
+– 修改 ansible.cfg
+host_key_checking = False
+
+ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(< /root/.ssh/authorized_keys)'" -k -v #或/root/.ssh/id_rsa.pub
+
+exclusive=true #覆盖之前的key文件
+
+模块
+• ansible-doc
+– 模块的手册,相当不 shell 的 man
+– 非常重要,非常重要,非常重要
+– ansible-doc -l 列出所有模块
+– ansible-doc modulename 查看帮助
+• ping 模块
+– 测试网络连通性, ping模块没有参数
+– 注:测试 ssh 的连通性
+– ansible host-pattern -m ping
+• command模块
+– 默认模块,进程执行命令
+– 用法
+– ansible host-pattern -m command -a '[args]'
+– 查看所有机器负载
+ansible all -m command -a 'uptime'
+– 查看日期和时间
+ansible all -m command -a 'date +%F_%T'
+• command模块注意事项:
+– 该模块通过-a跟上要执行的命令可以直接执行,不过
+命令里如果有带有如下字符部分则执行不成功
+– "<", ">", "|", "&"
+– 该模块不启动 shell 直接在 ssh 进程中执行,所有使用
+到 shell 特性的命令执行都会失败
+– 下列命令执行会失败
+ansible all -m command -a 'ps aux|grep ssh'
+ansible all -m command -a 'set'
+
+• shell | raw 模块
+– shell 模块用法基本和command一样,区别是 shell模
+块是通过/bin/sh进行执行命令,可以执行任意命令
+– raw模块,用法和shell 模块一样 ,可以执行任意命令
+– 区别是 raw 没有chdir、creates、removes参数
+– 执行以下命令查看结果
+ansible t1 -m command -a 'chdir=/tmp touch f1'
+ansible t1 -m shell -a 'chdir=/tmp touch f2'
+ansible t1 -m raw -a 'chdir=/tmp touch f3'
+
+• script模块
+– 复杂命令怎么办?
+– ansible 要上天
+– 直接在本地写脚本,然后使用 script 模块批量执行
+– ansible t1 -m script -a 'urscript'
+– 友情提示: 该脚本包含但不限于 shell 脚本,只要指
+定 Sha-bang 解释器的脚本都可运行
+
+#!/bin/bash
+if ! $(id li4 &> /dev/null);then
+useradd zhang3
+echo 123456 |passwd --stdin zhang3
+chage -d 0 zhang3
+fi
+
+• copy 模块
+– 复制文件到进程主机
+– src:要复制到进程主机的文件在本地的地址,可以是
+绝对路径,也可以是相对路径。如果路径是一个目彔,
+它将递归复制。在这种情况下,如果路径使用"/"来结
+尾,则只复制目彔里的内容,如果没有使用"/"来结尾,
+则包含目彔在内的整个内容全部复制,类似于rsync
+– dest:必选项。进程主机的绝对路径,如果源文件是
+一个目录,那么该路径也必须是个目录
+
+• copy 模块
+– backup:在覆盖之前将原文件备份,备份文件包含时
+间信息。有两个选项:yes|no
+– force:如果目标主机包含该文件,但内容不同,如果
+设置为yes,则强制覆盖,如果为no,则只有当目标主
+机的目标位置不存在该文件时,才复制。默认为yes
+– 复制文件
+ansible t1 -m copy -a 'src=/root/alog dest=/root/a.log'
+– 复制目彔
+ansible t1 -m copy -a 'src=urdir dest=/root/'
+
+• lineinfile | replace 模块
+– 类似 sed 的一种行编辑替换模块
+– path 目的文件，修改哪个文件
+– regexp 正则表达式，修改哪个地方
+– line 替换后的结果，修改成啥样
+ansible t1 -m lineinfile -a 'path="/etc/selinux/config"
+regexp="^SELINUX=" line="SELINUX=disabled"'
+
+ansible all -m lineinfile -a 'path="/etc/sysconfig/network-scripts/ifcfg-eth0" regexp="^BOOTPROTO=" line="BOOTPROTO=none"'
+
+– 替换指定字符
+ansible t1 -m replace -a 'path="/etc/selinux/config"
+regexp="^(SELINUX=).*" replace="\1disabled"'
+
+ansible all -m replace -a 'path="/etc/sysconfig/network-scripts/ifcfg-eth0" regexp="^(BOOTPROTO=).*" replace="\1static"'
+
+• yum模块
+– 使用yum包管理器来管理软件包
+– config_file:yum的配置文件
+– disable_gpg_check:关闭gpg_check
+– disablerepo:不启用某个源
+– enablerepo:启用某个源
+– name:要进行操作的软件包的名字,也可以传递一个
+url或者一个本地的rpm包的路径
+– state:状态(present,absent,latest)
+安装 ，删除，更新
+• yum模块
+– 删除软件包
+ansible t1 -m yum -a 'name="lrzsz" state=absent'
+– 删除多个软件包
+ansible t1 -m yum -a 'name="lrzsz,lftp" state=absent'
+– 安装软件包
+ansible t1 -m yum -a 'name="lrzsz"'
+– 安装多个软件包
+ansible t1 -m yum -a 'name="lrzsz,lftp"'
+
+• service模块
+– name:必选项,服务名称
+– enabled:是否开机启动 yes|no
+– sleep:如果执行了restarted,在则stop和start之间
+沉睡几秒钟
+– state:对当前服务执行启动,停止、重启、重新加载
+等操作(started,stopped,restarted,reloaded)
+ansible t1 -m service -a 'name="sshd" enabled="yes"
+state="started"'
+
+在web1 web2上安装apache并且设置开机启动，启动服务，端口给为8080，主页是hello world
+
+ansible web -m yum -a 'name="httpd"'
+ansible web -m service -a 'name="httpd" enabled="yes" state="started"'
+ansible web -m lineinfile -a 'path="/etc/httpd/conf/httpd.conf" regexp="^Listen" line="Listen 8080"'
+ansible web -m shell -a 'echo hello world > /var/www/html/index.html'
+ansible web -m service -a 'name="httpd" enabled="yes" state="restarted"'
+ansible web -m shell -a 'curl http://127.0.0.1:8080'
+ansible web -m replace -a 'path="/etc/httpd/conf/httpd.conf" regexp="(^Listen).*" replace="\1 8080"'
+• setup模块
+– 主要用于获取主机信息,在playbooks里经常会用到的
+一个参数gather_facts就不该模块相关。setup模块下
+经常使用的一个参数是filter参数
+– filter 可以过滤到我们需要的信息
+ansible t1 -m setup -a 'filter=ansible_distribution'
+
+ansible七种武器
+• 第一种武器
+– ansible 命令,用于执行临时性的工作,也是我们之前
+主要学习的功能,必须掌握
+
+• 第二种武器
+– ansible-doc 是 Ansible模块文档说明,针对每个模块
+都有详细的用法说明及应用案例介绍,功能和Linux系
+统man命令类似,必须掌握
+
+第三种武器
+– ansible-console 是 Ansible 为用户提供的一款交互
+式工具,用户可以在 ansible-console 虚拟出来的终
+端上像 Shell 一样使用 Ansible 内置的各种命令,
+这为习惯于使用 Shell 交互方式的用户提供了良好的
+使用体验。
+• 第四种武器
+– ansible-galaxy 从 github 上下载管理 Roles 的一款
+工具,不 python 的 pip 类似。
+
+第五种武器
+– ansible-playbook 是日常应用中使用频率最高的命令,
+其工作机制是:通过读取预先编写好的 playbook 文
+件实现批量管理。要实现的功能不命令 ansible 一样,
+可以理解为按一定条件组成的 ansible 任务集,必须
+掌握
+• 第六种武器
+– ansible-vault 主要用于配置文件加密,如编写的
+Playbook 配置文件中包含敏感信息,不希望其他人随
+意查看, ansible-vault 可加密/解密这个配置文件
+
+第七种武器
+– ansible-pull
+– Ansible 有两种工作模式 pull/push ,默认使用 push
+模式工作,pull 模式和通常使用的 push 模式工作机
+理刚好相反
+– 适用场景:有数量巨大的机器需要配置,即使使用高
+并发线程依旧要花费很多时间;
+– 通常在配置大批量机器的场景下会使用,灵活性稍有
+欠缺,但效率几乎可以无限提升,对运维人员的技术
+水平和前瞻性规划有较高要求。
+
+json简介
+• json 是什么?
+– json 是 JavaScript 对象表示法,它是一种基于文本,
+独立于语言的轻量级数据交换格式。
+
+– JSON中的分隔符限于单引号 ' 、小括号 ()、中括号
+[ ]、大括号 { } 、冒号 : 和逗号 ,
+• json 特性
+– JSON 是纯文本
+– JSON 具有"自我描述性"(人类可读)
+– JSON 具有层级结构(值中存在值)
+– JSON 可通过 JavaScript 进行解析
+
+json 语法规则
+– 数据在名称/值对中
+– 数据由逗号分隔
+– 大括号保存对象
+– 中括号保存数组
+• json 数据的书写格式是:名称/值对。
+– 名称/值对包括字段名称(在双引号中),后面写一个
+冒号,然后是值,
+
+yaml简介
+• yaml 是什么
+– 是一个可读性高,用来表达数据序列的格式。
+– YAML:YAML Ain't Markup Language
+– YAML参考了其他多种语言,包括:C语言、Python、
+Perl,并从XML、电子邮件的数据格式(RFC 2822)
+中获得灵感。Clark Evans在2001年首次发表了这种语
+言[1],另外Ingy döt Net不Oren Ben-Kiki也是这语
+言的共同设计者[2]。目前已经有数种编程语言或脚本
+语言支持(或者说解析)这种语言。
+
+yaml 基础语法
+– YAML的结构通过空格来展示
+– 数组使用"- "来表示
+– 键值对使用": "来表示
+– YAML使用一个固定的缩进风格表示数据层级结构关系
+– 一般每个缩进级别由两个以上空格组成
+– # 表示注释
+• 注意:
+– 不要使用tab,缩进是初学者容易出错的地方之一
+– 同一层级缩进必须对齐
+YAML的键值表示方法
+– 采用冒号分隔
+
+– : 后面必须有一个空格
+– YAML键值对例子
+"人名": "称号"
+– 或
+"人名":
+"称号"
+– 复杂YAML的键值对嵌套
+"讲师":
+"人名": "aa"
+
+– 或
+"讲师":
+"aa":
+"bb"
+– 数组
+["aa", "丁丁", "bb", "cc"]
+
+YAML 数组表示方法
+– 使用一个短横杠加一个空格
+– YAML 数组例子
+
+"aa"
+"vv"
+"cc"
+"dd"
+– 哈希数组复吅表达式
+"讲师":
+"dd"
+"vv"
+"dd"
+"zz"
+– 高级复吅表达式
+"讲师":
+
+"aa": "小逗比"
+"阶段": 1
+
+"bb": "老逗比"
+"阶段": 2
+
+"cc": "漂亮姐"
+"阶段": 3
+
+"dd": "老司机"
+"阶段": 4
+
+yaml高级语法
+– | 不 > 表示对应的值为多行字符, > 不 | 的区别是会
+把 \n 转换为空格
+– ! 可以设置类型,!! 可以强制类型转换
+– 为了维持文件的简洁,并避免数据输入的错误,YAML
+提供了结点参考(*)和散合并(<<)参考到其他
+结点标签的锚点标记(&)。参考会将树状结构加入锚
+点标记的内容,并可以在所有数据结构中运作,合并
+叧有散列表可以使用,可以将键值自锚点标记复制到
+指定的散列表中
+
+jinja2模版简介
+• jinja2 是什么
+– Jinja2是基于python的模板引擎,包含 变量 和 表达
+式两部分,这两者在模板求值的时候会被替换为值。
+模板中还有标签,控制模板的逻辑。
+• 为什么要学习 jinja2 模版
+– 要使用 ansible 就要深入学习 playbook 配置及模板。
+playbook 的模板使用 python 的 jinja2 模块来处理的
+
+jinja2 模版基本语法
+– 模板的表达式都是包含在分隔符 "{{}}" 内的;
+– 控制语句都是包含在分隔符 "{% %}" 内的;
+– 另外,模板也支持注释,都是包含在分隔符 "{# #}"
+内,支持块注释。
+– 调用变量
+{{varname}}
+– 计算
+{{2+3}}
+– 判断
+{{1 in [1,2,3]}}
+
+jinja2 模版控制语句
+{% if name == 'aa' %}
+讲故事
+{% elif name == 'bb' %}
+嘿嘿
+{% elif name == 'cc' %}
+哈哈
+{% else %}
+沉迷学习,无法自拔
+{% endif %}
+
+jinja2 模版控制语句
+{% if name == ... ... %}
+... ...
+{% elif name == '曹操' %}
+{% for method in [约会, 逛街, 吃饭, 看电影] %}
+{{do method}}
+{% endfor %}
+... ...
+{% endif %}
+
+jinja2 过滤器
+
+– 变量可以通过 过滤器 修改。过滤器不变量用管道符号
+( | )分割,并且也 可以用圆括号传递可选参数。多
+个过滤器可以链式调用,前一个过滤器的输出会被作
+为 后一个过滤器的输入。
+– 例如:
+– 把一个列表用逗号连接起来: {{ list|join(', ') }}
+– 过滤器这里不一一列丼,需要的可以查询在线文档
+http://docs.jinkan.org/docs/jinja2/templates.html
+#builtin-filters
+
+playbook是什么
+• playbook 是什么?
+– playbook 是 ansible 用于配置,部署,和管理托管主
+机剧本。通过 playbook 的详绅描述,执行其中的一系
+列 tasks,可以让进端主机达到预期的状态。
+– 也可以这么理解,playbook 字面意思,即剧本,现实
+中由演员按照剧本表演,在 Ansible 中由计算机进行表
+演,由计算机安装,部署应用,提供对外服务,以及组
+细计算机处理各种各样的事情
+
+为什么要使用playbook
+– 执行一些简单的任务,使用ad-hoc命令可以方便的解决
+问题,但是有时一个设施过于复杂,需要大量的操作时
+候,执行的 ad-hoc 命令是不适吅的,这时最好使用
+playbook,就像执行 shell 命令不写 shell 脚本一样,
+也可以理解为批处理任务
+– 使用 playbook 你可以方便的重用编写的代码,可以移
+植到不同的机器上面,像函数一样,最大化的利用代码
+在使用 Ansible 的过程中,你也会发现,你所处理的大
+部分操作都是编写 playbook
+
+playbook 语法格式
+– playbook由 YAML 语言编写,遵循 YAML 标准
+– 在同一行中,#之后的内容表示注释
+– 同一个列表中的元素应该保持相同的缩进
+– playbook 由一个或多个 play 组成
+– play 中 hosts,variables,roles,tasks 等对象的表示
+方法都是键值中间以 ": " 分隔表示
+– YAML 还有一个小的怪癖. 所有的 YAML 文件开始行都
+应该是 ---. 这是 YAML 格式的一部分, 表明一个文件的
+开始
+
+playbook 构成
+
+– Target: 定义将要执行 playbook 的进程主机组
+– Variable: 定义 playbook 运行时需要使用的变量
+– Tasks: 定义将要在进程主机上执行的任务列表
+– Handler: 定义 task 执行完成以后需要调用的任务
+
+Playbook执行结果
+• 使用 ansible-playbook 运行playbook文件,得到输
+出内容为 JSON 格式。并且由不同颜色组成,便于识
+别。一般而言
+• 绿色代表执行成功
+• ***代表系统代表系统状态发生改变
+• 红色代表执行失败
+
+第一个playbook
+
+hosts: all
+remote_user: root
+tasks:
+ping:
+第一行,表示开始
+
+ansible-playbook myping.yml -f 5
+– -f 并发进程数量,默认是 5
+– hosts 行的内容是一个或多个组或主机的 patterns,以
+逗号为分隔符
+– remote_user 就是账户名
+第一个playbook
+
+hosts: all
+remote_user: root
+tasks:
+ping:
+第一行,表示开始
+
+ansible-playbook myping.yml -f 5
+– -f 并发进程数量,默认是 5
+– hosts 行的内容是一个或多个组或主机的 patterns,以
+逗号为分隔符
+– remote_user 就是账户名
+续... ...
+– tasks
+– 每一个 play 包含了一个 task 列表(任务列表).
+– 一个 task 在其所对应的所有主机上(通过 host
+pattern 匹配的所有主机)执行完毕之后,下一个 task
+才会执行.
+– 有一点需要明白的是(很重要),在一个 play 之中,
+所有 hosts 会获取相同的任务指令,这是 play 的一个
+目的所在,也就是将一组选出的 hosts 映射到 task,执
+行相同的操作
+
+playbook 执行命令
+– 给所有主机添加用户 plj,设置默认密码 123456
+– 要求第一次登录修改密码
+
+hosts: all
+remote_user: root
+tasks:
+name: create user plj
+user: group=wheel uid=1000 name=plj
+shell: echo 123456 | passwd --stdin plj
+shell: chage -d 0 plj
+变量
+• 添加用户
+– 给所有主机添加用户 plj,设置默认密码 123456
+– 要求第一次登录修改密码(使用变量)
+
+hosts: 192.168.1.16
+remote_user: root
+vars:
+username: plj
+tasks:
+name: create user "{{username}}"
+user: group=wheel uid=1000 name={{username}}
+shell: echo 123456 | passwd --stdin plj
+shell: chage -d 0 {{username}}
+续... ...
+– 解决密码明文问题
+– user 模块的 password 为什么不能设置密码呢?
+– 经过测试发现,password 是把字符串直接写入
+shadow,并没有改变,而 Linux 的 shadow 密码是
+经过加密的,所以不能使用
+– 解决方案:
+– 变量过滤器 password_hash
+– {{ 'urpassword' | password_hash('sha512')}}
+
+变量过滤器
+– 给所有主机添加用户 plj,设置默认密码 123456
+
+– 要求第一次登录修改密码(使用变量)
+
+hosts: 192.168.1.16
+remote_user: root
+vars:
+username: plj
+tasks:
+name: create user "{{username}}"
+user: group=wheel uid=1000 password={{'123456' | password_hash('sha512')}} name={{username}} #分为多行写时，值要用“”引起 如 group: "whell"
+shell: chage -d 0 {{username}}
+error
+• ansible-playbook 对错误的处理
+– 默认情况判断 $?,如果 值 不为 0 就停止执行
+– 但某些情况我们需要忽略错误继续执行
+
+hosts: 192.168.1.16
+remote_user: root
+vars:
+username: plj
+tasks:
+name: create user "{{username}}"
+user: group=wheel uid=1000
+password={{'123456'|password_hash('sha512')}}
+name={{username}}
+shell: setenforce 0
+shell: chage -d 0 {{username}}
+error
+• 续... ...
+– 我们要关闭 selinux,如果 selinux 已经是关闭的,返
+回 1 ,但我们的目的就是关闭,已经关闭算错误,
+这个情况我们就需要忽略错误继续运行,忽略错误有
+两种方法
+– 第一种方式:
+shell: /usr/bin/somecommand || /bin/true
+– 第二种方式:
+
+name: run some command
+shell: /usr/bin/somecommand
+ignore_errors: True
+完整 playbook
+
+hosts: 192.168.1.16
+remote_user: root
+vars:
+username: plj
+tasks:
+name: create user "{{username}}"
+user: group=wheel uid=1000
+password={{'123456'|password_hash('sha512')}}
+name={{username}}
+shell: setenforce 0
+ignore_errors: true
+shell: chage -d 0 {{username}}
+handlers
+• 用于当关注的资源发生变化时采取一定的操作。
+• "notify" 这个action可用于在每个play的最后被触发
+这样可以避免多次有改变发生时每次都执行指定的操
+作取而代之仅在所有的变化发生完成后一次性地执行
+指定操作。
+• 在 notify 中列出的操作称为 handler 也即 notify 中
+调用 handler 中定义的操作
+前面我们安装了 apache,很多情况是要修改 httpd
+的配置文件的,修改配置文件以后要重新载入配置文
+件让服务生效
+• 这时候,我们可以使用 handlers 来实现
+handlers:
+
+name: restart apache
+service: name=apache state=restarted
+结和之前试验,完整 playbook
+
+hosts: 192.168.1.16
+remote_user: root
+tasks:
+name: config httpd.conf
+copy: src=/root/playbook/httpd.conf
+dest=/etc/httpd/conf/httpd.conf
+notify:
+restart httpd
+handlers:
+name: restart httpd
+service: name=httpd state=restarted
+注意事项:
+– notify 调用的是 handler 段 name 定义的串,必须一
+致,否则达不到触发的效果
+– 多个 task 触发同一个 notify 的时候,同一个服务叧会
+触发一次
+– notify 可以触发多个条件,在生产环境中往往涉及到
+某一个配置文件的改变要重启若干服务的场景,
+handler 用到这里非常适吅.
+– 结吅 vars 可以写出非常普适的服务管理脚本
+
+when
+
+• 某些时候我们可能需要在满足特定的条件后在触发某
+一项操作,或在特定的条件下织止某个行为,这个时
+候我们就需要进行条件判断,when 正是解决这个问
+题的最佳选择,进程中的系统变量 facts 变量作为
+when 的条件,这些 facts 我们可以通过 setup 模块
+查看
+– when 的样例:
+tashs:
+
+name: somecommand
+command: somecommand
+when: expr
+一个使用 when 的例子
+
+name: Install VIM
+hosts: all
+tasks:
+name: Install VIM via yum
+yum: name=vim-enhanced state=installed
+when: ansible_os_family == "RedHat"
+name: Install VIM via apt
+apt: name=vim state=installed
+when: ansible_os_family == "Debian"
+register
+• register
+
+– 有时候我们可能还需要更复杂的例子,比如判断前一
+个命令的执行结果,根据结果处理后面的操作,这时
+候我们就需要 register 模块来保存前一个命令的返回
+状态,在后面进行调用
+
+command: test command
+register: result
+command: run command
+when: result
+register
+• 变量注册
+– 例如我们需要判断 plj 这个用户是否存在
+
+– 如果存在我就修改密码,如果不存在就跳过
+tasks:
+
+shell: id {{username}}
+register: result
+name: change "{{username}}" password
+user: password={{'12345678'|password_hash('sha512')}}
+name={{username}}
+when: result
+变量注册进阶
+– 我们还可以针对运行命令结果的返回值做判定
+
+– 当系统负载超过一定值的时候做特殊处理
+
+hosts: 192.168.1.16
+remote_user: root
+tasks:
+shell: uptime |awk '{printf("%f\n",$(NF-2))}'
+register: result
+shell: touch /tmp/isreboot
+when: result.stdout|float > 0.5 #标准输出转化为浮点数
+with_items
+
+• with_items 是 playbook 标准循环,最常用到的就
+是它,with_items 可以用于迭代一个列表或字典,
+通过{{ item }}获取每次迭代的值
+– 例如创建多个用户
+
+hosts: 192.168.1.16
+remote_user: root
+tasks:
+name: add users
+user: group=wheel password={{'123456' |
+password_hash('sha512')}} name={{item}}
+with_items: ["nb", "dd", "plj", "lx"]
+with_items
+• with_items进阶
+– 为不同用户定义不同组
+
+hosts: 192.168.1.16
+remote_user: root
+tasks:
+name: add users
+user: group={{item.group}} password={{'123456' |
+password_hash('sha512')}} name={{item.name}}
+with_items:
+{name: 'nb', group: 'root'}
+{name: 'dd', group: 'root'}
+{name: 'plj', group: 'wheel'}
+{name: 'lx', group: 'wheel'}
+with_nested
+• 嵌套循环:
+
+hosts: 192.168.1.16
+remote_user: root
+vars:
+un: [a, b, c]
+id: [1, 2, 3]
+tasks:
+name: add users
+shell: echo {{item}}
+with_nested:
+"{{un}}"
+"{{id}}"
+tags
+• tags:给指定的任务定义一个调用标识;
+• 使用格式:
+– name: NAME
+– module: arguments
+– tags: TAG_ID
+• playbook 调用方式
+– -t TAGS, --tags=TAGS
+– --skip-tags=SKIP_TAGS
+– --start-at-task=START_AT
+
+tags
+• tags样例:
+vars:
+soft: httpd
+tasks:
+
+name: install {{soft}}
+yum: name={{soft}}
+name: config httpd.conf
+copy: src=/root/playbook/httpd.conf
+dest=/etc/httpd/conf/httpd.conf
+name: config services
+service: enabled=yes state=restarted name={{soft}}
+tags: restartweb
+• 调用方式
+ansible-playbook i.yml --tags=restartweb
+include and roles
+
+• 我们在编写 playbook 的时候随着项目越来越大,
+playbook 也越来越复杂,修改起来也越来越麻烦。
+这时候可以把一些 play、task 或 handler 放到其他
+文件中,然后通过include指令包含进来是一个不错
+的选择
+tasks:
+
+include: tasks/setup.yml
+include: tasks/users.yml user=plj #users.yml 中可以通过
+{{ user }}不使用这些变量
+handlers:
+include: handlers/handlers.yml
+include and roles
+• roles 像是加强版的 include,他可以引入一个项目
+的文件和目录
+
+• 一般所需的目录层级有
+– vars 变量层
+– tasks 任务层
+– handlers 触发条件
+– files
+文件
+– template 模板
+– default
+默认,优先级最低
+
+include and roles
+• 假如有一个play包含了一个叨 "x" 的role,则
+
+hosts: host_group
+roles:
+-x
+– x/tasks/main.yml
+– x/vars/main.yml
+– x/handler/main.yml
+– x/... .../main.yml
+– 都会自劢添加进这个 play
+debug
+
+• 对于 python 语法不熟悉的同学,playbook 书写起
+来容易出错,且排错困难,这里介终几种简单的排错
+调试方法
+– 检测语法
+ansible-playbook --syntax-check playbook.yaml
+– 测试运行
+ansible-playbook -C playbook.yaml
+– 显示收到影响到主机 --list-hosts
+– 显示工作的 task --list-tasks
+– 显示将要运行的 tag --list-tags
+
+debug
+• debug 模块可以在运行时输出更为详绅的信息,来
+帮助我们排错,debug 使用样例:
+
+hosts: 192.168.1.16
+remote_user: root
+tasks:
+shell: uptime |awk '{printf("%f\n",$(NF-2))}'
+register: result
+shell: touch /tmp/isreboot
+when: result.stdout|float > 0.5
+name: Show debug info
+debug: var=result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

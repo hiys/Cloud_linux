@@ -1,0 +1,114 @@
+ansible 01
+  1 ansible   管理机器
+  2 web1      托管机器
+  3 web2      托管机器
+  4 db1        托管机器
+  5 db2        托管机器
+  6 cache     托管机器
+
+配置一个 yum 源，使用 CentOS-7-x86_64-Everything-1511.iso 
+mount -t iso9660 -o ro,loop /ISO/CentOS-7-x86_64-Everything-1511.iso    /var/ftp/rhel7
+
+在创建一个目录用于存放 ansible 的安装包文件
+mkdir  /var/ftp/ansible
+拷贝安装文件到该目录，后创建索引
+cd /var/ftp/ansible
+createrepo .
+
+配置 ansible 管理机器，添加 repo 文件
+[ansible]
+name=ansible
+baseurl=ftp://192.168.4.254/ansible
+enabled=1
+gpgcheck=0
+
+在 ansible 管理机器上
+yum clean all
+yum install -y ansible
+
+安装完成以后执行，没有报错，正确显示版本即可
+ansible --version
+
+ansible 的配置文件是 ansible.cfg 
+ansible.cfg 的查找顺序是 
+1  ANSIBLE_CONFIG 变量定义的配置文件
+2 当前目录下的 ./ansible.cfg 文件
+3 前用户家目录下 ~/ansible.cfg 文件
+4 /etc/ansible/ansible.cfg 文件
+
+ansible.cfg 中 inventony 指定主机分组文件的路径和地址，默认分组文件 hosts
+hosts 的配置
+[web]
+web[1:2]
+
+[db]
+db1
+db2
+
+[app:children]  # 指定子组
+web
+db
+
+[app:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="123456"
+
+[other]
+cache		ansible_ssh_user="root" ansible_ssh_pass="123456"
+
+ansible  命令基础
+ansible  主机分组  -m 模块  -a '命令和参数'
+
+创建密钥对 id_rsa 是私钥，  id_rsa.pub 是公钥
+ssh-keygen -t rsa -b 2048 -N ''
+
+给所有主机部署密钥
+ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(< /root/.ssh/id_rsa.pub)'" -k
+
+模块 
+ansible-doc  查看帮助，必须掌握
+ansible-doc -l  列出所有模块
+ansible-doc  模块名   查看该模块的帮助信息
+
+ping
+没有参数，检测主机的连通性，与 ping 无关，主要检测 ssh 是否可以连接
+
+command | shell | raw 
+command 是默认模块，没有启用 shell ，所有shell 相关特性命令无法使用，例如 < > | &
+raw    模块，没有 chdir create remove 等参数，能执行大部分操作
+shell  模块，启动 /bin/sh 运行命令，可以执行所有操作
+
+测试
+ansible cache -m command -a 'chdir=/tmp touch f1'   创建成功
+ansible cache -m shell -a 'chdir=/tmp touch f2'            创建成功
+ansible cache -m raw -a 'chdir=/tmp touch f3'              文件可以创建，但无法切换目录，文件在用户家目录下生成
+
+复杂操作怎么办，使用脚本来解决
+#!/bin/bash
+adduser  zhang3   # 创建用户  zhang3
+echo 123456 |passwd --stdin zhang3   # 修改密码
+chage -d 0 zhang3   # 第一次登录必须修改密码
+
+ansible all -m scriopt -a "urscriopt.sh"
+
+copy lineinfile replace 模块
+copy 把文件发布到远程其他主机上面
+lineinfile  修改一个文件的一行，以行为基础，整行修改
+replace    修改文件的某一部分，以正则表达式匹配为基础修改
+
+利用 copy 模块修改所有机器的 /etc/resolv.conf 为 nameserver 8.8.8.8
+利用 lineinfile 修改 /etc/sysconfig/network-scriopts/ifcfg-eth0 
+PEERDNS=yes|no
+利用 replace 修改 /etc/sysconfig/network-scriopts/ifcfg-eth0 
+PEERROUTES=yes|no
+
+yum 模块  installed 安装， removed 删除
+ansible other -m yum -a 'name="lrzsz" state=removed'   
+ansible other -m yum -a 'name="lftp" state=removed'
+ansible other -m yum -a 'name="lrzsz,lftp" state=installed'
+
+service 模块  name 指定服务名称，enabled= yes|no 设置开机启动， state=stopped|started 启动关闭服务
+设置 sshd 服务开启启动，并启动服务
+ansible other -m service -a 'name="sshd" enabled="yes"  state="started"'
+
+setup 模块，查看信息  filter 过滤指定的关键字

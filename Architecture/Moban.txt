@@ -1,0 +1,1056 @@
+6 案例6：离线访问虚拟机问题
+本案例要求可以离线访问虚拟机：
+利用xml文件生成一个新的虚拟机
+利用guestmount实现离线访问虚拟机
+6.1 步骤
+
+实现此案例需要按照如下步骤进行。
+步骤一：用xml生成一个新的虚拟机
+
+[root@room9pc01 ~]# cd /etc/libvirt/qemu/
+[root@room9pc01 qemu]# cp centos7.0.xml  local.xml
+[root@room9pc01 qemu]# vim local.xml 
+<domain type='kvm'>
+  <name>local</name>        //修改名字
+  <memory unit='KiB'>2048000</memory>        //修改内存
+  <currentMemory unit='KiB'>2048000</currentMemory>
+...
+      <source file='/var/lib/libvirt/images/local.img'/>     //img文件位置
+注意：除这些外还要把mac地址删掉，带address字样的全部删除
+[root@room9pc01 ~]# cd /var/lib/libvirt/images/
+[root@room9pc01 images]# qemu-img  create –b node.qcow2 –f qcow2 local.img
+[root@room9pc01 images]# virsh define /etc/libvirt/qemu/local.xml
+[root@room9pc01 images]# virsh start local
+[root@room9pc01 images]# virsh console local
+步骤二：guestmount实现离线访问
+
+基本用法：guestmount -a 虚拟机磁盘路径 -i /挂载点
+-a：指定虚拟磁盘
+-i：挂载点
+[root@room9pc01 ~]# mkdir /mnt/kdisk
+[root@room9pc01 ~]# guestmount  -a  node1.qcow2  -i  /mnt/kdisk
+[root@room9pc01 ~]# cd /mnt/kdisk
+[root@room9pc01 kdisk]#  ls
+bin       home      media      opt        sbin     tmp
+boot      lib      misc       proc       selinux     usr
+******************************************************************/
+
+
+[root@hiys ~]# cd  /root/.ssh/
+[root@hiys .ssh]# ls
+authorized_keys  id_rsa  id_rsa.pub  known_hosts
+
+[root@hiys .ssh]# ssh-copy-id  -i  id_rsa.pub  192.168.1.19
+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@192.168.1.19's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh '192.168.1.19'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@hiys .ssh]#  ssh  -X 192.168.1.19   ## 免密码登陆
+X11 forwarding request failed on channel 0
+Last login: Mon Nov 26 16:33:01 2018 from 192.168.1.254
+[root@Va9 ~]# exit
+登出
+Connection to 192.168.1.19 closed.
+[root@hiys .ssh]# 
+
+====================================================
+[root@hiys images]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr2                 活动     是           是
+
+[root@hiys images]# virsh net-dumpxml  rhce
+<network>
+  <name>rhce</name>
+  <uuid>3f256312-81db-442b-b90d-9230409ae078</uuid>
+  <bridge name='rhce' stp='on' delay='0'/>
+  <mac address='52:54:00:45:6a:61'/>
+  <domain name='rhce'/>
+  <ip address='172.25.254.250' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@hiys images]# 
+
+
+
+[root@hiys ~]#  virsh console Va9
+连接到域 Va9
+换码符为 ^]
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# cat  -n  /etc/securetty  |grep ttyS0
+    24	ttyS0
+    40	ttyS0
+[root@Va9 ~]# tail -2   /etc/securetty   ## ??
+xvc0
+ttyS0
+[root@Va9 ~]# head  -2   /etc/securetty
+console
+vc/1
+
+[root@Va9 ~]# tail  -3   /etc/inittab   ## ??
+
+# systemctl set-default TARGET.target
+#
+S0:12345:respawn:/sbin/agetty ttyS0 115200
+
+[root@Va9 ~]# ll  /etc/grub2.cfg 
+lrwxrwxrwx. 1 root root 22 May 29 03:47 /etc/grub2.cfg -> ../boot/grub2/grub.cfg
+
+[root@Va9 ~]# ll  /boot/grub2/grub.cfg 
+-rw-r--r--. 1 root root 4225 May 28 19:53 /boot/grub2/grub.cfg
+
+[root@Va9 ~]# cat  -n  /boot/grub2/grub.cfg  |grep kernel   ## ??***
+    97		linux16 /boot/vmlinuz-3.10.0-693.el7.x86_64 root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+   111		linux16 /boot/vmlinuz-0-rescue-ca1b99ed73b54ac2ad4802a3584a439a root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+
+
+[root@Va9 ~]# cat  -n  /etc/grub2.cfg  |grep kernel
+    97		linux16 /boot/vmlinuz-3.10.0-693.el7.x86_64 root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+   111		linux16 /boot/vmlinuz-0-rescue-ca1b99ed73b54ac2ad4802a3584a439a root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+
+[root@Va9 ~]# 
+
+========================================================
+=======================================================
+在centos里面用命令行创建kvm：
+virt-install --name=rhel7 --disk path=/mnt/personal-data/SPool1/SVol1.img --graphics spice --vcpu=1 --ram=1024 --location=/run/media/dos/9e6f605a-f502-4e98-826e-e6376caea288/rhel-server-7.0-x86_64-dvd.iso --network bridge=virbr0
+
+===============================================
+[root@Va9 ~]# ps  -efww  |grep qemu
+root       449     1  0 16:31 ?        00:00:00 /usr/bin/qemu-ga --method=virtio-serial --path=/dev/virtio-ports/org.qemu.guest_agent.0 --blacklist=guest-file-open,guest-file-close,guest-file-read,guest-file-write,guest-file-seek,guest-file-flush,guest-exec,guest-exec-status -F/etc/qemu-ga/fsfreeze-hook
+root       820   794  0 16:33 pts/0    00:00:00 grep --color=auto qemu
+[root@Va9 ~]# 
+================
+[root@hiys ~]# ps  -efww   |grep qemu
+qemu      9486     1  2 16:31 ?        00:00:10 /usr/libexec/qemu-kvm -name Va9 -S -machine pc-i440fx-rhel7.0.0,accel=kvm,usb=off,dump-guest-core=off -cpu host -m 3815 -realtime mlock=off -smp 2,sockets=2,cores=1,threads=1 -uuid 7686e34f-d271-4a07-ad1b-a1db995471b7 -display none -no-user-config -nodefaults -device sga -chardev socket,id=charmonitor,path=/var/lib/libvirt/qemu/domain-10-Va9/monitor.sock,server,nowait -mon chardev=charmonitor,id=monitor,mode=control -rtc base=localtime -no-shutdown -boot menu=on,strict=on -device piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2 -device virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x6 -drive file=/var/lib/libvirt/images/Va9.img,format=qcow2,if=none,id=drive-virtio-disk0 -device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x7,drive=drive-virtio-disk0,id=virtio-disk0,bootindex=1 -drive file=/var/lib/libvirt/images/disk-Va9.img,format=qcow2,if=none,id=drive-virtio-disk1 -device virtio-blk-pci,scsi=off,bus=pci.0,addr=0x8,drive=drive-virtio-disk1,id=virtio-disk1 -netdev tap,fd=25,id=hostnet0,vhost=on,vhostfd=27 -device virtio-net-pci,netdev=hostnet0,id=net0,mac=52:54:00:b5:34:7e,bus=pci.0,addr=0x3 -netdev tap,fd=28,id=hostnet1,vhost=on,vhostfd=29 -device virtio-net-pci,netdev=hostnet1,id=net1,mac=52:54:00:81:46:28,bus=pci.0,addr=0x4 -netdev tap,fd=30,id=hostnet2,vhost=on,vhostfd=32 -device virtio-net-pci,netdev=hostnet2,id=net2,mac=52:54:00:a8:0c:ba,bus=pci.0,addr=0x5 -chardev pty,id=charserial0 -device isa-serial,chardev=charserial0,id=serial0 -chardev socket,id=charchannel0,path=/var/lib/libvirt/qemu/channel/target/domain-10-Va9/org.qemu.guest_agent.0,server,nowait -device virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=org.qemu.guest_agent.0 -device virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x9 -msg timestamp=on
+root      9748  8366  0 16:37 pts/0    00:00:00 grep --color=auto qemu
+[root@hiys ~]# 
+[root@hiys ~]# virsh  dominfo  Va9
+Id:             10
+名称：       Va9
+UUID:           7686e34f-d271-4a07-ad1b-a1db995471b7
+OS 类型：    hvm
+状态：       running
+CPU：          2
+CPU 时间：   10.8s
+最大内存： 3906560 KiB
+使用的内存： 3906252 KiB
+持久：       是
+自动启动： 禁用
+管理的保存： 否
+安全性模式： none
+安全性 DOI： 0
+
+[root@hiys ~]# 
+
+
+========================
+
+[root@hiys ~]# lsmod  |grep kvm
+kvm_intel             170086  0 
+kvm                   566340  1 kvm_intel
+irqbypass              13503  1 kvm
+[root@hiys ~]# cat  /proc/cpuinfo  |grep vmx |head -1
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp
+[root@hiys ~]# 
+
+
+
+
+
+[root@hiys ~]# vim /etc/chrony.conf
+[root@hiys ~]# cat -n  /etc/chrony.conf |sed -n '3,20p;39p' 
+     3	#server 0.centos.pool.ntp.org iburst
+     4	#server 1.centos.pool.ntp.org iburst
+     5	#server 2.centos.pool.ntp.org iburst
+     6	#server 3.centos.pool.ntp.org iburst
+     7	server  ntp.aliyun.com iburst
+     8	bindacqaddress  0.0.0.0
+     9	allow  0/0
+    10	#allow   all
+    11	cmdallow 127.0.0.1
+    12	# Record the rate at which the system clock gains/losses time.
+    13	driftfile /var/lib/chrony/drift
+    14	
+    15	# Allow the system clock to be stepped in the first three updates
+    16	# if its offset is larger than 1 second.
+    17	makestep 1.0 3
+    18	
+    19	# Enable kernel synchronization of the real-time clock (RTC).
+    20	rtcsync
+    39	logdir /var/log/chrony
+[root@hiys ~]# systemctl  restart  chronyd
+
+[root@hiys ~]# ss  -npult  |grep  123 |column -t
+udp  UNCONN  0  0  *:123  *:*  users:(("chronyd",pid=8776,fd=3))
+[root@hiys ~]# 
+
+[root@hiys ~]# chronyc  sources  -v  |tail  -4
+||                                 |    |           \
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^* 203.107.6.88                  2   6   377    16   +745us[+4335us] +/-   32ms
+[root@hiys ~]# 
+
+[root@hiys images]# pwd
+/var/lib/libvirt/images
+[root@hiys images]# cd
+[root@hiys ~]# cd  /etc/libvirt/qemu/networks/
+[root@hiys networks]# ls
+autostart    private1.xml  public1.xml  rhce.xml  vbr.xml
+default.xml  private2.xml  public2.xml  vbr2.xml
+
+[root@hiys networks]# cat  vbr.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr           ## 修改配置文件命令
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr</name>
+  <uuid>4687cb6a-45a9-4a36-bb21-7cc0a74fccaa</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr' stp='on' delay='0'/> ## delay 延长时间；；stp 
+  <mac address='52:54:00:b9:be:6c'/>
+  <domain name='vbr'/>     ## virsh net-list 显示的名字domain name='vbr'
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+===================================================
+
+[root@hiys networks]# virsh  net-dumpxml  vbr
+<network>
+  <name>vbr</name>
+  <uuid>4687cb6a-45a9-4a36-bb21-7cc0a74fccaa</uuid>
+  <forward mode='nat'>  ## 支持上网mode='nat'
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>  ## delay 延长时间
+  <mac address='52:54:00:b9:be:6c'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# 
+---------------------------------------------------------------------------------------------
+[root@hiys networks]# virsh  net-dumpxml  vbr2
+<network>
+  <name>vbr2</name>
+  <uuid>08768731-b6d8-4055-af00-9b429a37b360</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr2' stp='on' delay='0'/>
+  <mac address='52:54:00:d0:34:45'/>
+  <domain name='vbr2'/>
+  <ip address='192.168.3.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.3.100' end='192.168.3.200'/>
+    </dhcp>
+  </ip>
+</network>
+-------------------------------------------------------------------------------------------------------
+[root@hiys networks]# virsh  net-dumpxml  private1
+<network>
+  <name>private1</name>
+  <uuid>559de4a7-724c-4eec-ba19-3c7c2e69b4ad</uuid>
+  <bridge name='private1' stp='on' delay='0'/>
+  <mac address='52:54:00:37:78:11'/>
+  <domain name='private1'/>
+  <ip address='192.168.4.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@hiys networks]# 
+
+[root@hiys networks]# virsh net-define vbr2.xml 
+从 vbr2定义网络vbr2.xml
+
+[root@hiys networks]# virsh net-start vbr2
+网络 vbr2 已开始
+
+[root@hiys networks]# virsh net-autostart vbr2   ## 设定为 eth2
+网络vbr2标记为自动启动
+
+------------------------------------------------------------------------------
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+[root@hiys qemu]# ls
+autostart  nova01.xml     Va1.xml  Va3.xml  Va5.xml  Va7.xml  Va9.xml
+networks   openstack.xml  Va2.xml  Va4.xml  Va6.xml  Va8.xml  Va.xml.txt
+
+[root@hiys qemu]# cp Va.xml.txt  Moban.xml
+
+[root@hiys qemu]# vim  Moban.xml
+
+[root@hiys qemu]# cat  Moban.xml
+<domain type='kvm'>
+  <name>Moban</name>
+
+  <memory unit='GB'>4</memory>  ## 最大使用内存
+
+  <currentMemory unit='GB'>2</currentMemory> ## 当前使用内存
+
+  <vcpu placement='static'>2</vcpu>  ## 2个cpu
+
+  <os>          ## arch='64位 操作系统'
+    <type arch='x86_64' machine='pc'>hvm</type>
+
+    <boot dev='hd'/>  ## dev='hd' 系统启动从硬盘引导
+
+    <bootmenu enable='yes'/>  
+    <bios useserial='yes'/>  ## 串口链接
+  </os>
+
+  <features>  ## 电源管理 
+    <acpi/>  ## 永不断电
+    <apic/>
+  </features>
+       ## mode='host-passthrough' 使用虚拟的cpu 模式【可以限制cpu 指令集/proc/cpuinfo】
+  <cpu mode='host-passthrough'>
+
+  </cpu>
+  <clock offset='localtime'/> ## 使用系统时间
+
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+
+  <on_crash>restart</on_crash>  ## 强制重启
+
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator> ## 指定硬件访问程序
+
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>  ## 指定file=‘..Moban.img'文件的格式 type='qcow2'
+      <source file='/var/lib/libvirt/images/Moban.img'/>
+
+      <target dev='vda' bus='virtio'/>  ## 指定设备硬盘编号dev='vda';;虚拟总线 bus='virtio'
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/> # 指定file=‘...disk-Mob.img'文件的格式 type='qcow2'
+
+      <source file='/var/lib/libvirt/images/disk-Mob.img'/>
+
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>  ## 网卡链接的虚拟交换机vbr;;  bridge='vbr'
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>  ##ps  -ef  虚拟机qemu edit 客户端程序
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+                    ## 路由器 连接 路由器 就要用 路由器上 的Serial端口 连接
+    <serial type='pty'></serial>
+
+  ## Consol口是一个本地连接口，只能用来进行本地配置（就是使用超级终端）
+    <console type='pty'>
+
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>  ## 内存驱动
+  </devices>
+</domain>
+[root@hiys qemu]# 
+
+/****
+/dev/pty[p-za-e][0-9a-f]
+伪终端，这是BSD的实现风格，slave一般使用/dev/tty[p-za-e][0-9a-f]这种格式，而master一般使用/dev/pty[p-za-e][0-9a-f]这种格式。
+*****/
+
+[root@hiys qemu]# pwd
+/etc/libvirt/qemu
+
+[root@hiys qemu]# ls
+autostart  networks    openstack.xml  Va2.xml  Va4.xml  Va6.xml  Va8.xml  Va.xml.txt
+Moban.xml  nova01.xml  Va1.xml        Va3.xml  Va5.xml  Va7.xml  Va9.xml
+
+[root@hiys qemu]# 
+[root@hiys qemu]# cd  /var/ftp/
+
+[root@hiys ftp]# ls
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+[root@hiys ftp]# ls  CentOS7-1708/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+[root@hiys ftp]# 
+
+[root@hiys ftp]# cat  /etc/yum.repos.d/CentOS7-1708.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://176.121.213.151/CentOS7-1708/
+enabled=1
+[root@hiys ftp]# 
+
+[root@hiys ftp]# systemctl is-enabled   firewalld
+disabled
+[root@hiys ftp]# systemctl  mask   firewalld   ## 注销指定服务
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+[root@hiys ftp]# 
+
+[root@hiys ftp]# systemctl  unmask   firewalld   ## 取消 注销指定服务
+Removed symlink /etc/systemd/system/firewalld.service.
+
+[root@hiys ftp]# systemctl  mask   firewalld  ## 注销指定服务
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+[root@hiys ftp]# 
+/*********
+init 命令与systemctl命令对比
+init命令	systemctl命令	说明
+init 0	systemctl poweroff	系统关机
+init 6	systemctl reboot	重新启动
+运行级别对应表
+
+init级别	systemctl target
+0	shutdown.target
+1	emergency.target
+2	rescure.target
+3	multi-user.target
+4	无
+5	graphical.target
+6	无
+此外还是一个getty.target用来设置tty的数量。
+
+原文：https://blog.csdn.net/u012486840/article/details/53161574 
+
+*****************/
+
+[root@hiys ~]# cd  /var/lib/libvirt/images/
+
+[root@hiys images]# qemu-img  create  -f  qcow2  Moban.qcow2   2G    #####【 非常重要  】 ****
+
+Formatting 'Moban.qcow2', fmt=qcow2 size=2147483648 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys images]# ls
+bin                 disk-Va2.img  exam           Student.sh                  Va6.img
+conf.d              disk-Va3.img  iso            tedu-wallpaper-01.png       Va7.img
+content             disk-Va4.img  lost+found     tedu-wallpaper-weekend.png  Va8.img
+db                  disk-Va5.img  Moban.qcow2    Va1.img                     Va9.img
+disk.img            disk-Va6.img  node.qcow2     Va2.img                     vsftpd.conf
+disk-nova01.img     disk-Va7.img  nova01.img     Va3.img                     Weekend.sh
+disk-openstack.img  disk-Va8.img  openstack.img  Va4.img
+disk-Va1.img        disk-Va9.img  qemu           Va5.img
+[root@hiys images]# 
+[root@hiys images]# virt-manager 
+ 菜单---文件--新建虚拟机（N）
+生成新虚拟机
+选择网络安装，可为 HTTP，FTP 或者 NFS
+
+点击  前进
+
+提供操作系统安装 URL
+URL ： yum 源地址  ftp://176.121.213.151/CentOS7-1708/
+
+点击  前进
+/*****
+[root@hiys ~]# echo "1024*4" |bc
+4096
+[root@hiys ~]# echo  "1024*2" |bc
+2048
+***/
+
+内存（M），RAM   4096 MiB
+         CPU    2
+
+点击  前进
+
+为虚拟机启用存储（E）
+
+选择或创建自定义存储（S）
+管理（M）...  /var/lib/libvirt/images/Moban.qcow2
+/****
+[root@hiys ~]# ll /var/lib/libvirt/images/Moban.qcow2 
+-rw-r--r-- 1 root root 197120 11月 26 20:56 /var/lib/libvirt/images/Moban.qcow2
+[root@hiys ~]# 
+***/
+
+点击  前进
+
+生成新虚拟机
+名称（N）  Monban
+
+选择网络
+  虚拟网络‘vbr’：NAT
+
+点击 完成
+
+WELCOME TO CENTOS 7.
+选择语言必须是英语
+English      English(United States)
+
+           点击     Continue
+
+
+去掉 勾 Enable  kdump
+点击Done
+
+                     注意 SOFTWARE SELECTION 
+                  最小化安装Minimal  Install
+
+选择 I will configure partitioning
+点击Done
+
+New CentOS 7 Installation
+
+选择  Standard Partition  标准分区
+
+点击 加号 + 
+Mount  Point:   /  只选择根分区
+Desired Capacity:
+     点击  Add mount point 确定
+
+点击 Done
+New CentOS 7 Installation
+/       2047 MiB
+vda1
+
+SUMMARY OF CHANGES
+
+
+选择 Accept Changes
+
+点击 Begin Installation
+
+最后点击 Reboot
+
+
+
+ 1 <domain type='kvm'>
+ 2         <name>test_ubuntu</name> //虚拟机名称
+ 3         <memory>1048576</memory> //最大内存，单位k
+ 4         <currentMemory>1048576</currentMemory> //可用内存，单位k
+ 5         <vcpu>8</vcpu> //虚拟cpu个数
+ 6         <os>
+ 7           <type arch='x86_64' machine='pc'>hvm</type>
+ 8           <boot dev='cdrom'/> //光盘启动
+ 9        </os>
+10        <features>
+11          <acpi/>
+12          <apic/>
+13          <pae/>
+14        </features>
+15        <clock offset='localtime'/>
+16        <on_poweroff>destroy</on_poweroff>
+17        <on_reboot>restart</on_reboot>
+18        <on_crash>destroy</on_crash>
+19        <devices>
+20          <emulator>/usr/libexec/qemu-kvm</emulator>
+21          <disk type='file' device='disk'>
+22           <driver name='qemu' type='qcow2'/>
+23            <source file='/var/lib/libvirt/images/test.qcow2'/> //目的镜像路径
+24            <target dev='hda' bus='ide'/>
+25          </disk>
+26          <disk type='file' device='cdrom'>
+27            <source file='/var/lib/libvirt/images/ubuntu.iso'/> //光盘镜像路径
+28            <target dev='hdb' bus='ide'/>
+29          </disk>
+30         <interface type='bridge'> //虚拟机网络连接方式
+31           <source bridge='kvmbr0'/> //当前主机网桥的名称
+32           <mac address="00:16:3e:5d:aa:a8"/> //为虚拟机分配mac地址，务必唯一，否则dhcp获得同样ip,引起冲突
+33         </interface>
+34         <input type='mouse' bus='ps2'/>
+35          <graphics type='vnc' port='-1' autoport='yes' listen = '0.0.0.0' keymap='en-us'/>//vnc方式登录，端口号自动分配，自动加1，可以通过virsh vncdisplay来查询
+36        </devices>
+37      </domain>
+
+===============================================================
+        <interface type='bridge'> //虚拟机网络连接方式
+          <source bridge='kvmbr0'/> //当前主机网桥的名称
+          <mac address="00:16:3e:5d:aa:a8"/> //为虚拟机分配mac地址，务必唯一，否则dhcp获得同样ip,引起冲突
+        </interface>
+        <input type='mouse' bus='ps2'/>
+         <graphics type='vnc' port='-1' autoport='yes' listen = '0.0.0.0' keymap='en-us'/>//vnc方式登录，端口号自动分配，自动加1，可以通过virsh vncdisplay来查询
+       </devices>
+     </domain>
+==============================================
+
+
+
+
+
+virsh虚拟机管理
+
+1. 连接本地/远程KVM
+• 使用 virsh 客户端工具
+1.1连接本地
+– virsh
+– virsh# connect qemu:///system (默认选项)
+1.2 连接远程
+– virsh# connect
+qemu+ssh://user@ip:port/system
+
+2. 使用 virt-manager 客户端工具
+– virt-manager 也可以通过 add connection 管理其它
+机器上的虚拟机,一般通过 "remote tunnel over ssh" 就可以了
+– 需要注意的是 virt-manager 需要使用 ssh 免密码登录
+如果没有免密码登录需要单独安装 python 的 ssh 相
+关模块,这里我们可以使用部署 key 的方法解决（即实现免密码登陆需要远程的主机）
+
+网络管理
+• virsh                                  管理虚拟网络
+– net-list                              查看虚拟网络
+– net-define vbr.xml           创建虚拟网络
+– net-undefine vbr             初除虚拟网络
+– net-start vbr                     启劢虚拟网络
+– net-destroy vbr               停止虚拟网络
+– net-edit vbr                      修改 vbr 网络的配置
+– net-autostart vbr             设置 vbr 虚拟网络开机自启劢
+---------------------------------------------------
+
+3. 虚拟机模板制作
+
+软件包安装及yum配置
+• 把刚刚安装好的系统初始化
+
+ 3.1、禁用 selinux /etc/selinux/config
+SELINUX=disabled
+]# systemctl stop firewalld
+
+]# systemctl stop NetworkManager
+
+3.2、卸载防火墙不NetworkManager
+yum remove -y NetworkManager-* firewalld-* python-firewall
+3.3、配置 yum 源
+[local_repo]
+name=CentOS-$releasever - Base
+baseurl="ftp://192.168.1.254/centos7"
+enabled=1
+gpgcheck=0
+
+3.4 安装软件
+yum install -y lftp
+3.5 yum 源导入公钥验证配置 (重新修改yum配置文件)
+gpgcheck=1
+3.6、导入 gpg key
+rpm --import ftp://192.168.1.254/centos7/RPM-GPG-KEY-CentOS-7
+3.7、常用系统命令安装
+yum install -y net-tools(支持ifconfig 、ss、route等命令)   vim-enhanced (支持vim命令)  bridge-utils     psmisc （支持pstree命令）    bash-completion（支持tab键）
+
+ 
+
+4. 网卡及配置文件设置
+
+DEVICE="eth0"
+ONBOOT="yes"
+NM_CONTROLLED="no"
+TYPE="Ethernet"
+BOOTPROTO="dhcp"
+ 
+
+5. 添加 Console 配置及初除磁盘分区里的个性化信息         注释：不建议手写；错了虚拟机就启不起来了
+
+[root@localhost ~]# vim  /etc/default/grub
+
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=ttyS0,115200n8"
+GRUB_DISABLE_RECOVERY="true"
+GRUB_DISABLE_LINUX_UUID="true"
+GRUB_ENABLE_LINUX_LABEL="true"
+5.1 重新生成 grub.cfg     (是为了真机能virsh console进行管理)
+grub2-mkconfig -o /boot/grub2/grub.cfg
+
+6.修改/etc/fstab 文件中到 UUID 手工修改成系统设备    (防止UUID冲突)
+– blkid 查看 uuid 对应的磁盘设备,修改 fstab 文件
+[root@localhost ~]# vim /etc/fstab
+/dev/vda1     /          xfs     defaults        0 0
+
+7. 去除个性化信息
+• 安装分区扩展软件
+[root@localhost ~]# yum install -y cloud-utils-growpart
+– 设置第一次开机自机扩容根目录
+chmod 755 /etc/rc.local
+
+– 在 rc.local 里加入如下配置
+###
+/usr/bin/growpart /dev/vda 1      (扩展磁盘分区空间(让 /dev/vda1 变大)
+/usr/sbin/xfs_growfs /                  扩展文件系统识别空间(让 df -h 可使用空间变大)
+
+/usr/bin/sed '/^###/,$d' -i /etc/rc.d/rc.local
+
+8. 关闭虚拟机后执行信息清理工(真机上执行)
+
+设置语言为英文 LANG=en_US.UTF-8
+
+[root@room9pc01 ~]#  virt-sysprep -d centos7      到这里此模板就产生了        
+
+ 
+
+9.xml配置文件详解
+
+快建虚拟机
+
+1、生成前端盘：
+
+cd /var/lib/libvirt/imges/
+
+qemu-img create -f qcow2 -b test.img node1.img
+
+2、修改xml 配置文件
+
+cat /etc/libvirt/qemu/node.xml
+
+<domain type='kvm'>
+
+<name>node</name> //虚拟机名字
+
+<memory unit='KB'>2097152</memory> //虚拟机可使用的最大内存
+
+<currentMemory unit='KB'>2097152</currentMemory> //虚拟机启动时使用的内存
+
+<vcpu placement='static'>2</vcpu> //cpu核数
+
+ 
+
+<os>
+
+<type arch='x86_64' machine='pc'>hvm</type>
+
+<boot dev='hd'/> //从硬盘引导启动
+
+<bootmenu enable='yes'/>
+
+<bios useserial='yes'/>
+
+</os>
+
+ 
+
+<features> //电源配置
+
+<acpi/>
+
+<apic/>
+
+</features>
+
+ 
+
+<cpu mode='host-passthrough'>
+
+<topology sockets='1' cores='1' threads='2'/> // 1*2=2----》与第5行一致。可删除，系统会自动计算
+
+</cpu>
+
+<clock offset='localtime'/>
+
+<on_poweroff>destroy</on_poweroff>
+
+<on_reboot>restart</on_reboot>
+
+<on_crash>restart</on_crash>
+
+<devices>
+
+<emulator>/usr/libexec/qemu-kvm</emulator>
+
+ 
+
+<disk type='file' device='disk'>
+
+<driver name='qemu' type='qcow2'/>
+
+<source file='/var/lib/libvirt/images/node.img'/>
+
+<target dev='vda' bus='virtio'/>
+
+</disk>
+
+//复制上面内容，修改红色部分，可以给虚拟机添加磁盘，虚拟机关起再起后生效
+
+ 
+
+<interface type='bridge'>
+
+<source bridge='vbr'/> //交换机名字
+
+<model type='virtio'/>
+
+</interface>
+
+//复制上面内容，修改红色部分，可以给虚拟机添加网卡，虚拟机关起再起后生效
+
+ 
+
+<channel type='unix'>
+
+<target type='virtio' name='org.qemu.guest_agent.0'/>
+
+</channel>
+
+<serial type='pty'></serial>
+
+<console type='pty'>
+
+<target type='serial'/>
+
+</console> //console串口连接配置
+
+<memballoon model='virtio'></memballoon>
+
+</devices>
+
+</domain>
+
+3、注册并启动虚拟机：
+
+virsh define /etc/libvirt/qemu/node.xml
+
+virsh start node
+
+//若新的虚拟机磁盘和后端盘的大小不一致，则执行以下操作(在新建虚拟机上执行)：
+
+扩展磁盘分区空间(让 /dev/vda1 变大) //在新生成的虚拟机上操作
+
+/usr/bin/growpart /dev/vda 1
+
+扩展文件系统识别空间(让 df -h 可使用空间变大)
+
+/usr/sbin/xfs_growfs /
+
+--------------------------------------------------------------------------------
+
+补充:xml配置文件祥解:
+
+ 
+
+– 保存 node 虚拟机配置文件
+
+virsh dumpxml node >demo.xml
+
+– 清除模板配置
+
+virsh undefine node
+
+– xml 模板
+
+– <!-- 是注释的开始
+
+–
+
+--> 是注释的结尾
+
+– xml 标签必须成对出现
+
+– <keyword> ... ... </keyword>
+
+ 
+
+<domain type='kvm' id='4'>
+
+<name>centos7.0</name>
+
+<uuid>8413f30a-c978-4796-a28f-8ba9fe74b759</uuid>
+
+<memory unit='KiB'>2097152</memory>
+
+<currentMemory unit='KiB'>2097152</currentMemory>
+
+– id=4 个性化设置 ,去掉
+
+– uuid 去掉
+
+– memory unit 虚拟机最大使用内存,可以手劢调整
+
+– currentmemory 创建虚拟机使用内存
+
+ 
+
+– cpu 设置,可以调整
+
+<vcpu placement='static'>2</vcpu>
+
+– 资源设置,可以初除
+
+<resource> ... ... </resource>
+
+– 系统配置及引导设备,丌需要修改
+
+<os>
+
+<boot dev='hd'/>
+
+</os>
+
+– 电源相关配置无需修改
+
+<features> ... ... </features>
+
+ 
+
+– cpu配置,可以修改成使用真机cpu
+
+<cpu ... ... />
+
+<cpu mode='host-passthrough'></cpu>
+
+– 时钟相关配置,可以初除
+
+<clock ... ... </clock>
+
+– 重启,关机,强制关闭对应命令
+
+<on_poweroff>destroy</on_poweroff>
+
+<on_reboot>restart</on_reboot>
+
+<on_crash>destroy</on_crash>
+
+ 
+
+– 内存及硬盘休眠相关设置,可以初除
+
+<pm> ... ... </pm>
+
+– 仿真设备相关配置
+
+<devices> ... ... </devices>
+
+– 其他配置
+
+– 驱劢安全标签,可初除
+
+<seclabel> ... ... </seclabel>
+
+ 
+
+仿真设备配置
+
+– 总线地址,别名配置,都可以初除
+
+<address ....
+
+<alias ...
+
+– 硬盘配置,需要修改
+
+<emulator>/usr/libexec/qemu-kvm</emulator>
+
+<disk ... ... </disk>
+
+– usb 相关设备配置,可以初除
+
+<controller type='usb'
+
+ 
+
+仿真设备配置
+
+– type='pci' pci总线设备,可初除
+
+– type='virtio-serial' 串口设备需要保留串口终端
+
+– type='network' 网络配置需要修改
+
+– type='pty' 串口终端,需要保留
+
+– type='unix' 虚拟机通讯控制接口
+
+– type='spicevmc' 图形图像相关配置可以初除
+
+– type='tablet' 数位板,可以初除
+
+ 
+
+仿真设备配置
+
+– type='mouse' 鼠标,保留
+
+– type='keyboard' 键盘保留
+
+– graphics、video 图形图像显卡相关配置,可以初除
+
+– sound 声卡相关配置,可以初除
+
+– redirdev 设备重定向,可以初除
+
+– memballoon 内存气泡,可以劢态调整内存
+
+ 
+
+###################################################################
+
+guestmount
+
+– 支持离线挂载 raw、qcow2 格式虚拟机磁盘
+
+– 可以在虚拟机关机的情冴下,直接修改磁盘中的文档
+
+– 方便对虚拟机定制、修复、脚本维护
+
+---若修改原始盘,则前端盘要全部删除;若修改后端盘,则对原始盘没有影响
+
+!!! 需要注意 SELinux 机制的影响
+
+ 
+
+基本用法:
+
+guestmount -a 虚拟机磁盘路径 -i /挂载点
+
+chroot /mnt #将/mnt作为当前的假根,---->exit退出
+
+
+--------------------- 
+作者：majiangNB 
+来源：CSDN 
+原文：https://blog.csdn.net/majiangNB/article/details/81672911 
+版权声明：本文为博主原创文章，转载请附上博文链接！
+
+
+
+
+
+
+
+
+
+
+
+
+
+

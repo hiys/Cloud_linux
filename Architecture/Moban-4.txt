@@ -1,0 +1,1244 @@
+
+                       安装 linux 自定义虚拟机 制作 模板 配置yum 网卡
+
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+├─sda2   8:2    0   120G  0 part /
+└─sda3   8:3    0   122G  0 part /javaweb
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  1 loop /var/ftp/CentOS7-1708
+loop2    7:2    0   169M  1 loop /var/ftp/RHEL7-extras
+loop3    7:3    0     3G  1 loop /var/ftp/RHEL7OSP
+
+[root@hiys ~]# blkid 
+/dev/sda1: UUID="a1bc4085-ad0a-443c-9d62-00d84a1a2e3c" TYPE="ext4" 
+/dev/sda2: UUID="987e8693-eb61-4a69-9531-0ed377b321ad" TYPE="ext4" 
+/dev/sda3: UUID="1ae681d3-b6db-4609-bed8-f78295a292cb" TYPE="ext4" 
+
+/dev/loop0: UUID="2017-07-11-01-39-24-00" LABEL="RHEL-7.4 Server.x86_64" TYPE="iso9660" PTTYPE="dos" 
+/dev/loop1: UUID="2017-09-06-10-53-42-00" LABEL="CentOS 7 x86_64"    TYPE="iso9660"   PTTYPE="dos" 
+
+/dev/loop2: UUID="2017-03-08-18-04-11-00" LABEL="RHEL7EXTRAS"   TYPE="iso9660" 
+/dev/loop3: UUID="2017-06-07-20-32-47-00" LABEL="RHEL7OSP-10.0" TYPE="iso9660" 
+
+[root@hiys ~]# blkid  /dev/sda
+/dev/sda: PTTYPE="dos" 
+
+[root@hiys ~]# lsb_release  -a   ## 查看Linux系统版本的命令
+LSB Version:	:core-4.1-amd64:core-4.1-noarch:cxx-4.1-amd64:cxx-4.1-noarch:desktop-4.1-amd64:desktop-4.1-noarch:languages-4.1-amd64:languages-4.1-noarch:printing-4.1-amd64:printing-4.1-noarch
+Distributor ID:	CentOS
+Description:	CentOS Linux release 7.4.1708 (Core) 
+Release:	7.4.1708
+Codename:	Core
+
+[root@hiys ~]# ll  /etc/redhat-release 
+lrwxrwxrwx. 1 root root 14 3月  10 2018 /etc/redhat-release -> centos-release
+[root@hiys ~]# cat  /etc/redhat-release   ## 查看Linux系统版本的命令
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@hiys ~]# cat  /etc/centos-release
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@hiys ~]# ll  /etc/issue
+-rw-r--r--. 1 root root 23 8月  30 2017 /etc/issue
+[root@hiys ~]# cat  /etc/issue   ##查看Linux系统版本的命令
+\S
+Kernel \r on an \m
+
+[root@hiys ~]# cat  /proc/version    ## 查看Linux内核版本命令
+Linux version 3.10.0-693.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) ) #1 SMP Tue Aug 22 21:09:27 UTC 2017
+
+[root@hiys ~]# uname  -a     #查看Linux内核版本命令
+Linux hiys 3.10.0-693.el7.x86_64 #1 SMP Tue Aug 22 21:09:27 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+[root@hiys ~]# lsmod  |grep  kvm
+kvm_intel             170086  0 
+kvm                   566340  1 kvm_intel
+irqbypass              13503  1 kvm
+
+[root@hiys ~]# ls  /sys/module/kvm/
+coresize  initsize   notes       refcnt       sections    taint
+holders   initstate  parameters  rhelversion  srcversion  uevent
+
+[root@hiys ~]# ls  /sys/module/kvm_intel/
+coresize  initsize   notes       refcnt       sections    taint
+holders   initstate  parameters  rhelversion  srcversion  uevent
+
+[root@hiys ~]# cat  /proc/cpuinfo   |grep  vmx |head  -1
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc aperfmperf eagerfpu pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch intel_pt tpr_shadow vnmi flexpriority ept vpid fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm mpx rdseed adx smap clflushopt xsaveopt xsavec xgetbv1 dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp
+
+[root@hiys ~]# egrep  -o 'svm|vmx' /proc/cpuinfo  ##查看我们的电脑是否支持 虚拟化# #-o参数(只输出匹配的部分),
+vmx
+vmx
+vmx
+vmx
+
+[root@hiys ~]# yum  -y install  libguestfs-tools
+.............
+已安装:
+  libguestfs-tools.noarch 1:1.36.3-6.el7                                                                          
+
+作为依赖被安装:
+  perl-Sys-Guestfs.x86_64 1:1.36.3-6.el7  perl-Sys-Virt.x86_64 0:3.2.0-1.el7  perl-libintl.x86_64 0:1.20-12.el7 
+
+完毕！
+[root@hiys ~]# rpm  -q   qemu-kvm   libvirt    libvirt-client   libvirt-daemon   libvirt-daemon-driver-qemu  
+                 libguestfs-tools   libvirt-python    python-setuptools    virt-install     virt-manager
+qemu-kvm-1.5.3-141.el7.x86_64   ## 为 kvm 提供底层仿真支持  【虚拟化平台 安装必备软件】
+libvirt-3.2.0-14.el7.x86_64
+libvirt-client-3.2.0-14.el7.x86_64   ## 用户端软件,提供客户端管理命令 【虚拟化平台 安装必备软件】
+libvirt-daemon-3.2.0-14.el7.x86_64   ## 守护进程,管理虚拟机     【虚拟化平台 安装必备软件】
+libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64  ## libvirtd 连接 qemu 的驱动  【虚拟化平台 安装必备软件】
+
+libguestfs-tools-1.36.3-6.el7.noarch
+libvirt-python-3.2.0-3.el7.x86_64
+python-setuptools-0.9.8-7.el7.noarch
+virt-install-1.4.1-7.el7.noarch   ## 系统安装工具 【可选功能】
+virt-manager-1.4.1-7.el7.noarch   ## 图形管理工具 【可选功能】
+
+[root@hiys ~]# yum list  |egrep  'virt-v2v|virt-p2v'
+virt-p2v-maker.x86_64                    1:1.36.3-6.el7            CentOS7-1708 
+virt-v2v.x86_64                          1:1.36.3-6.el7            CentOS7-1708 
+
+[root@hiys ~]# yum  -y install  virt-v2v  virt-p2v
+.....................
+没有可用软件包 virt-p2v。
+...................
+已安装:
+  virt-v2v.x86_64 1:1.36.3-6.el7                                                                                  
+
+作为依赖被安装:
+  OVMF.noarch 0:20170228-5.gitc325e41585e3.el7              libguestfs-winsupport.x86_64 0:7.2-2.el7             
+
+完毕！
+[root@hiys ~]# rpm  -q  virt-v2v   virt-p2v
+virt-v2v-1.36.3-6.el7.x86_64   ## 虚拟机 迁移 工具【可选功能】
+未安装软件包 virt-p2v          ## 物理机 迁移 工具 【可选功能】
+
+[root@hiys ~]# systemctl is-active  libvirtd
+active
+[root@hiys ~]# systemctl is-enabled  libvirtd
+enabled
+[root@hiys ~]# systemctl restart  libvirtd
+[root@hiys ~]# echo $?
+0
+-------------------------------------log---------------------------------------
+[root@hiys ~]# ls  /var/log/libvirt/qemu/
+nova01.log     Va1.log  Va3.log  Va5.log  Va7.log  Va9.log
+openstack.log  Va2.log  Va4.log  Va6.log  Va8.log  win2008.log
+----------------------------------------------------------------------------------------------------------------------
+
+[root@hiys ~]# virsh nodeinfo
+CPU 型号：        x86_64
+CPU：               4
+CPU 频率：        900 MHz
+CPU socket：        1
+每个 socket 的内核数： 4
+每个内核的线程数： 1
+NUMA 单元：       1
+内存大小：      16687548 KiB
+
+=====================  创建 的 虚 拟 网 络  ===================
+
+[root@hiys ~]# virsh  net-list
+ 名称               状态        自动开始      持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr2                 活动     是           是
+
+[root@hiys ~]# virsh  -c  qemu:///system          ★ --虚拟机--★ 
+欢迎使用 virsh，虚拟化的交互式终端。
+
+输入：'help' 来获得命令的帮助信息
+       'quit' 退出
+
+virsh # list
+ Id    名称                         状态
+----------------------------------------------------
+
+virsh # quit
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr2.xml  vbr.xml
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/networks/autostart/
+default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr2.xml  vbr.xml
+
+[root@hiys ~]# virsh  -c  qemu:///system   net-dumpxml  vbr    ##虚拟网络vbr --> eth0
+<network>
+  <name>vbr</name>
+  <uuid>4687cb6a-45a9-4a36-bb21-7cc0a74fccaa</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:b9:be:6c'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys ~]# 
+[root@hiys ~]# virsh  net-dumpxml  private1      ##虚拟网络private1 -->  eth1
+<network>
+  <name>private1</name>
+  <uuid>559de4a7-724c-4eec-ba19-3c7c2e69b4ad</uuid>
+  <bridge name='private1' stp='on' delay='0'/>
+  <mac address='52:54:00:37:78:11'/>
+  <domain name='private1'/>
+  <ip address='192.168.4.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@hiys ~]# 
+[root@hiys ~]# virsh  net-dumpxml  vbr2            ###虚拟网络vbr2 -->  eth2
+<network>
+  <name>vbr2</name>
+  <uuid>08768731-b6d8-4055-af00-9b429a37b360</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr2' stp='on' delay='0'/>
+  <mac address='52:54:00:d0:34:45'/>
+  <domain name='vbr2'/>
+  <ip address='192.168.3.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.3.100' end='192.168.3.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys ~]# 
+
+-----------------------------------------------------------------------------------远程管理虚拟机----------------------------------------------------------------------------------------
+[root@hiys ~]# rpm  -q  virt-viewer
+virt-viewer-5.0-7.el7.x86_64
+
+[root@hiys ~]# which virt-viewer 
+/usr/bin/virt-viewer
+
+[root@hiys ~]# virt-viewer  -c  qemu+ssh://root@192.168.1.16:22/system  Va6
+root@192.168.1.16's password: a
+
+[root@hiys ~]# virt-viewer  -c  qemu+ssh://root@192.168.1.15/system  Va5
+root@192.168.1.15's password: a
+
+[root@hiys ~]# echo  $DISPLAY
+:0
+---------------------------------------------------------------------------------------
+[root@hiys ~]# virsh start  Va9  &&  sleep  16  &&  virsh  -c  qemu+ssh://192.168.1.19/system
+域 Va9 已开始
+
+错误：连接到管理程序失败
+错误：无法 recv 数据：ssh: connect to host 192.168.1.19 port 22: No route to host: Connection reset by peer
+--------------------------------------------------------------------------
+[root@hiys ~]# ssh  -X   192.168.1.19
+....................
+[root@Va9 ~]# sed  -n 17p  /etc/ssh/sshd_config 
+Port 22
+[root@Va9 ~]# logout
+Connection to 192.168.1.19 closed.
+-------------------------------------------------------------------------
+[root@hiys ~]# virsh  -c  qemu+ssh://192.168.1.19/system
+错误：连接到管理程序失败
+错误：读取数据时进入文件终点：Ncat: No such file or directory.: 输入/输出错误
+
+[root@hiys ~]# virsh console  Va9
+连接到域 Va9
+换码符为 ^]
+                     回车确认
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va9 login: root
+Password: a
+Last login: Wed Nov 28 13:00:45 from 192.168.1.254
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]#  Ctrl  +  ]  ## 退出虚拟机
+----------------------------------------------------------------------------------------------------------
+[root@hiys ~]# virsh   connect  qemu+ssh://root@192.168.1.16:22/system
+root@192.168.1.16's password: 
+错误：连接到管理程序失败
+错误：读取数据时进入文件终点：Ncat: No such file or directory.: 输入/输出错误
+
+[root@hiys ~]# ssh -X 192.168.1.16                                   ★ --虚拟机--★ 
+root@192.168.1.16's password: a
+X11 forwarding request failed on channel 0
+Last login: Wed Nov 28 14:45:54 2018 from 192.168.1.254
+
+[root@Va6 ~]# sed  -n 17p  /etc/ssh/sshd_config 
+Port 22
+[root@Va6 ~]# tty
+/dev/pts/0
+[root@Va6 ~]# exit
+登出
+Connection to 192.168.1.16 closed.
+[root@hiys ~]# virsh console Va6
+连接到域 Va6
+换码符为 ^]
+              回车确认
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va6 login: root
+Password: a
+Last login: Wed Nov 28 19:01:35 from 192.168.1.254
+[root@Va6 ~]# tty
+/dev/ttyS0
+[root@Va6 ~]#  Ctrl  +  ]  ## 退出虚拟机
+[root@hiys ~]# 
+ 
+ 
+fe3630Hiy53
+
+-------------------------------------------------------------------------------------------------------------------
+  =================   配 置 转发 DNS  =========================
+
+[root@hiys ~]# yum  -y install  bind-chroot  bind
+.....................
+软件包 32:bind-chroot-9.9.4-50.el7.x86_64 已安装并且是最新版本
+软件包 32:bind-9.9.4-50.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@hiys ~]# rpm -qa  |grep  bind
+bind-9.9.4-50.el7.x86_64
+bind-libs-9.9.4-50.el7.x86_64
+bind-license-9.9.4-50.el7.noarch
+bind-utils-9.9.4-50.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+keybinder3-0.3.0-1.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+bind-libs-lite-9.9.4-50.el7.x86_64
+
+[root@hiys ~]# vim  /etc/named.conf 
+
+[root@hiys ~]# cat  -n  /etc/named.conf |sed  -n  '12,22p;33,35p'
+    12	options {
+    13		listen-on port 53 { 192.168.1.254; };
+    14	//	listen-on-v6 port 53 { ::1; };
+    15		directory 	"/var/named";
+    16		dump-file 	"/var/named/data/cache_dump.db";
+    17		statistics-file "/var/named/data/named_stats.txt";
+    18		memstatistics-file "/var/named/data/named_mem_stats.txt";
+    19		allow-query     { any; };
+    20	        forwarders   { 114.114.114.114; };
+    21		/* 
+    22		 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+    33		dnssec-enable no;
+    34		dnssec-validation no;
+    35	
+[root@hiys ~]# 
+/**************
+　114.114.114.114是国内移动、电信和联通通用的DNS，手机和电脑端都可以使用，是国内用户上网常用的DNS
+
+　8.8.8.8是GOOGLE公司提供的DNS，该地址是全球通用的，相对来说，更适合国外以及访问国外网站的用户使用
+**************/
+
+[root@hiys ~]# systemctl is-active  named
+active
+[root@hiys ~]# systemctl  is-enabled  named
+enabled
+[root@hiys ~]# dig  +trace  ntp.aliyun.com
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-50.el7 <<>> +trace ntp.aliyun.com
+.......................
+;; Received 678 bytes from 192.41.162.30#53(l.gtld-servers.net) in 354 ms
+
+ntp.aliyun.com.		300	IN	A	203.107.6.88
+aliyun.com.		172800	IN	NS	ns5.aliyun.com.
+aliyun.com.		172800	IN	NS	ns4.aliyun.com.
+aliyun.com.		172800	IN	NS	ns3.aliyun.com.
+;; Received 209 bytes from 198.11.138.248#53(ns5.aliyun.com) in 158 ms
+
+[root@hiys ~]# dig  ntp.aliyun.com
+
+; <<>> DiG 9.9.4-RedHat-9.9.4-50.el7 <<>> ntp.aliyun.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 62580
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 3, ADDITIONAL: 5
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;ntp.aliyun.com.			IN	A
+
+;; ANSWER SECTION:
+ntp.aliyun.com.		296	IN	A	203.107.6.88
+
+;; AUTHORITY SECTION:
+aliyun.com.		666	IN	NS	ns4.aliyun.com.
+aliyun.com.		666	IN	NS	ns3.aliyun.com.
+aliyun.com.		666	IN	NS	ns5.aliyun.com.
+
+;; ADDITIONAL SECTION:
+ns4.aliyun.com.		262269	IN	A	140.205.71.248
+ns4.aliyun.com.		262269	IN	A	42.156.241.248
+ns5.aliyun.com.		262273	IN	A	198.11.138.248
+ns5.aliyun.com.		262273	IN	A	140.205.2.187
+
+;; Query time: 22 msec
+;; SERVER: 176.121.0.100#53(176.121.0.100)
+;; WHEN: 三 11月 28 13:45:52 CST 2018
+;; MSG SIZE  rcvd: 177
+-------------------------------------
+[root@hiys ~]# nslookup   ntp.aliyun.com
+
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+Non-authoritative answer:
+Name:	ntp.aliyun.com
+Address: 203.107.6.88
+
+==================== 配置  时间服务 ==================
+
+[root@hiys ~]# yum  -y  install chrony
+......................
+软件包 chrony-3.1-2.el7.centos.x86_64 已安装并且是最新版本
+无须任何处理
+[root@hiys ~]# vim  /etc/chrony.conf 
+
+[root@hiys ~]# sed  -n  '3,11p'  /etc/chrony.conf
+
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+server  ntp.aliyun.com iburst
+bindacqaddress  0.0.0.0
+allow  0/0
+#allow   all
+cmdallow 127.0.0.1
+
+[root@hiys ~]# systemctl is-active   chronyd
+active
+[root@hiys ~]# systemctl is-enabled   chronyd
+enabled
+[root@hiys ~]# chronyc   sources  -v   # # 查看时间同步源* 203.107.6.88
+
+210 Number of sources = 1
+
+  .-- Source mode  '^' = server, '=' = peer, '#' = local clock.
+ / .- Source state '*' = current synced, '+' = combined , '-' = not combined,
+| /   '?' = unreachable, 'x' = time may be in error, '~' = time too variable.
+||                                                 .- xxxx [ yyyy ] +/- zzzz
+||      Reachability register (octal) -.           |  xxxx = adjusted offset,
+||      Log2(Polling interval) --.      |          |  yyyy = measured offset,
+||                                \     |          |  zzzz = estimated error.
+||                                 |    |           \
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^* 203.107.6.88                  2  10   377   979  -1181us[-1279us] +/-   41ms
+
+[root@hiys ~]# chronyc  sourcestats  -v   ##  #查看同步状态
+210 Number of sources = 1
+                             .- Number of sample points in measurement set.
+                            /    .- Number of residual runs with same sign.
+                           |    /    .- Length of measurement set (time).
+                           |   |    /      .- Est. clock freq error (ppm).
+                           |   |   |      /           .- Est. error in freq.
+                           |   |   |     |           /         .- Est. offset.
+                           |   |   |     |          |          |   On the -.
+                           |   |   |     |          |          |   samples. \
+                                   |     |    |       |              |              |                |
+Name/IP Address            NP  NR  Span  Frequency  Freq Skew  Offset  Std Dev
+==============================================================================
+203.107.6.88               44  23  327m     +0.004      0.135   +270ns  1562us
+
+===================  配 置 ftp 服务 =====================
+
+[root@hiys ~]# rpm  -q  vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+[root@hiys ~]# vim  /etc/vsftpd/vsftpd.conf 
+
+[root@hiys ~]# grep -Ev '^#|^$'  /etc/vsftpd/vsftpd.conf
+anonymous_enable=YES
+local_enable=YES
+write_enable=YES
+local_umask=022
+anon_upload_enable=YES
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+anon_umask=022
+dirmessage_enable=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+xferlog_std_format=YES
+listen=YES
+listen_ipv6=NO
+pam_service_name=vsftpd
+userlist_enable=YES
+tcp_wrappers=YES
+
+[root@hiys ~]# cat  -n   /etc/vsftpd/vsftpd.conf | sed  -n  '112p;117,118p' 
+   112	listen=YES        //开启ipv4监听
+   117	#listen_ipv6=YES
+   118	listen_ipv6=NO     ## 关闭ipv6监听
+
+[root@hiys ~]# systemctl  is-enabled   vsftpd
+enabled
+[root@hiys ~]# systemctl  is-active   vsftpd
+active
+--------------------------------------------------------------------------------------
+[root@hiys ~]# systemctl  is-active   NetworkManager
+active
+[root@hiys ~]# systemctl  is-enabled   NetworkManager
+enabled
+
+========================  搭建 网络 yum 源 ============================
+
+[root@hiys ~]#  yum repolist |tail -16
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+ansible                          ansible                                      18
+rhel7                            rhel7.4                                   4,986
+repolist: 15,735
+
+[root@hiys ~]# ls  /var/ftp/CentOS7-1708/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+
+[root@hiys ~]# ls  /var/ftp/
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# ls  /var/ftp/ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm  kibana-4.5.2-1.x86_64.rpm                python-paramiko-2.1.1-2.el7.noarch.rpm
+ansible-devel                     logstash-2.3.4-1.noarch.rpm              python-passlib-1.6.5-2.el7.noarch.rpm
+elasticsearch-2.3.4.rpm           python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+filebeat-1.2.3-x86_64.rpm         python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@hiys ~]# ls  /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm  docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+==================================================
+
+===========   CentOS1708 虚拟机模版 制作===========
+
+[root@hiys ~]# qemu-img  create  -f  qcow2  /var/lib/libvirt/images/Moban.qcow2  3G  ## 注意至少 3G
+
+
+[root@hiys ~]# ll  /var/lib/libvirt/images/Moban.qcow2 
+-rw-r--r-- 1 root root 197120 11月 28 21:24 /var/lib/libvirt/images/Moban.qcow2
+
+[root@hiys ~]# du  -sh  /var/lib/libvirt/images/Moban.qcow2
+196K	/var/lib/libvirt/images/Moban.qcow2
+
+[root@hiys ~]# chmod 777 /var/lib/libvirt/images/Moban.qcow2
+
+[root@hiys ~]# ls   /var/lib/libvirt/images/
+bin                 disk-Va1.img  disk-Va8.img  nova01.img                  Va2.img  Va9.img
+conf.d              disk-Va2.img  disk-Va9.img  openstack.img               Va3.img  vsftpd.conf
+content             disk-Va3.img  exam          qemu                        Va4.img  Weekend.sh
+db                  disk-Va4.img  iso           Student.sh                  Va5.img
+disk.img            disk-Va5.img  lost+found    tedu-wallpaper-01.png       Va6.img
+disk-nova01.img     disk-Va6.img  Moban.qcow2   tedu-wallpaper-weekend.png  Va7.img
+disk-openstack.img  disk-Va7.img  node.qcow2    Va1.img                     Va8.img
+
+
+[root@hiys ~]# systemctl  unmask   firewalld   ## 取消 注销指定服务
+Removed symlink /etc/systemd/system/firewalld.service.
+
+[root@hiys ~]# systemctl  mask   firewalld  ## 注销指定服务
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@hiys ~]# systemctl  is-enabled  firewalld
+masked
+[root@hiys ~]# systemctl  is-active   firewalld
+unknown
+
+
+[root@hiys ~]# virt-manager
+
+====================================================================
+      虚拟系统管理器                                                                                               |
+-----------------------------------------------------                                                                              |
+   点击菜单  文件 ---> 新建虚拟机（N）                                                           |
+                                                                                                                    |
+生成新虚拟机                                                                                                       |
+
+  选择  网络安装，可为 HTTP，FTP 或者 NFS
+
+点击  前进
+---------------------------------------------------------
+生成新虚拟机
+提供操作系统安装 URL
+URL ： yum 源地址  ftp://176.121.213.151/CentOS7-1708/
+默认勾 上 根据安装介质 自动侦测 操作系统（U）
+
+点击  前进
+-----------------------------------------------
+/*****
+[root@hiys ~]# echo "1024*4" |bc
+4096
+[root@hiys ~]# echo  "1024*2" |bc
+2048
+***/
+-------------------------------
+生成新虚拟机
+
+内存（M），RAM   2048 MiB
+         CPU    2
+
+点击  前进
+------------------------------------------------------------
+
+生成新虚拟机
+
+默认勾 上 为虚拟机启用存储（E）
+
+选择或创建自定义存储（S）
+ 点击 管理（M）...  /var/lib/libvirt/images/Moban.qcow2
+
+点击  前进
+------------------------------------------------------------
+
+生成新虚拟机
+名称（N）  Mob  【自定义虚拟机名称】
+
+选择网络
+    虚拟网络‘vbr’：NAT
+
+点击 完成
+----------------------------------------------------------------
+
+WELCOME TO CENTOS 7.
+选择语言必须是 英语
+English        English(United States)
+
+           点击     Continue
+---------------------------------------------------------
+Installation  Summary
+------------------------------------------
+INSTALLATION   SUMMARY
+
+LOCALIZATION
+  DATE  & TIME                   KEYBOARD
+ Asia/Shanghai timezone          English(US)
+
+LANGUAGE SUPPORT
+English (United States)
+
+SOFTWARE
+
+INSTALLATION  SOURCE                      注意 SOFTWARE SELECTION  
+ftp://176.121.213.151/CentOS7-1708/        Minimal Install
+                                                        最小化安装
+
+                                               点击  KDUMP
+                                     ---------------------------------------------------
+                                       去掉 勾 Enable  kdump
+                                                 点击Done
+                                       ----------------------------------------------
+    installation  destination
+ 点击INSTALLATION  DESTINATION           KDUMP
+         |                              Kdump is disabled
+            |
+            |
+----------------------------------    
+Device Selection
+ 
+Other  Storage  Options
+选择 I will configure partitioning
+
+点击左上角 Done
+
+--------------------------------------------------
+MANUAL  PARTITIONING
+
+
+New CentOS 7 Installation
+
+
+Create  new  mount  points  by clicking  the  '+' button.
+New  mount points  will user the following  partitioning scheme:
+
+选择  Standard Partition  标准分区
+
+点击 左下角 加号 + 
+-----------------------------------------
+ADD   A  NEW  MOUNT  POINT
+
+Mount  Point:   /  只选择根分区
+
+Desired Capacity:
+
+     点击  Add mount point 确定
+------------------------------------------------------
+MANUAL  PARTITIONING
+点击左上角 Done  (需要点击二次）
+--------------------------------------
+New CentOS 7 Installation
+   SYSTEM 
+  /               2047 MiB
+  vda1
+---------------------------------------------------------
+------------------------------------------------
+弹出对话框 
+  SUMMARY  OF  CHANGES
+1   Destroy  Format    Unknow                    vda
+2   Create   Format    partition  table (MSDOS)  vda
+3   Create   Device    partition                 vda1
+4   Create   Format     xfs             vda1          /
+
+选择 Accept Changes
+-----------------------------------------
+------------------------------------------
+INSTALLATION   SUMMARY
+
+
+             点击 Begin Installation
+----------------------------------------------------
+CONFIGURATION
+
+USER SETTINGS  
+
+ROOT  PASSWORD              USER  CREATION
+         1                   lily     1
+----------------------------(需要点击二次）---------------------                                                                |
+                                                                                                                   |
+最后点击 Reboot                                                                            |
+====================================================================
+打开 虚拟 系统 管理器
+----------------------------------------
+打开 虚拟机 Mob 图形窗口
+----------------------------------------
+选择
+     添加硬件
+选择
+     网络
+选择 网络源  虚拟网络 ‘private1'
+                    点击   
+                           完成
+--------------------------------------------
+选择
+     添加硬件
+选择
+     网络
+选择 网络源  虚拟网络 ‘vbr2'
+                    点击   
+                           完成
+----------------------------------------
+
+[root@hiys ~]# ls /var/log/libvirt/qemu/
+Mob.log     openstack.log  Va2.log  Va4.log  Va6.log  Va8.log  win2008.log
+nova01.log  Va1.log        Va3.log  Va5.log  Va7.log  Va9.log
+[root@hiys ~]# ll  /var/log/libvirt/qemu/Mob.log 
+-rw------- 1 root root 13813 11月 28 21:28 /var/log/libvirt/qemu/Mob.log
+----------------------------------------------------------------------------------------------------------------------------------
+localhost  login: root
+Password:  1
+localhost ~]# yum  provides  ifconfig
+.................
+localhost ~]# yum  -y install net-tools
+
+localhost ~]# ifconfig  |awk '/inet /&&/192.168/{print $2}'
+192.168.1.?
+localhost ~]# echo Mob > /etc/hostname
+
+localhost ~]# shutdown  -h  now
+
+[root@hiys ~]# vim  /etc/ssh/ssh_config 
+
+ 41   Port 22
+
+ 58 Host *
+ 59         GSSAPIAuthentication   yes
+ 60         StrictHostKeyChecking  no
+
+[root@hiys ~]# cat  -n   /etc/ssh/ssh_config |sed  -n  '41p;58,60p'
+    41	  Port 22
+    58	Host *
+    59		GSSAPIAuthentication   yes
+    60	        StrictHostKeyChecking  no
+
+[root@hiys ~]# cat  local.repo.txt 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0
+enabled=1
+[root@hiys ~]# 
+
+[root@hiys ~]# virsh start  Mob
+域 Mob 已开始
+
+[root@hiys ~]# ssh  -X  192.168.1.103
+root@192.168.1.103's password: 1
+............................
+[root@Mob ~]# ls  /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Media.repo    CentOS-Vault.repo
+CentOS-CR.repo    CentOS-fasttrack.repo  CentOS-Sources.repo
+
+[root@Mob ~]# mkdir  /etc/yum.repos.d/repo
+
+[root@Mob ~]# mv  /etc/yum.repos.d/*.repo  /etc/yum.repos.d/repo/
+
+[root@Mob ~]# scp  root@192.168.1.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+........................................
+Are you sure you want to continue connecting (yes/no)? yes
+..................
+root@192.168.1.254's password: 1
+local.repo.txt                                    100%  257   176.2KB/s   00:00   
+ 
+[root@Mob ~]# ls  /etc/yum.repos.d/
+local.repo  repo
+
+[root@Mob ~]# yum clean  all >/dev/null && yum repolist  |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+
+[root@Mob ~]# cat   /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0
+enabled=1
+
+[root@Mob ~]# yum  -y  install git  vim-enhanced  cloud-utils-growpart  \
+> qemu-kvm   libvirt    libvirt-client   libvirt-daemon   libvirt-daemon-driver-qemu  \
+>  libguestfs-tools   libvirt-python    python-setuptools    virt-install     virt-manager \
+> virt-v2v   virt-viewer  elinks   lftp  firefox 
+..........................
+[root@Mob ~]# rpm  -q   git  vim-enhanced  cloud-utils-growpart  \
+> qemu-kvm   libvirt    libvirt-client   libvirt-daemon   libvirt-daemon-driver-qemu  \
+> libguestfs-tools   libvirt-python    python-setuptools    virt-install     virt-manager \
+> virt-v2v   virt-viewer  elinks   lftp  firefox
+
+git-1.8.3.1-11.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+cloud-utils-growpart-0.29-2.el7.noarch
+
+qemu-kvm-1.5.3-141.el7.x86_64
+libvirt-3.2.0-14.el7.x86_64
+libvirt-client-3.2.0-14.el7.x86_64
+libvirt-daemon-3.2.0-14.el7.x86_64
+libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64
+
+libguestfs-tools-1.36.3-6.el7.noarch
+libvirt-python-3.2.0-3.el7.x86_64
+python-setuptools-0.9.8-7.el7.noarch
+virt-install-1.4.1-7.el7.noarch
+virt-manager-1.4.1-7.el7.noarch
+
+virt-v2v-1.36.3-6.el7.x86_64
+virt-viewer-5.0-7.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+lftp-4.4.8-8.el7_3.2.x86_64
+firefox-52.2.0-2.el7.centos.x86_64
+
+[root@Mob ~]# vim  /etc/ssh/ssh_config 
+
+[root@Mob ~]# cat  -n  /etc/ssh/ssh_config  |sed  -n  '41p;58,60p' 
+
+    41	   Port 22
+    58	Host *
+    59		GSSAPIAuthentication   yes
+    60	        StrictHostKeyChecking  no
+
+[root@Mob ~]# systemctl restart  sshd
+[root@Mob ~]# systemctl  enable  sshd
+[root@Mob ~]# echo $?
+0
+[root@Mob ~]# systemctl is-enabled  sshd
+enabled
+
+[root@Mob ~]# vim  /etc/selinux/config 
+###~]# sed  -i   's/\(SELINUX=\)enforcing/\1disabled/'  /etc/selinux/config
+
+[root@Mob ~]# sed  -n  7p   /etc/selinux/config 
+SELINUX=disabled
+
+[root@Mob ~]# getenforce 
+Enforcing
+
+[root@Mob ~]# systemctl is-active  firewalld
+active
+
+[root@Mob ~]# firewall-cmd   --get-default-zone
+public
+[root@Mob ~]# yum  -y remove  firewalld-*  python-firewall
+..........................
+删除:
+  firewalld.noarch 0:0.4.4.4-6.el7                  firewalld-filesystem.noarch 0:0.4.4.4-6.el7           
+  python-firewall.noarch 0:0.4.4.4-6.el7           
+
+完毕！
+[root@Mob ~]# getenforce 
+Enforcing
+[root@Mob ~]# systemctl is-active  firewalld
+unknown
+-------------------------------------------------------------------------------
+[root@Mob ~]# echo  $LANG   ## 查看当前使用的系统语言
+zh_CN.UTF-8
+[root@Mob ~]# locale   ## 查看系统安装的语言包
+LANG=zh_CN.UTF-8
+LC_CTYPE="zh_CN.UTF-8"
+LC_NUMERIC="zh_CN.UTF-8"
+........................
+LC_IDENTIFICATION="zh_CN.UTF-8"
+LC_ALL=
+/************
+***[root@Mob ~]# yum groupinstall chinese-support  ## 安装中文语言包
+**********************/
+/****** 真机 **************
+[root@hiys ~]# locale
+LANG=zh_CN.UTF-8
+................................
+[root@hiys ~]# echo  $LANG
+zh_CN.UTF-8
+
+[root@hiys ~]# export  LANG=en_US.UTF-8  ##临时更换语言
+
+[root@hiys ~]# echo  $LANG
+
+en_US.UTF-8
+
+[root@hiys ~]# locale    ## 查看系统安装的语言包
+LANG=en_US.UTF-8
+LC_CTYPE="en_US.UTF-8"
+.................................
+LC_IDENTIFICATION="en_US.UTF-8"
+LC_ALL=
+
+[root@hiys ~]# export  LANG=zh_CN.UTF-8   ##临时更换语言
+
+[root@hiys ~]# locale     ## 查看系统安装的语言包
+
+LANG=zh_CN.UTF-8
+LC_CTYPE="zh_CN.UTF-8"
+.....................................
+LC_IDENTIFICATION="zh_CN.UTF-8"
+LC_ALL=
+
+[root@hiys ~]# echo  $LANG
+zh_CN.UTF-8
+
+********* 真机 ****************/
+
+[root@Mob ~]# LANG="en_US.UTF-8"   ##临时更换语言
+
+[root@Mob ~]# echo $LANG  ## 查看当前使用的系统语言
+en_US.UTF-8
+
+[root@Mob ~]# locale    ## 查看系统安装的语言包
+
+LANG=en_US.UTF-8
+LC_CTYPE="en_US.UTF-8"
+LC_NUMERIC="en_US.UTF-8"
+LC_TIME="en_US.UTF-8"
+LC_COLLATE="en_US.UTF-8"
+LC_MONETARY="en_US.UTF-8"
+LC_MESSAGES="en_US.UTF-8"
+LC_PAPER="en_US.UTF-8"
+LC_NAME="en_US.UTF-8"
+LC_ADDRESS="en_US.UTF-8"
+LC_TELEPHONE="en_US.UTF-8"
+LC_MEASUREMENT="en_US.UTF-8"
+LC_IDENTIFICATION="en_US.UTF-8"
+LC_ALL=
+
+
+[root@Mob ~]# yum  -y install  cloud-*
+............
+Installed:
+  cloud-init.x86_64 0:0.7.9-9.el7.centos.2                                                                
+
+Dependency Installed:
+  PyYAML.x86_64 0:3.10-11.el7                      audit-libs-python.x86_64 0:2.7.6-3.el7                
+  checkpolicy.x86_64 0:2.5-4.el7                   libsemanage-python.x86_64 0:2.5-8.el7                 
+  libyaml.x86_64 0:0.1.4-11.el7_0                  policycoreutils-python.x86_64 0:2.5-17.1.el7          
+  pyserial.noarch 0:2.6-6.el7                      python-IPy.noarch 0:0.75-6.el7                        
+  python-babel.noarch 0:0.9.6-8.el7                python-jinja2.noarch 0:2.7.2-2.el7                    
+  python-jsonpatch.noarch 0:1.2-4.el7              python-jsonpointer.noarch 0:1.9-2.el7                 
+  python-markupsafe.x86_64 0:0.11-10.el7           python-prettytable.noarch 0:0.7.2-3.el7               
+  setools-libs.x86_64 0:3.3.8-1.1.el7             
+
+Complete!
+
+[root@Mob ~]# rpm  -qa  |grep  cloud-
+cloud-utils-growpart-0.29-2.el7.noarch
+cloud-init-0.7.9-9.el7.centos.2.x86_64
+
+[root@Mob ~]# rpm  -q  cloud-utils-growpart
+cloud-utils-growpart-0.29-2.el7.noarch
+
+[root@Mob ~]# ls  /usr/bin/ |wc -l
+925
+[root@Mob ~]# ll  /usr/bin/growpart 
+-rwxr-xr-x. 1 root root 21428 8月   4 2017 /usr/bin/growpart
+[root@Mob ~]# ll  /usr/sbin/xfs_growfs 
+-rwxr-xr-x. 1 root root 335104 8月   4 2017 /usr/sbin/xfs_growfs
+
+[root@Mob ~]# blkid
+/dev/vda1: UUID="4df6bb7d-e402-4a75-ba61-f6cab0856d33" TYPE="xfs" 
+
+[root@Mob ~]# blkid  /dev/vda
+/dev/vda: PTTYPE="dos" 
+
+             第一次开机自动扩容【英语环境LANG=en_US.UTF-8】
+[root@Mob ~]# /usr/bin/growpart   /dev/vda  1     ## 给/dev/vda的第1个分区扩容
+
+[root@Mob ~]# cat  /etc/fstab 
+..................................
+#
+UUID=4df6bb7d-e402-4a75-ba61-f6cab0856d33 /                       xfs     defaults        0 0
+
+[root@Mob ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT
+vda    253:0    0   3G  0 disk 
+└─vda1 253:1    0   3G  0 part  /
+
+[root@Mob ~]# du  -sh  /dev/vda1
+0	/dev/vda1
+
+[root@Mob ~]# df  -hT  
+Filesystem     Type      Size  Used Avail Use% Mounted on
+/dev/vda1      xfs       3.0G  1.8G  1.3G  58% /
+devtmpfs       devtmpfs  991M     0  991M   0% /dev
+tmpfs          tmpfs    1001M     0 1001M   0% /dev/shm
+tmpfs          tmpfs    1001M  8.5M  992M   1% /run
+tmpfs          tmpfs    1001M     0 1001M   0% /sys/fs/cgroup
+tmpfs          tmpfs     201M     0  201M   0% /run/user/0
+
+[root@Mob ~]# vim  /etc/fstab
+
+[root@Mob ~]# tail  -2  /etc/fstab
+#
+/dev/vda1        /         xfs     defaults     0   0
+
+[root@Mob ~]# /usr/sbin/xfs_growfs   /   # 文件系统扩容
+
+meta-data=/dev/vda1              isize=512    agcount=4, agsize=196544 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0 spinodes=0
+data     =                       bsize=4096   blocks=786176, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal               bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+[root@Mob ~]# echo  $?
+0
+
+[root@Mob ~]# systemctl  stop  NetworkManager
+
+[root@Mob ~]# systemctl  is-active  NetworkManager
+inactive
+
+[root@Mob ~]# yum  -y remove  NetworkManager-*
+...................
+Removed:
+  NetworkManager.x86_64 1:1.8.0-9.el7                 NetworkManager-libnm.x86_64 1:1.8.0-9.el7           
+  NetworkManager-team.x86_64 1:1.8.0-9.el7            NetworkManager-tui.x86_64 1:1.8.0-9.el7             
+  NetworkManager-wifi.x86_64 1:1.8.0-9.el7           
+
+Complete!
+[root@Mob ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+[root@Mob ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+NAME="eth0"
+DEVICE="eth0"
+HWADDR="52:54:00:01:78:00"
+ONBOOT=yes
+NETBOOT=yes
+UUID="a3ba517c-2910-4c2b-bcba-7a521064293b"
+IPV6INIT=no
+BOOTPROTO=dhcp
+TYPE=Ethernet
+NM_CONTROLLED="no"
+
+
+[root@Mob ~]# cp  /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-eth1
+
+[root@Mob ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth1
+
+[root@Mob ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth1
+# Generated by dracut initrd
+NAME="eth1"
+DEVICE="eth1"
+ONBOOT=yes
+IPV6INIT=no
+BOOTPROTO="static"
+TYPE=Ethernet
+NM_CONTROLLED="no"
+IPADDR="192.168.4.1"
+NETMASK="255.255.255.0"
+
+[root@Mob ~]# cp  /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-eth2
+[root@Mob ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth2
+[root@Mob ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth2
+# Generated by dracut initrd
+NAME="eth2"
+DEVICE="eth2"
+ONBOOT=yes
+IPV6INIT=no
+BOOTPROTO=dhcp
+TYPE=Ethernet
+NM_CONTROLLED="no"
+
+[root@Mob ~]# cp  /etc/sysconfig/network-scripts/ifcfg-eth2   /etc/sysconfig/network-scripts/ifcfg-eth0
+cp: overwrite ‘/etc/sysconfig/network-scripts/ifcfg-eth0’? y
+
+[root@Mob ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0
+# Generated by dracut initrd
+NAME="eth0"
+DEVICE="eth0"
+ONBOOT=yes
+IPV6INIT=no
+BOOTPROTO=dhcp
+TYPE=Ethernet
+NM_CONTROLLED="no"
+
+[root@Mob ~]# cat  /etc/default/grub
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL_OUTPUT="console"
+GRUB_CMDLINE_LINUX="rhgb quiet"
+GRUB_DISABLE_RECOVERY="true"
+
+[root@Mob ~]# vim  /etc/default/grub
+[root@Mob ~]# cat  /etc/default/grub
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200n8"
+GRUB_DISABLE_LINUX_UUID="true"
+GRUB_ENABLE_LINUX_LABEL="true"
+GRUB_DISABLE_RECOVERY="true"
+
+[root@Mob ~]# vim  /etc/sysconfig/network  ## 禁用空路由
+
+[root@Mob ~]# cat  /etc/sysconfig/network
+# Created by anaconda
+NOZEROCONF="yes"
+
+[root@Mob ~]# rpm  -q  grub2-tools
+grub2-tools-2.02-0.64.el7.centos.x86_64
+
+[root@Mob ~]# grub2-mkconfig  -o  /boot/grub2/grub.cfg 
+
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-3.10.0-693.el7.x86_64
+Found initrd image: /boot/initramfs-3.10.0-693.el7.x86_64.img
+Found linux image: /boot/vmlinuz-0-rescue-37141ced8f234c2096d484f7259ea9b5
+Found initrd image: /boot/initramfs-0-rescue-37141ced8f234c2096d484f7259ea9b5.img
+done
+
+
+[root@Mob ~]# systemctl restart  network
+
+Job for network.service failed because the control process exited with error code. See "systemctl status network.service" and "journalctl -xe" for details.
+
+[root@Mob ~]# chkconfig  network   off
+[root@Mob ~]# echo  $?
+0
+[root@Mob ~]# chkconfig  network   on
+[root@Mob ~]# echo  $?
+0
+[root@Mob ~]# systemctl status network.service
+● network.service - LSB: Bring up/down networking
+   Loaded: loaded (/etc/rc.d/init.d/network; bad; vendor preset: disabled)
+   Active: failed (Result: exit-code) since Thu 2018-11-29 13:21:47 CST; 16min ago
+
+[root@Mob ~]# shutdown -h  now
+PolicyKit daemon disconnected from the bus.
+We are no longer a registered authentication agent.
+Connection to 192.168.1.103 closed by remote host.
+Connection to 192.168.1.103 closed.
+[root@hiys ~]# virsh  start  Mob
+域 Mob 已开始
+
+[root@hiys ~]# ls  /var/log/libvirt/qemu/
+Mob.log     openstack.log  Va2.log  Va4.log  Va6.log  Va8.log  win2008.log
+nova01.log  Va1.log        Va3.log  Va5.log  Va7.log  Va9.log
+[root@hiys ~]# rm  -f  /var/log/libvirt/qemu/Mob.log 
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/
+autostart  nova01.xml     Va1.xml  Va3.xml  Va5.xml  Va7.xml  Va9.xml
+networks   openstack.xml  Va2.xml  Va4.xml  Va6.xml  Va8.xml  Va.xml.txt
+
+[root@hiys ~]# ls  /var/lib/libvirt/images/
+bin                 disk-Va1.img  disk-Va8.img  openstack.img               Va3.img  vsftpd.conf
+conf.d              disk-Va2.img  disk-Va9.img  qemu                        Va4.img  Weekend.sh
+content             disk-Va3.img  exam          Student.sh                  Va5.img
+db                  disk-Va4.img  iso           tedu-wallpaper-01.png       Va6.img
+disk.img            disk-Va5.img  lost+found    tedu-wallpaper-weekend.png  Va7.img
+disk-nova01.img     disk-Va6.img  node.qcow2    Va1.img                     Va8.img
+disk-openstack.img  disk-Va7.img  nova01.img    Va2.img                     Va9.img
+
+[root@hiys ~]# 
+
+
+
+
+
+
+
+
+
+
+

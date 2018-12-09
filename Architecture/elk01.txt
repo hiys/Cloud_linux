@@ -1,0 +1,186 @@
+ 关系型   --------  非关系型
+MySQL    ?--?  NoSQL
+Database  ---->   Index
+Table        ---->   Type
+Row          ---->   Document
+Column    ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch，完成数据的存储和检索
+    - L：是Logstash，完成数据的采集、过滤及解析
+    - K：Kibana，以WEB方式展示
+
+curl 命令
+
+访问一个网页
+curl http://www.baidu.com
+
+显示头信息
+curl -I http://www.baidu.com
+
+显示详细的交互信息
+curl -v http://www.baidu.com
+
+把网页内存保存为文件
+curl -o urfile http://www.baidu.com
+
+禁用 防火墙，禁用 selinux
+
+elasticsearch 安装
+1、安装 openjdk 包
+yum install -y java-1.8.0-openjdk-devel
+
+验证
+java -version
+jps
+
+安装 elasticsearch 
+rpm -ivh elasticsearch-2.3.4.rpm
+
+修改配置文件启动服务
+network.host: ip.xx.xx.xx
+systemctl start elasticsearch
+
+验证
+systemctl status elasticsearch
+netstat -ltunp
+
+通过浏览器访问
+http://192.168.4.11:9200/
+
+elasticsearch 集群安装
+在多台机器上安装部署 java-1.8.0-openjdk-devel，elasticsearch-2.3.4.rpm
+修改 hosts 文件，保证所有机器通过名称能 ping 通集群中的其他机器
+
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+
+在所有节点修改配置文件 /etc/elasticsearch/elasticsearch.yml 
+cluster.name: my-elk01
+node.name: node5
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["node1", "node2", "node3", "node5"]
+
+启动所有节点的 elasticsearch 服务
+通过浏览器可以访问任意节点的 http://ip.xx.xx.xx:9200/
+
+验证集群是否正常，访问
+http://192.168.4.15:9200/_cluster/health?pretty
+
+{
+  "cluster_name" : "my-elk01", #集群名称
+  "status" : "green", # 表示正常
+  "timed_out" : false,
+  "number_of_nodes" : 5, #当前节点数量
+  "number_of_data_nodes" : 5,
+  "active_primary_shards" : 0,
+  "active_shards" : 0,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+
+插件的安装 head  kopf  bigdesk
+1 拷贝插件 zip 包到一个目录
+2 /usr/share/elasticsearch/bin/plugin install file:///插件的位置/插件包.zip 安装
+
+3 验证：
+安装完成以后可以通过
+/usr/share/elasticsearch/bin/plugin list 看到我们已经安装的插件的名称
+
+4 访问head 插件
+它展现ES集群的拓扑结构
+可以通过它来进行索引（Index）和节点（Node）级别的操作
+它提供一组针对集群的查询API，并将结果以json和表格形式返回
+它提供一些快捷菜单，用以展现集群的各种状态
+http://192.168.4.11:9200/_plugin/head/
+
+
+5 kopf 插件安装
+kopf是一个ElasticSearch的管理工具，它提供了对ES集群操作的API。
+/usr/share/elasticsearch/bin/plugin install file:///xxx-kopf.zip
+
+访问地址
+http://192.168.4.11:9200/_plugin/kopf/
+
+6 bigdesk 插件安装
+bigdesk是elasticsearch的一个集群监控工具
+可以通过它来查看es集群的各种状态，
+如：cpu、内存使用情况，索引数据、搜索情况，http连接数等。
+/usr/share/elasticsearch/bin/plugin install file:///bigdesk-xxx.zip
+
+访问地址
+http://192.168.4.11:9200/_plugin/bigdesk/
+
+使用RESTful API操作elasticsearch
+curl -XPUT 'http://192.168.4.11:9200/school/' -d '{
+    "settings":{
+        "index":{
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    }
+}'
+
+获取索引配置信息：
+curl -XGET 'http://192.168.4.11:9200/school/_settings/'
+curl -XGET 'http://192.168.4.11:9200/_all/_settings/'
+
+创建文档
+curl -XPUT 'http://192.168.4.11:9200/school/students/1' -d '{
+    "title": "devops",
+    "name":{
+        "first": "guzhang",
+        "last": "wu"
+    },
+    "age": 25
+}'
+
+查询文档信息
+curl -XGET 'http://192.168.4.11:9200/school/students/1'
+curl -XGET 'http://192.168.4.11:9200/school/students/1?_source=name,age'
+
+更新文档信息
+curl -XPOST 'http://192.168.4.11:9200/school/students/1/_update' -d '{
+    "doc":{
+        "age": 30
+    }
+}'
+
+删除文档信息
+curl -XDELETE 'http://192.168.4.14:9200/school/students/1'
+
+批量导入数据
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @shakespeare.json
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @logs.jsonl
+curl -XPOST 'http://192.168.4.14:9200/accounts/act/_bulk?pretty' --data-binary @accounts.json
+
+批量查询数据
+curl -XGET 'http://192.168.4.11:9200/_mget?pretty' -d '{ 
+    "docs":[
+        {
+            "_index": "accounts",
+            "_type:": "act",
+            "_id": 1
+        },
+        {
+            "_index": "accounts",
+            "_type:": "act",
+            "_id": 2
+        },
+        {
+            "_index": "shakespeare",
+            "_type:": "scene",
+            "_id": 1
+        }
+    ]
+}'
+
+json 是什么，格式怎么书写
+

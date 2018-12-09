@@ -1,0 +1,132 @@
+
+[root@Va1 ~]# tar  -zxf  zookeeper-3.4.10.tar.gz                                                     ★ --虚拟机--★ 
+[root@Va1 ~]# ls                                                                                     ★ --虚拟机--★ 
+aaa      elk.tar  Hadoop.zip   index.html               nagios-plugins-2.1.4.tar.gz  user.sh         ★ --虚拟机--★ 
+bigdesk  f1       ha.sh        kafka_2.10-0.10.2.1.tgz  nrpe-2.12.tar.gz             zookeeper-3.4.10
+eip      hadoop   index2.html  nagios-4.2.4.tar.gz      nrpe-3.0.1.tar.gz            zookeeper-3.4.10★ --虚拟机--★ 
+[root@Va1 ~]# mv  zookeeper-3.4.10
+zookeeper-3.4.10/        zookeeper-3.4.10.tar.gz                                                     ★ --虚拟机--★ 
+[root@Va1 ~]# mv  zookeeper-3.4.10/    /usr/local/zookeeper                                          ★ --虚拟机--★ 
+[root@Va1 ~]# ls  /usr/local/zookeeper/
+bin        dist-maven       lib                   README.txt            zookeeper-3.4.10.jar.asc     ★ --虚拟机--★ 
+build.xml  docs             LICENSE.txt           recipes               zookeeper-3.4.10.jar.md5     ★ --虚拟机--★ 
+conf       ivysettings.xml  NOTICE.txt            src                   zookeeper-3.4.10.jar.sha1
+contrib    ivy.xml          README_packaging.txt  zookeeper-3.4.10.jar
+[root@Va1 ~]# cd  /usr/local/zookeeper/
+[root@Va1 zookeeper]# cd
+[root@Va1 ~]# ls  /usr/local/zookeeper/conf/
+configuration.xsl  log4j.properties  zoo_sample.cfg                                                  ★ --虚拟机--★ 
+[root@Va1 ~]# cd  /usr/local/zookeeper/conf/                                                         ★ --虚拟机--★ 
+[root@Va1 conf]# mv  zoo_sample.cfg  zoo.cfg                                                         ★ --虚拟机--★ 
+[root@Va1 conf]# ls                                                                                  ★ --虚拟机--★ 
+configuration.xsl  log4j.properties  zoo.cfg                                                         ★ --虚拟机--★ 
+[root@Va1 conf]# ll  zoo.cfg                                                                         ★ --虚拟机--★ 
+-rw-rw-r-- 1 1001 1001 922 3月  23 2017 zoo.cfg                                                      ★ --虚拟机--★ 
+[root@Va1 conf]# chown  root.root  zoo.cfg
+[root@Va1 conf]# ll  zoo.cfg                                                                         ★ --虚拟机--★ 
+-rw-rw-r-- 1 root root 922 3月  23 2017 zoo.cfg                                                      ★ --虚拟机--★ 
+[root@Va1 conf]# vim  zoo.cfg
+[root@Va1 conf]# tail  -5  zoo.cfg                                                                   ★ --虚拟机--★ 
+#autopurge.purgeInterval=1                                                                           ★ --虚拟机--★ 
+server.1=Va2:2888:3888
+server.2=Va3:2888:3888                                                                               ★ --虚拟机--★ 
+server.3=Va4:2888:3888
+server.4=Va1:2888:3888:observer                                                                      ★ --虚拟机--★ 
+[root@Va1 conf]# mkdir   /tmp/zookeeper                                                              ★ --虚拟机--★ 
+[root@Va1 conf]# echo  4 > /tmp/zookeeper/myid
+[root@Va1 conf]# 
+[root@Va1 conf]# rsync  -aSH  --delete  /usr/local/zookeeper  Va2:/usr/local
+[root@Va1 conf]# rsync  -aSH  --delete  /usr/local/zookeeper  Va3:/usr/local
+[root@Va1 conf]# rsync  -aSH  --delete  /usr/local/zookeeper  Va4:/usr/local
+[root@Va1 conf]# for  i  in  {2..4};do
+> ssh  Va${i}  "mkdir   /tmp/zookeeper  && echo  4 > /tmp/zookeeper/myid"
+> done
+[root@Va1 conf]# ssh  Va2  'cat  /tmp/zookeeper/myid'
+4
+[root@Va1 conf]# ssh  Va2  'echo  1 >  /tmp/zookeeper/myid'
+[root@Va1 conf]# ssh  Va2  'cat  /tmp/zookeeper/myid'
+1
+[root@Va1 conf]# pwd
+/usr/local/zookeeper/conf
+[root@Va1 conf]# cd
+[root@Va1 ~]# scp  zookeeper-3.4.10.tar.gz  192.168.1.254:/root/桌面/rpm-tar-zip-iso 
+Warning: Permanently added '192.168.1.254' (ECDSA) to the list of known hosts.
+root@192.168.1.254's password: 
+zookeeper-3.4.10.tar.gz                                                           100%   33MB 164.4MB/s   00:00    
+[root@Va1 ~]# 
+
+mv  zoo_sample.cfg  zoo.cfg
+
+mkdir   /tmp/zookeeper
+
+echo  4 > /tmp/zookeeper/myid
+
+rsync  -aSH  --delete  /usr/local/zookeeper  Va2:/usr/local
+rsync  -aSH  --delete  /usr/local/zookeeper  Va3:/usr/local
+rsync  -aSH  --delete  /usr/local/zookeeper  Va4:/usr/local
+
+for  i  in  {2..4};do
+ssh  Va${i}  "mkdir   /tmp/zookeeper  && echo $[$i-1] > /tmp/zookeeper/myid"
+done
+
+ssh  Va2  'cat  /tmp/zookeeper/myid'
+
+for  i  in  {2..4};do
+ssh  Va${i}  "echo $[$i-1] > /tmp/zookeeper/myid"
+done
+
+[root@Va1 ~]# ls
+aaa      elk.tar  Hadoop.zip   index.html               nagios-plugins-2.1.4.tar.gz  user.sh
+bigdesk  f1       ha.sh        kafka_2.10-0.10.2.1.tgz  nrpe-2.12.tar.gz             zookeeper-3.4.10.tar.gz
+eip      hadoop   index2.html  nagios-4.2.4.tar.gz      nrpe-3.0.1.tar.gz
+[root@Va1 ~]# for  i  in  {2..4};do
+> ssh  Va${i}  "echo $[$i-1] > /tmp/zookeeper/myid"
+> done
+[root@Va1 ~]# ssh  Va2  'cat  /tmp/zookeeper/myid'
+1
+[root@Va1 ~]# ssh  Va3  'cat  /tmp/zookeeper/myid'
+2
+[root@Va1 ~]# ssh  Va4  'cat  /tmp/zookeeper/myid'
+3
+[root@Va1 ~]# 
+
+
+nc
+socat
+
+socat  -  Va3:2181
+
+socat  -TCP4:Va3:2181
+
+man  socat
+
+exec  8<>/dev/tcp/Va3/2181
+echo "ruok" >&8
+cat  <&8
+
+exec  8<&-
+
+./bin/ka
+
+ssh  node1
+cd  /usr/local/kafka/
+./bin/kafka-topics.sh  --create  --partitions  1 --replication-factor  1 --zookeeper  node3:2181  --topic  mymsg
+
+ssh  node2
+./bin/kafka-console-producer.sh  --broker-list  localhost:9092  --topic  mymsg
+
+node3
+./bin/kafka-console-consumer.sh  --bootstrap-server  localhost:9092  --topic  mymsg
+
+
+
+
+
+
+
+
+
+
+
+
+

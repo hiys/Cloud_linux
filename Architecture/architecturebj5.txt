@@ -1,0 +1,828 @@
+
+
+[root@hiys ~]# scp '/root/桌面/arthitecture 05/Hadoop.zip'  root@192.168.1.11:/root/
+root@192.168.1.11's password: 
+Hadoop.zip                                                                                 100%  277MB 138.3MB/s   00:02    
+[root@hiys ~]# scp '/root/桌面/arthitecture 05/Hadoop.zip'  root@192.168.1.12:/root/
+
+/***
+192.168.1.11  NameNode ---SecondaryNameNode--nn01   HDFS      Va1
+192.168.1.12       node1                            HDFS      Va2
+192.168.1.13       node2                            HDFS      Va3
+192.168.1.14       node3                            HDFS      Va4
+*****/
+
+[root@Va1 ~]# ls
+aaa      eip      f1          hadoop.zip  index2.html  nagios-4.2.4.tar.gz          nrpe-2.12.tar.gz   user.sh
+bigdesk  elk.tar  hadoop.tar  ha.sh       index.html   nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz
+
+[root@Va1 ~]# yum  -y  install  java-1.8.0-openjdk-devel
+
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                                                                 
+
+完毕！
+[root@Va1 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@Va1 ~]# jps  ## 进程pid 查看（每次不一样）
+1083 Jps
+783 Elasticsearch
+
+[root@Va1 ~]# 
+[root@Va1 ~]# ls
+aaa                  index2.html
+bigdesk              index.html
+eip                  ?k??1?Ad???5??9?G???cg?*?XD?????x???lMN???T?P??????:"4Eʖ???2"???m?? ?
+..................................
+[root@Va1 ~]# rm  -f  ?k*
+[root@Va1 ~]# ls
+aaa      eip      f1          ha.sh        index.html               nagios-4.2.4.tar.gz          nrpe-2.12.tar.gz   user.sh
+bigdesk  elk.tar  Hadoop.zip  index2.html  kafka_2.10-0.10.2.1.tgz  nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz  zookeeper-3.4.10.tar.gz
+[root@Va1 ~]# 
+
+[root@Va1 ~]# unzip  Hadoop.zip 
+Archive:  Hadoop.zip
+  inflating: hadoop/hadoop-2.7.6.tar.gz  
+ extracting: hadoop/kafka_2.10-0.10.2.1.tgz  
+  inflating: hadoop/zookeeper-3.4.10.tar.gz  
+
+[root@Va1 ~]# ls
+...............................
+
+[root@Va1 ~]# ls  hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# 
+[root@Va1 ~]# tar  -xf  hadoop/hadoop-2.7.6.tar.gz 
+
+[root@Va1 ~]# ls
+aaa      elk.tar  hadoop-2.7.6  index2.html              nagios-4.2.4.tar.gz          nrpe-3.0.1.tar.gz
+bigdesk  f1       Hadoop.zip    index.html               nagios-plugins-2.1.4.tar.gz  user.sh
+eip      hadoop   ha.sh         kafka_2.10-0.10.2.1.tgz  nrpe-2.12.tar.gz             zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# ls  hadoop-2.7.6/
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 ~]# mv  hadoop-2.7.6/   /usr/local/hadoop
+
+[root@Va1 ~]# ls  /usr/local/hadoop/
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 ~]# 
+[root@Va1 ~]# cd  /usr/local/hadoop/
+
+[root@Va1 hadoop]# rpm  -ql  java-1.8.0-openjdk
+
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/policytool
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libawt_xawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjsoundalsa.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libsplashscreen.so                   ★ --虚拟机--★ 
+/usr/share/applications/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64-policytool.desktop
+/usr/share/icons/hicolor/16x16/apps/java-1.8.0.png                                                             ★ --虚拟机--★ 
+/usr/share/icons/hicolor/24x24/apps/java-1.8.0.png
+/usr/share/icons/hicolor/32x32/apps/java-1.8.0.png
+/usr/share/icons/hicolor/48x48/apps/java-1.8.0.png
+[root@Va1 hadoop]# ls  etc/
+hadoop
+[root@Va1 hadoop]# ls  etc/hadoop/
+....................................
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop
+
+[root@Va1 hadoop]# vim   /usr/local/hadoop/etc/hadoop/hadoop-env.sh   ### 修改配置文件 1
+
+ 25 export JAVA_HOME=${JAVA_HOME}  修改此行
+ 25 export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+
+ 33 export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"/etc/hadoop"}  修改此行
+ 33 export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+[root@Va1 hadoop]# sed  -n '25p;33p'  /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+[root@Va1 hadoop]# ls
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 hadoop]# ls  /usr/local/hadoop/bin/
+container-executor  hadoop  hadoop.cmd  hdfs  hdfs.cmd  mapred  mapred.cmd  rcc  test-container-executor  yarn  yarn.cmd
+
+[root@Va1 hadoop]# head  -2  /usr/local/hadoop/bin/hadoop
+#!/usr/bin/env bash
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop
+
+Usage: hadoop [--config confdir] [COMMAND | CLASSNAME]
+  CLASSNAME            run the class named CLASSNAME
+ or                                                        ★ --虚拟机--★ 
+  where COMMAND is one of:
+  fs                   run a generic filesystem user client
+  version              print the version
+  jar <jar>            run a jar file
+                       note: please use "yarn jar" to launch
+                             YARN applications, not this command.
+  checknative [-a|-h]  check native hadoop and compression libraries availability
+  distcp <srcurl> <desturl> copy file or directories recursively
+  archive -archiveName NAME -p <parent path> <src>* <dest> create a hadoop archive
+  classpath            prints the class path needed to get the
+  credential           interact with credential providers
+                       Hadoop jar and the required libraries
+  daemonlog            get/set the log level for each daemon
+  trace                view and modify Hadoop tracing settings
+
+Most commands print help when invoked w/o parameters.
+
+[root@Va1 hadoop]# 
+
+/***
+192.168.1.11  NameNode ---SecondaryNameNode--nn01   HDFS      Va1
+192.168.1.12       node1                            HDFS      Va2
+192.168.1.13       node2                            HDFS      Va3
+192.168.1.14       node3                            HDFS      Va4
+*****/
+[root@Va1 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+
+[root@Va1 ~]# jps #### 进程pid 查看（每次不一样）
+2286 Jps
+783 Elasticsearch
+[root@Va1 ~]# 
+[root@Va1 ~]# mkdir /usr/local/hadoop/aa
+
+[root@Va1 ~]# ls  /usr/local/hadoop/
+aa  bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 ~]# cd  /usr/local/hadoop/
+
+[root@Va1 hadoop]# cp  *.txt  /usr/local/hadoop/aa/
+
+             //wordcount为参数 统计aa这个文件夹，存到bb这个文件里面（这个文件不能存在，要是存在会报错，是为了防止数据覆盖）
+[root@Va1 hadoop]# ./bin/hadoop   jar  share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar  wordcount  aa    bb
+.....................................
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=102768
+	File Output Format Counters 
+		Bytes Written=30538
+[root@Va1 hadoop]# 
+
+[root@Va1 hadoop]# cat   bb/_SUCCESS
+
+[root@Va1 hadoop]# ll  bb/_SUCCESS
+-rw-r--r-- 1 root root 0 11月 27 14:49 bb/_SUCCESS
+
+[root@Va1 hadoop]# wc  -l bb/part-r-00000 
+2408 bb/part-r-00000
+
+[root@Va1 hadoop]# tail  -3  bb/part-r-00000
+“You”	2
+“commercial	3
+“control”	1
+
+[root@Va1 hadoop]# head  -3   bb/part-r-00000
+""AS	2
+"AS	17
+"COPYRIGHTS	1
+
+[root@Va1 hadoop]# cd
+
+[root@Va1 ~]# vim  /etc/ssh/ssh_config 
+
+ 41    Port 22
+
+ 58 Host *
+ 59         GSSAPIAuthentication yes
+ 60         StrictHostKeyChecking  no
+
+[root@Va1 ~]# cat  -n  /etc/ssh/ssh_config  |sed  -n  '41p;58,60p'  
+    41	   Port 22
+    58	Host *
+    59		GSSAPIAuthentication yes
+    60	        StrictHostKeyChecking  no
+[root@Va1 ~]# 
+/****************
+[root@hiys ~]# ssh-keygen   -R   192.168.1.141  ## 使用命令清除所连接的IP
+************/
+
+[root@Va1 ~]# ssh-keygen   ## 【 第二种方式 ssh-keygen  -b  2048  -t  rsa  -N  ''  -f  key 】
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 直接回车
+/root/.ssh/id_rsa already exists.
+Overwrite (y/n)? y      直接 y 回车                                                                          ★ --虚拟机--★ 
+Enter passphrase (empty for no passphrase): 直接回车
+Enter same passphrase again: 直接回车
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:+e3M07EMXrPqJt9cHIxyEGSGuy2YKCBtpw9bOI/AjY0 root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+|          o=     |
+|         .o .    |
+| .        ..     |
+|..o .    o  . o  |
+|o.*+  . S o. o o |
+|.E=+.. o + o+ +..|
+| . O.     o..= =o|
+|  o o     .++o=. |
+|           =Boo  |
++----[SHA256]-----+
+[root@Va1 ~]# 
+
+[root@Va1 ~]# for  i  in  192.168.1.1{2..9}  ##方式 1 注意绝对路径
+> do
+> ssh-copy-id  -i  /root/.ssh/id_rsa.pub  $i
+> done
+
+[root@Va1 ~]# cd  /root/.ssh/   ## 方式2 相对路径
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+[root@Va1 .ssh]# for  i  in  192.168.1.1{2..9}; do ssh-copy-id  -i  id_rsa.pub  $i; done
+
+                                                                                                  ★ --虚拟机--★ 
+[root@Va1 .ssh]# ssh  Va9
+Last login: Mon Nov 26 17:29:39 2018 from 192.168.1.254
+[root@Va9 ~]# exit
+登出                                                                                              ★ --虚拟机--★ 
+Connection to va9 closed.
+[root@Va1 .ssh]# ssh  Va7
+Last login: Mon Nov 26 14:11:08 2018 from 192.168.1.254
+[root@Va7 ~]# exit
+登出
+Connection to va7 closed.
+
+[root@Va1 .ssh]# ssh  Va2
+Last login: Tue Nov 27 14:08:13 2018 from 192.168.1.254
+[root@Va2 ~]# exit
+登出
+Connection to va2 closed.
+[root@Va1 .ssh]# cd
+
+[root@Va1 ~]# ssh-copy-id  -i  /root/.ssh/id_rsa.pub   192.168.1.11  ## 本机器给自己配公钥匙
+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@192.168.1.11's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh '192.168.1.11'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@Va1 ~]# 
+
+
+[root@Va1 ~]# cd  /usr/local/hadoop/etc/hadoop/
+[root@Va1 hadoop]# ls
+capacity-scheduler.xml      hadoop-policy.xml        kms-log4j.properties        ssl-client.xml.example
+configuration.xsl           hdfs-site.xml            kms-site.xml                ssl-server.xml.example
+container-executor.cfg      httpfs-env.sh            log4j.properties            yarn-env.cmd
+core-site.xml               httpfs-log4j.properties  mapred-env.cmd              yarn-env.sh
+hadoop-env.cmd              httpfs-signature.secret  mapred-env.sh               yarn-site.xml
+hadoop-env.sh               httpfs-site.xml          mapred-queues.xml.template
+hadoop-metrics2.properties  kms-acls.xml             mapred-site.xml.template
+hadoop-metrics.properties   kms-env.sh               slaves
+
+/***
+[root@Va1 hadoop]# vim   /usr/local/hadoop/etc/hadoop/hadoop-env.sh   ### 修改配置文件 1{ 前面已经完成}
+***/
+[root@Va1 hadoop]# vim  slaves   ### 修改配置文件 2 【/usr/local/hadoop/etc/hadoop/slaves】
+[root@Va1 hadoop]# cat  slaves
+Va2
+Va3
+Va4
+
+[root@Va1 ~]# mkdir  /var/hadoop
+[root@Va1 ~]# ls  /var/hadoop/
+/***
+https://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-common/core-default.xml
+Configuration
+core-default.xml
+hdfs-default.xml
+mapred-default.xml
+yarn-default.xml
+Deprecated Properties
+https://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+***/
+
+[root@Va1 hadoop]# vim  core-site.xml   ### 修改配置文件3  【/usr/local/hadoop/etc/hadoop/core-site.xml】
+
+[root@Va1 hadoop]# sed  -n '19,$p'  core-site.xml
+<configuration>
+ <property>
+   <name>fs.defaultFS</name>  ## fs.default.name
+   <value>hdfs://Va1:9000</value>  ##不使用本地硬盘file:///
+ </property>
+ <property>
+   <name>hadoop.tmp.dir</name>
+   <value>/var/hadoop</value>  ## 自定义根目录【官方文档/tmp/hadoop-${user.name}】
+ </property>
+</configuration>
+
+[root@Va1 hadoop]# rpm  -q  rsync
+rsync-3.0.9-18.el7.x86_64
+
+[root@Va1 hadoop]# 
+
+<property>
+ 
+</property>
+ <property>
+  <name></name>
+  <value></value>
+ </property>
+ <property>
+  <name></name>
+  <value></value>
+ </property>
+
+[root@Va1 hadoop]# vim   hdfs-site.xml  ### 修改配置文件 4  【/usr/local/hadoop/etc/hadoop/hdfs-site.xml 】
+
+[root@Va1 hadoop]# sed  -n  '19,$p'  /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+<configuration>
+ <property>
+   <name>dfs.namenode.http-address</name>  ## 寻找NameNode的主机
+   <value>Va1:50070</value>
+ </property>
+ <property>
+  <name>dfs.namenode.secondary.http-address</name>  ##SecondaryNameNode 的主机
+  <value>Va1:50090</value>
+ </property>
+ <property>
+  <name>dfs.replication</name>  ## 备份 2 份
+  <value>2</value>
+ </property>
+</configuration>
+
+[root@Va1 hadoop]#   
+/***
+[root@xuexi ~]# rsync /etc/fstab /tmp                # 在本地同步
+[root@xuexi ~]# rsync -r /etc 172.16.10.5:/tmp       # 将本地/etc目录拷贝到远程主机的/tmp下，以保证远程/tmp目录和本地/etc保持同步
+[root@xuexi ~]# rsync -r 172.16.10.5:/etc /tmp       # 将远程主机的/etc目录拷贝到本地/tmp下，以保证本地/tmp目录和远程/etc保持同步
+[root@xuexi ~]# rsync /etc/                          # 列出本地/etc/目录下的文件列表
+[root@xuexi ~]# rsync 172.16.10.5:/tmp/              # 列出远程主机上/tmp/目录下的文件列表
+
+第四种工作方式：通过远程shell也能临时启动一个rsync daemon，这不同于方式(3)，它不要求远程主机上事先启动rsync服务，而是临时派生出rsync daemon，它是单用途的一次性daemon，仅用于临时读取daemon的配置文件，当此次rsync同步完成，远程shell启动的rsync daemon进程也会自动消逝。此通信方式的命令行语法格式同"Access via rsync daemon"，但要求options部分必须明确指定"--rsh"选项或其短选项"-e"
+-a --archive  ：归档模式，表示递归传输并保持文件属性。等同于"-rtopgDl"。
+-e          ：指定所要使用的远程shell程序，默认为ssh。
+
+-S, --sparse                handle sparse files efficiently
+ 尝试以高效率的方式处理稀疏文件，使得它们在目标主机上占用更少的空间。该选项不能和
+              "--inplace"选项一起使用，因为"--inplace"不能向稀疏模式的文件中覆盖数据。
+
+   -H, --hard-links            preserve hard links
+
+**/
+
+               ## 误操作 应该是 12 到 14
+[root@Va1 hadoop]# for  i  in  192.168.1.1{2..9}; do rsync  -aSH  --delete  /usr/local/hadoop/  $i:/usr/local/hadoop/  -e   'ssh'  &  done
+[1] 3510
+[2] 3511
+[3] 3512
+[4] 3513
+[5] 3514
+[6] 3515
+[7] 3516
+[8] 3517
+[root@Va1 hadoop]# for  i  in  192.168.1.1{2..4}; do rsync  -aSH  --delete  /usr/local/hadoop/  $i:/usr/local/hadoop/  -e   'ssh'  &  done      //同步的主机都要安装rsync
+[9] 3536
+[10] 3537
+[11] 3538
+[5]   完成                  rsync -aSH --delete /usr/local/hadoop/ $i:/usr/local/hadoop/ -e 'ssh'
+[root@Va1 hadoop]# 
+
+[root@Va1 hadoop]# ssh  Va2  ls /usr/local/hadoop/                                                ★ --虚拟机--★ 
+aa
+bb
+bin
+etc
+include
+lib
+libexec                                                                                           ★ --虚拟机--★ 
+LICENSE.txt
+NOTICE.txt                                                                                        ★ --虚拟机--★ 
+README.txt                                                                                        ★ --虚拟机--★ 
+sbin
+share                                                                                             ★ --虚拟机--★ 
+[root@Va1 hadoop]# ssh  Va4  ls /usr/local/hadoop/
+aa
+bb                                                                                                ★ --虚拟机--★ 
+bin
+etc
+include
+lib
+libexec
+LICENSE.txt
+NOTICE.txt
+README.txt
+sbin
+share
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop/etc/hadoop
+[root@Va1 hadoop]# cd  /usr/local/hadoop/
+
+[root@Va1 hadoop]# ls
+aa  bb  bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 hadoop]# ls  bin/
+container-executor  hadoop.cmd  hdfs.cmd  mapred.cmd  test-container-executor  yarn.cmd
+hadoop              hdfs        mapred    rcc         yarn
+
+[root@Va1 hadoop]# ./bin/hdfs    namenode  -format   //格式化 namenode
+.................
+18/11/27 16:19:38 INFO namenode.NNStorageRetentionManager: Going to retain 1 images with txid >= 0
+18/11/27 16:19:38 INFO util.ExitUtil: Exiting with status 0                                       ★ --虚拟机--★ 
+18/11/27 16:19:38 INFO namenode.NameNode: SHUTDOWN_MSG: 
+/************************************************************                                     ★ --虚拟机--★ 
+SHUTDOWN_MSG: Shutting down NameNode at Va1/192.168.1.11                                          ★ --虚拟机--★ 
+************************************************************/
+[root@Va1 hadoop]# ls  bin/
+container-executor  hadoop.cmd  hdfs.cmd  mapred.cmd  test-container-executor  yarn.cmd
+hadoop              hdfs        mapred    rcc         yarn
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop
+[root@Va1 ~]# ls  /usr/local/hadoop/sbin/
+distribute-exclude.sh  kms.sh                   start-balancer.sh    stop-all.cmd        stop-yarn.cmd
+hadoop-daemon.sh       mr-jobhistory-daemon.sh  start-dfs.cmd        stop-all.sh         stop-yarn.sh
+hadoop-daemons.sh      refresh-namenodes.sh     start-dfs.sh         stop-balancer.sh    yarn-daemon.sh
+hdfs-config.cmd        slaves.sh                start-secure-dns.sh  stop-dfs.cmd        yarn-daemons.sh
+hdfs-config.sh         start-all.cmd            start-yarn.cmd       stop-dfs.sh
+httpfs.sh              start-all.sh             start-yarn.sh        stop-secure-dns.sh
+
+[root@Va1 ~]# jps      //验证角色
+3958 Jps
+783 Elasticsearch
+
+[root@Va1 ~]# /usr/local/hadoop/sbin/start-dfs.sh   //启动
+
+Starting namenodes on [Va1]
+Va1: Warning: Permanently added 'va1' (ECDSA) to the list of known hosts.
+Va1: starting namenode, logging to /usr/local/hadoop/logs/hadoop-root-namenode-Va1.out
+Va2: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va2.out
+Va4: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va4.out
+Va3: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va3.out
+Starting secondary namenodes [Va1]
+Va1: starting secondarynamenode, logging to /usr/local/hadoop/logs/hadoop-root-secondarynamenode-Va1.out
+
+[root@Va1 ~]# jps      //验证角色
+4081 NameNode
+4394 Jps
+4269 SecondaryNameNode
+783 Elasticsearch
+
+[root@Va1 ~]# ls  /usr/local/hadoop/bin/
+container-executor  hadoop.cmd  hdfs.cmd  mapred.cmd  test-container-executor  yarn.cmd
+hadoop              hdfs        mapred    rcc         yarn
+
+[root@Va1 ~]# /usr/local/hadoop/bin/hdfs   dfsadmin  -report    //查看集群是否组建成功
+
+Configured Capacity: 53652426752 (49.97 GB)
+Present Capacity: 44475412480 (41.42 GB)
+DFS Remaining: 44475400192 (41.42 GB)
+DFS Used: 12288 (12 KB)
+DFS Used%: 0.00%
+Under replicated blocks: 0
+Blocks with corrupt replicas: 0
+Missing blocks: 0
+Missing blocks (with replication factor 1): 0
+
+-------------------------------------------------
+Live datanodes (3):        //有三个角色成功
+
+Name: 192.168.1.12:50010 (Va2)
+Hostname: Va2
+Decommission Status : Normal
+Configured Capacity: 19315798016 (17.99 GB)
+DFS Used: 4096 (4 KB)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***
+192.168.1.11  NameNode ---SecondaryNameNode--nn01   HDFS      Va1
+192.168.1.12       node1                            HDFS      Va2
+192.168.1.13       node2                            HDFS      Va3
+192.168.1.14       node3                            HDFS      Va4
+*****/
+[root@Va2 ~]# ls                                                                                  ★ --虚拟机--★ 
+bigdesk  elk.tar     hadoop.zip  index.html           nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz
+eip      hadoop.tar  Hadoop.zip  nagios-4.2.4.tar.gz  nrpe-2.12.tar.gz             uptime.yml
+[root@Va2 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va2 ~]# 
+[root@Va2 ~]# yum  -y install  java-1.8.0-openjdk-devel |tail -4
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                        
+
+完毕！
+[root@Va2 ~]# ls  /root/.ssh/
+authorized_keys  known_hosts
+[root@Va2 ~]# cat  /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCpIcC51SxIXLhG4aYl2So5uBHsvmE/oqW3CpZlkTEsTax+90gnSyUujK+I7DYgFJ4Pe2K+/lNLQ13QgosQwKw6bQEKFytRVzgxWTrGNbamKKvSMxuMgsFJk5WpGdJBTgqYfjfIeUaOA4cuYlb2fPFHtjvIPf0sXSJfG9UBeY2HqxuLiGwob/dLb+NxPQTfvfXZdlmIVlzzLQenm3yXmi95prudYhPvl/abV9D7ZUGuAXmm+785PU6uUwOLs4BZcTjiI426sCKsS18GHw/AhAgrjsECxK94TVzfc46ZRZJoaPvI7c3Nbht/0WO1dHDkzN1CldWLDiCIJheHDIs+dXix root@Va1
+[root@Va2 ~]# ll  /root/.ssh/authorized_keys
+-rw------- 1 root root 780 11月 27 15:23 /root/.ssh/authorized_keys
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+/***
+192.168.1.11  NameNode ---SecondaryNameNode--nn01   HDFS      Va1
+192.168.1.12       node1                            HDFS      Va2
+192.168.1.13       node2                            HDFS      Va3
+192.168.1.14       node3                            HDFS      Va4
+*****/
+[root@Va3 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va3 ~]# 
+[root@Va3 ~]#  yum  -y install  java-1.8.0-openjdk-devel |tail -4
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                        
+
+完毕！
+[root@Va3 ~]# ll  /root/.ssh/
+authorized_keys  known_hosts      
+[root@Va3 ~]# ll  /root/.ssh/authorized_keys 
+-rw------- 1 root root 780 11月 27 15:23 /root/.ssh/authorized_keys
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***
+192.168.1.11  NameNode ---SecondaryNameNode--nn01   HDFS      Va1
+192.168.1.12       node1                            HDFS      Va2
+192.168.1.13       node2                            HDFS      Va3
+192.168.1.14       node3                            HDFS      Va4
+*****/
+[root@Va4 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va4 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***
+192.168.1.11  NameNode ---SecondaryNameNode--nn01   HDFS      Va1
+192.168.1.12       node1                            HDFS      Va2
+192.168.1.13       node2                            HDFS      Va3
+192.168.1.14       node3                            HDFS      Va4
+*****/
+[root@Va6 ~]# ls                                       ★ --虚拟机--★ 
+bigdesk  elk.tar     hadoop.zip  nagios-4.2.4.tar.gz          nrpe-2.12.tar.gz                    ★ --虚拟机--★ 
+eip      hadoop.tar  Hadoop.zip  nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz
+[root@Va6 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4                ★ --虚拟机--★ 
+192.168.1.11    Va1
+192.168.1.12    Va2                                                                               ★ --虚拟机--★ 
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5                                                                               ★ --虚拟机--★ 
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va6 ~]# yum  -y install  java-1.8.0-openjdk-devel  |tail -4                                 ★ --虚拟机--★ 
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                        
+                                                                                                  ★ --虚拟机--★ 
+完毕！
+[root@Va6 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)                                                 ★ --虚拟机--★ 
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+[root@Va6 ~]# jps
+1132 Jps
+
+[root@Va6 ~]# unzip   Hadoop.zip 
+Archive:  Hadoop.zip
+  inflating: hadoop/hadoop-2.7.6.tar.gz  
+ extracting: hadoop/kafka_2.10-0.10.2.1.tgz  
+  inflating: hadoop/zookeeper-3.4.10.tar.gz  
+
+[root@Va6 ~]# ls  hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va6 ~]# tar  -xf  hadoop/hadoop-2.7.6.tar.gz 
+
+[root@Va6 ~]# ls  hadoop-2.7.6/
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va6 ~]# mv   hadoop-2.7.6/   /usr/local/hadoop
+
+[root@Va6 ~]# ls  /usr/local/hadoop/
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va6 ~]# 
+[root@Va6 ~]# rpm  -ql  java-1.8.0-openjdk
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/policytool
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libawt_xawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjsoundalsa.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libsplashscreen.so
+/usr/share/applications/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64-policytool.desktop
+/usr/share/icons/hicolor/16x16/apps/java-1.8.0.png
+/usr/share/icons/hicolor/24x24/apps/java-1.8.0.png
+/usr/share/icons/hicolor/32x32/apps/java-1.8.0.png
+/usr/share/icons/hicolor/48x48/apps/java-1.8.0.png
+[root@Va6 ~]# 
+
+[root@Va6 etc]# pwd
+/usr/local/hadoop/etc
+
+[root@Va6 etc]# vim  hadoop/hadoop-env.sh
+
+[root@Va6 etc]# sed  -n  '25p;33p'  hadoop/hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+[root@Va6 etc]# pwd
+/usr/local/hadoop/etc
+
+[root@Va6 etc]# ls  /usr/local/hadoop/etc/hadoop/
+capacity-scheduler.xml      hadoop-policy.xml        kms-log4j.properties        ssl-client.xml.example
+configuration.xsl           hdfs-site.xml            kms-site.xml                ssl-server.xml.example
+container-executor.cfg      httpfs-env.sh            log4j.properties            yarn-env.cmd
+core-site.xml               httpfs-log4j.properties  mapred-env.cmd              yarn-env.sh
+hadoop-env.cmd              httpfs-signature.secret  mapred-env.sh               yarn-site.xml
+hadoop-env.sh               httpfs-site.xml          mapred-queues.xml.template
+hadoop-metrics2.properties  kms-acls.xml             mapred-site.xml.template
+hadoop-metrics.properties   kms-env.sh               slaves
+[root@Va6 etc]# 
+
+[root@Va6 etc]# pwd
+/usr/local/hadoop/etc
+[root@Va6 etc]# /usr/local/hadoop/bin/hadoop
+
+Usage: hadoop [--config confdir] [COMMAND | CLASSNAME]                                            ★ --虚拟机--★ 
+  CLASSNAME            run the class named CLASSNAME
+ or
+  where COMMAND is one of:
+  fs                   run a generic filesystem user client
+  version              print the version
+  jar <jar>            run a jar file
+                       note: please use "yarn jar" to launch
+                             YARN applications, not this command.
+  checknative [-a|-h]  check native hadoop and compression libraries availability
+  distcp <srcurl> <desturl> copy file or directories recursively
+  archive -archiveName NAME -p <parent path> <src>* <dest> create a hadoop archive
+  classpath            prints the class path needed to get the
+  credential           interact with credential providers
+                       Hadoop jar and the required libraries
+  daemonlog            get/set the log level for each daemon
+  trace                view and modify Hadoop tracing settings
+
+Most commands print help when invoked w/o parameters.
+
+[root@Va6 etc]# 
+[root@Va6 etc]# ls  /usr/local/hadoop/bin/                                                        ★ --虚拟机--★ 
+container-executor  hadoop.cmd  hdfs.cmd  mapred.cmd  test-container-executor  yarn.cmd
+hadoop              hdfs        mapred    rcc         yarn
+[root@Va6 etc]# 
+
+
+
+https://hadoop.apache.org/docs/r2.7.6/
+https://hadoop.apache.org/docs/
+---------------------------------------------------------------------
+# yum  -y  install  dhcp  tftp-server
+
+# tar  -xPf   /opt/pxeconf.tar.gz
+
+# systemctl  restart  dhcpd  tftp
+--------------------------------------------------
+rsync同步工具的常用选项：
+
+-n：测试同步过程，不做实际修改
+--delete：删除目标文件夹内多余的文档
+-a：归档模式，相当于-rlptgoD
+-v：显示详细操作信息
+-z：传输过程中启用压缩/解压
+---------------------------------------------
+需要安装： inotify-tools
+
+inotifywait常用命令选项：
+
+-m，持续监控（捕获一个事件后不退出）
+-r，递归监控、包括子目录及文件
+-q，减少屏幕输出信息
+-e，指定监视的 modify、move、create、delete、attrib 等事件类别
+https://activity.huaweicloud.com/promotion/
+https://account.huaweicloud.com/usercenter/
+https://account.huaweicloud.com/usercenter/?locale=zh-cn#/userindex/allview
+

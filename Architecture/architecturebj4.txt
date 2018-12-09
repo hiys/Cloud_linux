@@ -1,0 +1,1470 @@
+
+http://www.jinbuguo.com/apache/menu22/logs.html
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/docker*  ;ls  /var/lib/libvirt/images/*docker*
+/etc/libvirt/qemu/docker1.xml  /etc/libvirt/qemu/docker2.xml
+/var/lib/libvirt/images/disk-docker1.img  /var/lib/libvirt/images/docker1.img
+/var/lib/libvirt/images/disk-docker2.img  /var/lib/libvirt/images/docker2.img
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/docker*  ;ls  /var/lib/libvirt/images/*docker*
+/etc/libvirt/qemu/docker2.xml
+/var/lib/libvirt/images/disk-docker2.img  /var/lib/libvirt/images/docker2.img
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/docker*  ;ls  /var/lib/libvirt/images/*docker*
+ls: 无法访问/etc/libvirt/qemu/docker*: 没有那个文件或目录
+ls: 无法访问/var/lib/libvirt/images/*docker*: 没有那个文件或目录
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/;  ls  /var/lib/libvirt/images/
+
+autostart  nova01.xml     Va1.xml  Va3.xml  Va5.xml  Va7.xml  Va9.xml
+networks   openstack.xml  Va2.xml  Va4.xml  Va6.xml  Va8.xml  Va.xml.txt
+bin                 disk-Va1.img  disk-Va8.img  openstack.img               Va3.img  vsftpd.conf
+conf.d              disk-Va2.img  disk-Va9.img  qemu                        Va4.img  Weekend.sh
+content             disk-Va3.img  exam          Student.sh                  Va5.img
+db                  disk-Va4.img  iso           tedu-wallpaper-01.png       Va6.img
+disk.img            disk-Va5.img  lost+found    tedu-wallpaper-weekend.png  Va7.img
+disk-nova01.img     disk-Va6.img  node.qcow2    Va1.img                     Va8.img
+disk-openstack.img  disk-Va7.img  nova01.img    Va2.img                     Va9.img
+
+[root@hiys ~]# ls /etc/libvirt/qemu/autostart/
+Va2.xml
+[root@hiys ~]# ls  /var/lib/libvirt/images/lost+found/ -a
+.  ..
+[root@hiys ~]# tar  -xf ansible.tar.gz 
+
+[root@hiys ~]# ls ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm         python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+python-paramiko-2.1.1-2.el7.noarch.rpm
+-----------------------------------------------------------------------------------------------------
+[root@hiys ~]# unzip ansible.zip  -d /var/ftp/ansible/  ##rpm 包 来源 1
+Archive:  ansible.zip
+  inflating: /var/ftp/ansible/python-httplib2-0.9.2-1.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/python-paramiko-2.1.1-2.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/python-passlib-1.6.5-2.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/python2-jmespath-0.9.0-3.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/sshpass-1.06-2.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-2.4.1.0-1.el7.noarch.rpm 
+
+[root@hiys ~]# unzip ansible-devel.zip  -d /var/ftp/ansible/   ##rpm 包 来源 2
+Archive:  ansible-devel.zip
+   creating: /var/ftp/ansible/ansible-devel/
+  inflating: /var/ftp/ansible/ansible-devel/openssl-1.0.2k-8.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/openssl-libs-1.0.2k-8.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python-cffi-1.6.0-5.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python-idna-2.4-1.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python-ipaddress-1.0.16-2.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python2-cryptography-1.7.2-1.el7.x86_64.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python2-pyasn1-0.1.9-7.el7.noarch.rpm  
+  inflating: /var/ftp/ansible/ansible-devel/python2-pyasn1-modules-0.1.9-7.el7.noarch.rpm  
+
+[root@hiys ~]# cd /var/ftp/ansible/
+
+[root@hiys ansible]# createrepo   .  ## 创建yum 仓库
+
+[root@hiys ansible]# tar  -xf  /root/桌面/rpm-tar-zip-iso/elk.tar   ##rpm 包 来源3
+[root@hiys ansible]# ls
+accounts.json.gz                  elasticsearch-kopf-master.zip            python-paramiko-2.1.1-2.el7.noarch.rpm
+alog.gz                           filebeat-1.2.3-x86_64.rpm    #【new】#       python-passlib-1.6.5-2.el7.noarch.rpm
+ansible-2.4.1.0-1.el7.noarch.rpm  kibana-4.5.2-1.x86_64.rpm    #【new】#       repodata
+ansible-devel                     logs.jsonl.gz                            shakespeare.json.gz
+bigdesk-master.zip                logstash-2.3.4-1.noarch.rpm   #【new】#      sshpass-1.06-2.el7.x86_64.rpm
+elasticsearch-2.3.4.rpm    #【new】#        python2-jmespath-0.9.0-3.el7.noarch.rpm
+elasticsearch-head-master.zip     python-httplib2-0.9.2-1.el7.noarch.rpm
+
+[root@hiys ansible]# createrepo  --update  .  ## 更新yum 仓库
+
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Spawning worker 2 with 1 pkgs
+Spawning worker 3 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+----------------------------------------------------------------------------------------------
+
+[root@hiys ~]# ls /var/ftp/ansible/logstash-2.3.4-1.noarch.rpm 
+/var/ftp/ansible/logstash-2.3.4-1.noarch.rpm
+
+[root@hiys ~]# rm -f /var/ftp/ansible/*.gz
+
+[root@hiys ~]# rm  -f  /var/ftp/ansible/*.zip
+
+[root@hiys ~]# ls /var/ftp/ansible/
+ansible-2.4.1.0-1.el7.noarch.rpm  python2-jmespath-0.9.0-3.el7.noarch.rpm
+ansible-devel                     python-httplib2-0.9.2-1.el7.noarch.rpm
+elasticsearch-2.3.4.rpm           python-paramiko-2.1.1-2.el7.noarch.rpm
+filebeat-1.2.3-x86_64.rpm         python-passlib-1.6.5-2.el7.noarch.rpm
+kibana-4.5.2-1.x86_64.rpm         repodata
+logstash-2.3.4-1.noarch.rpm       sshpass-1.06-2.el7.x86_64.rpm
+
+[root@hiys ~]# ls /var/ftp/ansible/ansible-devel/
+openssl-1.0.2k-8.el7.x86_64.rpm              python2-pyasn1-modules-0.1.9-7.el7.noarch.rpm
+openssl-libs-1.0.2k-8.el7.x86_64.rpm         python-cffi-1.6.0-5.el7.x86_64.rpm
+python2-cryptography-1.7.2-1.el7.x86_64.rpm  python-idna-2.4-1.el7.noarch.rpm
+python2-pyasn1-0.1.9-7.el7.noarch.rpm        python-ipaddress-1.0.16-2.el7.noarch.rpm
+
+[root@hiys ~]# ls /var/ftp/
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+[root@hiys ~]# ls  /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          repodata
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@hiys ~]# createrepo  --update  /var/ftp/ansible/  ## 更新yum 仓库
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@hiys ~]# cat  /etc/yum.repos.d/ansible.repo 
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# yum  clean  all >/dev/null && yum repolist |tail -16
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+ansible                          ansible                                      18
+rhel7                            rhel7.4                                   4,986
+repolist: 15,735
+[root@hiys ~]# 
+ 
+
+/************
+
+Linux下的压缩和解压缩命令——gzip/gunzip
+gzip命令
+
+gzip命令用来压缩文件。gzip是个使用广泛的压缩程序，文件经它压缩过后，其名称后面会多处“.gz”扩展名。
+
+gzip是在Linux系统中经常使用的一个对文件进行压缩和解压缩的命令，既方便又好用。gzip不仅可以用来压缩大的、较少使用的文件以节省磁盘空间，还可以和tar命令一起构成Linux操作系统中比较流行的压缩文件格式。据统计，gzip命令对文本文件有60%～70%的压缩率。减少文件大小有两个明显的好处，一是可以减少存储空间，二是通过网络传输文件时，可以减少传输的时间。
+
+选项：
+
+-a：使用ASCII文字模式；
+
+-d：解开压缩文件；
+
+-f：强行压缩文件。不理会文件名称或硬连接是否存在以及该文件是否为符号连接；
+
+-h：在线帮助；
+
+-l：列出压缩文件的相关信息；
+
+-L：显示版本与版权信息；
+
+-n：压缩文件时，不保存原来的文件名称及时间戳记；
+
+-N：压缩文件时，保存原来的文件名称及时间戳记；
+
+-q：不显示警告信息；
+
+-r：递归处理，将指定目录下的所有文件及子目录一并处理；
+
+-S或<压缩字尾字符串>或----suffix<压缩字尾字符串>：更改压缩字尾字符串；
+
+-t：测试压缩文件是否正确无误；
+
+-v：显示指令执行过程；
+
+-V：显示版本信息；
+
+-<压缩效率>：压缩效率是一个介于1~9的数值，预设值为“6”，指定愈大的数值，压缩效率就会愈高；
+
+--best：此参数的效果和指定“-9”参数相同；
+
+--fast：此参数的效果和指定“-1”参数相同。
+
+ 
+
+实例
+
+1. 把test6目录下的每个文件压缩成.gz文件
+
+gzip *
+
+2. 把上例中每个压缩的文件解压，并列出详细的信息
+
+gzip -dv *
+
+3. 详细显示例1中每个压缩的文件的信息，并不解压
+
+gzip -l *
+
+4.压缩一个tar备份文件，此时压缩文件的扩展名为.tar.gz
+
+gzip -r log.tar
+
+5. 递归的压缩目录
+
+gzip -rv test6
+
+这样，所有test下面的文件都变成了*.gz，目录依然存在只是目录里面的文件相应变成了*.gz.这就是压缩，和打包不同。因为是对目录操作，所以需要加上-r选项，这样也可以对子目录进行递归了。
+
+6. 递归地解压目录
+
+gzip -dr test6
+
+ 
+
+gunzip命令
+
+gunzip命令用来解压缩文件。gunzip是个使用广泛的解压缩程序，它用于解开被gzip压缩过的文件，这些压缩文件预设最后的扩展名为.gz。事实上gunzip就是gzip的硬连接，因此不论是压缩或解压缩，都可通过gzip指令单独完成。
+
+选项：
+
+-a：使用ASCII文字模式；
+
+-c：把解压后的文件输出到标准输出设备；
+
+-f：强行解开压缩文件，不理会文件名称或硬连接是否存在以及该文件是否为符号连接；
+
+-h：在线帮助；
+
+-l：列出压缩文件的相关信息；
+
+-L：显示版本与版权信息；
+
+-n：解压缩时，若压缩文件内含有原来的文件名称及时间戳记，则将其忽略不予处理；
+
+-N：解压缩时，若压缩文件内含有原来的文件名称及时间戳记，则将其回存到解开的文件上；
+
+-q：不显示警告信息；
+
+-r：递归处理，将指定目录下的所有文件及子目录一并处理；
+
+-S或<压缩字尾字符串>或----suffix<压缩字尾字符串>：更改压缩字尾字符串；
+
+-t：测试压缩文件是否正确无误；
+
+-v：显示指令执行过程；
+
+-V：显示版本信息；
+
+实例
+
+1. 首先将/etc目录下的所有文件以及子目录进行压缩，备份压缩包etc.zip到/opt目录，然后对etc.zip文件进行gzip压缩，设置gzip的压缩级别为9。
+
+zip –r /opt/etc.zip /etc
+
+gzip -9v /opt/etc.zip
+
+2. 查看上述etc.zip.gz文件的压缩信息。
+
+gzip -l /opt/etc.zip.gz
+
+compressed        uncompressed ratio uncompressed_name
+
+11938745            12767265   6.5% /opt/etc.zip
+
+3. 解压上述etc.zip.gz文件到当前目录。
+
+[root@mylinux ~]#gzip –d /opt/etc.zip.gz
+
+或者执行
+
+[root@mylinux ~]#gunzip /opt/etc.zip.gz
+
+通过上面的示例可以知道gzip –d等价于gunzip命令。
+************************/
+[root@Va1 ~]# cd /root/.ssh/
+
+[root@Va1 .ssh]# vim   /etc/ansible/hosts 
+[root@Va1 .ssh]# sed  -n  '43,$p'  /etc/ansible/hosts
+## db-[99:101]-node.example.com
+[web]
+Va[2:3]
+                                                                                               ★ --虚拟机--★ 
+#[web:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+
+[db]
+Va[4:5]
+
+[other]
+Va[6:9]
+# ansible_ssh_user="root" ansible_ssh_pass="a"
+
+[app:children]
+web
+db
+
+#[app:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+[root@Va1 .ssh]# 
+
+[root@Va1 .ssh]# ansible  all  -m ping  //直接ping会报错
+Va2 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+.......................................
+[root@Va1 .ssh]# ssh-keygen   -t  rsa  -b  2048  -N ''        //创建密钥       ★ --虚拟机--★ 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): ## 这里不需要输入操作，直接回车
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:n+WVa44Wk80XrgqmjrrbG7nXjbf1t4yWkEIBxWIBXCA root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+|   E.o++=.       |
+|    .. o o       |
+|      . . .      |
+|         .     o |
+|        S   o++ .|
+|      .  o *+.oo.|
+|     o  .o* o+=. |
+|    . +.oo.ooB+ .|
+|   ++=+o  .+=..+o|
++----[SHA256]-----+
+
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+                                            ## 给所有主机部署密钥
+[root@Va1 .ssh]# ansible  all  -m  authorized_key  -a  \
+> "user=root  exclusive=true  manage_dir=true  key='$(<  /root/.ssh/id_rsa.pub)'"  -k
+
+SSH password: a ## //输入root 密码 a
+Va2 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+....................
+[root@Va1 .ssh]# ssh Va2    //不需要输入密码,可以直接登陆
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va2 ~]# exit
+登出
+Connection to va2 closed.
+[root@Va1 .ssh]# ssh Va6
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va6 ~]# exit
+登出
+Connection to va6 closed.
+[root@Va1 .ssh]# 
+----------------------------------------------
+------------------------------------------------注意 exec  9<&-; 在& 后是短横杠 "[ - ]"
+
+[root@Va3 ~]# function  sendtcp(){  exec  9<>/dev/tcp/192.168.1.17/8888;  echo  "$A" >&9; exec  9<&-; }
+[root@Va3 ~]# sendtcp  xixixhaha
+[root@Va3 ~]# echo $?
+0
+[root@Va3 ~]# sendtcp  xixixhaha22222222
+[root@Va3 ~]# 
+vim   /etc/rsyslog.conf
+a.b
+种类 . 等级
+authpriv.*
+mail.*
+73
+75 local0.=notice  /var/log/testxx.log
+
+[root@Va3 ~]# cd  /var/log/
+[root@Va3 log]# ls
+anaconda           boot.log-20181123  chrony  dmesg.old      lastlog   rhsm    yum.log
+boot.log           boot.log-20181124  cron    elasticsearch  messages  secure
+boot.log-20181122  btmp               dmesg   httpd          qemu-ga   wtmp
+[root@Va3 log]# vim  /etc/rsyslog.conf 
+[root@Va3 log]# sed  -n '73,75p'  /etc/rsyslog.conf
+local7.*                                                /var/log/boot.log
+authpriv.*       @192.168.1.17:514
+local0.=notice   @@192.168.1.17:514  ## 注意@@ 和@ 的区别？？
+[root@Va3 log]# systemctl  restart  rsyslog
+
+[root@Va3 log]# logger  -p  local0.notice  -t  HAHAHAH "HELLO WORLD AND boy"
+
+[root@Va3 log]# logger  -p  local0.notice  -t  HAHAHAH "ssh -X 192.168.1.17"
+
+[root@Va3 log]# vim  /etc/httpd/conf/httpd.conf
+
+
+
+[root@hiys ~]# ssh  -X 192.168.1.16                    ★ --虚拟 ★ --虚................................
+[root@Va6 ~]# ls                                      ★ --虚拟机--★ 
+bigdesk  elk.tar     hadoop.zip           nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz
+eip      hadoop.tar  nagios-4.2.4.tar.gz  nrpe-2.12.tar.gz               ★ --虚拟机--★ 
+[root@Va6 ~]# ls bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+
+[root@Va6 ~]# gzip  -d   bigdesk/logs.jsonl.gz  ## 默认解压到源压缩文件 bigdesk/logs.jsonl.gz 所在的目录 bigdesk/下
+[root@Va6 ~]# gzip  -dv  bigdesk/accounts.json.gz   
+bigdesk/accounts.json.gz:	 76.7% -- replaced with bigdesk/accounts.json
+
+[root@Va6 ~]# gzip  -dv  bigdesk/shakespeare.json.gz 
+bigdesk/shakespeare.json.gz:	 85.7% -- replaced with bigdesk/shakespeare.json
+
+[root@Va6 ~]# ls
+bigdesk  elk.tar     hadoop.zip           nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz
+eip      hadoop.tar  nagios-4.2.4.tar.gz  nrpe-2.12.tar.gz
+
+[root@Va6 ~]# ls bigdesk/      ## 默认解压到源压缩文件 bigdesk/logs.jsonl.gz 所在的目录 bigdesk/下
+accounts.json       elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl
+
+[root@Va6 ~]# ll bigdesk/accounts.json 
+-rw-r--r-- 1 root root 244848 3月   5 2014 bigdesk/accounts.json
+
+[root@Va6 ~]# wc  -l  bigdesk/shakespeare.json
+222792 bigdesk/shakespeare.json
+
+[root@Va6 ~]# head -4  bigdesk/shakespeare.json
+
+{"index":{"_index":"shakespeare","_type":"act","_id":0}}
+{"line_id":1,"play_name":"Henry IV","speech_number":"","line_number":"","speaker":"","text_entry":"ACT I"}
+{"index":{"_index":"shakespeare","_type":"scene","_id":1}}
+{"line_id":2,"play_name":"Henry IV","speech_number":"","line_number":"","speaker":"","text_entry":"SCENE I. London. The palace."}
+
+[root@Va6 ~]#  curl  -X POST  "http://192.168.1.11:9200/_bulk"  \
+> --data-binary  @bigdesk/shakespeare.json
+...................................
+
+92","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}},{"index":{"_index":"shakespeare","_type":"line","_id":"111393","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}},{"index":{"_index":"shakespeare","_type":"line","_id":"111394","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}},{"index":{"_index":"shakespeare","_type":"line","_id":"111395","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}}]}[root@Va6 ~]# 
+
+/****
+ curl  -X POST  "http://192.168.1.11:9200/_bulk"  \
+--data-binary  @bigdesk/shakespeare.json
+*****/
+[root@Va6 ~]# head -4  bigdesk/accounts.json 
+{"index":{"_id":"1"}}
+{"account_number":1,"balance":39225,"firstname":"Amber","lastname":"Duke","age":32,"gender":"M","address":"880 Holmes Lane","employer":"Pyrami","email":"amberduke@pyrami.com","city":"Brogan","state":"IL"}
+{"index":{"_id":"6"}}
+{"account_number":6,"balance":5686,"firstname":"Hattie","lastname":"Bond","age":36,"gender":"M","address":"671 Bristol Street","employer":"Netagy","email":"hattiebond@netagy.com","city":"Dante","state":"TN"}
+
+[root@Va6 ~]# wc  -l  bigdesk/accounts.json
+2000 bigdesk/accounts.json                  #导入没有 index 配置的json 文件accounts.json
+[root@Va6 ~]# curl  -XPOST  "http://192.168.1.11:9200/suoyin-acc/leixing-acc/_bulk" \
+> --data-binary  @bigdesk/accounts.json
+# 在ur 【http://192.168.1.11:9200/】里面自定义 索引是suoyin-acc ，类型是leixing-acc，
+必须导入索引和类型，没有索引，要手动自定义加上
+
+ion":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}},{"index":{"_index":"suoyin-acc","_type":"leixing-acc","_id":"990","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}},{"index":{"_index":"suoyin-acc","_type":"leixing-acc","_id":"995","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}}]}[root@Va6 ~]#  
+[root@Va6 ~]# 
+
+
+[root@Va6 ~]# wc  -l  bigdesk/logs.jsonl 
+28010 bigdesk/logs.jsonl
+[root@Va6 ~]# head   -2   bigdesk/logs.jsonl
+{"index":{"_index":"logstash-2015.05.18","_type":"log"}}
+{"@timestamp":"2015-05-18T09:03:25.877Z","ip":"185.124.182.126","extension":"gif","response":"404","geo":{"coordinates":{"lat":36.518375,"lon":-86.05828083},"src":"PH","dest":"MM","srcdest":"PH:MM"},"@tags":["success","info"],"utc_time":"2015-05-18T09:03:25.877Z","referer":"http://twitter.com/error/william-shepherd","agent":"Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1","clientip":"185.124.182.126","bytes":804,"host":"motion-media.theacademyofperformingartsandscience.org","request":"/canhaz/gemini-7.gif","url":"https://motion-media.theacademyofperformingartsandscience.org/canhaz/gemini-7.gif",........................................-hall-2396867","article:published_time":"2008-06-04T14:16:10-07:00","article:modified_time":"2014-11-26T14:43:59-08:00","article:section":"News","og:site_name":"LA Weekly","twitter:title":"Laurence Tribe Tangles with CBS and L.A. City Hall","twitter:description":"The United States Court of Appeals for the Ninth Circuit&rsquo;s Courtroom 3 - a miniature auditorium with comfortable, smoked salmon-colored seats - wa...","twitter:card":"summary","twitter:site":"@laweekly"}],"machine":{"os":"win xp","ram":3221225472},"@version":"1"}
+[root@Va6 ~]# 
+
+[root@Va6 ~]# curl  -XPOST  "http://192.168.1.11:9200/_bulk"  \
+> --data-binary  @bigdesk/logs.jsonl
+
+..............
+{"_index":"logstash-2015.05.20","_type":"log","_id":"AWdDqb90C3bmFwfMYTCJ","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}}]}[root@Va6 ~]# 
+[root@Va6 ~]# 
+
+http://192.168.1.15:9200/
+http://192.168.1.15:9200/_plugin/head/
+nsd1807集群健康值: green (62 of 62)
+Elasticsearch
+概览
+索引
+数据浏览
+基本查询 [+]
+复合查询 [+]
+集群概览
+		
+suoyin-acc
+size: 443ki (887ki)
+docs: 1,000 (2,000)
+shakespeare
+size: 18.8Mi (37.3Mi)
+docs: 111,394 (222,788)
+logstash-2015.05.20
+size: 19.2Mi (37.5Mi)
+docs: 4,750 (9,500)
+logstash-2015.05.19
+size: 18.7Mi (36.4Mi)
+docs: 4,624 (9,248)
+logstash-2015.05.18
+size: 18.6Mi (36.5Mi)
+docs: 4,631 (9,262)
+index
+size: 795B (1.55ki)
+docs: 0 (0)
+.kibana
+size: 3.17ki (6.33ki)
+docs: 1 (2)
+	
+Va1
+.........................
+Va2
+.....................
+Va3
+..................	
+Va4
+...............	
+Va5
+................
+	
+
+curl  -XGET  http://192.168.1.11:9200/_mget?pretty  -d '
+{
+  "docs":[
+    {
+       "_index": "shakespeare",
+       "_type": "line",
+       "_id":"22"
+    },
+    {
+       "_index": "shakespeare",
+       "_type": "line",
+       "_id":"0"
+    },
+    {
+       "_index": "suoyin-acc",
+       "_type": "leixing-acc",
+       "_id":"25"
+    }
+  ]
+}'
+         ----------------  数据批量查询使用GET 
+[root@Va6 ~]# curl  -XGET  http://192.168.1.11:9200/_mget?pretty  -d '
+> {
+>   "docs":[
+>     {
+>        "_index": "shakespeare",
+>        "_type": "line",
+>        "_id":"22"
+>     },
+>     {
+>        "_index": "shakespeare",
+>        "_type": "line",
+>        "_id":"0"
+>     },
+>     {
+>        "_index": "suoyin-acc",
+>        "_type": "leixing-acc",
+>        "_id":"25"
+>     }
+>   ]
+> }'
+----------------------------使用GET查询结果------- 显示 结果 -------------------------------------
+{
+  "docs" : [ {
+    "_index" : "shakespeare",
+    "_type" : "line",
+    "_id" : "22",
+    "_version" : 1,
+    "found" : true,
+    "_source" : {
+      "line_id" : 23,
+      "play_name" : "Henry IV",
+      "speech_number" : 1,
+      "line_number" : "1.1.20",
+      "speaker" : "KING HENRY IV",
+      "text_entry" : "Whose soldier now, under whose blessed cross"
+    }
+  }, {
+    "_index" : "shakespeare",
+    "_type" : "line",
+    "_id" : "0",
+    "found" : false
+  }, {
+    "_index" : "suoyin-acc",
+    "_type" : "leixing-acc",                                                                                 ★ --虚拟机--★ 
+    "_id" : "25",
+    "_version" : 1,
+    "found" : true,
+    "_source" : {
+      "account_number" : 25,
+      "balance" : 40540,
+      "firstname" : "Virginia",
+      "lastname" : "Ayala",
+      "age" : 39,
+      "gender" : "F",
+      "address" : "171 Putnam Avenue",
+      "employer" : "Filodyne",
+      "email" : "virginiaayala@filodyne.com",
+      "city" : "Nicholson",
+      "state" : "PA"
+    }
+  } ]
+}
+[root@Va6 ~]# 
+[root@Va6 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va6 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1861         486        1177           8         197        1211
+Swap:             0           0           0
+
+[root@Va6 ~]# yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+[root@Va6 ~]# 
+成功创建会有logstash-*
+
+在 Kibana 里选择日志（支持通配符 * ）
+http://192.168.1.16:5601/app/kibana#/settings/indices/?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))
+
+ Time-field name     refresh fields 
+
+选择 @timestramp  作为索引
+ 然后create 按钮回车
+
+
+yum install -y  httpd
+
+vim  /etc/httpd/conf/httpd.conf
+
+ServerName
+# rpm -q httpd
+httpd-2.4.6-67.el7.centos.x86_64
+# apachectl -t
+Syntax OK
+
+
+cd  /var/www/html/
+echo index >index.html
+
+cd  /var/log/httpd/
+ls access_log
+cat  access_log
+协议  url
+GET   /
+
+192.168.1.16:5601
+
+vim 
+23 kibana.index: ".kibana"
+
+默认首页 discover
+
+
+Absolute  from 时间范围 to
+
+go
+
+^ 缩回去
+
+From new 
+
+Data
+metrics
+
+Field
+
+Size
+
+
+[root@Va7 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va7 ~]# yum list |grep java-1.8.0-openjdk
+java-1.8.0-openjdk.x86_64                1:1.8.0.131-11.b12.el7     @CentOS7-1708
+java-1.8.0-openjdk-headless.x86_64       1:1.8.0.131-11.b12.el7     @CentOS7-1708
+......................................................
+java-1.8.0-openjdk-src.x86_64            1:1.8.0.131-11.b12.el7     CentOS7-1708
+java-1.8.0-openjdk-src-debug.i686        1:1.8.0.131-11.b12.el7     CentOS7-1708                             ★ --虚拟机--★ 
+java-1.8.0-openjdk-src-debug.x86_64      1:1.8.0.131-11.b12.el7     CentOS7-1708
+
+[root@Va7 ~]# rpm  -q  java-1.8.0-openjdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+
+[root@Va7 ~]# yum  -y install  java-1.8.0-openjdk |tail -3                                                   ★ --虚拟机--★ 
+                                                                ★ --虚拟机--★ 
+软件包 1:java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64 已安装并且是最新版本                                 ★ --虚拟机--★ 
+无须任何处理
+[root@Va7 ~]# java  -version                                                                                 ★ --虚拟机--★ 
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)                                                            ★ --虚拟机--★ 
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+[root@Va7 ~]# yum  list |grep  logstash
+logstash.noarch                          1:2.3.4-1                  ansible                                  ★ --虚拟机--★ 
+[root@Va7 ~]# yum  -y install logstash |tail -4
+已安装:                                                                                                      ★ --虚拟机--★ 
+  logstash.noarch 1:2.3.4-1                                                     
+                                                                                                             ★ --虚拟机--★ 
+完毕！
+[root@Va7 ~]# ls /etc/log
+login.defs      logrotate.conf  logrotate.d/    logstash/       
+[root@Va7 ~]# ls /etc/logstash/                                                                              ★ --虚拟机--★ 
+conf.d                                                                                                       ★ --虚拟机--★ 
+[root@Va7 ~]# ls /etc/logstash/conf.d/
+
+[root@Va7 ~]# touch  /etc/logstash/logstash.conf
+
+[root@Va7 ~]# ll /etc/logstash/logstash.conf
+-rw-r--r-- 1 root root 0 11月 24 11:33 /etc/logstash/logstash.conf
+[root@Va7 ~]# ll  /opt/logstash/bin/logstash
+-rwxrwxr-x 1 logstash logstash 1854 7月   7 2016 /opt/logstash/bin/logstash  
+                             
+[root@Va7 ~]# ls  /opt/logstash/bin/
+logstash      logstash.lib.sh  logstash-plugin.bat  plugin.bat  rspec.bat
+logstash.bat  logstash-plugin  plugin               rspec       setup.bat
+[root@Va7 ~]# ls  /opt/logstash/
+bin  CHANGELOG.md  CONTRIBUTORS  Gemfile  Gemfile.jruby-1.9.lock  lib  LICENSE  NOTICE.TXT  vendor
+[root@Va7 ~]# /opt/logstash/bin/logstash  --version
+logstash 2.3.4
+[root@Va7 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3513          77        3045           8         390        3174
+Swap:             0           0           0
+[root@Va7 ~]# 
+[root@Va7 ~]# yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+[root@Va7 ~]# 
+
+
+
+#  echo 'export PATH=/usr/local/nginx/sbin/:$PATH' >>/etc/profile;
+#  source /etc/profile;
+  ln -s /usr/local/nginx/sbin/nginx /sbin/
+  ll  /sbin/nginx
+
+vim  /etc/bashrc
+
+93 path
+
+[root@Va7 ~]# /opt/logstash/bin/logstash-plugin  list |head -9
+Ignoring ffi-1.9.13 because its extensions are not built.  Try: gem pristine ffi --version 1.9.13
+logstash-codec-collectd
+logstash-codec-dots
+logstash-codec-edn
+logstash-codec-edn_lines
+logstash-codec-es_bulk
+logstash-codec-fluent
+logstash-codec-graphite
+logstash-codec-json
+logstash-codec-json_lines
+[root@Va7 ~]# /opt/logstash/bin/logstash-plugin  list |wc -l
+Ignoring ffi-1.9.13 because its extensions are not built.  Try: gem pristine ffi --version 1.9.13
+106
+[root@Va7 ~]# 
+
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf 
+
+[root@Va7 ~]# cat  /etc/logstash/logstash.conf
+input{
+   stdin{
+   }
+}
+filter{
+}
+output{
+   stdout{
+   }
+}
+[root@Va7 ~]#
+[root@Va7 ~]# /opt/logstash/bin/logstash --help
+Usage:
+    /bin/logstash agent [OPTIONS]
+
+Options:
+    -f, --config CONFIG_PATH      Load the logstash config from a specific file
+                                  or directory.  If a directory is given, all
+                                  files in that directory will be concatenated
+                                  in lexicographical order and then parsed as a
+                                  single config file. You can also specify
+                                  wildcards (globs) and any matched files will
+                                  be loaded in the order described above.
+    -e CONFIG_STRING              Use the given string as the configuration
+
+.............................
+    --reload-interval RELOAD_INTERVAL How frequently to poll the configuration location
+                                  for changes, in seconds.
+                                   (default: 3)
+    --allow-env                   EXPERIMENTAL. Enables templating of environment variable
+                                  values. Instances of "${VAR}" in strings will be replaced
+                                  with the respective environment variable value named "VAR".
+                                   (default: false)
+    -h, --help                    print help
+[root@Va7 ~]# 
+[root@Va7 ~]# /opt/logstash/bin/logstash  -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+kankanni
+2018-11-24T06:26:55.700Z Va7 kankanni
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+Received shutdown signal, but pipeline is still waiting for in-flight events
+to be processed. Sending another ^C will force quit Logstash, but this may cause
+data loss. {:level=>:warn}
+
+Pipeline main has been shutdown
+[root@Va7 ~]# 
+
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf 
+[root@Va7 ~]# cat  /etc/logstash/logstash.conf
+input{
+   stdin{
+     codec => "json"
+   }
+}
+filter{
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash  -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+
+{"a":1,"b":2,"c3":3}
+{
+             "a" => 1,
+             "b" => 2,
+            "c3" => 3,
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T06:41:24.465Z",
+          "host" => "Va7"
+}
+abcdefg
+{
+       "message" => "abcdefg",
+          "tags" => [
+        [0] "_jsonparsefailure"
+    ],
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T06:41:37.123Z",
+          "host" => "Va7"
+}
+quit
+{
+       "message" => "quit",
+          "tags" => [
+        [0] "_jsonparsefailure"
+    ],
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T06:42:09.937Z",
+          "host" => "Va7"                                                                                    ★ --虚拟机--★ 
+}
+exit
+{
+       "message" => "exit",
+          "tags" => [
+        [0] "_jsonparsefailure"
+    ],
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T06:42:18.217Z",
+          "host" => "Va7"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+Received shutdown signal, but pipeline is still waiting for in-flight events
+to be processed. Sending another ^C will force quit Logstash, but this may cause
+data loss. {:level=>:warn}
+
+Pipeline main has been shutdown
+[root@Va7 ~]#
+https://github.com/logstash-plugins
+ 
+https://www.elastic.co/guide/en/logstash/current/input-plugins.html
+
+/******
+
+安装使用
+
+1.安装
+
+wget https://artifacts.elastic.co/downloads/logstash/logstash-6.0.1.rpm
+yum install -y ./logstash-6.0.1.rpm
+2.Logstash配置文件
+
+vim /etc/logstash/logstash.yml
+path.data: /var/lib/logstash                                    # 数据存放路径
+path.config: /etc/logstash/conf.d/*.conf                        # 其他插件的配置文件，输入输出过滤等等
+path.logs: /var/log/logstash                                    # 日志存放路径
+3.Logstash中的JVM配置文件
+
+Logstash是一个基于Java开发的程序，需要运行在JVM中，可以通过配置jvm.options来针对JVM进行设定。
+比如内存的最大最小、垃圾清理机制等等。这里仅仅列举最常用的两个。
+JVM的内存分配不能太大不能太小，太大会拖慢操作系统。太小导致无法启动。
+
+vim /etc/logstash/jvm.options                               # logstash有关JVM的配置
+-Xms256m                                                    # logstash最大最小使用内存
+-Xmx1g
+4.最简单的日志收集配置
+
+安装一个httpd用于测试，配置Logstash收集Apache的accless.log日志文件
+
+yum install httpd
+echo "Hello world" > /var/www/html/index.html               # 安装httpd，创建首页用于测试
+vim /etc/logstash/conf.d/test.conf
+input {
+    file {                                                  # 使用file作为数据输入
+        path => ['/var/log/httpd/access_log']               # 设定读入数据的路径
+        start_position => beginning                         # 从文件的开始处读取，end从文件末尾开始读取
+    }
+}
+output {                                                    # 设定输出的位置
+    stdout {
+        codec => rubydebug                                  # 输出至屏幕
+    }
+}
+5.测试配置文件
+
+logstash是自带的命令但是不在环境变量中，所以只能使用绝对路径来使用此命令。
+
+/usr/share/logstash/bin/logstash -t  -f  /etc/logstash/conf.d/test.conf   # 测试执行配置文件，-t要在-f前面
+Configuration OK                                                          # 表示测试OK
+6.启动logstash
+
+在当前会话运行logstash后不要关闭这个会话暂时称其为会话1，再打开一个新的窗口为会话2
+
+/usr/share/logstash/bin/logstash  -f  /etc/logstash/conf.d/test.conf
+启动以后在会话2中使用curl命令进行测试
+
+curl 172.18.68.14
+然后在回到之前的会话1可以看到输出的信息
+
+{
+      "@version" => "1",
+          "host" => "logstash.shuaiguoxia.com",
+          "path" => "/var/log/httpd/access_log",
+    "@timestamp" => 2017-12-10T14:07:07.682Z,
+       "message" => "172.18.68.14 - - [10/Dec/2017:22:04:44 +0800] \"GET / HTTP/1.1\" 200 12 \"-\" \"curl/7.29.0\""
+}
+至此最简单的Logstash配置就已经完成了，这里仅仅是将收集到的直接输出没有进行过滤或者修剪。
+***/
+[root@Va7 ~]# /opt/logstash/bin/logstash  -t   -f   /etc/logstash/logstash.conf   # 测试执行配置文件，-t要在-f前面
+Configuration OK
+
+[root@Va7 ~]# ls  /root/.sincedb_e9a1772295a869da80134b5c4e75816e 
+/root/.sincedb_e9a1772295a869da80134b5c4e75816e
+[root@Va7 ~]# cat /root/.sincedb_e9a1772295a869da80134b5c4e75816e
+1466 0 64769 13
+3194439 0 64769 8
+
+[root@Va7 ~]# mv  /root/.sincedb_e9a1772295a869da80134b5c4e75816e   /root/.sincedb_e9a1772295a869da80134b5c4e75816e.txt
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf [root@Va7 ~]# cat   /etc/logstash/logstash.conf
+input{
+   file{
+     path => ["/tmp/a.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb" 
+     start_position => "beginning"
+   }
+}
+filter{
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash  -f   /etc/logstash/logstash.conf Settings: Default pipeline workers: 2
+Pipeline main started
+{                                                                                              ★ --虚拟机--★ 
+       "message" => "A_5580",                                                                  ★ --虚拟机--★ 
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T07:36:57.229Z",
+          "path" => "/tmp/a.log",
+          "host" => "Va7"
+}
+{
+       "message" => "BBVa7",
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T07:36:57.278Z",
+          "path" => "/tmp/a.log",
+          "host" => "Va7"
+}
+{
+       "message" => "A_20055",
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T07:36:57.282Z",
+          "path" => "/var/tmp/b.log",
+          "host" => "Va7"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+Pipeline main has been shutdown                                                                ★ --虚拟机--★ 
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf 
+[root@Va7 ~]# cat  /etc/logstash/logstash.conf
+input{
+   file{
+     path => ["/tmp/a.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb" 
+     start_position => "beginning"
+     type =>  "http_log_a"
+   }
+   file{
+     path => ["/tmp/b.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb"
+     start_position => "beginning"
+     type =>  "http_log_b"
+   }
+}
+filter{
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash  -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "A_14972",
+........................................
+{       
+       "message" => "BB_6237",                                                                 ★ --虚拟机--★ 
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T07:41:49.373Z",
+          "path" => "/var/tmp/b.log",
+          "host" => "Va7",
+          "type" => "http_log_a"
+}
+{
+       "message" => "BB_6237",
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T07:41:49.416Z",
+          "path" => "/var/tmp/b.log",
+          "host" => "Va7",
+          "type" => "http_log_b"                                                               ★ --虚拟机--★ 
+}
+^C
+[root@Va7 ~]# /opt/logstash/bin/logstash  -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started                                                                          ★ --虚拟机--★ 
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}                                                                ★ --虚拟机--★ 
+Pipeline main has been shutdown
+
+[root@Va7 ~]# /opt/logstash/bin/logstash  -t   -f   /etc/logstash/logstash.conf 
+Configuration OK
+
+[root@Va7 ~]# 
+
+     50768                        80
+src,sport   =proto=>  dst,dport
+tcp   client  server
+udp   只有服务器端 server
+
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf 
+[root@Va7 ~]# cat   /etc/logstash/logstash.conf
+input{
+   file{
+     path => ["/tmp/a.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb" 
+     start_position => "beginning"
+     type =>  "http_log_a"
+   }
+   file{
+     path => ["/tmp/b.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb"
+     start_position => "beginning"                             
+     type =>  "http_log_b"
+   }
+   tcp{
+     mode => "server"
+     host => "0.0.0.0"
+     port => "8888"
+     type => "tcp-t_log"
+   }
+   udp{
+     host => "0.0.0.0"
+     port => "8888"
+     type => "udp-u_log"
+   }
+}
+filter{
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash  -t   -f   /etc/logstash/logstash.conf 
+Configuration OK
+[root@Va7 ~]# /opt/logstash/bin/logstash    -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "",                 ★ --虚拟机--★ 
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T08:29:13.781Z",
+          "host" => "192.168.1.13",
+          "port" => 39570,
+          "type" => "tcp-t_log"
+}
+{
+       "message" => "",
+      "@version" => "1",
+    "@timestamp" => "2018-11-24T08:29:53.113Z",
+          "host" => "192.168.1.13",
+          "port" => 39572,
+          "type" => "tcp-t_log"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+
+UDP listener died {:exception=>#<IOError: closed stream>, 
+
+:backtrace=>
+["org/jruby/RubyIO.java:3682:in `select'", 
+"/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:77:in `udp_listener'", 
+"/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:50:in `run'",
+ "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:342:in `inputworker'", 
+"/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:336:in `start_input'"],
+
+ :level=>:warn}
+Pipeline main has been shutdown
+[root@Va7 ~]# 
+[root@Va7 ~]# ss -anpult
+Netid  State      Recv-Q Send-Q       Local Address:Port           Peer Address:Port              
+udp    UNCONN     0      0           127.0.0.1:323             *:*                   users:(("chronyd",pid=486,fd=1))
+udp    UNCONN     0      0          :::8888               :::*                   users:(("java",pid=3247,fd=39))
+tcp    LISTEN     0      128            *:22          *:*                   users:(("sshd",pid=776,fd=3))
+tcp    LISTEN     0      50                             :::8888               :::*                   users:(("java",pid=3247,fd=20))
+[root@Va7 ~]# 
+
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf 
+[root@Va7 ~]# cat  /etc/logstash/logstash.conf
+input{
+   file{
+     path => ["/tmp/a.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb" 
+     start_position => "beginning"
+     type =>  "http_log_a"
+   }
+   file{
+     path => ["/tmp/b.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb"
+     start_position => "beginning"
+     type =>  "http_log_b"                                                                     ★ --虚拟机--★ 
+   }
+   tcp{
+     mode => "server"
+     host => "0.0.0.0"
+     port => "8888"
+     type => "tcp-t_log"
+   }
+   udp{
+     host => "0.0.0.0"
+     port => "8888"
+     type => "udp-u_log"
+   }
+   syslog{
+     type => "syslog-type"
+   }
+}
+filter{
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash    -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+
+{
+           "message" => "HELLO WORLD AND boy\n",
+          "@version" => "1",
+        "@timestamp" => "2018-11-24T09:06:10.000Z",
+              "type" => "syslog-type",
+              "host" => "192.168.1.13",
+          "priority" => 133,
+         "timestamp" => "Nov 24 17:06:10",
+         "logsource" => "Va3",
+           "program" => "HAHAHAH",
+          "severity" => 5,
+          "facility" => 16,
+    "facility_label" => "local0",
+    "severity_label" => "Notice"
+}
+
+{
+           "message" => "ssh -X 192.168.1.17\n",
+          "@version" => "1",
+        "@timestamp" => "2018-11-24T09:08:33.000Z",
+              "type" => "syslog-type",
+              "host" => "192.168.1.13",                                                        ★ --虚拟机--★ 
+          "priority" => 133,                                                                   ★ --虚拟机--★ 
+         "timestamp" => "Nov 24 17:08:33",
+         "logsource" => "Va3",
+           "program" => "HAHAHAH",                                                             ★ --虚拟机--★ 
+          "severity" => 5,
+          "facility" => 16,
+    "facility_label" => "local0",
+    "severity_label" => "Notice"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+Errno::EBADF: Bad file descriptor - Bad file descriptor
+          each at org/jruby/RubyIO.java:3542
+  tcp_receiver at /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-syslog-2.0.5/lib/logstash/inputs/syslog.rb:173
+  tcp_listener at /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-syslog-2.0.5/lib/logstash/inputs/syslog.rb:159
+[root@Va7 ~]# vim  /etc/bashrc 
+[root@Va7 ~]# tail -2   /etc/bashrc
+fi
+# vim:ts=4:sw=4
+[root@Va7 ~]# 
+[root@Va7 ~]# ls  /opt/logstash/bin/
+logstash      logstash.lib.sh  logstash-plugin.bat  plugin.bat  rspec.bat
+logstash.bat  logstash-plugin  plugin               rspec       setup.bat
+[root@Va7 ~]# vim  /root/.bashrc 
+[root@Va7 ~]# tail -5 /root/.bashrc
+
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+	. /etc/bashrc
+fi
+[root@Va7 ~]# 
+
+http://www.jinbuguo.com/apache/menu22/logs.html
+
+
+[root@Va7 ~]# find  /opt/logstash/vendor/bundle/jruby/1.9/gems/  -name  "grok-patterns"  -type  f
+/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+[root@Va7 ~]# 
+
+
+[root@Va7 ~]# vim    /etc/logstash/logstash.conf 
+[root@Va7 ~]# cat  /etc/logstash/logstash.conf
+input{
+   beats{
+     port => 5044
+   }
+   file{
+     path => ["/tmp/a.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb" 
+   #  sincedb_path  => "/dev/null"
+     start_position => "beginning"
+     type =>  "http_log_a"
+   }
+   file{
+     path => ["/tmp/b.log","/var/tmp/b.log"]
+     sincedb_path   => "/var/lib/logstash/sincedb"
+     start_position => "beginning"
+     type =>  "http_log_b"
+   }
+   tcp{
+     mode => "server"                                                                          ★ --虚拟机--★ 
+     host => "0.0.0.0"
+     port => "8888"                                                                            ★ --虚拟机--★ 
+     type => "tcp-t_log"
+   }
+   udp{
+     host => "0.0.0.0"
+     port => "8888"
+     type => "udp-u_log"
+   }
+   syslog{
+     port => "514"
+     type => "syslog-type"
+   }
+}
+filter{
+  if [type] == "apachelog"{
+    grok{
+      match => ["message", "%{COMBINEDAPACHELOG}"]
+    }
+  }
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash  -t  -f   /etc/logstash/logstash.conf 
+Configuration OK
+[root@Va7 ~]# 
+
+[root@Va7 ~]# find  /opt/logstash/vendor/bundle/jruby/1.9/gems/  -name  "grok-patterns"  -type  f
+/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+[root@Va7 ~]# 
+
+
+
+vim 
+
+if [type] == "http_log" {
+  elasticsearch {
+    hosts => ["Va1:9200", "Va5:9200"]
+    index => "weblog"
+    flush_size => 2000
+
+web1  web2
+vim  /etc/yum.repos.d/local.repo
+yum instal filebeat
+cd  /etc/filebeat/
+ls
+grep  -Pv "^\s*($|#)"  filebeat.yml
+
+cd /var/log/httpd/
+pwd  -P
+cat  /var/log/httpd/
+
+72  
+188 #
+280  hosts: [
+systemctl resart filebeat
+
+
+
+
+curl -XDELETE  http://192.168.1.13:9200/*
+
+
+COMBINEDAPACHELOG
+combinedapachelog
+
+
+[root@Va7 ~]# cat  -n  /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+     1	USERNAME [a-zA-Z0-9._-]+
+     2	USER %{USERNAME}
+     3	EMAILLOCALPART [a-zA-Z][a-zA-Z0-9_.+-=:]+
+     4	EMAILADDRESS %{EMAILLOCALPART}@%{HOSTNAME}
+     5	HTTPDUSER %{EMAILADDRESS}|%{USER}
+     6	INT (?:[+-]?(?:[0-9]+))
+     7	BASE10NUM (?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\.[0-9]+)?)|(?:\.[0-9]+)))
+     8	NUMBER (?:%{BASE10NUM})
+     9	BASE16NUM (?<![0-9A-Fa-f])(?:[+-]?(?:0x)?(?:[0-9A-Fa-f]+))
+    10	BASE16FLOAT \b(?<![0-9A-Fa-f.])(?:[+-]?(?:0x)?(?:(?:[0-9A-Fa-f]+(?:\.[0-9A-Fa-f]*)?)|(?:\.[0-9A-Fa-f]+)))\b
+    11	
+    12	POSINT \b(?:[1-9][0-9]*)\b
+    13	NONNEGINT \b(?:[0-9]+)\b
+    14	WORD \b\w+\b
+    15	NOTSPACE \S+
+    16	SPACE \s*
+    17	DATA .*?
+    18	GREEDYDATA .*
+    19	QUOTEDSTRING (?>(?<!\\)(?>"(?>\\.|[^\\"]+)+"|""|(?>'(?>\\.|[^\\']+)+')|''|(?>`(?>\\.|[^\\`]+)+`)|``))
+    20	UUID [A-Fa-f0-9]{8}-(?:[A-Fa-f0-9]{4}-){3}[A-Fa-f0-9]{12}
+    21	
+    22	# Networking
+    23	MAC (?:%{CISCOMAC}|%{WINDOWSMAC}|%{COMMONMAC})
+    24	CISCOMAC (?:(?:[A-Fa-f0-9]{4}\.){2}[A-Fa-f0-9]{4})
+    25	WINDOWSMAC (?:(?:[A-Fa-f0-9]{2}-){5}[A-Fa-f0-9]{2})
+    26	COMMONMAC (?:(?:[A-Fa-f0-9]{2}:){5}[A-Fa-f0-9]{2})
+    27	IPV6 ((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?
+    28	IPV4 (?<![0-9])(?:(?:[0-1]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])[.](?:[0-1]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])[.](?:[0-1]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])[.](?:[0-1]?[0-9]{1,2}|2[0-4][0-9]|25[0-5]))(?![0-9])
+    29	IP (?:%{IPV6}|%{IPV4})
+    30	HOSTNAME \b(?:[0-9A-Za-z][0-9A-Za-z-]{0,62})(?:\.(?:[0-9A-Za-z][0-9A-Za-z-]{0,62}))*(\.?|\b)
+    31	IPORHOST (?:%{IP}|%{HOSTNAME})
+    32	HOSTPORT %{IPORHOST}:%{POSINT}
+    33	
+    34	# paths
+    35	PATH (?:%{UNIXPATH}|%{WINPATH})
+    36	UNIXPATH (/([\w_%!$@:.,~-]+|\\.)*)+
+    37	TTY (?:/dev/(pts|tty([pq])?)(\w+)?/?(?:[0-9]+))
+    38	WINPATH (?>[A-Za-z]+:|\\)(?:\\[^\\?*]*)+
+    39	URIPROTO [A-Za-z]+(\+[A-Za-z+]+)?
+    40	URIHOST %{IPORHOST}(?::%{POSINT:port})?
+    41	# uripath comes loosely from RFC1738, but mostly from what Firefox
+    42	# doesn't turn into %XX
+    43	URIPATH (?:/[A-Za-z0-9$.+!*'(){},~:;=@#%&_\-]*)+
+    44	#URIPARAM \?(?:[A-Za-z0-9]+(?:=(?:[^&]*))?(?:&(?:[A-Za-z0-9]+(?:=(?:[^&]*))?)?)*)?
+    45	URIPARAM \?[A-Za-z0-9$.+!*'|(){},~@#%&/=:;_?\-\[\]<>]*
+    46	URIPATHPARAM %{URIPATH}(?:%{URIPARAM})?
+    47	URI %{URIPROTO}://(?:%{USER}(?::[^@]*)?@)?(?:%{URIHOST})?(?:%{URIPATHPARAM})?
+    48	
+    49	# Months: January, Feb, 3, 03, 12, December
+    50	MONTH \b(?:Jan(?:uary|uar)?|Feb(?:ruary|ruar)?|M(?:a|ä)?r(?:ch|z)?|Apr(?:il)?|Ma(?:y|i)?|Jun(?:e|i)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|O(?:c|k)?t(?:ober)?|Nov(?:ember)?|De(?:c|z)(?:ember)?)\b
+    51	MONTHNUM (?:0?[1-9]|1[0-2])
+    52	MONTHNUM2 (?:0[1-9]|1[0-2])
+    53	MONTHDAY (?:(?:0[1-9])|(?:[12][0-9])|(?:3[01])|[1-9])
+    54	
+    55	# Days: Monday, Tue, Thu, etc...
+    56	DAY (?:Mon(?:day)?|Tue(?:sday)?|Wed(?:nesday)?|Thu(?:rsday)?|Fri(?:day)?|Sat(?:urday)?|Sun(?:day)?)
+    57	
+    58	# Years?
+    59	YEAR (?>\d\d){1,2}
+    60	HOUR (?:2[0123]|[01]?[0-9])
+    61	MINUTE (?:[0-5][0-9])
+    62	# '60' is a leap second in most time standards and thus is valid.
+    63	SECOND (?:(?:[0-5]?[0-9]|60)(?:[:.,][0-9]+)?)
+    64	TIME (?!<[0-9])%{HOUR}:%{MINUTE}(?::%{SECOND})(?![0-9])
+    65	# datestamp is YYYY/MM/DD-HH:MM:SS.UUUU (or something like it)
+    66	DATE_US %{MONTHNUM}[/-]%{MONTHDAY}[/-]%{YEAR}
+    67	DATE_EU %{MONTHDAY}[./-]%{MONTHNUM}[./-]%{YEAR}
+    68	ISO8601_TIMEZONE (?:Z|[+-]%{HOUR}(?::?%{MINUTE}))
+    69	ISO8601_SECOND (?:%{SECOND}|60)
+    70	TIMESTAMP_ISO8601 %{YEAR}-%{MONTHNUM}-%{MONTHDAY}[T ]%{HOUR}:?%{MINUTE}(?::?%{SECOND})?%{ISO8601_TIMEZONE}?
+    71	DATE %{DATE_US}|%{DATE_EU}
+    72	DATESTAMP %{DATE}[- ]%{TIME}
+    73	TZ (?:[PMCE][SD]T|UTC)
+    74	DATESTAMP_RFC822 %{DAY} %{MONTH} %{MONTHDAY} %{YEAR} %{TIME} %{TZ}
+    75	DATESTAMP_RFC2822 %{DAY}, %{MONTHDAY} %{MONTH} %{YEAR} %{TIME} %{ISO8601_TIMEZONE}
+    76	DATESTAMP_OTHER %{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{TZ} %{YEAR}
+    77	DATESTAMP_EVENTLOG %{YEAR}%{MONTHNUM2}%{MONTHDAY}%{HOUR}%{MINUTE}%{SECOND}                 ★ --虚拟机--★ 
+    78	HTTPDERROR_DATE %{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}
+    79	
+    80	# Syslog Dates: Month Day HH:MM:SS
+    81	SYSLOGTIMESTAMP %{MONTH} +%{MONTHDAY} %{TIME}
+    82	PROG [\x21-\x5a\x5c\x5e-\x7e]+
+    83	SYSLOGPROG %{PROG:program}(?:\[%{POSINT:pid}\])?
+    84	SYSLOGHOST %{IPORHOST}
+    85	SYSLOGFACILITY <%{NONNEGINT:facility}.%{NONNEGINT:priority}>
+    86	HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{INT}
+    87	
+    88	# Shortcuts
+    89	QS %{QUOTEDSTRING}
+    90	
+    91	# Log formats
+    92	SYSLOGBASE %{SYSLOGTIMESTAMP:timestamp} (?:%{SYSLOGFACILITY} )?%{SYSLOGHOST:logsource} %{SYSLOGPROG}:
+    93	COMMONAPACHELOG %{IPORHOST:clientip} %{HTTPDUSER:ident} %{USER:auth} \[%{HTTPDATE:timestamp}\] "(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion})?|%{DATA:rawrequest})" %{NUMBER:response} (?:%{NUMBER:bytes}|-)
+    94	COMBINEDAPACHELOG %{COMMONAPACHELOG} %{QS:referrer} %{QS:agent}
+    95	HTTPD20_ERRORLOG \[%{HTTPDERROR_DATE:timestamp}\] \[%{LOGLEVEL:loglevel}\] (?:\[client %{IPORHOST:clientip}\] ){0,1}%{GREEDYDATA:errormsg}
+    96	HTTPD24_ERRORLOG \[%{HTTPDERROR_DATE:timestamp}\] \[%{WORD:module}:%{LOGLEVEL:loglevel}\] \[pid %{POSINT:pid}:tid %{NUMBER:tid}\]( \(%{POSINT:proxy_errorcode}\)%{DATA:proxy_errormessage}:)?( \[client %{IPORHOST:client}:%{POSINT:clientport}\])? %{DATA:errorcode}: %{GREEDYDATA:message}
+    97	HTTPD_ERRORLOG %{HTTPD20_ERRORLOG}|%{HTTPD24_ERRORLOG}
+    98	
+    99	
+   100	# Log Levels
+   101	LOGLEVEL ([Aa]lert|ALERT|[Tt]race|TRACE|[Dd]ebug|DEBUG|[Nn]otice|NOTICE|[Ii]nfo|INFO|[Ww]arn?(?:ing)?|WARN?(?:ING)?|[Ee]rr?(?:or)?|ERR?(?:OR)?|[Cc]rit?(?:ical)?|CRIT?(?:ICAL)?|[Ff]atal|FATAL|[Ss]evere|SEVERE|EMERG(?:ENCY)?|[Ee]merg(?:ency)?)
+[root@Va7 ~]# 
+
+
+
+http://www.jinbuguo.com/apache/menu22/logs.html
+

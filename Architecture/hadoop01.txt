@@ -1,0 +1,174 @@
+hadoop 安装 （单机模式）
+
+禁用 selinux 和 iptables
+禁用 selinux 和 iptables
+禁用 selinux 和 iptables
+配置 /etc/hosts 保证所有主机域名能够相互解析
+配置 /etc/hosts 保证所有主机域名能够相互解析
+配置 /etc/hosts 保证所有主机域名能够相互解析
+
+1、安装 java 
+yum install java-1.8.0-openjdk -y
+
+验证：
+java -version
+
+2、安装 jps
+yum install java-1.8.0-openjdk-devel -y
+
+验证：
+jps
+
+3、安装 hadoop 
+tar zxf hadoop-2.7.3.tar.gz
+mv hadoop-2.7.3 /usr/local/hadoop
+
+修改配置文件的运行环境：
+/usr/local/hadoop/etc/hadoop/hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+验证：
+cd /usr/local/hadoop
+./bin/hadoop version
+
+统计分析热词
+创建数据源
+mkdir input
+在这个文件夹里面放入需要统计分析的数据
+cp *.txt input/
+
+统计分析1  单词出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+统计分析2  某一个关键词出现的频率，例如 dfs 这个词前面字母是 h 的出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep input output1 '(?<=h)dfs'
+
+排错 1
+提示  JAVA_HOME is not set and could not be found
+表示  JAVA_HOME 没有设置
+解决方法：
+设置 hadoop-env.sh 里面的 JAVA_HOME 或在运行脚本前面加入前置变量设置
+JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre" ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+排错 2
+提示 java.net.UnknownHostException: host: host: unknown error
+	at java.net.InetAddress.getLocalHost(InetAddress.java:1505)
+表示主机名没有 IP 解析
+解决方法：
+在 /etc/hosts 里面增加 主机名 IP 对应关系
+
+排错 3
+提示：17/07/24 23:10:46 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory file:/usr/local/hadoop/output already exists
+表示输出的文件目录已经存在
+解决方法：
+删除已经存在的目录或更改结果保存位置
+
+伪分布式配置：
+
+xml 配置格式
+<property>
+        <name>关键字</name>
+        <value>变量值</value>
+        <description> 描述 </description>
+</property>
+
+配置文件路径 /usr/local/hadoop/etc/hadoop/
+1 配置 hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+查找 JAVA_HOME
+readlink -f $(which java)
+
+2 配置 core-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-common/core-default.xml
+
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>file:///</value>
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+    </property>
+</configuration>
+
+3 配置 hdfs-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+        <description> 文件复制份数 </description>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address</name>
+        <value>192.168.4.10:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.secondary.http-address</name>
+        <value>192.168.4.10:50090</value>
+    </property>
+</configuration>
+
+常用配置选项
+dfs.namenode.name.dir
+dfs.datanode.data.dir
+dfs.namenode.http-address
+dfs.namenode.secondary.http-address
+dfs.webhdfs.enabled
+dfs.permissions.enabled
+
+4 配置 mapred-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-mapreduce-client/hadoop-mapreduce-client-core/mapred-default.xml
+
+<configuration>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>mapreduce.jobtracker.http.address</name>
+        <value>master:50030</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>master:10020</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>master:19888</value>
+    </property>
+</configuration>
+
+常用配置选项
+mapreduce.framework.name
+mapreduce.jobtracker.http.address
+mapreduce.jobhistory.address
+mapreduce.jobhistory.webapp.address
+
+5 配置 yarn-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-yarn/hadoop-yarn-common/yarn-default.xml
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>myhadoop</value>
+    </property>
+
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>master</value>
+    </property>
+</configuration>
+
+
+常用配置选项
+yarn.nodemanager.aux-services
+yarn.nodemanager.aux-services.mapreduce.shuffle.class
+yarn.resourcemanager.hostname

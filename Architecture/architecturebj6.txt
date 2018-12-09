@@ -1,0 +1,395 @@
+
+# vimdiff  wen1    wen2
+/****
+ who 命令显示关于当前在本地系统上的所有用户的信息。显示以下内容：登录名、tty、登录日期和时间。输入whoami 显示您的登录名、tty、您登录的日期和时间。如果用户是从一个远程机器登录的，那么该机器的主机名也会被显示出来。
+
+who 命令也能显示自从线路活动发生以来经过的时间、命令解释器（shell）的进程标识、登录、注销、重新启动和系统时钟的变化，还能显示由初始化进程生成的其它进程。
+a 处理 /etc/utmp 文件或有全部信息的指定文件。等同于指定 -bdlprtTu 标志。
+ 
+-b 指出最近系统启动的时间和日期。
+ 
+-d 显示没有被 init 重新生成的所有到期的进程。退出字段用于显示死进程并包含死进程的终止和退出值(由 wait 进程返回的)。（这个标志用于通过察看应用程序返回的错误号来确定一个进程的结束原因。）
+ 
+-l 列出任何登录进程。
+ 
+-m 仅显示关于当前终端的信息。who -m 命令等同于 who am i 和 who am I 命令。
+ 
+-p 列出任何当前活动的和以前已由 init 生成的活动进程。
+ 
+-q 打印一份在本地系统上的用户和用户数的快速清单。
+ 
+-r 显示当前进程的运行级别。
+ 
+-s 仅列出名字、线路和时间字段。这个标志是缺省值；因此，who 和 who -s 命令是等效的。
+ 
+-t 显示 root 用户上一次用 date 命令对系统时钟做的更改。如果 date 命令自从系统安装以来还没有被运行过， who -t 命令就不产生输出。
+ 
+-u 或 -i 显示每个当前用户的用户名、tty、登录时间、线路活动和进程标识。
+ 
+-A 显示在 /etc/utmp 文件中的所有记帐项。这些项是通过 acctwtmp 命令生成的。
+ 
+-H 显示一个头（标题）。
+ 
+-T 或 -w 显示 tty 的状态并如下显示谁能够对 tty 写入：
+**********/
+
+[root@hiys ~]# who  -b
+         系统引导 2018-11-28 16:23
+
+[root@hiys ~]# ssh  -X  192.168.1.11                                                  ★ --虚拟机--★ 
+root@192.168.1.11's password: a
+
+[root@Va1 ~]# yum  -y  install  java-1.8.0-openjdk-devel
+.................
+软件包 1:java-1.8.0-openjdk-devel-1.8.0.131-11.b12.el7.x86_64 已安装并且是最新版本
+无须任何处理
+
+[root@Va1 ~]# java  -version
+
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@Va1 ~]# jps   ## 进程pid 查看（每次不一样）
+787 Elasticsearch
+1622 Jps
+
+[root@Va1 ~]# ls
+aaa      f1          index2.html              nagios-plugins-2.1.4.tar.gz  zookeeper-3.4.10.tar.gz
+bigdesk  hadoop      index.html               nrpe-2.12.tar.gz
+eip      Hadoop.zip  kafka_2.10-0.10.2.1.tgz  nrpe-3.0.1.tar.gz
+elk.tar  ha.sh       nagios-4.2.4.tar.gz      user.sh
+
+[root@Va1 ~]# ls hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# ls  /usr/local/hadoop/
+bin  etc  include  lib  libexec  LICENSE.txt  logs  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 ~]# cd  /usr/local/hadoop/
+
+[root@Va1 hadoop]# 
+
+
+[root@Va1 ~]# cd  /usr/local/hadoop/
+
+[root@Va1 hadoop]# rpm  -ql  java-1.8.0-openjdk
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/policytool
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libawt_xawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjsoundalsa.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libsplashscreen.so
+/usr/share/applications/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64-policytool.desktop
+/usr/share/icons/hicolor/16x16/apps/java-1.8.0.png
+/usr/share/icons/hicolor/24x24/apps/java-1.8.0.png
+/usr/share/icons/hicolor/32x32/apps/java-1.8.0.png
+/usr/share/icons/hicolor/48x48/apps/java-1.8.0.png
+[root@Va1 hadoop]# vim  /usr/local/hadoop/etc/hadoop/hadoop-env.sh 
+[root@Va1 hadoop]# sed   -n  '25p;33p'  /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+[root@Va1 hadoop]# cat  -n  /usr/local/hadoop/etc/hadoop/hadoop-env.sh |sed  -n '25p;33p'
+    25	export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+    33	export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop
+
+Usage: hadoop [--config confdir] [COMMAND | CLASSNAME]
+  CLASSNAME            run the class named CLASSNAME
+ or
+  where COMMAND is one of:
+  fs                   run a generic filesystem user client
+  version              print the version
+  jar <jar>            run a jar file
+                       note: please use "yarn jar" to launch
+                             YARN applications, not this command.
+  checknative [-a|-h]  check native hadoop and compression libraries availability
+  distcp <srcurl> <desturl> copy file or directories recursively
+  archive -archiveName NAME -p <parent path> <src>* <dest> create a hadoop archive
+  classpath            prints the class path needed to get the
+  credential           interact with credential providers
+                       Hadoop jar and the required libraries
+  daemonlog            get/set the log level for each daemon
+  trace                view and modify Hadoop tracing settings
+
+Most commands print help when invoked w/o parameters.
+
+[root@Va1 hadoop]# mkdir  /usr/local/hadoop/aa
+[root@Va1 hadoop]# ls
+aa  bin  etc  include  lib  libexec  LICENSE.txt  logs  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 hadoop]# cp  *.txt  /usr/local/hadoop/aa/
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop   jar   /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar  wordcount  /usr/local/hadoop/aa/   /usr/local/hadoop/bb
+
+Caused by: java.net.ConnectException: 拒绝连接
+.........................
+	at org.apache.hadoop.ipc.Client.call(Client.java:1452)
+	... 41 more
+[root@Va1 hadoop]# echo $?
+255
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va2 ~]# ls   /var/hadoop/dfs/data/current/
+BP-480972555-192.168.1.11-1543306778221  VERSION
+[root@Va2 ~]# rm  -rf  /var/hadoop/
+[root@Va2 ~]# ls   /var/hadoop/
+ls: 无法访问/var/hadoop/: 没有那个文件或目录
+[root@Va2 ~]# 
+[root@Va2 ~]# diff  -y  --suppress-common-lines  wen1  wen2
+diff: wen1: 没有那个文件或目录
+diff: wen2: 没有那个文件或目录
+[root@Va2 ~]# 
+# vimdiff  wen1    wen2
+[root@Va2 ~]# vimdiff  wen1   wen2
+还有 2 个文件等待编辑
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va3 ~]# rm  -rf  /var/hadoop/
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va4 ~]# rm  -rf  /var/hadoop/
+[root@Va4 ~]# 
+
+
+[root@Va5 ~]# sestatus
+SELinux status:                 disabled
+[root@Va5 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+
+[root@Va5 ~]# cat  /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1
+
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCpIcC51SxIXLhG4aYl2So5uBHsvmE/oqW3CpZlkTEsTax+90gnSyUujK+I7DYgFJ4Pe2K+/lNLQ13QgosQwKw6bQEKFytRVzgxWTrGNbamKKvSMxuMgsFJk5WpGdJBTgqYfjfIeUaOA4cuYlb2fPFHtjvIPf0sXSJfG9UBeY2HqxuLiGwob/dLb+NxPQTfvfXZdlmIVlzzLQenm3yXmi95prudYhPvl/abV9D7ZUGuAXmm+785PU6uUwOLs4BZcTjiI426sCKsS18GHw/AhAgrjsECxK94TVzfc46ZRZJoaPvI7c3Nbht/0WO1dHDkzN1CldWLDiCIJheHDIs+dXix root@Va1
+
+[root@Va5 ~]# yum  -y install  java-1.8.0-openjdk
+已加载插件：fastestmirror
+CentOS7-1708                                                                  | 3.6 kB  00:00:00     
+ansible                                                                       | 2.9 kB  00:00:00     
+docker                                                                        | 2.9 kB  00:00:00     
+Loading mirror speeds from cached hostfile
+软件包 1:java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@Va5 ~]# 
+
+===================================
+-----------------Va1 操作 -------------------------
+cd  /usr/
+
+
+<configureation>
+  <property>
+     <name>mapreduce.framework.name</name>
+     <value>yarn</value>
+  </property>
+</configuration>
+
+
+<configureation>
+  <property>
+     <name>yarn.resourcemanager.hostname</name>
+     <value>Va1</value>
+  </property>
+  <property>
+     <name>yarn.nodemanager.aux-services</name>
+     <value>mapreduce_shuffle</value>
+  </property>
+</configuration>
+
+
+for  i in   Va{2..4}
+do
+rsync  -aSH   --delete  /usr/local/hadoop/etc  ${i}:/usr/local/hadoop/  -e  'ssh'  
+done
+
+cd  /usr/local/hadoop/
+./sbin/start-yarn.sh
+
+#jps
+
+./bin/yarn   node  -list
+
+
+
+http://192.168.1.11:50070  ##namenode
+
+http://192.168.1.11:50090  ## secondarynamenode
+ 
+http://192.168.1.11:8088  ## resourcemanager
+
+vim
+
+[local_public]
+url= ftp://192.168.1.254/public
+
+vim /etc/ansible/ansible.cfg
+
+vim /etc/ansible/hosts
+
+hadoop]#./bin/hadoop  fs
+
+hadoop]#./bin/hadoop  fs  /
+
+hadoop]#./bin/hadoop  fs  -mkdir  /abc  ## 创建文件夹
+
+hadoop]#./bin/hadoop  fs  -ls  /
+
+hadoop]# ./bin/hadoop  fs    -put  *.txt  /abc ## 上传
+
+hadoop]# ./bin/hadoop  fs   -get  /abc/*.txt  ## 下载
+
+hadoop]#ls   ## 查看本地磁盘上的文件（夹）
+
+hadoop]#./bin/hadoop  fs  -touchz  /readme.txt  ## 创建文件
+
+hadoop]#./bin/hadoop  fs  -ls  hdfs:/Va1:9000/
+
+hadoop]# cd  /usr/local/hadoop/
+
+hadoop]# ./bin/hadoop  jar  share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar  wordcount  hdfs://Va1:9000/abc    hdfs://Va1:9000/output
+
+hadoop]# ./bin/hadoop fs  -cat  /output*
+
+hadoop]# 
+
+# rsync  -aSH  --delete  /usr/local/hadoop  192.168.1.15:/usr/local/
+
+vim  /etc/hosts
+
+192.168.1.15  Va5
+vim  /usr/local/hadoop/etc/hadoop/slaves
+
+ansible  all  --list-hosts
+
+ansible  all  -m  copy  -a  'src=/usr/local/hadoop/etc/hadoop/slaves  dest=/usr/local/hadoop/etc/hadoop/
+
+ansible all  -m  shell  -a  'jps'
+ 
+./sbin/hadoop-daemon.sh 
+
+hadoop]# ./bin/hdfs  dfsadmin  -setBalancerBandwidth  6000 0000 ## 数据平衡
+./sbin/start-balancer.sh
+
+hadoop]# ./bin/hadoop  fs    -put  xxx.txt  hdfs://
+
+http://192.168.1.11:50070  ##namenode
+
+hadoop]# ./bin/hdfs  dfsadmin  -report
+
+Decommission  in  progress  数据迁移中
+
+vim  /etc/ansible/hosts
+ansible  all -m  copy  -a  '
+
+# groupadd  -g  200  nfsuser
+# useradd  -u  200  -g   200  -r  nfsuser
+
+cd /usr/local/hadoop/
+./sbin/stop-all.sh
+ls etc/hadoop/slaves
+删除newnode
+vim  /etc/hadoop/slaves
+
+rm  -rf  logs/*
+
+namenode  ./sbin/stop-all.sh
+
+vim   core-site.xml
+./sbin/start-dfs.sh
+
+vim hdfs
+
+<configureation>
+  <property>
+     <name>fs.defaultFS</name>
+     <value>hdfs://Va1:9000</value>
+  </property>
+  <property>
+     <name>hadoop.tmp.dir</name>
+     <value>/var/</value>
+  </property>
+
+  <property>
+     <name>dfs.replication</name>
+     <value>2</value>
+  </property>
+  <property>
+     <name>nfs.ex</name>
+     <value>2</value>
+  </property>
+</configuration>
+
+
+
+
+
+
+--------------Va2  操作---------------
+http://192.168.1.12:8042   #nodemanager
+http://192.168.1.12:50075  #datanode
+
+
+
+启动一台新主机
+
+cd  /usr/local/hadoop/
+
+
+
+卸载 yum  remove -y  rpcbind  nfs-utils
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

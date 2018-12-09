@@ -1,0 +1,719 @@
+
+
+[root@hiys ~]# grep  -Ev  "^#|^$"  /etc/vsftpd/vsftpd.conf 
+
+anonymous_enable=YES
+local_enable=YES
+write_enable=YES
+local_umask=022
+anon_upload_enable=YES
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+anon_umask=022
+dirmessage_enable=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+xferlog_std_format=YES
+
+listen=YES
+listen_ipv6=NO
+
+pam_service_name=vsftpd
+userlist_enable=YES
+tcp_wrappers=YES
+
+[root@hiys ~]# cat  -n /etc/vsftpd/vsftpd.conf |sed -n  '112p;118p'
+   112	listen=YES
+   118	listen_ipv6=NO
+[root@hiys ~]# systemctl is-enabled  vsftpd
+enabled
+
+[root@hiys ~]# ls /etc/yum.repos.d/
+ansible.repo       NSD-2018-1-12.tar.gz   repo               RHEL7OSP.repo
+CentOS7-1708.repo  packagekit-media.repo  RHEL7-extras.repo  rhel7.repo
+
+[root@hiys ~]# cat  /etc/yum.repos.d/CentOS7-1708.repo 
+
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://176.121.213.151/CentOS7-1708/
+enabled=1
+
+[root@hiys ~]# ls  /var/ftp/
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# ls  /var/ftp/CentOS7-1708/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+
+[root@hiys ~]# yum clean all >/dev/null &&  yum repolist |tail  -16
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+ansible                          ansible                                      18
+rhel7                            rhel7.4                                   4,986
+repolist: 15,735
+
+ [root@hiys ~]# virsh net-list
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              活动     是           是
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr2                 活动     是           是
+
+[root@hiys ~]# virsh  net-dumpxml  vbr    ### eth0
+<network>
+  <name>vbr</name>
+  <uuid>4687cb6a-45a9-4a36-bb21-7cc0a74fccaa</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:b9:be:6c'/>
+  <domain name='vbr'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys ~]# 
+[root@hiys ~]# virsh  net-dumpxml  private1   ### eth1
+<network>
+  <name>private1</name>
+  <uuid>559de4a7-724c-4eec-ba19-3c7c2e69b4ad</uuid>
+  <bridge name='private1' stp='on' delay='0'/>
+  <mac address='52:54:00:37:78:11'/>
+  <domain name='private1'/>
+  <ip address='192.168.4.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@hiys ~]# 
+[root@hiys ~]# virsh  net-dumpxml  vbr2    ### eth2
+<network>
+  <name>vbr2</name>
+  <uuid>08768731-b6d8-4055-af00-9b429a37b360</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr2' stp='on' delay='0'/>
+  <mac address='52:54:00:d0:34:45'/>
+  <domain name='vbr2'/>
+  <ip address='192.168.3.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.3.100' end='192.168.3.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys ~]# qemu-img  create   -f   qcow2   /var/lib/libvirt/images/Moban.qcow2  2G
+
+Formatting '/var/lib/libvirt/images/Moban.qcow2', fmt=qcow2 size=2147483648 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys ~]# ls   /var/lib/libvirt/images/
+bin                 disk-Va1.img  disk-Va8.img  nova01.img                  Va2.img  Va9.img
+conf.d              disk-Va2.img  disk-Va9.img  openstack.img               Va3.img  vsftpd.conf
+content             disk-Va3.img  exam          qemu                        Va4.img  Weekend.sh
+db                  disk-Va4.img  iso           Student.sh                  Va5.img
+disk.img            disk-Va5.img  lost+found    tedu-wallpaper-01.png       Va6.img
+disk-nova01.img     disk-Va6.img  Moban.qcow2   tedu-wallpaper-weekend.png  Va7.img
+disk-openstack.img  disk-Va7.img  node.qcow2    Va1.img                     Va8.img
+
+[root@hiys ~]# ll  /var/lib/libvirt/images/Moban.qcow2 
+-rw-r--r-- 1 root root 197120 11月 27 18:49 /var/lib/libvirt/images/Moban.qcow2
+
+[root@hiys ~]# du  -sh  /var/lib/libvirt/images/Moban.qcow2
+196K	/var/lib/libvirt/images/Moban.qcow2
+
+[root@hiys ~]# which  virt-manager 
+/usr/bin/virt-manager
+
+[root@hiys ~]# yum  provides  virt-manager
+.....................
+virt-manager-1.4.1-7.el7.noarch : Desktop tool for managing virtual machines via libvirt
+源    ：CentOS7-1708
+..............................
+[root@hiys ~]# rpm  -q  virt-manager
+virt-manager-1.4.1-7.el7.noarch
+
+[root@hiys ~]# systemctl  unmask   firewalld   ## 取消 注销指定服务
+Removed symlink /etc/systemd/system/firewalld.service.
+
+[root@hiys ~]# systemctl  mask   firewalld  ## 注销指定服务
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@hiys ~]# systemctl  is-enabled  firewalld
+masked
+
+[root@hiys ~]# virt-manager
+====================================================================
+      虚拟系统管理器                                                                                               |
+-----------------------------------------------------                                                                              |
+   点击菜单  文件 ---> 新建虚拟机（N）                                                           |
+                                                                                                                    |
+生成新虚拟机                                                                                                       |
+
+  选择  网络安装，可为 HTTP，FTP 或者 NFS
+
+点击  前进
+---------------------------------------------------------
+生成新虚拟机
+提供操作系统安装 URL
+URL ： yum 源地址  ftp://176.121.213.151/CentOS7-1708/
+默认勾 上 根据安装介质 自动侦测 操作系统（U）
+
+点击  前进
+-----------------------------------------------
+/*****
+[root@hiys ~]# echo "1024*4" |bc
+4096
+[root@hiys ~]# echo  "1024*2" |bc
+2048
+***/
+-------------------------------
+生成新虚拟机
+
+内存（M），RAM   2048 MiB
+         CPU    2
+
+点击  前进
+------------------------------------------------------------
+
+生成新虚拟机
+
+默认勾 上 为虚拟机启用存储（E）
+
+选择或创建自定义存储（S）
+ 点击 管理（M）...  /var/lib/libvirt/images/Moban.qcow2
+
+点击  前进
+------------------------------------------------------------
+
+生成新虚拟机
+名称（N）  Mob  【自定义虚拟机名称】
+
+选择网络
+    虚拟网络‘vbr’：NAT
+
+点击 完成
+----------------------------------------------------------------
+
+WELCOME TO CENTOS 7.
+选择语言必须是 英语
+English        English(United States)
+
+           点击     Continue
+---------------------------------------------------------
+Installation  Summary
+------------------------------------------
+INSTALLATION   SUMMARY
+
+LOCALIZATION
+  DATE  & TIME                   KEYBOARD
+ Asia/Shanghai timezone          English(US)
+
+LANGUAGE SUPPORT
+English (United States)
+
+SOFTWARE  SOURCE                      注意 SOFTWARE SELECTION  
+ftp://176.121.213.151/CentOS7-1708/        Minimal Install
+                                                        最小化安装
+
+                                               点击  KDUMP
+                                     ---------------------------------------------------
+                                       去掉 勾 Enable  kdump
+                                                 点击Done
+                                       ----------------------------------------------
+    installation  destination
+ 点击INSTALLATION  DESTINATION           KDUMP
+         |                              Kdump is disabled
+            |
+            |
+----------------------------------    
+Device Selection
+ 
+Other  Storage  Options
+选择 I will configure partitioning
+
+点击左上角 Done
+
+--------------------------------------------------
+MANUAL  PARTITIONING
+
+
+New CentOS 7 Installation
+
+
+Create  new  mount  points  by clicking  the  '+' button.
+New  mount points  will user the following  partitioning scheme:
+
+选择  Standard Partition  标准分区
+
+点击 加号 + 
+-----------------------------------------
+ADD   A  NEW  MOUNT  POINT
+
+Mount  Point:   /  只选择根分区
+
+Desired Capacity:
+
+     点击  Add mount point 确定
+------------------------------------------------------
+MANUAL  PARTITIONING
+点击左上角 Done  (需要点击二次）
+--------------------------------------
+New CentOS 7 Installation
+   SYSTEM 
+  /               2047 MiB
+  vda1
+---------------------------------------------------------
+------------------------------------------------
+弹出对话框 
+  SUMMARY  OF  CHANGES
+1   Destroy  Format    Unknow                    vda
+2   Create   Format    partition  table (MSDOS)  vda
+3   Create   Device    partition                 vda1
+4   Create   Format     xfs             vda1          /
+
+选择 Accept Changes
+-----------------------------------------
+------------------------------------------
+INSTALLATION   SUMMARY
+
+
+             点击 Begin Installation
+----------------------------------------------------
+CONFIGURATION
+
+USER SETTINGS  
+
+ROOT  PASSWORD              USER  CREATION
+                            lily     mima
+-----------------------------------------------------------------------                                                                |
+                                                                                                                   |
+最后点击 Reboot                                                                            |
+====================================================================
+ 
+[root@hiys ~]# vim  /etc/ssh/ssh_config 
+
+ 41   Port 22
+
+ 58 Host *
+ 59         GSSAPIAuthentication   yes
+ 60         StrictHostKeyChecking  no
+[root@hiys ~]# cat  -n   /etc/ssh/ssh_config |sed  -n  '41p;58,60p'
+    41	  Port 22
+    58	Host *
+    59		GSSAPIAuthentication   yes
+    60	        StrictHostKeyChecking  no
+[root@hiys ~]# 
+
+
+
+localhost  login: root
+Password:  1
+localhost ~]# yum  provides  ifconfig
+.................
+localhost ~]# yum  -y install net-tools
+
+localhost ~]# ifconfig  |awk '/inet /&&/192.168/{print $2}'
+ 192.168.1.141
+
+[root@hiys ~]# ssh  -X  192.168.1.141   ## ssh连接服务器出错
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+........................
+Please contact your system administrator.
+Add correct host key in /root/.ssh/known_hosts to get rid of this message.
+Offending ECDSA key in /root/.ssh/known_hosts:4
+ECDSA host key for 192.168.1.141 has changed and you have requested strict checking.
+Host key verification failed.
+
+[root@hiys ~]# which  ssh-keygen
+/usr/bin/ssh-keygen
+/** *********************8
+[root@Va1 ~]# ssh-keygen   ## 【 第二种方式 ssh-keygen  -b  2048  -t  rsa  -N  ''  -f  key 】
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 直接回车
+**/
+[root@hiys ~]# ssh-keygen   -R   192.168.1.141  ## 使用命令清除所连接的IP
+
+# Host 192.168.1.141 found: line 4
+/root/.ssh/known_hosts updated.
+Original contents retained as /root/.ssh/known_hosts.old
+
+[root@hiys ~]# ssh  -X  192.168.1.141
+..................................................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.1.141' (ECDSA) to the list of known hosts.
+root@192.168.1.141's password: 1
+...................................
+[root@localhost ~]# echo  Mob > /etc/hostname 
+
+[root@localhost ~]# cat  /etc/hostname
+Mob
+[root@localhost ~]# ls  /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Media.repo    CentOS-Vault.repo
+CentOS-CR.repo    CentOS-fasttrack.repo  CentOS-Sources.repo
+
+[root@localhost ~]# mkdir  /etc/yum.repos.d/repo
+
+[root@localhost ~]# mv  /etc/yum.repos.d/*.repo   /etc/yum.repos.d/repo/
+
+[root@localhost ~]# scp  -o  StrictHostKeyChecking=no  root@192.168.1.254:/root/local.repo.txt  /etc/yum.repos.d/local.repo
+Warning: Permanently added '192.168.1.254' (ECDSA) to the list of known hosts.
+root@192.168.1.254's password: 1
+local.repo.txt                                                  100%  257    48.0KB/s   00:00 
+   
+[root@localhost ~]# yum  clean  all >/dev/null  && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+
+[root@localhost ~]# yum  provides  git |grep  git
+git-1.8.3.1-11.el7.x86_64 : Fast Version Control System
+
+[root@localhost ~]# yum  provides  vim |grep  vim
+2:vim-enhanced-7.4.160-2.el7.x86_64 : A version of the VIM editor which includes
+提供    ：vim = 7.4.160-2.el7
+
+[root@localhost ~]# yum  -y install git  vim-enhanced  cloud-utils-growpart
+.....................
+已安装:
+  cloud-utils-growpart.noarch 0:0.29-2.el7               git.x86_64 0:1.8.3.1-11.el7              
+  vim-enhanced.x86_64 2:7.4.160-2.el7                   
+
+作为依赖被安装:
+  gpm-libs.x86_64 0:1.20.7-5.el7                     libgnome-keyring.x86_64 0:3.12.0-1.el7 
+...........................................
+  rsync.x86_64 0:3.0.9-18.el7                        vim-common.x86_64 2:7.4.160-2.el7            
+  vim-filesystem.x86_64 2:7.4.160-2.el7             
+
+完毕！
+
+[root@localhost ~]# rpm  -q  git  vim-enhanced  cloud-utils-growpart
+git-1.8.3.1-11.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+cloud-utils-growpart-0.29-2.el7.noarch
+
+[root@localhost ~]# sed  -n  '/SELINUX=/p'  /etc/selinux/config 
+# SELINUX= can take one of these three values:
+SELINUX=enforcing
+
+[root@localhost ~]# sed  -n  '/SELINUX=enforcing/p'  /etc/selinux/config 
+SELINUX=enforcing
+
+[root@localhost ~]# sed  -i   's/\(SELINUX=\)enforcing/\1disabled/'  /etc/selinux/config
+
+[root@localhost ~]# sed  -n  '/SELINUX=/p'  /etc/selinux/config 
+# SELINUX= can take one of these three values:
+SELINUX=disabled
+
+[root@localhost ~]# yum  -y remove  NetworkManager-*  firewalld-*  python-firewall
+.......................
+删除:
+  NetworkManager.x86_64 1:1.8.0-9.el7              NetworkManager-libnm.x86_64 1:1.8.0-9.el7     
+  NetworkManager-team.x86_64 1:1.8.0-9.el7         NetworkManager-tui.x86_64 1:1.8.0-9.el7       
+  NetworkManager-wifi.x86_64 1:1.8.0-9.el7         firewalld.noarch 0:0.4.4.4-6.el7              
+  firewalld-filesystem.noarch 0:0.4.4.4-6.el7      python-firewall.noarch 0:0.4.4.4-6.el7        
+
+完毕！
+/***
+[root@hiys ~]# cat   /etc/sysconfig/network-scripts/ifcfg-enp2s0 
+# Generated by dracut initrd
+NAME="enp2s0"
+DEVICE="enp2s0"
+ONBOOT=yes
+NETBOOT=yes   ## 是否支持网络引导
+UUID="607123f0-395f-4085-a7da-93f58bee45bb"
+IPV6INIT=yes
+BOOTPROTO=dhcp
+TYPE=Ethernet
+[root@hiys ~]# 
+**/
+
+[root@localhost ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+[root@localhost ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+# Generated by dracut initrd
+DEVICE="eth0"
+ONBOOT=yes
+IPV6INIT=no
+NM_CONTROLLED="no"
+BOOTPROTO=dhcp
+TYPE=Ethernet
+
+[root@localhost ~]# cp  /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-eth1
+
+[root@localhost ~]# cp  /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-eth2
+
+[root@localhost ~]# vim /etc/sysconfig/network-scripts/ifcfg-eth1
+
+[root@localhost ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth1
+
+# Generated by dracut initrd
+DEVICE="eth1"     # 指定设备驱动
+ONBOOT=yes
+IPV6INIT=no
+NM_CONTROLLED="no"   ## 禁用NetworkManager
+BOOTPROTO="static"
+TYPE=Ethernet
+IPADDR="192.168.4.1"
+NETMASK="255.255.255.0"
+
+[root@localhost ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth2
+	
+[root@localhost ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth2
+# Generated by dracut initrd
+DEVICE="eth2"
+ONBOOT=yes
+IPV6INIT=no
+NM_CONTROLLED="no"
+BOOTPROTO=dhcp
+TYPE=Ethernet
+
+[root@localhost ~]# vim   /etc/default/grub
+
+[root@localhost ~]# cat  /etc/default/grub
+
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200n8"
+GRUB_DISABLE_LINUX_UUID="true"    ##禁止使用UUID
+GRUB_ENABLE_LINUX_LABEL="true"
+GRUB_DISABLE_RECOVERY="true"
+ 
+[root@localhost ~]# yum  -y install  lftp net-tools vim-enhanced bridge-utils  psmisc 
+.................
+已安装:
+  bridge-utils.x86_64 0:1.5-9.el7   lftp.x86_64 0:4.4.8-8.el7_3.2   psmisc.x86_64 0:22.20-15.el7  
+
+作为依赖被安装:
+  gnutls.x86_64 0:3.3.26-9.el7    nettle.x86_64 0:2.7.1-8.el7    trousers.x86_64 0:0.3.14-2.el7   
+
+完毕！
+[root@localhost ~]# rpm  -q   lftp net-tools vim-enhanced bridge-utils psmisc 
+
+lftp-4.4.8-8.el7_3.2.x86_64
+net-tools-2.0-0.22.20131004git.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+bridge-utils-1.5-9.el7.x86_64
+psmisc-22.20-15.el7.x86_64
+
+[root@localhost ~]# vim   /etc/sysconfig/network   ##禁用空路由
+
+[root@localhost ~]# cat  /etc/sysconfig/network
+# Created by anaconda
+NOZEROCONF="yes"
+
+[root@localhost ~]# rpm  -q   grub2-tools
+grub2-tools-2.02-0.64.el7.centos.x86_64
+
+
+[root@H127 ~]# ll /boot/grub2/grub.cfg 
+-rw-r--r--. 1 root root 4103 11月 14 21:09 /boot/grub2/grub.cfg
+
+[root@H127 ~]# grub2-mk
+grub2-mkconfig         grub2-mklayout         grub2-mkrelpath        
+grub2-mkfont           grub2-mknetdir         grub2-mkrescue         
+grub2-mkimage          grub2-mkpasswd-pbkdf2  grub2-mkstandalone  
+   
+[root@H127 ~]# grub2-mkconfig  -o  /boot/grub2/grub.cfg  ## ）重新生成grub.cfg
+
+[root@H127 ~]# ll /boot/grub2/grub.cfg
+-rw-r--r--. 1 root root 4343 11月 15 13:12 /boot/grub2/grub.cfg
+[root@H127 ~]# wc -l /boot/grub2/grub.cfg
+143 /boot/grub2/grub.cfg
+
+[root@H127 ~]# lsblk
+    ............... 
+[root@H127 ~]# blkid
+............在文件 /etc/fstab中 把UUID 改成 /dev/vda1 ,或 /dev/sda1 具体看blkid行首显示的结果
+
+[root@H127 ~]# yum -y install cloud-utils-growpart  ## 安装扩展分区软件
+.............
+已安装:
+  cloud-utils-growpart.noarch 0:0.29-2.el7                                                      
+
+完毕！
+[root@H127 ~]# rpm -q cloud-utils-growpart
+cloud-utils-growpart-0.29-2.el7.noarch
+[root@H127 ~]# 
+
+[root@H127 ~]# which growpart
+/usr/bin/growpart
+[root@H127 ~]# ll /usr/bin/growpart 
+-rwxr-xr-x 1 root root 21428 8月   4 2017 /usr/bin/growpart
+[root@H127 ~]# lsblk
+NAME            MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda             252:0    0  24G  0 disk 
+├─vda1          252:1    0   1G  0 part /boot
+└─vda2          252:2    0  23G  0 part 
+  ├─centos-root 253:0    0  21G  0 lvm  /
+  └─centos-swap 253:1    0   2G  0 lvm  [SWAP]
+[root@H127 ~]# 
+----------------------cloudbj3-1.txt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+localhost ~]# shutdown  -h  now
+
+[root@hiys ~]# yum  provides   virt-sysprep
+...........
+1:libguestfs-tools-c-1.36.3-6.el7.x86_64 : System administration tools for virtual machines
+源    ：rhel7
+..........................
+[root@hiys ~]# rpm  -q  libguestfs-tools-c
+未安装软件包 libguestfs-tools-c 
+[root@hiys ~]# yum  -y install  libguestfs-tools-c
+.......................
+已安装:
+  libguestfs-tools-c.x86_64 1:1.36.3-6.el7                                                        
+
+作为依赖被安装:
+  hexedit.x86_64 0:1.2.13-5.el7                                                                   
+
+完毕！
+[root@hiys ~]# rpm  -q  libguestfs-tools-c
+libguestfs-tools-c-1.36.3-6.el7.x86_64
+
+[root@hiys ~]# virt-sysprep   -d   Mob
+
+[root@hiys ~]# virt-sysprep   -d   Mob
+[   0.0] Examining the guest ...
+[  19.0] Performing "abrt-data" ...
+..................................
+[  19.3] Performing "customize" ...
+[  19.3] Setting a random seed
+[  19.7] Performing "lvm-uuids" ...
+[root@hiys ~]# 
+
+
+
+====================================================
+虚拟机上网
+
+for i in mangle security raw nat filter;do
+     iptables -t ${i} -F
+     iptables -t ${i} -X
+     rmmod iptable_${i}
+done
+sysctl -w net.ipv4.ip_forward=1
+ETH=$(ip route show|awk '{if($1=="default" && $2=="via")print $NF}')
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o ${ETH} -j MASQUERADE
+========================================
+[root@localhost ~]# cat  /etc/default/grub
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial  console"
+GRUB_SERIAL_COMMAND="serial --unit=1 --speed=115200"
+GRUB_CMDLINE_LINUX="biosdevname=0 net.ifnames=0 console=tty0 console=ttyS0,115200n8"
+
+#GRUB_TERMINAL_OUTPUT="console"
+#GRUB_CMDLINE_LINUX="rhgb quiet"
+
+GRUB_DISABLE_LINUX_UUID="true"
+GRUB_ENABLE_LINUX_LABEL="true"
+GRUB_DISABLE_RECOVERY="true"
+[root@localhost ~]# 
+==============================
+https://blog.csdn.net/exbob/article/details/6626654
+
+关于serial console
+
+Console是一个输出系统管理信息的文本输出设备，这些信息来自于内核，系统启动和系统用户，serial console就是串口作为输出终端设备，是这些信息可以通过串口在远程的终端上显示。
+
+配置一个serial console大致包括五项内容：
+
+Ø 配置BIOS使用serial console（可选）；
+
+Ø 配置Bootloader使用serial console（可选）；
+
+Ø 配置内核使用serial console
+
+Ø 在系统启动时运行一个支持serial console登录的程序
+
+Ø 一些其他系统配置，使这些功能支持serial console，或者防止它们扰乱serial console
+
+GRUB的配置
+
+GRUB的配置文件是/boot/grub目录下的grub.conf，在配置文件的开始处添加：
+
+serial --unit=0 --speed=9600 --word=8 --parity=no --stop=1
+
+terminal --timeout=10 serial console
+
+Serial命令用于设置串口的参数：
+
+--unit：串口设备，0就表示ttyS0，如果是ttyS1就要设为1；
+
+--speed：波特率；
+
+--work：数据位；
+
+--parity：奇偶校验位；
+
+--stop：停止位。
+
+Terminal命令用于设置终端的类型
+
+--timeout：等待时间，单位是秒
+
+

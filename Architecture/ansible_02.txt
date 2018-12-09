@@ -1,0 +1,156 @@
+作业讲解和回顾
+
+1 在 web 上安装 apache
+ansible web -m yum -a 'name="httpd" state=installed'
+
+2 修改 httpd.conf 的配置
+3 把 httpd 同步到远程机器上
+ansible web -m copy -a 'src="/root/httpd.conf" dest="/etc/httpd/conf/httpd.conf"'
+
+4 设置默认主页 hello nsd1711
+ansible web -m shell -a 'echo "hello nsd1711" >/var/www/html/index.html'
+
+5 设置开机自启动，开启服务
+ansible web -m service -a 'name="httpd" enabled=yes state=started'
+
+playbook 
+myping.yml
+---
+- hosts: all
+  remote_user: root
+  tasks:
+    - ping:
+
+给所有主机添加用户 plj，设置默认密码 123456，要求第一次登录修改密码
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: aaabbb
+      user: name="plj" group="wheel"
+    - name: xxx
+      shell: echo 123456 |passwd --stdin plj
+    - name: ooo
+      shell: chage -d 0 plj
+
+编写 playbook 实现以下效果
+安装 apache
+修改 apache 监听的端口为 8080
+为 apache 增加 NameServer 配置
+设置默认主页  hello world
+启动服务，并设置设置开机自启动
+---
+- hosts: cache
+  remote_user: root
+  tasks:
+    - name: install the latest version of Apache
+      yum:
+        name: httpd
+        state: installed
+    - copy:
+        src: /root/httpd.conf
+        dest: /etc/httpd/conf/httpd.conf
+        owner: apache
+        group: apache
+        mode: 0644
+    - service:
+        name: httpd
+        enabled: yes
+        state: started
+    - shell: echo "hello world" >index.html
+      args:
+        chdir: /var/www/html
+
+ansible 进阶，变量过滤器，条件与判断
+---
+- hosts: cache
+  remote_user: root
+  vars:
+    user: jj
+    pwd: "123456"
+  tasks:
+    - user:
+        name: "{{user}}"
+        password: "{{pwd|password_hash('sha512')}}"
+        group: wheel
+    - shell: chage -d 0 {{user}}
+
+触发器 handlers 的设置
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: install the latest version of Apache
+      yum:
+        name: httpd
+        state: installed
+    - copy:
+        src: /root/httpd.conf
+        dest: /etc/httpd/conf/httpd.conf
+        owner: apache
+        group: apache
+        mode: 0644
+      notify:
+        - restart apache
+    - shell: echo "hello world" >index.html
+      args:
+        chdir: /var/www/html
+  handlers:
+    - name: restart apache
+      service: name=httpd state=restarted
+
+结合 shell 脚本判断，当系统负载超过 0.7 的时候 终止 httpd 进程
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime |awk '{printf("%.2f\n",$(NF-2))}'
+      register: result
+    - service: 
+        name: httpd
+        state: stopped
+      when: result.stdout|float >0.7
+
+with_items 循环添加用户
+---
+- hosts: cache
+  remote_user: root
+  vars:
+    pwd: "123456"
+  tasks:
+    - user:
+        name: "{{item.name}}"
+        group: "{{item.group}}"
+      with_items:
+        - {name: "nb", group: "root"}
+        - {name: "dd", group: "root"}
+        - {name: "jj", group: "wheel"}
+        - {name: "lx", group: "wheel"}
+
+循环嵌套
+---
+- hosts: cache
+  remote_user: root
+  vars:
+    un: [a, b, c]
+    id: [1, 2, 3]
+  tasks:
+    - name: add users
+      shell: echo {{item}}
+      with_nested:
+        - "{{un}}"
+        - "{{id}}"
+
+调试模块 debug，显示对象的所有属性
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime |awk '{printf("%.2f\n",$(NF-2))}' >&2
+      register: result
+    - service: 
+        name: httpd
+        state: stopped
+      when: result.stdout|float >0.7
+    - name: Show debug info
+      debug: var=result

@@ -1,0 +1,400 @@
+
+
+https://www.elastic.co/guide/index.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+vim  /etc/filebeat/filebeat.yml
+
+paths:
+  - /var/log/httpd/access_log
+
+#el
+
+280 logstash:
+
+hosts: ["192.168.1.17:5044"]
+
+[root@Va3 ~]# ls bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va3 ~]# yum list |grep filebeat
+filebeat.x86_64                          1.2.3-1                   ansible      
+[root@Va3 ~]# yum -y install  filebeat |tail -4
+已安装:
+  filebeat.x86_64 0:1.2.3-1                                                     
+
+完毕！
+[root@Va3 ~]# vim  /etc/filebeat/filebeat.
+filebeat.template.json  filebeat.yml            
+[root@Va3 ~]# vim  /etc/filebeat/filebeat.yml 
+
+
+ 14       paths:
+ 15         - /var/log/httpd/access_log
+ 31       input_type: log
+
+164   registry_file: /var/lib/filebeat/registry
+
+278   logstash:
+279     # The Logstash hosts
+280     hosts: ["192.168.1.17:5044"]
+
+[root@Va3 ~]# systemctl  start  filebeat
+[root@Va3 ~]# echo $?
+0
+[root@Va3 ~]# # vim  /etc/filebeat/filebeat.yml
+
+ 31 #      input_type: log
+
+ 72       document_type: apache_log
+
+[root@Va3 ~]# systemctl  start  filebeat
+[root@Va3 ~]# echo $?
+0
+[root@Va3 ~]# 
+
+ 31 #      input_type: log
+
+ 72       document_type: apache_log
+278   logstash:
+279     # The Logstash hosts
+280     hosts: ["192.168.1.17:5044"]
+
+[root@Va3 ~]# vim   /etc/filebeat/filebeat.yml 
+[root@Va3 ~]# sed  -n '14,15p;31p;72p;278,280p'  /etc/filebeat/filebeat.yml
+      paths:
+        - /var/log/httpd/access_log
+#      input_type: log
+      document_type: apache_log
+  logstash:
+    # The Logstash hosts
+     hosts: ["192.168.1.17:5044"]
+[root@Va3 ~]# systemctl restart filebeat
+[root@Va3 ~]# echo $?
+0
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va7 ~]# /opt/logstash/bin/logstash  -t   -f   /etc/logstash/logstash.conf 
+Configuration OK
+[root@Va7 ~]# ls  /etc/logstash/logstash.conf
+/etc/logstash/logstash.conf
+[root@Va7 ~]# vim   /etc/logstash/logstash.conf
+[root@Va7 ~]# cat  /etc/logstash/logstash.conf
+input{
+   beats{
+     port => 5044
+   }
+  # file{
+   #  path => ["/tmp/a.log","/var/tmp/b.log"]
+   #  sincedb_path   => "/var/lib/logstash/sincedb"                                     ★ --虚拟机--★ 
+   #  sincedb_path  => "/dev/null"
+   #  start_position => "beginning"                                                     ★ --虚拟机--★ 
+   #  type =>  "http_log_a"
+  # }
+  # file{
+  #   path => ["/tmp/b.log","/var/tmp/b.log"]
+  #   sincedb_path   => "/var/lib/logstash/sincedb"
+  #   start_position => "beginning"
+   #  type =>  "http_log_b"
+ #  }
+  # tcp{
+   #  mode => "server"
+    # host => "0.0.0.0"
+   #  port => "8888"
+   #  type => "tcp-t_log"
+ #  }
+ #  udp{
+ #    host => "0.0.0.0"
+ #    port => "8888"
+ #    type => "udp-u_log"
+ #  }
+ #  syslog{
+ #    port => "514"
+ #    type => "syslog-type"
+ #  }
+}
+filter{
+ # if [type] == "apachelog"{
+ #   grok{
+ #     match => ["message", "%{COMBINEDAPACHELOG}"]
+  #  }
+ # }
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+}
+[root@Va7 ~]# /opt/logstash/bin/logstash  -t   -f   /etc/logstash/logstash.conf 
+Configuration OK
+[root@Va7 ~]# /opt/logstash/bin/logstash    -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "192.168.1.11 - - [22/Nov/2018:13:56:36 +0800] \"GET / HTTP/1.1\" 200 16 \"-\" \"curl/7.29.0\"",
+      "@version" => "1",
+    "@timestamp" => "2018-11-26T06:29:14.642Z",
+          "type" => "log",
+    "input_type" => "log",
+        "fields" => nil,
+        "offset" => 0,
+         "count" => 1,
+          "beat" => {
+        "hostname" => "Va3",
+            "name" => "Va3"
+    },
+        "source" => "/var/log/httpd/access_log",
+          "host" => "Va3",
+          "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ]
+}
+{
+       "message" => "192.168.1.13 - - [22/Nov/2018:14:12:01 +0800] \"GET / HTTP/1.1\" 200 16 \"-\" \"curl/7.29.0\"",
+      "@version" => "1",
+    "@timestamp" => "2018-11-26T06:29:14.642Z",
+        "fields" => nil,
+          "beat" => {
+        "hostname" => "Va3",
+            "name" => "Va3"
+    },
+        "offset" => 88,
+          "type" => "log",
+    "input_type" => "log",
+         "count" => 1,
+        "source" => "/var/log/httpd/access_log",
+          "host" => "Va3",
+          "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ]
+}
+{
+       "message" => "192.168.1.11 - - [22/Nov/2018:16:09:30 +0800] \"GET / HTTP/1.1\" 200 16 \"-\" \"curl/7.29.0\"",
+      "@version" => "1",
+    "@timestamp" => "2018-11-26T06:29:14.642Z",
+         "count" => 1,
+          "beat" => {
+        "hostname" => "Va3",
+            "name" => "Va3"
+    },
+        "source" => "/var/log/httpd/access_log",
+          "type" => "log",
+    "input_type" => "log",
+        "fields" => nil,
+        "offset" => 176,
+          "host" => "Va3",
+          "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ]
+}
+{
+       "message" => "192.168.1.11 - - [22/Nov/2018:16:15:37 +0800] \"GET / HTTP/1.1\" 200 16 \"-\" \"curl/7.29.0\"",
+      "@version" => "1",
+    "@timestamp" => "2018-11-26T06:29:14.642Z",
+        "source" => "/var/log/httpd/access_log",
+          "type" => "log",
+          "beat" => {
+        "hostname" => "Va3",
+            "name" => "Va3"
+    },
+        "fields" => nil,
+        "offset" => 264,
+    "input_type" => "log",
+         "count" => 1,
+          "host" => "Va3",
+          "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ]
+}
+{
+       "message" => "192.168.1.13 - - [22/Nov/2018:16:29:27 +0800] \"GET / HTTP/1.1\" 200 16 \"-\" \"curl/7.29.0\"",
+      "@version" => "1",
+    "@timestamp" => "2018-11-26T06:29:14.642Z",
+        "source" => "/var/log/httpd/access_log",
+          "type" => "log",
+    "input_type" => "log",
+         "count" => 1,
+          "beat" => {
+        "hostname" => "Va3",
+            "name" => "Va3"
+    },
+        "offset" => 352,
+        "fields" => nil,
+          "host" => "Va3",
+          "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ]
+}
+{
+       "message" => "192.168.1.13 - - [26/Nov/2018:14:17:30 +0800] \"GET / HTTP/1.1\" 200 16 \"-\" \"curl/7.29.0\"",
+      "@version" => "1",
+    "@timestamp" => "2018-11-26T06:29:14.642Z",
+         "count" => 1,
+        "fields" => nil,
+        "source" => "/var/log/httpd/access_log",
+    "input_type" => "log",
+        "offset" => 440,
+          "type" => "log",
+          "beat" => {
+        "hostname" => "Va3",
+            "name" => "Va3"
+    },
+          "host" => "Va3",
+          "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ]
+}
+
+[root@Va7 ~]# vim   /etc/logstash/logstash.conf
+[root@Va7 ~]# cat   /etc/logstash/logstash.conf
+input{
+   beats{
+     port => 5044
+   }
+  # file{
+   #  path => ["/tmp/a.log","/var/tmp/b.log"]
+   #  sincedb_path   => "/var/lib/logstash/sincedb" 
+   #  sincedb_path  => "/dev/null"
+   #  start_position => "beginning"
+   #  type =>  "http_log_a"
+  # }
+  # file{
+  #   path => ["/tmp/b.log","/var/tmp/b.log"]
+  #   sincedb_path   => "/var/lib/logstash/sincedb"
+  #   start_position => "beginning"
+   #  type =>  "http_log_b"
+ #  }
+  # tcp{
+   #  mode => "server"
+    # host => "0.0.0.0"
+   #  port => "8888"
+   #  type => "tcp-t_log"
+ #  }
+ #  udp{
+ #    host => "0.0.0.0"
+ #    port => "8888"
+ #    type => "udp-u_log"
+ #  }                                                                                                            ★ --虚拟机--★ 
+ #  syslog{
+ #    port => "514"
+ #    type => "syslog-type"
+ #  }
+}
+filter{
+  if [type] == "apache_log"{
+    grok{
+      match => ["message", "%{COMBINEDAPACHELOG}"]
+    }
+  }
+}
+output{
+   stdout{
+     codec => "rubydebug"
+   }
+   if [type] == "apache_log"{
+     elasticsearch {
+          hosts => ["192.168.1.11:9200", "192.168.1.12:9200"]
+          index => "filelog"
+          flush_size => 2000
+          idle_flush_time => 10
+     }
+   }
+}
+[root@Va7 ~]# 
+
+
+[root@hiys ~]# cd nsd1807/
+[root@hiys nsd1807]# ls
+docs  grub  ifcfg-eth0  node.xml  openstack  readme.txt  vbr.xml
+[root@hiys nsd1807]# tail -5
+^C
+[root@hiys nsd1807]# tail  -7   readme.txt 
+git clone git://124.193.128.166/nsd1807.git
+
+北京本地
+git clone git://172.40.53.65/nsd1807.git
+
+更新(必须进入 git 目录)
+git  pull
+[root@hiys nsd1807]# git  pull
+...............................
+来自 git://124.193.128.166/nsd1807
+   f38ff34..d7c727f  master     -> origin/master
+更新 f38ff34..d7c727f
+Fast-forward
+ docs/NSD_ARCHITECTURE_03.pdf | Bin 0 -> 909308 bytes
+ docs/NSD_ARCHITECTURE_04.pdf | Bin 0 -> 791738 bytes
+ elk/filebeat.yml             | 421 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ elk/logstash.conf            |  21 +++++
+ 4 files changed, 442 insertions(+)
+ create mode 100644 docs/NSD_ARCHITECTURE_03.pdf
+ create mode 100644 docs/NSD_ARCHITECTURE_04.pdf
+ create mode 100644 elk/filebeat.yml
+ create mode 100644 elk/logstash.conf
+[root@hiys nsd1807]# ls
+docs  elk  grub  ifcfg-eth0  node.xml  openstack  readme.txt  vbr.xml
+[root@hiys nsd1807]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

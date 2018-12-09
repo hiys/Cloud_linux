@@ -1,0 +1,122 @@
+1 ELK 搭建
+
+Elasticsearch   重点，存储空间   分布式集群
+
+Logstash     根据压力负载情况，多节点
+
+Kibana     单节点
+
+Elasticsearch 组建
+1  禁用 selinux， 卸载 firewalld  (所有主机都要做)
+[root@room9pc19 doc]# cat /etc/selinux/config 
+SELINUX=disabled
+
+禁用防火墙 (所有主机都要做)
+systemctl stop  firewalld
+systemctl mask firewalld
+
+2  配置 /etc/hosts  (所有主机都要做)
+192.168.1.10	klog
+192.168.1.11	es1
+192.168.1.12	es2
+192.168.1.13	es3
+192.168.1.14	es4
+192.168.1.15	es5
+
+3 安装 java 运行环境  java-1.8.0-openjdk (所有主机都要做)
+yum install java-1.8.0-openjdk -y
+
+4 安装 elasticsearch (所有主机都要做)
+yum install elasticsearch-2.3.4.rpm
+
+5 修改配置文件 /etc/elasticsearch/elasticsearch.yml (所有主机都要做)
+cluster.name: nsd1711
+node.name: 当前主机名称
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["es1", "es2", "es3"]
+
+启动并验证 (所有主机都要做)
+systemctl start elasticsearch
+
+浏览器访问 
+http://192.168.1.ip:9200/
+http://192.168.1.ip:9200/_cluster/health?pretty
+
+集群插件
+/usr/share/elasticsearch/bin
+下载插件文件到本地，必须使用 file:// 绝对路径安装
+./plugin install file:///usr/share/elasticsearch/bin/bigdesk-master.zip 
+使用远程 uri 路径可以直接安装
+./plugin install ftp://192.168.1.254/elk/elasticsearch-head-master.zip
+./plugin install ftp://192.168.1.254/elk/elasticsearch-kopf-master.zip
+
+安装完成以后使用 ./plugin list 查看
+
+http://192.168.1.15:9200/_plugin/插件名字
+
+集群 api 查询地址
+http://192.168.1.15:9200/_cat
+http://192.168.1.15:9200/_cat/nodes?v  显示详细信息
+http://192.168.1.15:9200/_cat/nodes?help  显示帮助信息
+
+ES 数据库基本操作，使用 curl 命令
+创建索引
+curl -XPUT 'http://192.168.1.13:9200/tarena/' -d '{
+    "settings":{
+        "index":{
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    }
+}'
+
+增
+curl -XPUT 'http://192.168.1.11:9200/tarena/teacher/1' -d '{
+    "title": "阶段1",
+    "name":{"first": "小逗比", "last": "牛犇"},
+    "age": 25
+}'
+curl -XPUT 'http://192.168.1.11:9200/tarena/teacher/2' -d '{
+    "title": "阶段2",
+    "name":{"first": "老逗比", "last": "丁丁"},
+    "age": 52
+}'
+curl -XPUT 'http://192.168.1.11:9200/tarena/teacher/3' -d '{
+    "title": "阶段3",
+    "name":{"first": "漂亮姐", "last": "静静"},
+    "age": 20
+}'
+curl -XPUT 'http://192.168.1.11:9200/tarena/teacher/4' -d '{
+    "title": "阶段4",
+    "name":{"first": "老司机", "last": "欣欣"},
+    "age": 35
+}'
+
+改
+curl -XPOST 'http://192.168.1.11:9200/tarena/teacher/3/_update' -d '{
+    "doc":{
+        "age": 18
+    }
+}'
+
+查
+curl -XGET 'http://192.168.1.14:9200/tarena/teacher/1'
+
+删
+curl -XDELETE 'http://192.168.1.14:9200/tarena/teacher/1'
+
+kibana 安装配置 
+server.port: 5601
+server.host: "0.0.0.0"
+elasticsearch.url: "http://192.168.1.11:9200"
+kibana.index: ".kibana"
+kibana.defaultAppId: "discover"
+elasticsearch.pingTimeout: 1500
+elasticsearch.requestTimeout: 30000
+elasticsearch.startupTimeout: 5000
+
+
+
+
+
+

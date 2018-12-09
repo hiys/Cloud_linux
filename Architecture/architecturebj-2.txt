@@ -1,0 +1,1684 @@
+
+
+YAML 数组使用“- ”来表示 ，注意是“-空格”
+     键值对使用“： ”来表示 ，注意是“：空格”
+
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no 192.168.1.11                      ★ --虚拟机--★ -虚拟机--★                                                                        ★ --虚拟机--★ 
+root@192.168.1.11's password: a
+                        ★ --虚拟机--★ 
+[root@Va1 ~]# ls                                                                 ★ --虚拟机--★ 
+aaa  eip                                                                         ★ --虚拟机--★ 
+[root@Va1 ~]# ansible --version                                                  ★ --虚拟机--★ 
+ansible 2.4.1.0
+  config file = /etc/ansible/ansible.cfg                                         ★ --虚拟机--★ 
+  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/shar★ --虚拟机--★ ins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible      ★ --虚拟机--★ 
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, Aug  4 2017, 00:39:18) [GCC 4.8.5 20150623 (Red Hat 4.8.5-16)]
+
+[root@Va1 ~]# ls -a
+.   aaa       .bash_history  .bash_profile  .cshrc  .ssh     .viminfo
+..  .ansible  .bash_logout   .bashrc        eip     .tcshrc
+
+[root@Va1 ~]# ls  .ansible/
+cp  tmp
+[root@Va1 ~]# ls  .ansible/cp/
+[root@Va1 ~]# ls  .ansible/tmp/
+
+[root@Va1 ~]# cd /etc/ansible/
+
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# ls roles/
+
+[root@Va1 ansible]# vim  /etc/ansible/ansible.cfg 
+ 
+ 10 [defaults]  //组名称
+
+14 inventory      = /etc/ansible/hosts     //指定分组文件路径，主机的分组文件hosts
+
+ 58 roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+
+61 host_key_checking = False  #开启ssh不验证yes，不检测主机的sshkey，在第一次连接的时候不用输入yes
+
+449 [colors]
+       //组名称，selinux的相关选项在这个下面配置
+...
+449 [colors]       //组名称，colors的相关选项在这个下面配置
+...
+[root@Va1 ansible]# sed -n  '14p;61p' /etc/ansible/ansible.cfg
+inventory      = /etc/ansible/hosts
+host_key_checking = False
+
+[root@Va1 ansible]# sed -n '44,$p'  hosts
+[web]
+Va[2:3]
+
+#[web:vars]
+#ansible_ssh_user="root"                                                         ★ --虚拟机--★ 
+#ansible_ssh_pass="a"
+
+[db]
+Va[4:5]
+
+[other]
+Va6 
+# ansible_ssh_user="root" ansible_ssh_pass="a"
+
+[app:children]
+web
+db
+
+#[app:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+
+[root@Va1 ansible]# cd  /root/.ssh/
+
+[root@Va1 .ssh]# ssh-keygen   -t  rsa  -b  2048  -N ''        //创建密钥       ★ --虚拟机--★ 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): ## 这里不需要输入操作，直接回车
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:n+WVa44Wk80XrgqmjrrbG7nXjbf1t4yWkEIBxWIBXCA root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+|   E.o++=.       |
+|    .. o o       |
+|      . . .      |
+|         .     o |
+|        S   o++ .|
+|      .  o *+.oo.|
+|     o  .o* o+=. |
+|    . +.oo.ooB+ .|
+|   ++=+o  .+=..+o|
++----[SHA256]-----+
+
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+                                            ## 给所有主机部署密钥
+[root@Va1 .ssh]# ansible  all  -m  authorized_key  -a  \
+> "user=root  exclusive=true  manage_dir=true  key='$(<  /root/.ssh/id_rsa.pub)'"  -k
+
+SSH password: a # # //输入root用户密码
+Va2 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+.............................
+
+[root@Va1 .ssh]# ansible  all  -m ping   //成功
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false,                                                                         ★ --虚拟机--★ 
+    "ping": "pong"
+}                                                                                            ★ --虚拟机--★ 
+Va3 | SUCCESS => {
+    "changed": false, 
+    "failed": false,                                                                         ★ --虚拟机--★ 
+    "ping": "pong"
+}                                                                                            ★ --虚拟机--★ 
+Va5 | SUCCESS => {
+    "changed": false, 
+    "failed": false,                                                                         ★ --虚拟机--★ 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va6 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 .ssh]# ssh Va2    //不需要输入密码,可以直接登陆
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va2 ~]# exit
+登出
+Connection to va2 closed.
+[root@Va1 .ssh]# ssh Va6
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va6 ~]# exit
+登出
+Connection to va6 closed.
+
+[root@Va1 .ssh]# cat /root/.ssh/id_rsa.pub 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1
+
+[root@Va1 .ssh]# cd
+
+ [root@Va1 ~]# ansible  Va2  -m  ping
+Va2 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# ansible  Va2 -m  command  -a  'chdir=/tmp  touch  f1' 
+ [WARNING]: Consider using file module with state=touch rather than running touch
+
+Va2 | SUCCESS | rc=0 >>
+
+
+[root@Va1 ~]# ansible  Va3  -m  shell  -a 'chdir=/tmp  touch f2'
+ [WARNING]: Consider using file module with state=touch rather than running touch
+
+Va3 | SUCCESS | rc=0 >>
+
+
+[root@Va1 ~]# ansible  Va4  -m  raw  -a  'chdir=/tmp  touch f3'
+Va4 | SUCCESS | rc=0 >>             #//文件可以创建，但无法切换目录，文件在用户root家目录下生成
+Shared connection to va4 closed.
+
+
+[root@Va1 ~]# ls /etc/ansible/
+ansible.cfg  hosts  roles
+
+[root@Va1 ~]# cd /etc/ansible/
+
+[root@Va1 ansible]# vim ping.yml
+[root@Va1 ansible]# cat ping.yml
+---
+- hosts: all
+  remote_user: root
+  tasks:
+    - ping:
+[root@Va1 ansible]# ansible-playbook  ping.yml 
+
+PLAY [all] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va4]
+ok: [Va6]
+ok: [Va5]
+ok: [Va2]                                                                        ★ --虚拟机--★ 
+ok: [Va3]
+
+TASK [ping] ************************************************************************************
+ok: [Va2]
+ok: [Va4]
+ok: [Va3]
+ok: [Va5]
+ok: [Va6]
+
+PLAY RECAP *************************************************************************************
+Va2                        : ok=2    changed=0    unreachable=0    failed=0   
+Va3                        : ok=2    changed=0    unreachable=0    failed=0   
+Va4                        : ok=2    changed=0    unreachable=0    failed=0   
+Va5                        : ok=2    changed=0    unreachable=0    failed=0   
+Va6                        : ok=2    changed=0    unreachable=0    failed=0   
+
+[root@Va1 ansible]# 
+注意：如果检测的时候出错，会在当前的目录生成一个新的文件（以.retry结尾），可以去这个文件里面看是哪个主机的错
+
+[root@Va1 ansible]# ls /etc/yum.repos.d/
+local.repo
+[root@Va1 ansible]# cat /etc/yum.repos.d/local.repo 
+[CentOS7-1708]                                                                   ★ --虚拟机--★ 
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker                                                                      ★ --虚拟机--★ 
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0
+enabled=1                                                                        ★ --虚拟机--★ 
+[root@Va1 ansible]# yum clean all >/dev/null && yum repolist |tail -6
+Determining fastest mirrors
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va1 ansible]# lsblk 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+
+[root@Va1 ansible]# ansible  Va2   -m  shell -a  'useradd zhangsan3'
+Va2 | SUCCESS | rc=0 >>
+
+/**
+远程登录：ssh  -l  userName  ip
+# 远程登录到 10.175.23.9
+ssh -l root2 10.175.23.9
+
+执行远程命令(不登录)：ssh  -l  userName  ip  command
+# 不远程登录到 10.175.23.9，但通过命令查看10.175.23.9上面的nginx的进程情况
+ssh -l root2 10.175.23.9 ps -ef|grep nginx
+**/
+[root@Va1 ansible]# ansible  Va2  -m  shell  -a  'echo a |passwd  --stdin zhangsan3'
+Va2 | SUCCESS | rc=0 >>
+更改用户 zhangsan3 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+
+[root@Va1 ansible]# ssh  -l zhangsan3  Va2  #远程登录：ssh  -l  userName  ip
+zhangsan3@va2's password: 
+[zhangsan3@Va2 ~]$ echo $USER
+zhangsan3
+[zhangsan3@Va2 ~]$ pwd
+/home/zhangsan3
+[zhangsan3@Va2 ~]$ hostname
+Va2
+[zhangsan3@Va2 ~]$ exit
+登出
+Connection to va2 closed.
+[root@Va1 ansible]# 
+
+/**
+command   默认【建议，没办法的时候使用，少用】
+
+raw    实用性广泛 ，不支持chdir
+
+shell  万能
+--------------------------------------------------
+对与已经存在的普通用户
+执行下面命令 （强制密码立刻过期）
+root@ubuntu:~# chage -d 0 root
+-----该命令设置用户上次修改密码的时间为纪元时间（1970年1月1日），这样会使得该命令立刻过期，而不论密码过期策略的设置
+**/
+
+[root@Va1 ansible]# ansible  Va2  -m shell  -a  'chage  -d  0  zhangsan3'
+Va2 | SUCCESS | rc=0 >>
+
+
+[root@Va1 ansible]# ssh  -l zhangsan3  Va2   # 强制密码立刻过期 ,必须立即修改密码，否则无法登陆          ★ --虚拟机--★ 
+zhangsan3@va2's password: a
+You are required to change your password immediately (root enforced)
+Last login: Thu Nov 22 11:11:55 2018 from 192.168.1.11
+WARNING: Your password has expired.
+You must change your password now and login again!
+Changing password for user zhangsan3.
+Changing password for zhangsan3.
+(current) UNIX password: a
+New password: a             ## 使用旧密码，不换成新密码，无效
+BAD PASSWORD: The password is the same as the old one
+New password: a                ## 使用旧密码，不换成新密码，无效
+BAD PASSWORD: The password is the same as the old one
+New password: a                     ## 使用旧密码，不换成新密码，无效
+BAD PASSWORD: The password is the same as the old one
+passwd: Have exhausted maximum number of retries for service
+Connection to va2 closed.
+
+[root@Va1 ansible]# vim  user.yml
+/**
+YAML 数组使用“- ”来表示 ，注意是“-空格”
+     键值对使用“： ”来表示 ，注意是“：空格”
+**/
+ [root@Va1 ansible]# cat  user.yml
+---
+- hosts: all
+  remote_user: root
+  vars:
+    username: plj
+  tasks:
+    - name: create user  "{{username}}"
+      user: group=wheel uid=1200 name="{{username}}"
+    - name: change password
+      shell: echo a | passwd --stdin  plj
+    - name: chage  -d   0   plj
+      shell: chage  -d  0  plj
+
+[root@Va1 ansible]# ansible-playbook  user.yml
+
+PLAY [all] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va5]
+ok: [Va4]
+ok: [Va3]
+ok: [Va6]
+ok: [Va2]
+
+TASK [create user  "plj"] **********************************************************************
+changed: [Va4]
+changed: [Va6]
+changed: [Va5]
+changed: [Va2]
+changed: [Va3]
+
+TASK [change password] *************************************************************************
+changed: [Va6]
+changed: [Va2]
+changed: [Va3]
+changed: [Va5]                                                                   ★ --虚拟机--★ 
+changed: [Va4]
+
+TASK [chage  -d   0   plj] *********************************************************************
+changed: [Va6]
+changed: [Va4]
+changed: [Va3]
+changed: [Va2]
+changed: [Va5]
+
+PLAY RECAP *************************************************************************************
+Va2                        : ok=4    changed=3    unreachable=0    failed=0   
+Va3                        : ok=4    changed=3    unreachable=0    failed=0   
+Va4                        : ok=4    changed=3    unreachable=0    failed=0      ★ --虚拟机--★ 
+Va5                        : ok=4    changed=3    unreachable=0    failed=0   
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+ 
+
+安装Apache的一个特定版本
+[root@Va1 ansible]# vim http.yml
+[root@Va1 ansible]# cat http.yml
+---
+- hosts: web
+  remote_user: root
+  tasks:    ## 安装Apache的一个特定版本
+    - name: install one  specific version of Apache
+      yum:
+        name: httpd                                                              ★ --虚拟机--★ 
+        state: installed
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 8080'
+    - replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^#(ServerName).*'
+        replace: '\1 localhost'
+    - service:
+        name: httpd
+        enabled: yes
+        state: restarted
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+
+
+[root@Va1 ansible]# echo  "Hello Va2-3 web" >/root/index.html
+
+[root@Va1 ansible]# ansible-playbook http.yml
+
+PLAY [web] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va3]
+ok: [Va2]
+
+TASK [install one  specific version of Apache] *************************************************
+ok: [Va3]
+ok: [Va2]
+
+TASK [lineinfile] ******************************************************************************
+ok: [Va3]
+ok: [Va2]
+                                                                                 ★ --虚拟机--★ 
+TASK [replace] *********************************************************************************
+ok: [Va3]
+ok: [Va2]                                                                        ★ --虚拟机--★ 
+
+TASK [service] *********************************************************************************
+changed: [Va3]
+changed: [Va2]
+
+TASK [copy] ************************************************************************************
+changed: [Va2]
+changed: [Va3]
+
+PLAY RECAP *************************************************************************************
+Va2                        : ok=6    changed=2    unreachable=0    failed=0   
+Va3                        : ok=6    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ansible]# ls /var/
+adm    db     games   kerberos  local  log   nis  preserve  spool  yp
+cache  empty  gopher  lib       lock   mail  opt  run       tmp
+[root@Va1 ansible]# 
+[root@Va1 ansible]#  pwd
+/etc/ansible
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  http.retry  http.yml  ping.yml  roles  user.yml
+[root@Va1 ansible]# vim  hosts 
+[root@Va1 ansible]# sed -n '44,$p' /etc/ansible/hosts                            ★ --虚拟机--★ 
+[web]
+Va[2:3]
+
+#[web:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+
+[db]
+Va[4:5]
+
+[other]
+Va6 
+# ansible_ssh_user="root" ansible_ssh_pass="a"
+
+[app:children]
+web
+db
+
+#[app:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+
+[root@Va1 ansible]# curl Va2
+curl: (7) Failed connect to Va2:80; 拒绝连接
+[root@Va1 ansible]# curl Va2:8080
+Hello Va2-3 web
+[root@Va1 ansible]# curl Va3:8080
+Hello Va2-3 web
+[root@Va1 ansible]# ssh  -l  root  Va2  hostname
+Va2
+[root@Va1 ansible]# ssh  -l  root  Va3  hostname
+Va3
+
+############ Pattern not found  (press RETURN) # 使用回车继续查看，q 退出
+
+[root@Va1 ansible]# ansible-doc  service   ## 查看服务帮助
+> SERVICE    (/usr/lib/python2.7/site-packages/ansible/modules/system/service.py)
+............................
+OPTIONS (= is mandatory):
+
+- arguments
+        Additional arguments provided on the command line
+        (Aliases: args)[Default: (null)]
+
+- enabled
+        Whether the service should start on boot. *At least one of state and
+        enabled are required.*
+        (Choices: yes, no)[Default: (null)]
+
+= name
+        Name of the service.
+..........................
+
+- state
+        `started'/`stopped' are idempotent actions that will not run
+        commands unless necessary.  `restarted' will always bounce the
+        service.  `reloaded' will always reload. *At least one of state and
+        enabled are required.* Note that reloaded will start the service if
+        it is not already started, even if your chosen init system wouldn't
+        normally.
+        (Choices: started, stopped, restarted, reloaded)[Default: (null)]
+
+- use
+        The service module actually uses system specific modules, normally
+        through auto detection, this setting can force a specific module.
+        Normally it uses the value of the 'ansible_service_mgr' fact and
+        falls back to the old 'service' module when none matching is found.
+        [Default: auto]
+        version_added: 2.2
+        
+NOTES:
+      * For Windows targets, use the [win_service] module instead.
+
+AUTHOR: Ansible Core Team, Michael DeHaan
+        METADATA:
+          status:
+          - stableinterface
+          supported_by: core
+        
+EXAMPLES:
+# Example action to start service httpd, if not running
+- service:
+    name: httpd
+    state: started
+
+# Example action to stop service httpd, if running
+- service:
+    name: httpd
+    state: stopped
+
+# Example action to restart service httpd, in all cases
+- service:
+    name: httpd
+    state: restarted
+
+# Example action to reload service httpd, in all cases                           ★ --虚拟机--★ 
+- service:
+    name: httpd
+    state: reloaded
+
+# Example action to enable service httpd, and not touch the running state
+- service:
+    name: httpd
+    enabled: yes
+
+# Example action to start service foo, based on running process /usr/bin/foo
+- service:
+    name: foo
+    pattern: /usr/bin/foo
+    state: started
+
+# Example action to restart network service for interface eth0
+- service:
+    name: network
+    state: restarted
+    args: eth0
+
+[root@Va1 ansible]# ssh  -l  root  Va3  apachectl  -t  ## 检查 Va3 主机 http服务语法是否正确
+Syntax OK
+
+[root@Va1 ansible]# vim  user2.yml
+[root@Va1 ansible]# cat  user2.yml
+---
+- hosts: Va6
+  remote_user: root
+  vars:
+    user:
+      name: "dd"
+      group: "mail"
+  tasks:
+    - name: create user  "{{user.name}}"
+      user:
+        name: "{{user.name}}"
+        group: "{{user.group}}"
+    - name: change password
+      shell: echo a | passwd --stdin  "{{user.name}}"                            ★ --虚拟机--★ 
+    - name: chage  -d   0   "{{user.name}}"
+      shell: chage  -d  0   "{{user.name}}"
+
+[root@Va1 ansible]# ansible-playbook user2.yml 
+
+PLAY [Va6] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va6]
+
+TASK [create user  "dd"] ***********************************************************************
+changed: [Va6]
+
+TASK [change password] *************************************************************************
+changed: [Va6]
+
+TASK [chage  -d   0   "dd"] ********************************************************************
+changed: [Va6]
+
+PLAY RECAP **********************************************************************★ --虚拟机--★ *
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+
+[root@Va1 ansible]# ansible-playbook user2.yml  -e  user.name="jj"  ## 不支持user.name="jj" ？？？
+
+PLAY [Va6] *************************************************************************************
+...............................................
+
+PLAY RECAP **********************************************************************★ --虚拟机--★ *
+Va6                        : ok=4    changed=2    unreachable=0    failed=0      ★ --虚拟机--★ 
+                                                                                 ★ --虚拟机--★ 
+[root@Va1 ansible]# ansible-playbook user2.yml  -e  '{"user":{"name":"xx","group":"root"}}'
+
+PLAY [Va6] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va6]
+
+TASK [create user  "xx"] ***********************************************************************
+changed: [Va6]
+
+TASK [change password] *************************************************************************
+changed: [Va6]
+
+TASK [chage  -d   0   "xx"] ********************************************************************
+changed: [Va6]
+
+PLAY RECAP *************************************************************************************
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ansible]# ls /home
+[root@Va1 ansible]# ls /home/
+[root@Va1 ansible]# ansible-playbook user2.yml  -e  '{"user":{"name":"jj","group":"root"}}'
+
+PLAY [Va6] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va6]
+
+TASK [create user  "jj"] ***********************************************************************
+changed: [Va6]
+
+TASK [change password] *************************************************************************
+changed: [Va6]
+
+TASK [chage  -d   0   "jj"] ********************************************************************
+changed: [Va6]
+
+PLAY RECAP *************************************************************************************
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ansible]# 
+[root@Va1 ansible]# vim  user.vars                                               ★ --虚拟机--★ 
+[root@Va1 ansible]# cat user.vars    ## 简单实用
+user:
+  name: "jiajia"
+  group: "root"
+[root@Va1 ansible]# cat  user2.yml 
+---
+- hosts: Va6
+  remote_user: root
+  vars:
+    user:
+      name: "dd"
+      group: "mail"
+  tasks:
+    - name: create user  "{{user.name}}"
+      user:
+        name: "{{user.name}}"
+        group: "{{user.group}}"
+    - name: change password                                                      ★ --虚拟机--★ 
+      shell: echo a | passwd --stdin  "{{user.name}}"
+    - name: chage  -d   0   "{{user.name}}"
+      shell: chage  -d  0   "{{user.name}}"
+
+[root@Va1 ansible]# ansible-playbook  user2.yml  -e  "@user.vars"
+
+PLAY [Va6] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va6]
+
+TASK [create user  "jiajia"] *******************************************************************
+changed: [Va6]
+
+TASK [change password] *************************************************************************
+changed: [Va6]
+
+TASK [chage  -d   0   "jiajia"] ****************************************************************
+changed: [Va6]
+
+PLAY RECAP *************************************************************************************
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ansible]# vim  user4.yml
+[root@Va1 ansible]# cat  user4.yml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    username: plj
+  tasks:
+    - name: create user  "{{username}}"
+      user:
+        name: "{{username}}"
+        group: users
+        password: "{{'123'|password_hash('sha512')}}"
+    - shell: setenforce  0
+      ignore_errors: true   ## 正常报错 设置 忽略
+    - shell: chage -d 0  "{{username}}"
+
+[root@Va1 ansible]# ansible-playbook  user4.yml                                  ★ --虚拟机--★ 
+
+PLAY [other] ********************************************************************★ --虚拟机--★ *
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va6]
+
+TASK [create user  "plj"] **********************************************************************
+changed: [Va6]
+
+TASK [command] *********************************************************************************
+fatal: [Va6]: FAILED! => {"changed": true, "cmd": "setenforce 0", "delta": "0:00:00.012817", "end": "2018-11-22 15:55:22.986916", "failed": true, "msg": "non-zero return code", "rc": 1, "start": "2018-11-22 15:55:22.974099", "stderr": "setenforce: SELinux is disabled", "stderr_lines": ["setenforce: SELinux is disabled"], "stdout": "", "stdout_lines": []}
+...ignoring
+
+TASK [command] *********************************************************************************
+changed: [Va6]
+
+PLAY RECAP *************************************************************************************
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ansible]# echo $?
+0
+[root@Va1 ansible]# 
+[root@Va1 ansible]# ls
+ansible.cfg  http.retry  ping.yml  user2.retry  user3.yml  user.vars
+hosts        http.yml    roles     user2.yml    user4.yml  user.yml
+
+[root@Va1 ansible]# cp  http.yml  httpd.yml
+
+[root@Va1 ansible]# vim  httpd.yml   ## 修改了监听端口
+[root@Va1 ansible]# cat  httpd.yml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: install one  specific version of Apache
+      yum:
+        name: httpd
+        state: installed                                                         ★ --虚拟机--★ 
+    - lineinfile:          ## 修改了监听端口
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 80'   ## 修改了监听端口
+      notify:
+        - reload httpd
+    - replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^#(ServerName).*'
+        replace: '\1 localhost'
+      notify:
+        - reload httpd
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+      notify:
+        - reload httpd
+  handlers:
+    - name: reload httpd
+      service:
+        name: httpd
+        enabled: yes
+        state: restarted
+
+[root@Va1 ansible]# ansible-playbook httpd.yml 
+
+PLAY [web] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va3]
+ok: [Va2]
+                                                                                 ★ --虚拟机--★ 
+TASK [install one  specific version of Apache] *************************************************
+ok: [Va3]                                                                        ★ --虚拟机--★ 
+ok: [Va2]
+                                                                                 ★ --虚拟机--★ 
+TASK [lineinfile] ***************************************************************★ --虚拟机--★ *
+changed: [Va3]     ## 修改了监听端口
+changed: [Va2]                                                                   ★ --虚拟机--★ 
+                                                                                 ★ --虚拟机--★ 
+TASK [replace] *********************************************************************************
+ok: [Va3]                                                                        ★ --虚拟机--★ 
+ok: [Va2]                                                                        ★ --虚拟机--★ 
+
+TASK [copy] ************************************************************************************
+ok: [Va2]
+ok: [Va3]
+
+RUNNING HANDLER [reload httpd] *****************************************************************
+changed: [Va3]
+changed: [Va2]
+
+PLAY RECAP *************************************************************************************
+Va2                        : ok=6    changed=2    unreachable=0    failed=0   
+Va3                        : ok=6    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ansible]# curl Va2:80
+Hello Va2-3 web
+[root@Va1 ansible]# curl Va3
+Hello Va2-3 web
+[root@Va1 ansible]# vim  httpd.yml
+
+[root@Va1 ansible]# sed -n '/src:/p' httpd.yml
+        src: /root/index.html
+
+[root@Va1 ansible]# sed -i  '/src:/s/index/index2/' httpd.yml    ## 修改了网页来源地址src
+
+[root@Va1 ansible]# sed -n '/src:/p' httpd.yml
+        src: /root/index2.html
+
+[root@Va1 ansible]# echo "Xiawu web Va2-3" >/root/index2.html
+
+[root@Va1 ansible]# ansible-playbook httpd.yml 
+
+PLAY [web] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va3]
+ok: [Va2]
+                                                                                 ★ --虚拟机--★ 
+TASK [install one  specific version of Apache] *************************************************
+ok: [Va3]
+ok: [Va2]
+
+TASK [lineinfile] ******************************************************************************
+ok: [Va3]
+ok: [Va2]
+
+TASK [replace] *********************************************************************************
+ok: [Va3]
+ok: [Va2]
+
+TASK [copy] ************************************************************************************
+changed: [Va3]    ## 修改了网页来源地址src
+changed: [Va2]
+
+RUNNING HANDLER [reload httpd] *****************************************************************
+changed: [Va3]
+changed: [Va2]
+
+PLAY RECAP *************************************************************************************
+Va2                        : ok=6    changed=2    unreachable=0    failed=0   
+Va3                        : ok=6    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ansible]# cat httpd.yml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: install one  specific version of Apache
+      yum:
+        name: httpd
+        state: installed                                                         ★ --虚拟机--★ 
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf                                         ★ --虚拟机--★ 
+        regexp: '^Listen '
+        line: 'Listen 80'                                                        ★ --虚拟机--★ 
+      notify:
+        - reload httpd
+    - replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^#(ServerName).*'
+        replace: '\1 localhost'
+      notify:
+        - reload httpd
+    - copy:
+        src: /root/index2.html     ## 修改了网页来源地址src
+        dest: /var/www/html/index.html
+      notify:
+        - reload httpd
+  handlers:
+    - name: reload httpd
+      service:
+        name: httpd
+        enabled: yes
+        state: restarted
+
+[root@Va1 ansible]# curl Va3
+Xiawu web Va2-3
+[root@Va1 ansible]# curl Va2
+Xiawu web Va2-3
+[root@Va1 ansible]# 
+[root@Va1 ansible]# ansible-playbook  user5.yml
+
+PLAY [Va6] *************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************
+ok: [Va6]
+
+TASK [change  user  "{{item.name}}" password] **************************************************
+changed: [Va6] => (item={u'pwd': u'aa', u'name': u'nb7'})
+changed: [Va6] => (item={u'pwd': u'aa2', u'name': u'nb8'})
+
+PLAY RECAP *************************************************************************************
+Va6                        : ok=2    changed=1    unreachable=0    failed=0   
+
+
+
+[root@Va1 ansible]# cat  user5.yml
+---
+- hosts: Va6
+  remote_user: root
+  tasks:
+    - name: change  user  "{{item.name}}" password
+      user: group=users  name="{{item.name}}"
+      with_items:
+        - {name: nb7,pwd: aa}
+        - {name: nb8,pwd: aa2}
+
+[root@Va1 ansible]# 
+
+
+[root@Va1 ansible]# ls /root/aaa/
+ansible.cfg  myhost  my.sh
+[root@Va1 ansible]# cat /root/aaa/my.sh 
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+                "ansible_ssh_pass": "a"}
+ },
+}' 
+[root@Va1 ansible]# cat /root/aaa/myhost                                         ★ --虚拟机--★ 
+[app1]
+Va2
+Va4
+                                                                                 ★ --虚拟机--★ 
+[app2]
+Va3
+Va5
+
+[app:children]
+app1
+app2
+
+[app:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="a"
+
+[other]
+Va6
+[root@Va1 ansible]# cat /root/aaa/ansible.cfg 
+
+[defaults]
+inventory      =   myhost
+host_key_checking = False
+
+[root@Va1 ansible]# 
+
+[root@Va1 ansible]# cd                                                           ★ --虚拟机--★ 
+[root@Va1 ~]# ls
+aaa  eip  index2.html  index.html
+[root@Va1 ~]# vim user.sh
+[root@Va1 ~]# cat user.sh
+#!/bin/bash                                                                      ★ --虚拟机--★ 
+useradd  zhangsan
+echo a |passwd  --stdin  zhangsan                                                ★ --虚拟机--★ 
+chage  -d 0  zhangsan
+echo                                                                             ★ --虚拟机--★ 
+[root@Va1 ~]# ansible other  -m  script  -a  './user.sh'
+Va6 | SUCCESS => {
+    "changed": true, 
+    "failed": false, 
+    "rc": 0, 
+    "stderr": "Shared connection to va6 closed.\r\n", 
+    "stdout": "更改用户 zhangsan 的密码 。\r\npasswd：所有的身份验证令牌已经成功更新。\r\n\r\n", 
+    "stdout_lines": [
+        "更改用户 zhangsan 的密码 。", 
+        "passwd：所有的身份验证令牌已经成功更新。", 
+        ""
+    ]
+}
+[root@Va1 ~]# ssh -l  root Va6 id zhangsan
+uid=1210(zhangsan) gid=1210(zhangsan) 组=1210(zhangsan)
+[root@Va1 ~]# ssh -l  root Va6 ls -ld /home/zhangsan
+drwx------ 2 zhangsan zhangsan 62 11月 22 18:56 /home/zhangsan
+
+/****************
+使用copy模块同步数据
+
+使用lineinfile模块编辑文件
+
+使用replace模块修改文件
+
+1）使用copy模块同步数据
+src：要复制到进程主机的文件在本地的地址,可以是绝对路径,也可以是相对路径。
+如果路径是一个目录,它将递归复制。
+在这种情况下,如果路径使用"/"来结尾,则只复制目录里的内容,
+如果没有使用"/"来结尾,则包含目录在内的整个内容全部复制,
+类似于rsync
+dest：必选项。
+进程主机的绝对路径,如果源文件是一个目录,那么该路径也必须是个目录
+backup：在覆盖之前将原文件备份,备份文件包含时间信息。
+有两个选项:yes|no
+
+force：如果目标主机包含该文件,但内容不同,
+如果设置为yes,则强制覆盖,
+如果为no,则只有当目标主机的目标位置不存在该文件时,才复制。
+默认为yes
+[root@Va1 ansible]# cat /root/aaa/my.sh 
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+                "ansible_ssh_pass": "a"}
+ },
+}' 
+[root@Va1 ansible]# cat /root/aaa/myhost                                         ★ --虚拟机--★ 
+[app1]
+Va2
+Va4
+                                                                                 ★ --虚拟机--★ 
+[app2]
+Va3
+Va5
+
+[app:children]
+app1
+app2
+
+[app:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="a"
+
+[other]
+Va6
+
+[root@Va1 ansible]# cat /root/aaa/ansible.cfg 
+[defaults]
+inventory      =   myhost
+host_key_checking = False
+
+[root@Va1 ansible]# 
+[root@Va1 ansible]# cd                                                           ★ --虚拟机--★ 
+[root@Va1 ~]# ls
+aaa  eip  index2.html  index.html
+[root@Va1 ~]# vim user.sh
+[root@Va1 ~]# cat user.sh
+#!/bin/bash                                                                      ★ --虚拟机--★ 
+useradd  zhangsan
+echo a |passwd  --stdin  zhangsan                                                ★ --虚拟机--★ 
+chage  -d 0  zhangsan
+echo                                                                             ★ --虚拟机--★ 
+[root@Va1 ~]# ansible other  -m  script  -a  './user.sh'
+Va6 | SUCCESS => {
+    "changed": true, 
+    "failed": false, 
+    "rc": 0, 
+    "stderr": "Shared connection to va6 closed.\r\n", 
+    "stdout": "更改用户 zhangsan 的密码 。\r\npasswd：所有的身份验证令牌已经成功更新。\r\n\r\n", 
+    "stdout_lines": [
+        "更改用户 zhangsan 的密码 。", 
+        "passwd：所有的身份验证令牌已经成功更新。",                              ★ --虚拟机--★ 
+        ""
+    ]                                                                            ★ --虚拟机--★ 
+}
+[root@Va1 ~]# ssh -l  root Va6 id zhangsan
+uid=1210(zhangsan) gid=1210(zhangsan) 组=1210(zhangsan)
+[root@Va1 ~]# ssh -l  root Va6 ls -ld /home/zhangsan
+drwx------ 2 zhangsan zhangsan 62 11月 22 18:56 /home/zhangsan
+[root@Va1 ~]# ansible  web   -m  shell   -a  'tail -3  /etc/resolv.conf'
+Va3 | SUCCESS | rc=0 >>
+; generated by /usr/sbin/dhclient-script
+search vbr
+nameserver 192.168.1.254
+
+Va2 | SUCCESS | rc=0 >>
+; generated by /usr/sbin/dhclient-script
+search vbr
+nameserver 192.168.1.254
+
+[root@Va1 ~]# ls /root/aaa/
+ansible.cfg  myhost  my.sh            //复制本机的 /root/aaa/my.sh 文件 到其他主机
+[root@Va1 ~]# ansible  db  -m  copy  -a  'src=/root/aaa/my.sh  dest=/root/my-copy.sh'
+Va4 | SUCCESS => {
+    "changed": true, 
+    "checksum": "960b4ba65f33db7a85164f94faf1ae5fd0c0a86b", 
+    "dest": "/root/my-copy.sh", 
+    "failed": false, 
+    "gid": 0, 
+    "group": "root", 
+    "md5sum": "94f0d1d31ec3dde8c5509e8ec53ebfa0", 
+    "mode": "0644", 
+    "owner": "root", 
+    "size": 210, 
+    "src": "/root/.ansible/tmp/ansible-tmp-1542888442.68-50949680726255/source", ★ --虚拟机--★ 
+    "state": "file", 
+    "uid": 0
+}
+Va5 | SUCCESS => {
+    "changed": true, 
+    "checksum": "960b4ba65f33db7a85164f94faf1ae5fd0c0a86b", 
+    "dest": "/root/my-copy.sh", 
+    "failed": false, 
+    "gid": 0, 
+    "group": "root", 
+    "md5sum": "94f0d1d31ec3dde8c5509e8ec53ebfa0", 
+    "mode": "0644", 
+    "owner": "root", 
+    "size": 210, 
+    "src": "/root/.ansible/tmp/ansible-tmp-1542888442.69-278656546877339/source", 
+    "state": "file", 
+    "uid": 0
+}
+[root@Va1 ~]# 
+/****************
+使用copy模块同步数据
+
+使用lineinfile模块编辑文件
+
+使用replace模块修改文件
+
+1）使用copy模块同步数据
+src：要复制到进程主机的文件在本地的地址,可以是绝对路径,也可以是相对路径。
+如果路径是一个目录,它将递归复制。
+在这种情况下,如果路径使用"/"来结尾,则只复制目录里的内容,
+如果没有使用"/"来结尾,则包含目录在内的整个内容全部复制,
+类似于rsync
+dest：必选项。
+进程主机的绝对路径,如果源文件是一个目录,那么该路径也必须是个目录
+backup：在覆盖之前将原文件备份,备份文件包含时间信息。
+有两个选项:yes|no
+
+force：如果目标主机包含该文件,但内容不同,
+如果设置为yes,则强制覆盖,
+如果为no,则只有当目标主机的目标位置不存在该文件时,才复制。
+默认为yes
+
+[root@Va1 ~]# ansible db -m shell  -a  'ls -l /root/my-copy.sh'
+Va4 | SUCCESS | rc=0 >>                                                          ★ --虚拟机--★ 
+-rw-r--r-- 1 root root 210 11月 22 20:07 /root/my-copy.sh
+
+Va5 | SUCCESS | rc=0 >>
+-rw-r--r-- 1 root root 210 11月 22 20:07 /root/my-copy.sh
+
+  ## //复制本机的目录/root/aaa 到其他机器的/root/，复制目录只能少数批量执行同步
+[root@Va1 ~]# ansible  db  -m  copy  -a  'src=/root/aaa  dest=/root/' # src 没有使用"/"来结尾,则包含目录在内的整个内容全部复制
+
+Va4 | SUCCESS => {
+    "changed": true, 
+    "dest": "/root/", 
+    "failed": false, 
+    "src": "/root/aaa"
+}
+Va5 | SUCCESS => {                                                               ★ --虚拟机--★ 
+    "changed": true, 
+    "dest": "/root/", 
+    "failed": false, 
+    "src": "/root/aaa"
+}
+[root@Va1 ~]# ansible db -m shell  -a  'ls -l /root/aaa/' # src 没有使用"/"来结尾,包含目录aaa 在内的整个内容全部复制
+
+Va5 | SUCCESS | rc=0 >>
+总用量 12
+-rw-r--r-- 1 root root  63 11月 22 20:35 ansible.cfg
+-rw-r--r-- 1 root root 127 11月 22 20:35 myhost
+-rw-r--r-- 1 root root 210 11月 22 20:35 my.sh
+
+Va4 | SUCCESS | rc=0 >>
+总用量 12
+-rw-r--r-- 1 root root  63 11月 22 20:35 ansible.cfg
+-rw-r--r-- 1 root root 127 11月 22 20:35 myhost
+-rw-r--r-- 1 root root 210 11月 22 20:35 my.sh
+
+                                ## 使用lineinfile模块编辑文件 , 以行为基础，整行修改(整行被替换掉)
+
+[root@Va1 ~]# ansible  db  -m  lineinfile  -a  'path=/root/my-copy.sh regexp="(.*)pass(.*)a(.*)"  line="\1pass\2aa\3"'   ## 有时间百度 组合替换保留\1()\2
+Va4 | SUCCESS => {
+    "backup": "", 
+    "changed": true, 
+    "failed": false, 
+    "msg": "line replaced"
+}
+Va5 | SUCCESS => {
+    "backup": "", 
+    "changed": true, 
+    "failed": false, 
+    "msg": "line replaced"
+}
+[root@Va1 ~]# ansible db  -m shell -a  'cat  /root/my-copy.sh'
+Va5 | SUCCESS | rc=0 >>  
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"],                                ★ --虚拟机--★ 
+       "vars": {
+                "ansible_ssh_user": "root", 
+\1pass\2aa\3
+ },
+}' 
+
+Va4 | SUCCESS | rc=0 >>
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+\1pass\2aa\3
+ },
+}' 
+      ##        使用replace模块修改文件
+  ## 修改文件的某一部分(替换一行中匹配的内容)，以正则表达式匹配为基础修改
+
+[root@Va1 ~]# ansible  db  -m  replace  -a  'path=/root/my-copy.sh  \
+regexp="(.*pass.*)(aa).*"  replace="\1\"yes\"\2end"'
+Va4 | SUCCESS => {
+    "changed": true, 
+    "failed": false, 
+    "msg": "1 replacements made"
+}
+Va5 | SUCCESS => {
+    "changed": true, 
+    "failed": false, 
+    "msg": "1 replacements made"
+}
+[root@Va1 ~]# ansible db  -m shell -a  'cat  /root/my-copy.sh'
+Va4 | SUCCESS | rc=0 >>
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"],                                ★ --虚拟机--★ 
+       "vars": {
+                "ansible_ssh_user": "root", 
+\1pass\2"yes"aaend
+ },
+}' 
+
+Va5 | SUCCESS | rc=0 >>
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+\1pass\2"yes"aaend
+ },
+}' 
+
+[root@Va1 ~]# 
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+/**
+command   默认【建议，没办法的时候使用，少用】
+
+raw    实用性广泛 ，不支持chdir
+
+shell  万能
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no 192.168.1.12                      ★ --虚拟机--★ -虚拟机--★ 
+root@192.168.1.12's password: a
+Last login: Wed Nov 21 21:18:54 2018 from 192.168.1.11
+[root@Va2 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+
+[root@Va2 ~]#  cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1
+
+[root@Va2 ~]# ls /tmp/
+f1  systemd-private-018b06c518b74922a6d150bd2057f716-chronyd.service-GVpTEl
+[root@Va2 ~]# ll /tmp/f1 
+-rw-r--r-- 1 root root 0 11月 22 10:11 /tmp/f1
+[root@Va2 ~]# 
+
+[root@Va2 ~]# ls  /home
+plj  zhangsan3
+
+[root@Va2 ~]# id plj
+uid=1200(plj) gid=10(wheel) 组=10(wheel)
+
+[root@Va2 ~]# grep plj /etc/passwd
+plj:x:1200:10::/home/plj:/bin/bash
+
+[root@Va2 ~]# grep  wheel  /etc/group                                            ★ --虚拟机--★ 
+wheel:x:10:
+[root@Va2 ~]# ls  /home/plj/                                                     ★ --虚拟机--★ 
+[root@Va2 ~]# ls -ld  /home/plj/
+drwx------ 2 plj wheel 62 11月 22 12:53 /home/plj/
+[root@Va2 ~]# ssh -X  plj@localhost    # 强制密码立刻过期 ,必须立即修改密码，否则无法登陆       ★ --虚拟机--★ 
+plj@localhost's password: a  #旧密码
+You are required to change your password immediately (root enforced)             ★ --虚拟机--★ 
+WARNING: Your password has expired.
+You must change your password now and login again!                               ★ --虚拟机--★ 
+Changing password for user plj.                                                  ★ --虚拟机--★ 
+Changing password for plj.
+(current) UNIX password:   a    #旧密码                                                   ★ --虚拟机--★ 
+New password: Hiy53.es    #新密码 Hiy53.es
+Retype new password: Hiy53.es  #新密码 Hiy53.es
+passwd: all authentication tokens updated successfully.                          ★ --虚拟机--★ 
+Connection to localhost closed.
+
+[root@Va2 ~]# echo $USER
+root
+[root@Va2 ~]# ssh -X  plj@localhost   ## 第二次登陆使用 #新密码 Hiy53.es
+plj@localhost's password: Hiy53.es  #新密码 Hiy53.es
+Last login: Thu Nov 22 13:04:04 2018 from 127.0.0.1
+
+[plj@Va2 ~]$ echo $USER
+plj
+[plj@Va2 ~]$ pwd
+/home/plj
+[plj@Va2 ~]$ ls
+[plj@Va2 ~]$ echo $PATH
+/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/plj/.local/bin:/home/plj/bin
+[plj@Va2 ~]$ exit
+登出
+Connection to localhost closed.
+[root@Va2 ~]# 
+
+[root@Va2 ~]# ls  /home                                                          ★ --虚拟机--★ 
+plj  zhangsan3
+[root@Va2 ~]# ls /etc/httpd/conf/
+ls: 无法访问/etc/httpd/conf/: 没有那个文件或目录
+
+[root@Va2 ~]# ls /etc/httpd/conf/
+httpd.conf  magic
+[root@Va2 ~]# ls
+eip
+[root@Va2 ~]# echo  "Hello Va2 web" >/root/index.html ## 无效
+[root@Va2 ~]# cat /root/index.html
+Hello Va2 web
+[root@Va2 ~]# systemctl is-active httpd
+active
+[root@Va2 ~]# netstat -npult |grep httpd
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      3143/httpd          
+[root@Va2 ~]# vim  /etc/httpd/conf
+conf/           conf.d/         conf.modules.d/ 
+
+
+[root@Va2 ~]# sed -n '42p;95p' /etc/httpd/conf/httpd.conf
+Listen 8080
+ServerName localhost
+
+[root@Va2 ~]# curl Va2:8080
+Hello Va2-3 web
+
+[root@Va2 ~]# apachectl  -t
+Syntax OK
+[root@Va2 ~]# ls /var/www/
+cgi-bin  html
+[root@Va2 ~]# ls /var/www/cgi-bin/
+[root@Va2 ~]# ls -ld  /var/www/cgi-bin/
+drwxr-xr-x 2 root root 6 8月   4 2017 /var/www/cgi-bin/
+
+[root@Va2 ~]# ls -ld  /var/www/html/
+drwxr-xr-x 2 root root 24 11月 22 16:13 /var/www/html/
+
+[root@Va2 ~]# ls  /var/www/html/
+index.html
+
+[root@Va2 ~]# cat /var/www/html/index.html
+Xiawu web Va2-3
+[root@Va2 ~]# 
+
+[root@Va2 ~]# uptime
+ 16:59:31 up  8:41,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va2 ~]# uptime |awk '{print $(NF-2)}'
+0.00,
+
+[root@Va2 ~]# printf  "aaa"
+aaa[root@Va2 ~]# printf  "aaa\n"
+aaa
+
+[root@Va2 ~]# vim  uptime.yml
+[root@Va2 ~]# cat uptime.yml
+---
+  hosts: Va2
+  remote_user: root
+  task:
+    - shell: uptime |awk '{printf("%.2f\n",$(NF-2))}'
+      register: result
+    - service:
+        name: httpd
+        state: stopped
+      when.result.stdout|float > 0.5
+[root@Va2 ~]# 
+[root@Va2 ~]# uptime |awk '{printf("%.2f\n",$(NF-2))}'
+0.00
+[root@Va2 ~]# uptime |awk '{printf("%.2f",$(NF-2))}'
+0.00[root@Va2 ~]# 
+
+[root@Va2 ~]# uptime |awk '{print $(NF-2)}'
+0.00,
+[root@Va2 ~]# 
+[root@Va2 ~]# printf  "aaa"
+aaa[root@Va2 ~]# printf  "aaa\n"
+aaa
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no 192.168.1.13                      ★ --虚拟机--★ -虚拟机--★ 
+root@192.168.1.13's password: 
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+
+[root@Va3 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+
+[root@Va3 ~]# ls /tmp/
+f2  systemd-private-ceef632557ec4e1296afc4970938f6b8-chronyd.service-zFXYI5
+[root@Va3 ~]# ll /tmp/f2 
+-rw-r--r-- 1 root root 0 11月 22 10:14 /tmp/f2
+[root@Va3 ~]# 
+[root@Va3 ~]# ls  /home
+plj
+[root@Va3 ~]# ls /etc/httpd/conf/
+ls: 无法访问/etc/httpd/conf/: 没有那个文件或目录
+[root@Va3 ~]# echo  "Va3  web" >/root/index.html  ## 无效
+
+[root@Va3 ~]# systemctl is-active httpd
+active
+[root@Va3 ~]# netstat -npult |grep httpd
+tcp        0      0 0.0.0.0:8080            0.0.0.0:*               LISTEN      2379/httpd          
+[root@Va3 ~]# curl Va2:8080
+Hello Va2-3 web
+[root@Va3 ~]# sed -n '42p;95p' /etc/httpd/conf/httpd.conf
+Listen 8080
+ServerName localhost
+
+[root@Va3 ~]# curl Va3:8080
+Hello Va2-3 web
+
+[root@Va3 ~]# ll /var/www/html/index.html 
+-rw-r--r-- 1 root root 16 11月 22 16:13 /var/www/html/index.html
+
+[root@Va3 ~]# cat /var/www/html/index.html
+Xiawu web Va2-3
+
+[root@Va3 ~]# curl Va3:8080  ## 修改了端口和页面
+curl: (7) Failed connect to Va3:8080; 拒绝连接
+
+[root@Va3 ~]# curl Va3    ## 修改了端口和页面
+Xiawu web Va2-3
+
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no 192.168.1.14                      ★ --虚拟机--★ -虚拟机--★ 
+root@192.168.1.14's password: 
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+
+[root@Va4 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+
+[root@Va4 ~]# ls
+eip  f3
+[root@Va4 ~]# ll /root/f3 
+-rw-r--r-- 1 root root 0 11月 22 10:23 /root/f3
+
+[root@Va4 ~]# ls
+eip  f3  my-copy.sh
+
+[root@Va4 ~]# ls
+aaa  eip  f3  my-copy.sh
+[root@Va4 ~]# 
+[root@Va4 ~]# cat my-copy.sh 
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+                "ansible_ssh_pass": "a"}
+ },
+}' 
+[root@Va4 ~]# 
+[root@Va4 ~]# cat my-copy.sh  ## 失败的实验
+#!/bin/bash
+echo '
+{  "aa": {
+        "hosts": 
+                ["192.168.1.15", "192.168.1.16"], 
+       "vars": {
+                "ansible_ssh_user": "root", 
+\1pass\2aa\3
+ },
+}' 
+[root@Va4 ~]# 
+
+
+
+
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no 192.168.1.15                      ★ --虚拟机--★ -虚拟机--★ 
+root@192.168.1.15's password: 
+Last login: Wed Nov 21 21:18:37 2018 from 192.168.1.11
+[root@Va5 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+
+[root@Va5 ~]# ls
+eip  my-copy.sh
+[root@Va5 ~]# ls
+aaa  eip  my-copy.sh
+[root@Va5 ~]# ls aaa/
+ansible.cfg  myhost  my.sh
+
+
+
+
+
+
+
+/**
+Va1   ansible  192.168.1.11
+Va2   web1     192.168.1.12
+Va3   web2     192.168.1.13
+Va4   db1      192.168.1.14
+Va5   db2      192.168.1.15
+Va6   cache    192.168.1.16
+******/
+[root@hiys ~]# ssh -o StrictHostKeyChecking=no 192.168.1.16                      ★ --虚拟机--★ -虚拟机--★ 
+root@192.168.1.16's password: 
+Last login: Wed Nov 21 21:18:59 2018 from 192.168.1.11
+[root@Va6 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+
+[root@Va6 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1
+
+[root@Va6 ~]# 
+[root@Va6 ~]# id jj
+uid=1203(jj) gid=0(root) 组=0(root)
+[root@Va6 ~]# ls /home/
+dd  jj  plj  xx
+
+[root@Va6 ~]# ls /home/
+dd  jiajia  jj  plj  xx
+[root@Va6 ~]# id jiajia
+uid=1204(jiajia) gid=0(root) 组=0(root)
+
+[root@Va6 ~]# 
+[root@Va6 ~]# cat -n  /etc/login.defs  |tail -4
+    69	
+    70	# Use SHA512 to encrypt password.
+    71	ENCRYPT_METHOD SHA512 
+    72	                                         ★ --虚拟机--★ 
+
+[root@Va6 ~]# echo  123 |openssl  sha1
+(stdin)= a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0
+
+[root@Va6 ~]# echo  123 |openssl md5
+(stdin)= ba1f2511fc30423bdbb183fe33f3dd0f
+
+[root@Va6 ~]# tail  -3  /etc/shadow
+xx:$6$vnKCnbg9$zPZ5cB/fiicPvYbyMrN2KHFqNggwWrbocK3Awc/ETWH8wwwN/ETCL2O3s4G.E0q60EazttKSpXLYY9yG2xVCw/:0:0:99999:7:::
+jj:$6$/YO7D6Wt$FDTs7dMibse.brw9nAgyq/WJrrxKZG0mvIjU1QroTvjq/sSHx1zxGXWPx3X5jCUGAJOASoLXwbzDLO.40oVSl0:0:0:99999:7:::
+jiajia:$6$WcYxB9BA$U8W.2yjVHwebIv1n3PmVI0VCmndBpifjXSqGo4htOwLSeqNP87lOC6ZjEXOsrLXAFsaQE3QAKOKdZZrupb.eo.:0:0:99999:7:::
+
+[root@Va6 ~]# ls /home/
+dd  jiajia  jj  plj  sha512  xx
+
+[root@Va6 ~]# id sha512
+uid=1205(sha512) gid=100(users) 组=100(users)
+
+[root@Va6 ~]# grep users /etc/group 
+users:x:100:
+
+[root@Va6 ~]# tail -2  /etc/shadow
+
+jiajia:$6$WcYxB9BA$U8W.2yjVHwebIv1n3PmVI0VCmndBpifjXSqGo4htOwLSeqNP87lOC6ZjEXOsrLXAFsaQE3QAKOKdZZrupb.eo.:0:0:99999:7:::
+
+sha512:$6$rounds=656000$atLXHHB5spvlfdqL$B4yZg1tKQF5u44YUIshZ3oNCux0nHHXi75lYLA.dI7stzzN3n63Kly662bjIsag6RYDLQsKO7ijijJMEOoFFM1:0:0:99999:7:::
+
+[root@Va6 ~]# echo  123 |openssl  sha1
+(stdin)= a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0
+
+[root@Va6 ~]# echo  123 |openssl  sha512
+(stdin)= ea2fe56bb8c1fb5ada84963b42ed71b764a74b092d75755173ade06f2f4aada9c00d6c302e185035cbe85fdff31698bca93e8661f0cbcef52cf2ff65864fd742
+[root@Va6 ~]# 
+[root@Va6 ~]# ls /home/
+dd  jiajia  jj  nb7  nb8  plj  sha512  xx
+[root@Va6 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

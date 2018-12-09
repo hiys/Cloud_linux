@@ -1,0 +1,344 @@
+课程回顾
+1 配置 yum 源
+2 把 salt 拷贝到 源里面
+createrepo .
+3 安装
+master 上安装 salt-master
+yum install -y salt-master
+node    上安装 salt-minion
+yum install -y salt-minion
+
+# master 上默认启动 4505,4506
+配置文件保持默认，启动服务
+# minion 上配置
+master 的地址
+id 标识
+nmap -p 4505,4506 masterip
+
+启动服务
+master 上可以查看到minion已经申请链接
+salt-key -L
+添加授信后可以开始使用
+salt-key -A -y
+
+# 测试使用
+salt '*' test.ping
+
+按照用户纬度查询
+注:  2015 版本有bug，查询有时候会出不来，升级到 2016 版，问题解决
+salt '*' pillar.item 'users:zhang3' 
+salt -I 'users:zhang3' test.ping
+
+salt 模块 state
+查看 state 所有模块
+salt 'node1' sys.list_state_modules
+查看 state 模块方法
+salt 'node1' sys.list_state_functions modules_name
+查看 state 帮助
+salt 'node1' sys.state_doc modules.function
+
+修改配置文件 /etc/salt/master
+file_roots:
+   base:
+     - /srv/salt/base
+   dev:
+     - /srv/salt/dev
+   prod:
+     - /srv/salt/prod
+
+创建对应的文件夹
+mkdir -p /srv/salt/{base,dev,prod}
+重启服务
+systemctl restart salt-master
+
+文件管理
+更改 base 环境的 dns 配置，首先在 base 文件夹下创建入口文件 top.sls
+目的1，修改 node1 的 resolv.conf 配置
+目的2，给 node1,node4 的 issue 文件追加内容
+
+base:
+  'node1':
+    - dns
+    - issue
+  'node4':
+    - issue
+  'L@node2,node3,node5'
+    - rpm_pkgs
+
+这里引用的 dns 配置文件 dns.sls 和 issue 追加配置文件 issue.sls
+dns.sls
+resolv_conf:
+  file.managed:
+    - name: /etc/resolv.conf
+    - source: salt://files/resolv.conf
+    - user: root
+    - group: root
+    - mode: 644
+    - template: jinja
+    - defaults:
+      DNS_IP: 192.168.113.254
+
+这里指定了 source 文件在 files/resolv.conf，并且在配置中使用了 jinja 模版定义 dns_ip
+创建files文件夹和 resolv.conf 文件
+mkdir -p /srv/salt/bash/files
+
+resolv.conf 文件
+ameserver {{DNS_IP}}
+
+issue.sls
+issue_file:
+  file.append:
+    - name: /etc/issue
+    - text:
+      - Red Hat Enterprise Linux 7
+      - Tedu Ltd Server
+
+创建文件夹 rpm_pkgs
+配置文件 rpm_pkgs.sls 
+rpms:
+  file.directory:
+    - name: /opt/rpm_pkgs
+    - user: root
+    - group: root
+    - dir_mode: 755
+    - file_mode: 644
+
+测试执行
+salt '*' state.highstate saltenv=base test=True
+
+运行
+salt '*' state.highstate saltenv=base test=False
+
+为 salt 添加执行的条件判断
+unless 判断条件为【假】的时候执行
+onlyif  判断条件为【真】的时候执行
+例子： 
+添加用户，当用户不存在的时候执行添加操作
+add_user.sls
+useradd zhang3:
+  cmd.run:
+    - unless: id zhang3
+
+删除用户，当用户   存在的时候执行删除操作
+del_user.sls
+userdel zhang3:
+  cmd.run:
+    - onlyif: id zhang3
+
+在 top.sls 对应要增加或删除的机器上配置
+base:
+  "node3":
+    - add_user
+  "node4":
+    - del_user
+
+项目1： 
+    利用 salt 给多台机器实现下列功能：
+    配置多台minion的dns服务器地址为192.168.4.1
+    配置history命令显示时间
+    配置系统内核参数 net.ipv4.ip_forward 打开路由转发
+    创建用户zhang3
+    设置初始化密码为123456
+    配置用户初次登陆必须修改密码
+
+分析：
+    初始化的工作比较多，写入一个文件比较凌乱，设计一个初始化模块 init
+    在模块下分别配置 dns，sysctl， history， adduser 实现
+    创建 init 文件夹
+    mkdir /srv/salt/base/init
+    进入这个文件夹
+    cd  /srv/salt/base/init
+    配置 dns 
+    dns.sls
+resolv_conf:
+  file.managed:
+    - name: /etc/resolv.conf
+    - source: salt://init/files/resolv.conf
+    - user: root
+    - group: root
+    - mode: 644
+    - template: jinja
+    - defaults:
+      DNS_IP: 192.168.4.1
+
+创建文件夹
+mkdir files
+
+配置  files/resolv.conf 文件
+nameserver {{DNS_IP}}
+
+配置 history.sls 增加时间
+history_file:
+  file.append:
+    - name: /etc/profile
+    - text:
+      - export HISTTIMEFORMAT="[%F_%T]:"
+
+配置 sysctl.sls 开启路由转发
+net.ipv4.ip_forward:
+  sysctl.present:
+  - value: 1
+
+配置 add_user.sls 
+添加用户
+useradd zhang3:
+  cmd.run:
+    - unless: id zhang3
+
+设置默认密码
+echo 123456 | passwd --stdin zhang3:
+  cmd.run:
+    - onlyif: id zhang3
+
+设置初次登录修改密码策略
+chage -d0 zhang3:
+  cmd.run:
+    - onlyif: id zhang3
+
+配置入口文件 top.sls
+base:
+  'L@node2,node3,node4':
+    - init/dns
+    - init/history
+    - init/sysctl
+    - init/add_user
+
+测试执行
+salt '*' state.highstate saltenv=base test=True
+
+运行
+salt '*' state.highstate saltenv=base test=False
+
+安装部署软件，使用 pkg 模块，这次使用 prod 环境部署
+首先根据 /etc/salt/master 里面定义的路径创建 prod 的根目录
+mkdir -p /srv/salt/prod
+cd  /srv/salt/prod
+
+创建入口文件： top.sls
+prod:
+  'L@node1,node5':
+    - httpd
+
+创建 httpd.sls 文件
+httpd_pkg_installd:
+  pkg.installed:
+    - name: httpd
+
+httpd_conf:
+  file.managed:
+    - name: /etc/httpd/conf/httpd.conf
+    - source: salt://files/httpd.conf
+    - template: jinja
+    - defaults:
+      PORT: 80
+    - require:
+      - pkg: httpd_pkg_installd
+
+httpd_service_running:
+  service.running:
+   - name: httpd
+   - enable: true
+   - restart: true
+   - watch:
+     - file: httpd_conf
+
+创建 files 文件夹，并编辑 httpd.conf 的配置文件
+mkdir files
+修改 httpd.conf 配置文件
+Listen {{ PORT }}
+ServerName local
+
+测试执行
+salt '*' state.highstate saltenv=prod test=True
+
+运行
+salt '*' state.highstate saltenv=prod test=False
+
+# 以上就完成了 批量 安装 部署软件、批量修改配置文件，批量设置服务状态并且运行服务
+
+nginx 源码编译安装，这次使用 dev 环境
+编译源码安装步骤
+1、安装依赖包
+   编译源码包需要安装依赖 gcc gcc-c++ make autoconf prce-devel openssl-devel
+2、创建用户、编译源码
+3、设置开机启动、启动服务
+
+由于 nginx 源码安装是一个独立工作，我们建立一个项目
+mkdir -p /srv/salt/dev/nginx_install
+
+工作分为3部分
+第一部分安装依赖包 initpkg.sls 
+init_pkg_install:
+  pkg.installed:
+    - names:
+      - gcc
+      - gcc-c++
+      - make
+      - autoconf
+      - openssl-devel
+      - pcre-devel
+
+第二部分源码编译安装 install.sls
+nginx_src_install:
+  file.managed:
+    - name: /usr/local/src/nginx-1.9.12.tar.gz
+    - source: salt://nginx_install/files/nginx-1.9.12.tar.gz
+    - user: root
+    - group: root
+    - mode: 644
+  cmd.script:
+    - source: salt://nginx_install/files/build.sh
+    - cwd: /usr/local/src
+    - user: root
+    - unless: test -d /usr/local/nginx
+    - require:
+      - file: nginx_src_install
+      - pkg:  init_pkg_install
+
+第二部分需要源码文件、服务配置文件、和编译安装脚本
+mkdir -p /srv/salt/dev/nginx_install/files
+拷贝 nginx-1.9.12.tar.gz 到这个目录下
+拷贝 nginx.service 到这个目录下
+创建编译安装脚本 build.sh
+#!/bin/bash
+useradd -s /sbin/nologin nginx
+tar xzf nginx-1.9.12.tar.gz
+cd nginx-1.9.12
+./configure --prefix=/usr/local/nginx --user=nginx --group=nginx
+make
+make install
+
+
+第三部分设置开机启动服务 nginx_init.sls 
+nginx_init:
+  file.managed:
+    - name: /usr/lib/systemd/system/nginx.service
+    - source: salt://nginx_install/files/nginx.service
+    - user: root
+    - group: root
+    - mode: 644
+
+nginx_service:
+  service.running:
+    - name: nginx
+    - enable: true
+    - restart: true
+
+编辑入口文件 top.sls
+dev:
+  'node5':
+    - nginx_install
+
+编辑 nginx_install 入口文件 init.sls
+include:
+  - .initpkg
+  - .install
+  - .nginx_init
+
+测试执行
+salt '*' state.highstate saltenv=dev test=True
+
+运行
+salt '*' state.highstate saltenv=dev test=False
+
+执行后等待几分钟就可以看到 nginx 在服务器上已经正确启动运行了

@@ -1,0 +1,176 @@
+docker02
+
+增删改数据、安装软件、修改配置文件后，容器另存为镜像
+docker run -it centos
+修改容器配置环境
+配置 yum 源
+[rhel7]
+name=rhel
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+gpgcheck=0
+
+清理缓存
+yum clean all
+安装软件
+yum install -y net-tools
+yum install -y psmisc
+yum install -y iproute
+yum install -y vim-enhanced
+yum install -y openssh-clients
+
+安装完成以后，切换到宿主机
+对已经修改过的 docker 做镜像
+查看修改过的容器的 id
+docker ps
+
+把容器做成镜像
+docker commit  容器id  新镜像的名称：tag
+docker commit  dd61895d9f88 mycentos:latest
+
+查看新的镜像
+docker images 
+
+用新的镜像生成容器
+docker run -it mycentos /bin/bash
+
+进入容器检查，刚刚的配置
+
+利用 Dockerfile 编排镜像
+关键字
+FROM:基础镜像
+MAINTAINER:镜像创建者信息
+EXPOSE:开放的端口
+ENV:设置变量
+ADD:复制文件到镜像
+RUN:制作镜像时执行的命令，可以有多个
+WORKDIR:定义容器默认工作目录
+CMD:容器启动时执行的命令，仅可以有一条CMD
+
+综合 Dockerfile 实验
+1、自动配置 yum 的源
+2、安装 net-tools psmisc httpd sshd
+3、设置容器启动，自动运行 [sshd,httpd]
+4、设置默认主页为 Hello World
+5、添加用户 user01，并设置默认密码为 123456
+6、在宿主机添加映射，把 22,80 映射出去
+
+yum 源配置文件
+local.repo
+[rhel7]
+name=rhel
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+gpgcheck=0
+
+Dockerfile 文件配置
+FROM centos
+MAINTAINER  lix  lix@tedu.cn
+ENV  HOSTNAME=web
+RUN  rm -f /etc/yum.repos.d/*
+ADD  local.repo /etc/yum.repos.d/local.repo
+RUN  yum clean all
+RUN  yum install -y net-tools psmisc vim-enhanced openssh-clients 
+RUN  yum install -y openssh-server httpd
+WORKDIR  /var/www/html
+RUN  echo "Hello World" >index.html
+RUN  useradd user01
+RUN  echo 123456 |passwd --stdin user01
+RUN  chage -d 0 user01
+EXPOSE  22
+EXPOSE  80
+ADD  run.sh /etc/init.d/run.sh
+CMD  ["/etc/init.d/run.sh"]
+
+因为每个 images 只能有一个 CMD，我们需要启动两个服务
+这里使用一个脚本解决这个问题
+run.sh 脚本
+#!/bin/bash
+/usr/sbin/sshd-keygen >/dev/null 2<&1
+/usr/sbin/sshd
+/usr/sbin/httpd -DFOREGROUND
+
+配置完以后，build 自定义镜像
+docker build -t myimg .
+
+编译成功以后，我们启动容器，这里使用参数 -p 映射端口
+[ -p ] 宿主机端口:容器端口
+docker run -d -p 80:80 -p 222:22 myimg
+
+容器启动以后：
+    可以使用 curl http://宿主机ip/ 访问容器
+    可以使用 ssh -l user01 -p 222 宿主机 ip 连接
+
+创建私有仓库
+1、docker 的启动文件，添加参数 
+--insecure-registry=192.168.4.20:5000
+
+systemctl daemon-reload
+systemctl restart docker
+
+2、启动私有仓库
+docker run -d -p 5000:5000 registry
+
+验证
+curl http://192.168.4.20:5000/v2/
+
+3、给镜像打标签
+docker tag busybox:latest 192.168.4.20:5000/busybox:latest
+
+4、上传
+docker push 192.168.4.20:5000/busybox:latest
+
+验证：
+删除本地镜像
+docker rmi 192.168.4.20:5000/busybox:latest busybox:latest
+
+使用远程镜像启动容器
+docker run -it 192.168.4.20:5000/busybox
+
+查看远程仓库上有什么镜像
+http://192.168.4.20:5000/v2/_catalog
+
+查看远程镜像的tag
+http://192.168.4.20:5000/v2/<name>/tags/list
+
+查看容器的ip
+docker inspect -f {{.NetworkSettings.IPAddress}} 容器id
+
+使用容器挂载共享目录
+-d 宿主机源目录:容器内目录
+docker run -d -v /var/webroot:/var/www/html myimg
+
+NFS 共享目录
+在 docker 的宿主机挂载 NFS 共享目录
+在启动容器的时候，使用 -v 参数把 NFS 共享目录挂接进容器
+
+docker 网络管理
+查看 docker 网络结构
+docker network ls
+
+创建一个网桥
+docker network create --driver bridge --subnet=192.168.1.0/24 br1
+
+查看某一个桥的详细信息
+docker network inspect 网桥id
+
+创建一个容器，使用新建的网桥
+docker run -it --network=br1 myimg /bin/bash
+
+
+给容器添加网卡
+nspid=$(docker inspect -f '{{.State.Pid}}' conid)
+
+ip link add lnet0 type veth peer name rnet0
+
+ip link set dev lnet0 master br0
+
+ip link set dev lnet0 up
+
+ip link set dev rnet0 name eth1 netns ${nspid}
+
+ln -s /proc/${nspid}/ns/net /var/run/netns/${nspid}
+
+ip netns exec ${nspid} ip link set dev eth1 up
+
+ip netns exec ${nspid} ip addr add 192.168.1.100/24 brd 192.168.1.255 dev eth1

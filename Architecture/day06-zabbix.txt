@@ -1,0 +1,264 @@
+day06  部署Zabbix监控服务  192.168.4.13
+一、部署服务器运行环境 (LAMP)
+#yum  -y   install  httpd   php
+#yum  -y   install  mariadb-server   mariadb
+#yum  -y    install php-mysql
+#systemctl  restart httpd ;systemctl  enable httpd
+#systemctl  start mariadb ;systemctl  enable mariadb
+
+#mysql
+mysql> create  database  zabbixdb;
+mysql> grant all  on  zabbixdb.*  to   yaya@"localhost" identified 
+
+by  "123456";
+mysql>quit;
+#mysql  -uyaya   -p123456
+mysql> quit;
+
+二 、测试运行环境
+vim /var/www/html/linkdb.php
+<?php
+$a=mysql_connect("localhost","yaya","123456");
+if($a){echo "ok";}else{echo  "err";}
+?>
+:wq
+[root@localhost ~]# elinks  --dump http://localhost/linkdb.php
+   ok
+
+三、安装提供zabbix监控服务的软件包
+#rpm  -q  gcc   gcc-c++
+#useradd  zabbix
+#tar -zxvf zabbix-3.2.3.tar.gz 
+#cd zabbix-3.2.3/
+
+#./configure   --prefix=/usr/local/zabbix     --enable-server   --
+
+enable-agent    --with-mysql
+
+#make  install  
+
+[root@localhost zabbix-3.2.3]# ls /usr/local/zabbix/
+bin   可执行命令
+etc   配置文件
+lib    库文件
+sbin   服务程序文件
+share 帮助文件
+
+四、创建存储配置信息的表
+#cd zabbix-3.2.3/
+
+# mysql -uyaya -p123456  zabbixdb  < 
+
+./database/mysql/schema.sql 
+
+# mysql -uyaya -p123456  zabbixdb < ./database/mysql/images.sql
+
+#mysql -uyaya -p123456  zabbixdb < ./database/mysql/data.sql
+
+#mysql -uyaya -p123456  zabbixdb
+mysql> show  tables;
+
+五、访问web页面做初始化配置
+a拷贝网页文件
+#cd zabbix-3.2.3/
+#cp -r  frontends/php/ /var/www/html/zabbix
+#chown -R apache:apache  /var/www/html/zabbix
+b安装依赖的软件包并修改配置参数
+vim /etc/php.ini
+394 max_input_time = 300
+384 max_execution_time = 300
+672 post_max_size = 16M
+878 date.timezone = Asia/Shanghai
+:wq
+#rpm -ivh  --nodeps php-bcmath-5.4.45-13.el7.remi.x86_64.rpm 
+#rpm -ivh  --nodeps php-mbstring-5.4.45-13.el7.remi.x86_64.rpm
+# yum -y  install  php-gd php-xml
+# systemctl restart   httpd
+c 访问web页面做初始化配置
+firefox  http://192.168.4.13/zabbix
+
+存放初始化配置信息文件
+/var/www/html/zabbix/conf/zabbix.conf.php
+
+管理员 admin
+密码    zabbix
+
+六 使用zabbix
+a 修改管理员登录密码
+b 修改使用的语言
+c 查看已监控的主机
+d 查看监控模版
+e 查看监控信息
+
+七 启动监控服务zabbix_server
+7.1 修改主配置文件（根据初始化设置使用的库）
+38 LogFile=/tmp/zabbix_server.log
+87 DBName=zabbixdb
+103 DBUser=yaya
+111 DBPassword=123456
+:wq
+
+7.2 启动服务zabbix_server
+#cd  zabbix-3.2.3
+#cp misc/init.d/fedora/core/zabbix_server /etc/init.d/ 
+
+#chmod  +x  /etc/init.d/zabbix_server 
+
+# sed -i "22s;/usr/local;&/zabbix;"  /etc/init.d/zabbix_server
+
+# /etc/init.d/zabbix_server start
+
+# netstat -utnalp  | grep :10051
+tcp        0      0 0.0.0.0:10051           0.0.0.0:*               LISTEN      
+
+3664/zabbix_server 
+
+八 、配置zabbix服务
+8.1 监控本机
+a 运行zabbix_agentd 服务
+#cd  zabbix-3.2.3
+#cp misc/init.d/fedora/core/zabbix_agentd /etc/init.d/
+#chmod +x  /etc/init.d/zabbix_agentd 
+
+# sed -i "22s;/usr/local;&/zabbix;"  /etc/init.d/zabbix_agentd
+
+#vim /usr/local/zabbix/etc/zabbix_agentd.conf
+30 LogFile=/tmp/zabbix_agentd.log
+91 Server=127.0.0.1
+132 ServerActive=127.0.0.1:10051
+:wq
+#/etc/init.d/zabbix_agentd  start
+#netstat  -utnalp  | grep :10050
+tcp        0      0 0.0.0.0:10050           0.0.0.0:*               LISTEN      
+
+6871/zabbix_agentd 
+
+8.2 登录管理页面，启用监控本机
+8.3 查看监控信息
+8.4 给已监控主机设置使用的新模版
++++++++++++++++++++++++++++++++++
+8.2 监控远端主机(192.168.4.12)
+a 配置被监控端 192.168.4.12
+1运行zabbix_agnentd服务
+#useradd zabbix
+#rpm -q gcc gcc-c++
+#tar -zxvf zabbix-3.2.3.tar.gz 
+#cd zabbix-3.2.3/
+#./configure --prefix=/usr/local/zabbix --enable-agent
+#make install
+[root@localhost zabbix-3.2.3]# ls /usr/local/zabbix/
+bin  etc  lib  sbin  share
+
+# vim /usr/local/zabbix/etc/zabbix_agentd.conf
+30 LogFile=/tmp/zabbix_agentd.log
+91 Server=127.0.0.1, 192.168.4.13
+132 ServerActive=192.168.4.13:10051
+:wq
+
+#cp misc/init.d/fedora/core/zabbix_agentd /etc/init.d/
+#chmod +x /etc/init.d/
+#sed -i '22s;/usr/local;&/zabbix;' /etc/init.d/zabbix_agentd 
+#sed -n '22p' /etc/init.d/zabbix_agentd 
+#/etc/init.d/zabbix_agentd status
+#/etc/init.d/zabbix_agentd start
+#netstat -utnalp  | grep :10050
+b配置监控服务器192.168.4.13
+1 添加新监控的主机并选择监控模版
+2 查看监控信息
+
+8.3自定义监控模版
+监控远端主机12 用户数量 
+a 配置被监控端192.168.4.12
+系统总用户数量  不能够登录系统的用户数量 能登录系统的用户数量
+#awk -F ":" '$7!="/bin/bash"{i++}END{print i}'  /etc/passwd
+#wc -l /etc/passwd | awk  '{print $1}'
+#awk -F ":" '$7=="/bin/bash"{j++}END{print j}'  /etc/passwd
+
+1 启用自定义监控命令
+# vim /usr/local/zabbix/etc/zabbix_agentd.conf
+262 Include=/usr/local/zabbix/etc/zabbix_agentd.conf.d/
+278 UnsafeUserParameters=1
+:wq
+
+vim  
+
+/usr/local/zabbix/etc/zabbix_agentd.conf.d/get_sum_users.conf
+UserParameter=get_sum_users,wc -l /etc/passwd | awk  '{print $1}'
+
+UserParameter=get_login_users,awk -F ":" '$7=="/bin/bash"{j++}
+
+END{print j}' /etc/passwd
+
+UserParameter=get_notlogin_users,awk -F ":" '$7!="/bin/bash"{i+
+
++}END{print i}'  /etc/passwd
+:wq
+
+2 重启zabbix_agentd服务
+# /etc/init.d/zabbix_agentd stop
+#/etc/init.d/zabbix_agentd start
+
+3 测试自定义监控命令
+#/usr/local/zabbix/bin/zabbix_get -s 127.0.0.1 -p 10050 -k  
+
+get_sum_users
+#useradd  yaya9
+#/usr/local/zabbix/bin/zabbix_get -s 127.0.0.1 -p 10050 -k  
+
+get_sum_users
+
+b 配置监控服务器192.168.4.13
+1测试能否在命令行下使用被监控端自定义的监控命令
+#/usr/local/zabbix/bin/zabbix_get  -s 192.168.4.12 -p 10050 -k 
+
+get_sum_users
+
+#/usr/local/zabbix/bin/zabbix_get  -s 192.168.4.12 -p 10050 -k 
+
+get_login_users
+  
+#/usr/local/zabbix/bin/zabbix_get  -s 192.168.4.12 -p 10050 -k 
+
+get_notlogin_users
+
+2 登录监控服务管理页面做如下配置
+1 创建新模版  atmp12user
+2 创建应用集  usergrp
+3 创建监控项并指定使用的命令   sumusers  
+4 监控12主机是调用新创建的模版
+5 查看监控信息
+++++++++++++++++++++++++++++++++++
+8.4监控报警 192.168.4.13
+监控主机12 系统总用户数量 大于  51个时发送报警邮件到邮箱
+
+zabbix@localhost   
+1 准备邮件服务器  和 邮箱帐号    zabbix@localhost  root@localhost
+#rpm -q postfix 
+#systemctl  status  postfix
+#useradd zabbix
+#mail  -s "999" zabbix  < /etc/hosts
+#su - zabbix 
+#mail
+
+2 登录管理页面做如下配置：
+a 创建触发器    cfqone
+b 创建动作       dongzone
+c  指定收件人邮箱
+d  指定邮件服务器
+e  触发器被触发后，查看是否接收到报警邮件
+++++++++++++++++++++++++++++++++++++++
+Nagios    Cacti      Zabbix （内置监控命令的使用）
+           
+1 部署运行环境
+2 监控软件会自带监控插件 或 监控模版  、默认都监控本机
+3 监控端运行监控服务   nagios   snmpd  zabbix_server  
+4 被监控端也要运行服务 nrpe  snmpd   zabbix_agentd
+5 配置：修改配置Nagios      通过web页面配置（Cacti      Zabbix）
+6 查看监控信息
+7 监控报警（邮件报警   短信  微信   即时消息）
+
+
+
+
+
+
