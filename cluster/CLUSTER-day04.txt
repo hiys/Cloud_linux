@@ -1,0 +1,449 @@
+配置分布式存储服务
+
+CEPH介绍
+
+检查CEPH环境准备
+检查 51 / 52  /53 添加的3块盘
+检查 50 - 53 主机网络yum源配置
+检查 50 - 53 配置的主机名映射配置
+检查 51   能否无密码连接本机及其他主机
+检查 50主机NTP服务的配置
+++++++++++++++++++++++++++++++++++++++++
+一、部署CEPH集群
+1.1 创建集群
+node1 ~]# yum -y  install ceph-deploy
+node1 ~]# ceph-deploy --help
+[root@node1 ~]# mkdir /root/ceph-cluster
+[root@node1 ~]# cd /root/ceph-cluster/
+[root@node1 ceph-cluster]# ls
+[root@node1 ceph-cluster]#
+[root@node1 ceph-cluster]# ceph-deploy new node1 node2 node3
+[ceph_deploy.conf][DEBUG ] found configuration file at: /root/.cephdeploy.conf
+[ceph_deploy.cli][INFO  ] Invoked (1.5.33): /usr/bin/ceph-deploy new node1 node2 
+
+node3
+[ceph_deploy.cli][INFO  ] ceph-deploy options:
+[ceph_deploy.cli][INFO  ]  username                      : None
+[ceph_deploy.cli][INFO  ]  func                          : <function new at 
+
+0x7fd5d3da4c80>
+[ceph_deploy.cli][INFO  ]  verbose                       : False
+[ceph_deploy.cli][INFO  ]  overwrite_conf                : False
+[ceph_deploy.cli][INFO  ]  quiet                         : False
+[ceph_deploy.cli][INFO  ]  cd_conf                       : 
+
+<ceph_deploy.conf.cephdeploy.Conf instance at 0xa6b7a0>
+[ceph_deploy.cli][INFO  ]  cluster                       : ceph
+[ceph_deploy.cli][INFO  ]  ssh_copykey                   : True
+[ceph_deploy.cli][INFO  ]  mon                           : ['node1', 'node2', 
+
+'node3']
+[ceph_deploy.cli][INFO  ]  public_network                : None
+[ceph_deploy.cli][INFO  ]  ceph_conf                     : None
+[ceph_deploy.cli][INFO  ]  cluster_network               : None
+[ceph_deploy.cli][INFO  ]  default_release               : False
+[ceph_deploy.cli][INFO  ]  fsid                          : None
+[ceph_deploy.new][DEBUG ] Creating new cluster named ceph
+[ceph_deploy.new][INFO  ] making sure passwordless SSH succeeds
+[node1][DEBUG ] connected to host: node1 
+[node1][DEBUG ] detect platform information from remote host
+[node1][DEBUG ] detect machine type
+[node1][DEBUG ] find the location of an executable
+[node1][INFO  ] Running command: /usr/sbin/ip link show
+[node1][INFO  ] Running command: /usr/sbin/ip addr show
+[node1][DEBUG ] IP addresses found: ['192.168.122.1', '192.168.4.51']
+[ceph_deploy.new][DEBUG ] Resolving host node1
+[ceph_deploy.new][DEBUG ] Monitor node1 at 192.168.4.51
+[ceph_deploy.new][INFO  ] making sure passwordless SSH succeeds
+[node2][DEBUG ] connected to host: node1 
+[node2][INFO  ] Running command: ssh -CT -o BatchMode=yes node2
+[node2][DEBUG ] connected to host: node2 
+[node2][DEBUG ] detect platform information from remote host
+[node2][DEBUG ] detect machine type
+[node2][DEBUG ] find the location of an executable
+[node2][INFO  ] Running command: /usr/sbin/ip link show
+[node2][INFO  ] Running command: /usr/sbin/ip addr show
+[node2][DEBUG ] IP addresses found: ['192.168.122.1', '192.168.4.52']
+[ceph_deploy.new][DEBUG ] Resolving host node2
+[ceph_deploy.new][DEBUG ] Monitor node2 at 192.168.4.52
+[ceph_deploy.new][INFO  ] making sure passwordless SSH succeeds
+[node3][DEBUG ] connected to host: node1 
+[node3][INFO  ] Running command: ssh -CT -o BatchMode=yes node3
+[node3][DEBUG ] connected to host: node3 
+[node3][DEBUG ] detect platform information from remote host
+[node3][DEBUG ] detect machine type
+[node3][DEBUG ] find the location of an executable
+[node3][INFO  ] Running command: /usr/sbin/ip link show
+[node3][INFO  ] Running command: /usr/sbin/ip addr show
+[node3][DEBUG ] IP addresses found: ['192.168.122.1', '192.168.4.53']
+[ceph_deploy.new][DEBUG ] Resolving host node3
+[ceph_deploy.new][DEBUG ] Monitor node3 at 192.168.4.53
+[ceph_deploy.new][DEBUG ] Monitor initial members are ['node1', 'node2', 'node3']
+[ceph_deploy.new][DEBUG ] Monitor addrs are ['192.168.4.51', '192.168.4.52', 
+
+'192.168.4.53']
+[ceph_deploy.new][DEBUG ] Creating a random mon key...
+[ceph_deploy.new][DEBUG ] Writing monitor keyring to ceph.mon.keyring...
+[ceph_deploy.new][DEBUG ] Writing initial config to ceph.conf...
+[root@node1 ceph-cluster]# 
+
+[root@node1 ceph-cluster]# ls
+ceph.conf  ceph-deploy-ceph.log  ceph.mon.keyring
+
+node1 ceph-cluster]# ceph-deploy install node1 node2 node3
+
+node1 ceph-cluster]# ceph-deploy mon create-initial
+
+1.2 创建OSD
+
+1.2.1 创建日志盘（使用vdb做日志盘，分别在node1 node2  node3 主机上执行如下命令 ）
+
+parted  /dev/vdb  mklabel  gpt
+parted  /dev/vdb  mkpart primary 1M 50%
+parted  /dev/vdb  mkpart primary 50% 100%
+
+]# chown  ceph.ceph  /dev/vdb*
+]# echo  "chown  ceph.ceph  /dev/vdb*"  >>  /etc/rc.local 
+]# chmod +x /etc/rc.d/rc.local
+
+
+1.2.2 在管理主机node1初始化存储盘 vdc  和  vdd
+node1]# cd /root/ceph-cluster/
+node1]# ceph-deploy disk  zap  node1:vdc   node1:vdd 
+node1]# ceph-deploy disk  zap  node2:vdc   node2:vdd 
+node1]# ceph-deploy disk  zap  node3:vdc   node3:vdd 
+
+1.2.3 在管理主机node1上,创建osd设备
+
+node1]# 
+ceph-deploy osd create node1:vdc:/dev/vdb1 node1:vdd:/dev/vdb2 
+
+node1]# 
+ceph-deploy osd create node2:vdc:/dev/vdb1 node2:vdd:/dev/vdb2
+
+node1]# 
+ceph-deploy osd create node3:vdc:/dev/vdb1 node3:vdd:/dev/vdb2
+
+3查看集群状态
+[root@node1 ~]# ceph -s
+    cluster ad2bf018-8b58-4289-97db-406a365a9289
+     health HEALTH_OK
+     monmap e1: 3 mons at 
+
+{node1=192.168.4.51:6789/0,node2=192.168.4.52:6789/0,node3=192.168.4.53:6789/0}
+            election epoch 6, quorum 0,1,2 node1,node2,node3
+     osdmap e33: 6 osds: 6 up, 6 in
+            flags sortbitwise
+      pgmap v82: 64 pgs, 1 pools, 0 bytes data, 0 objects
+            202 MB used, 61171 MB / 61373 MB avail
+                  64 active+clean
+[root@node1 ~]#
+
+查看相关服务的状态信息：
+node1]#  systemctl status ceph\*.service  ceph\*.target
+
+
+查看工作目录下的文件列表
+[root@node1 ~]# ls /root/ceph-cluster/
+ceph.bootstrap-mds.keyring  ceph.bootstrap-rgw.keyring  ceph.conf             
+
+ceph.mon.keyring
+ceph.bootstrap-osd.keyring  ceph.client.admin.keyring   ceph-deploy-ceph.lo
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+部署CEPH块存储集群
+
+[root@node1 ~]# ceph osd  lspools 查看已有的存储池
+0 rbd,
+[root@node1 ~]# rbd list  查看存储池里的镜像列表
+[root@node1 ~]# 
+
+
+创建新镜像
+[root@node1 ~]# rbd create domo-image --image-feature  layering --size 10G
+[root@node1 ~]# 
+[root@node1 ~]# rbd list
+domo-image
+[root@node1 ~]# rbd info domo-image
+rbd image 'domo-image':
+	size 10240 MB in 2560 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.1052238e1f29
+	format: 2
+	features: layering
+	flags: 
+
+创建新镜像时，指定镜像文件所属的存储池
+[root@node1 ~]# rbd create rbd/image --image-feature  layering --size 15G
+[root@node1 ~]# rbd list
+domo-image
+image
+
+查看镜像大小
+[root@node1 ~]# rbd info image  
+rbd image 'image':
+	size 15360 MB in 3840 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10662ae8944a
+	format: 2
+	features: layering
+	flags: 
+[root@node1 ~]# 
+
+
+
+[root@node1 ~]# rbd info image
+rbd image 'image':
+	size 15360 MB in 3840 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10662ae8944a
+	format: 2
+	features: layering
+	flags: 
+[root@node1 ~]# 
+
+把image容量的缩小到1G
+[root@node1 ~]# rbd resize --size 1G image --allow-shrink
+Resizing image: 100% complete...done.
+[root@node1 ~]# 
+[root@node1 ~]# rbd info image
+rbd image 'image':
+	size 1024 MB in 256 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10662ae8944a
+	format: 2
+	features: layering
+	flags: 
+[root@node1 ~]# 
+
+把image容量的扩大到4G
+[root@node1 ~]# rbd resize --size 4G image
+Resizing image: 100% complete...done.
+[root@node1 ~]# rbd info image
+rbd image 'image':
+	size 4096 MB in 1024 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10662ae8944a
+	format: 2
+	features: layering
+	flags: 
+[root@node1 ~]# 
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++
+在存储服务器本机使用镜像存储文件的步骤：
+
+[root@node1 ~]# rbd list
+domo-image
+image
+
+[root@node1 ~]# 
+[root@node1 ~]# rbd map domo-image  把镜像映射到本机 
+/dev/rbd0
+
+[root@node1 ~]# ls /dev/rbd0  映射到本机的镜像设备文件命令
+/dev/rbd0
+
+[root@node1 ~]# mkdir  /notedir  创建挂载目录
+
+
+[root@node1 ~]# mkfs.ext4 /dev/rbd0  格式化
+
+
+[root@node1 ~]# blkid  /dev/rbd0 查看格式化信息
+/dev/rbd0: UUID="c4b13e97-49ac-407c-8045-477a91fe6550" TYPE="ext4" 
+
+[root@node1 ~]# mount /dev/rbd0 /notedir/  挂载 
+[root@node1 ~]# echo  123  > /notedir/test.txt  存储文件
+[root@node1 ~]# cat /notedir/test.txt  
+123
+[root@node1 ~]#
+
+
+配置：在客户端50主机client， 使用ceph镜像存储文件的配置步骤：
+
+1 安装软件包
+client ~]# yum -y  install ceph-common
+
+[root@client ~]# ls /etc/ceph/
+rbdmap
+
+[root@client ~]# 
+
+2 从管理主机上拷贝集群配置文件
+[root@client ~]# ls /etc/ceph/
+rbdmap
+
+[root@client ~]# scp  192.168.4.51:/etc/ceph/ceph.conf   /etc/ceph/
+root@192.168.4.51's password: 
+ceph.conf                                  100%  235   441.4KB/s   00:00    
+
+ 
+[root@client ~]# ls /etc/ceph/
+ceph.conf  rbdmap
+
+3 从管理主机上拷贝连接集群密钥文件
+[root@client ~]# scp 192.168.4.51:/etc/ceph/ceph.client.admin.keyring /etc/ceph/
+
+[root@client ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap
+[root@client ~]# 
+
+
+[root@client ~]# rbd list  查看ceph集群镜像列表
+domo-image
+image
+
+[root@client ~]# rbd map image  把镜像文件映射到本机
+/dev/rbd0
+[root@client ~]# ls /dev/rbd0
+/dev/rbd0
+[root@client ~]# 
+[root@client ~]# mkdir /studayup
+[root@client ~]# mkfs.ext4 /dev/rbd0  格式化
+
+[root@client ~]# blkid  /dev/rbd0
+/dev/rbd0: UUID="f4edce49-4dae-4a5e-a63d-fe55a30ac158" TYPE="ext4" 
+[root@client ~]# 
+[root@client ~]# mount /dev/rbd0 /studayup/  挂载
+[root@client ~]# 
+[root@client ~]# echo 123456  > /studayup/test2.txt
+[root@client ~]# 
+[root@client ~]# cat /studayup/test2.txt 
+123456
+[root@client ~]#
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+在管理主机上给被挂载的镜像创建快照   （COW技术   Copy  Online  Write）
+
+
+[root@node1 ~]# rbd list  查看已有的镜像
+domo-image
+image
+
+[root@node1 ~]# 
+[root@node1 ~]# rbd snap ls image  查看image镜像是否有快照
+[root@node1 ~]# 
+
+给image镜像创建快照 名称叫 image-snap1
+[root@node1 ~]# rbd snap create image --snap image-snap1 
+[root@node1 ~]# 
+
+[root@node1 ~]# rbd snap ls image  再次查看
+SNAPID NAME           SIZE 
+     4 image-snap1 4096 MB 
+
+[root@node1 ~]# 
+
+使用快照恢复 误删除的 文件
+
+[root@client ~]# cat /studayup/test2.txt 
+123456
+[root@client ~]# rm  -rf /studayup/test2.txt 
+[root@client ~]# cat /studayup/test2.txt 
+cat: /studayup/test2.txt: 
+[root@client ~]# 
+
+在管理主机上使用快照恢复误删除的文件
+[root@node1 ~]# rbd snap rollback image --snap image-snap1
+Rolling back to snapshot: 100% complete...done.
+[root@node1 ~]#
+客户端卸载当前挂载的image镜像 后 再次挂载image 就可看到恢复的文件
+[root@client ~]# cat /studayup/test2.txt 
+cat: /studayup/test2.txt: \u6ca1\u6709\u90a3\u4e2a\u6587\u4ef6\u6216\u76ee\u5f55
+[root@client ~]# 
+[root@client ~]# 
+[root@client ~]# umount /studayup/
+[root@client ~]# mount /dev/rbd0 /studayup/
+[root@client ~]# 
+[root@client ~]# ls /studayup/
+lost+found  test2.txt
+[root@client ~]# 
+[root@client ~]# cat /studayup/test2.txt 
+123456
+[root@client ~]# 
+
+++++++++++++++++++++++++++++++++++++++
+快照克隆：（在管理主机上操作）
+
+对快照文件写保护
+[root@node1 ~]# rbd snap protect image --snap image-snap1
+
+对image镜像的快照image-snap1 做克隆 名称叫image-clone
+[root@node1 ~]# rbd clone image --snap image-snap1 image-clone --image-feature 
+
+layering
+
+[root@node1 ~]# rbd info image-clone1  查看克隆文件的信息 若没有报错
+rbd: error opening image image-clone1: (2) No such file or directory
+[root@node1 ~]# 
+[root@node1 ~]# 
+[root@node1 ~]# rbd info image-clone 查看克隆文件的信息
+rbd image 'image-clone':
+	size 4096 MB in 1024 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10653d1b58ba
+	format: 2
+	features: layering
+	flags: 
+	parent: rbd/image@image-snap1  显示克隆文件对应的镜像信息
+	overlap: 4096 MB
+[root@node1 ~]# 
+
+[root@node1 ~]# rbd info image-clone  恢复前查看
+rbd image 'image-clone':
+	size 4096 MB in 1024 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10653d1b58ba
+	format: 2
+	features: layering
+	flags: 
+	parent: rbd/image@image-snap1
+	overlap: 4096 MB
+[root@node1 ~]# 
+[root@node1 ~]# rbd flatten image-clone  使用克隆文件恢复image镜像
+Image flatten: 100% complete...done.
+[root@node1 ~]# 
+[root@node1 ~]# rbd info image-clone 恢复后查看
+rbd image 'image-clone':
+	size 4096 MB in 1024 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.10653d1b58ba
+	format: 2
+	features: layering     查看克隆文件的对应的镜像信息 信息没有了
+	flags: 
+[root@node1 ~]# 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+配置 客户端不使用ceph集群的块设备存储数据的步骤：
+
+1 撤销镜像映射 （要先卸载挂载的/dev/rbdx 设备）
+
+[root@client ~]# umount /studayup/
+[root@client ~]# 
+[root@client ~]# rbd showmapped
+id pool image snap device    
+0  rbd  image -    /dev/rbd0 
+[root@client ~]# 
+[root@client ~]# rbd unmap /dev/rbd/rbd/image
+[root@client ~]# 
+[root@client ~]# rbd showmapped
+[root@client ~]# 
+
++++++++++++++++++++++++++++++++++++++++
+在管理主机上删除创建的镜像（如果镜像有快照的话要先删除快照文件）
+
+[root@node1 ~]# rbd snap unprotect image --snap image-snap1 取消保护
+[root@node1 ~]# rbd snap rm image --snap image-snap1 删除快照
+
+[root@node1 ~]# rbd list
+domo-image
+image
+image-clone
+[root@node1 ~]# rbd rm image 删除image镜像
+Removing image: 100% complete...done.
+[root@node1 ~]# 
+[root@node1 ~]# rbd list
+domo-image
+image-clone
+[root@node1 ~]#
+

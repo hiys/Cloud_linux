@@ -1,0 +1,204 @@
+集群与LVS介绍
+LB : LVS软件  Haproxy软件  (nginx)
+HA : Keepalived软件
+
+
+一、配置LVS/NAT模式集群
+主机角色：
+real server   : 主机52 和 53 
+分发器         : 主机54
+客户端		： 主机50
+
+1.1 准备实验环境
+分发器         : 主机54
+eth0  私有网络 ip 地址  192.168.4.54
+eth1  公有网络 IP 地址  192.168.2.54 
+
+开启内核路由转发功能，使其能够收发不同网段的IP包
+]# vim /etc/sysctl.conf
+net.ipv4.ip_forward = 1
+:wq
+
+[root@host54 ~]# sysctl  -p
+net.ipv4.ip_forward = 1
+
+
+real server ：
+主机52  eth0  192.168.4.52
+把网关地址 是  192.168.4.54
+
+[root@host52 ~]# systemctl  stop  NetworkManager
+[root@host52 ~]# route add  default  gw  192.168.4.54
+[root@host52 ~]# route -n
+
+主机53  eth0  192.168.4.53
+把网关地址 是  192.168.4.54
+[root@host53 ~]# systemctl  stop  NetworkManager
+[root@host53 ~]# route add  default  gw  192.168.4.54
+[root@host53 ~]# route -n
+
+客户端50 
+把网关地址 是  192.168.2.54
+[root@client ~]# systemctl  stop  NetworkManager
+[root@client ~]# route add  default  gw  192.168.2.54
+[root@client ~]# route -n
+
+
+删除网关地址命令
+]# route del  default  gw  网关IP地址 （删除）
+
+1.2 配置网站服务器52/53
+运行网站服务并编写网页文件
+
+
+1.3 配置分发器54
+安装提供lvs服务的软件包
+[root@host54 ~]# yum -y install  ipvsadm
+[root@host54 ~]# systemctl  status ipvsadm.service
+
+[root@host54 ~]# man ipvsadm
+
+创建虚拟服务
+]# ipvsadm -A -t 192.168.2.54:80 -s rr
+
+添加realserver
+]# ipvsadm -a  -t 192.168.2.54:80 -r 192.168.4.52:80 -m
+]# ipvsadm -a  -t 192.168.2.54:80 -r 192.168.4.53:80 -m
+
+保存配置
+[root@host54 ~]# ipvsadm -S
+-A -t host54:http -s rr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# 
+
+]# ipvsadm -S > /etc/sysconfig/ipvsadm-config
+
+
+删除全部配置的命令  [root@host54 ~]# ipvsadm -C
+
+查看配置信息
+]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn 
+
+InActConn
+TCP  192.168.2.54:80 rr
+  -> 192.168.4.52:80              Masq    1      0          0  
+
+    
+  -> 192.168.4.53:80              Masq    1      0          0  
+
+
+1.4 客户端测试配置
+客户端连接VIP地址 访问网站服务。 http://192.168.2.54
+
+[root@host54 ~]# watch -n 1 ipvsadm -Ln --stats
+
+[root@client50 ~]# curl  http://192.168.2.54/test.html
+
+
+1.5 管理集群
+删除realserver
+]#ipvsadm  -d -t 192.168.2.54:80 -r 192.168.4.53
+
+添加realserver
+]#ipvsadm  -a -t 192.168.2.54:80 -r 192.168.4.53:80 -m
+
+修改调度算法   
+]# ipvsadm -E -t 192.168.2.54:80 -s wrr
+
+修改realserver权重值
+]# ipvsadm -e -t 192.168.2.54:80 -r  192.168.4.53:80 -w 3 -m
+
+清空计数器  ]# ipvsadm -Z
+
+删除所有配置 ]# ipvsadm  -C
+
+把服务设置为开机启动
+]# systemctl  enable  ipvsadm
+
++++++++++++++++++++++++++++++++++++++++++
+配置LVS/DR模式集群
+
+需求： 客户端访问VIP地址 192.168.4.253 访问网站集群
+
+配置步骤
+
+1 配置分发器 54
+1.1 在本机的eth0 接口上绑定vip地址192.168.4.253
+]#ifconfig  eth0:1  192.168.4.253
+]#ifconfig  eth0:1
+]#ifconfig  eth0
+
+]#vim /etc/rc.local
+ifconfig  eth0:1  192.168.4.253
+:wq
+
+1.2创建集群：
+创建虚拟服务
+添加realserver
+保存配置
+查看状态信息
+]# ipvsadm -A -t 192.168.4.253:80 -s rr
+]# ipvsadm -a -t 192.168.4.253:80 -r 192.168.4.52:80 -g
+]# ipvsadm -a -t 192.168.4.253:80 -r 192.168.4.53:80 -g
+]# ipvsadm -S  > /etc/sysconfig/ipvsadm-config
+
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn 
+
+InActConn
+TCP  192.168.4.253:80 rr
+  -> 192.168.4.52:80              Route   1      0          0  
+
+       
+  -> 192.168.4.53:80              Route   1      0          0 
+
+
+2配置realserver 52 和 53
+
+2.1 修改网络接口的内核参数
+]# echo 1 >  /proc/sys/net/ipv4/conf/lo/arp_ignore
+
+]# echo 2 >  /proc/sys/net/ipv4/conf/lo/arp_announce
+
+]# echo 1 >  /proc/sys/net/ipv4/conf/all/arp_ignore
+
+]# echo 2 > /proc/sys/net/ipv4/conf/all/arp_announce
+
+]#vim /etc/rc.local
+echo 1 > /proc/sys/net/ipv4/conf/lo/arp_ignore
+echo 2 > /proc/sys/net/ipv4/conf/lo/arp_announce
+echo 1 > /proc/sys/net/ipv4/conf/all/arp_ignore
+echo 2 > /proc/sys/net/ipv4/conf/all/arp_announce
+:wq
+
+2.2 在本机的lo接口绑定vip地址 192.168.4.253
+]#ifconfig  lo:1 192.168.4.253/32
+]#ifconfig  lo:1
+
+]#vim /etc/rc.local
+ifconfig  lo:1 192.168.4.253/32
+:wq
+
+删除绑定的VIP地址  ]#ifdown  lo
+                  ]#ifup    lo
+
+2.3 运行网站服务并编写网页文件
+[root@host53 ~]# cat /var/www/html/test.html 
+web53
+
+[root@host52 ~]#  cat /var/www/html/test.html
+web52
+
+3客户端测试
+client50]# http://192.168.4.253/test.html
+web52
+
+client50]# http://192.168.4.253/test.html
+web53
+

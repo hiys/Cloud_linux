@@ -1,0 +1,383 @@
+块存储应用
+
+1 在管理主机上创建安装虚拟的镜像文件vm-image1
+[root@node1 ~]# rbd list
+domo-image
+image-clone
+[root@node1 ~]# 
+[root@node1 ~]# 
+[root@node1 ~]# rbd create vm1-image --image-feature layering --size 10G
+[root@node1 ~]# rbd list
+domo-image
+image-clone
+vm1-image
+[root@node1 ~]# rbd info vm1-image
+rbd image 'vm1-image':
+	size 10240 MB in 2560 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.1093238e1f29
+	format: 2
+	features: layering
+	flags: 
+[root@node1 ~]# ceph -s
+    cluster 00ce4de6-1c78-45bc-a7f6-f84c00d37c03
+     health HEALTH_OK
+     monmap e1: 3 mons at 
+
+{node1=192.168.4.51:6789/0,node2=192.168.4.52:6789/0,node3=192.168.4.53:6789/0}
+            election epoch 8, quorum 0,1,2 node1,node2,node3
+     osdmap e40: 8 osds: 6 up, 6 in
+            flags sortbitwise
+      pgmap v572: 64 pgs, 1 pools, 180 MB data, 1081 objects
+            745 MB used, 60628 MB / 61373 MB avail
+                  64 active+clean
+[root@node1 ~]# 
+
+
+二、客户端配置步骤：
+2.1 配置YUM源
+
+]#scp  192.168.4.51:/etc/yum.repos.d/plj.repo  /etc/yum.repos.d/
+]#yum clean all
+]#yum replist
+!mon                              cephmon                                  41
+!osd                              cephosd                                  28
+!rhel                             rhel                                  4,986
+!tools                            cephtools                                33
+repolist: 5,088
+
+
+2.2 安装软件包
+
+[root@room9pc17 ~]# yum -y  install  ceph-common
+
+
+[root@room9pc17 ~]# rpm  -q ceph-common
+ceph-common-10.2.2-38.el7cp.x86_64
+
+[root@room9pc17 ~]# ls /etc/ceph/
+rbdmap
+
+2.3 从管理主机上拷贝集群配置文件和密码文件到本机的/etc/ceph/ 下
+[root@room9pc17 ~]# scp 192.168.4.51:/etc/ceph/ceph.conf  /etc/ceph/
+                              
+ 
+[root@room9pc17 ~]# scp 192.168.4.51:/etc/ceph/ceph.client.admin.keyring  
+
+/etc/ceph/
+    
+
+[root@room9pc17 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap
+
+
+2.4 在真机上创建一台新的虚拟机 创建好后不需要安装操作者系统 直接关机即可。 avpc
+]# virsh list --all
+
+
+2.5 配置 libvirt secret
+
+[root@room9pc17 ~]# cat /root/secret.xml 
+<secret ephemeral='no' private='no'>
+        <usage type='ceph'>
+                <name>client.admin secret</name>
+        </usage>
+</secret>
+[root@room9pc17 ~]# 
+
+ 
+创建UUID
+
+[root@room9pc17 ~]# virsh secret-define --file /root/secret.xml
+497db405-39a4-422f-861d-26b34276ed57
+
+删除UUID的方法
+[root@room9pc17 ~]# virsh secret-undefine ebee4925-94b2-4a66-940a-6eebb96d3a26
+
+
+[root@room9pc17 ceph]# virsh secret-set-value --secret 497db405-39a4-422f-861d-
+
+26b34276ed57 --base64 AQDRvb5bXIhzGRAAL92VTAaYbO+rSKRcJbqaqQ==
+secret 已设定
+
+
+使用图像管理工具创建的虚拟文件 定义一个新的虚拟机
+[root@room9pc17 ceph]# virsh dumpxml avpc > /tmp/avpc1.xml
+[root@room9pc17 ceph]# ls /tmp/avpc1.xml 
+/tmp/avpc1.xml
+
+
+
+[root@room9pc17 nsd1805]# virsh secret-list  获取创建好的uuid                       
+
+ 497db405-39a4-422f-861d-26b34276ed57  ceph client.admin secret
+
+[root@room9pc17 nsd1805]# 
+[root@room9pc17 ceph]# vim /tmp/avpc1.xml 
+2   <name>avpc1</name>
+3   <uuid>489ceb7b-e21c-41a2-b0cc-5c57bb03e9d3</uuid> 删除此行
+
+ 32     <disk type='network' device='disk'>
+ 33       <driver name='qemu' type='raw'/>
+ 34       <auth username='admin'>
+ 35        <secret type='ceph' uuid='497db405-39a4-422f-861d-26b34276ed57'/>
+ 36       </auth>
+ 37       <source protocol='rbd' name='rbd/vm1-image'>
+ 38          <host name='192.168.4.51' port='6789'/>
+ 39       </source>
+ 40       <target dev='hda' bus='ide'/>
+ 41       <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+ 42     </disk>
+:wq
+
+使用编辑好的虚拟配置文件/tmp/avpc1.xml 创建虚拟机
+
+]# virsh define /tmp/avpc1.xml
+
+]# virsh list --all  | grep avpc1
+
++++++++++++++++++++++++++++
+分布式文件系统存储CephFS
+
+准备元数据服务器192.168.4.54 （根据PPT的要求准备环境）
+
+创建源数据服务器
+node4 ~]# yum -y install ceph-mds
+node1 ~]# cd /root/ceph-cluster/
+node1 ~]# ceph-deploy mds create node4
+       ]# ceph-deploy admin node4
+
+创建存储池
+[root@node4 ceph]# ceph osd pool create cephfs_data 128   存储数据的池
+pool 'cephfs_data' created
+[root@node4 ceph]# 
+[root@node4 ceph]# ceph osd pool create cephfs_meatedata 128 存储源数据的池
+pool 'cephfs_meatedata' created
+[root@node4 ceph]# 
+
+创建文件系统 myfs1
+[root@node4 ceph]# ceph fs new myfs1 cephfs_meatedata  cephfs_data
+
+new fs with metadata pool 2 and data pool 1
+
+
+
+查看mds 状态信息
+[root@node4 ceph]# ceph mds stat
+e5: 1/1/1 up {0=node4=up:active}
+
+++++++++++++++++++++++++++++++++++++++++++++++++
+在50客户端使用cephfs方式共享的存储设备 myfs1
+
+[root@client ~]# mkdir  /cephfs  创建挂载目录
+
+查看链接集群管理主机的用户和密码
+[root@client ~]# cat /etc/ceph/ceph.client.admin.keyring 
+[client.admin]
+	key = AQDRvb5bXIhzGRAAL92VTAaYbO+rSKRcJbqaqQ==
+[root@client ~]#
+
+创新cephfs设备 
+[root@client ~]# mount -t ceph 192.168.4.51:6789:/  /cephfs -o  \
+> name=admin,secret=AQDRvb5bXIhzGRAAL92VTAaYbO+rSKRcJbqaqQ==
+[root@client ~]#
+
+查看挂载信息 
+[root@client ~]# mount | grep cephfs
+192.168.4.51:6789:/ on /cephfs type cep(rw,relatime,name=admin,secret=<hidden>,acl)
+
+储存数据 
+echo  1234567 > /cephfs/test3.txt
+
+cat  /cephfs/test3.txt
+
+
+卸载 （要先退出挂载目录执行卸载命令）
+
+[root@client ~]# mount | grep cephfs
+192.168.4.51:6789:/ on /cephfs type ceph 
+
+(rw,relatime,name=admin,secret=<hidden>,acl)
+[root@client ~]# 
+[root@client ~]# umount /cephfs
+[root@client ~]# 
+[root@client ~]# mount | grep cephfs
+[root@client ~]# 
+
+++++++++++++++++++++++++++++++++++++
+对象存储
+
+
+node1 ~]# ceph-deploy install --rgw node5
+
+[root@node5 ~]# ls /etc/ceph/
+rbdmap
+
+[root@node1 ~]# cd /root/ceph-cluster/
+[root@node1 ceph-cluster]# ceph-deploy admin  node5
+
+
+[root@node5 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap  tmpkK1_ZL
+[root@node5 ~]# 
+
+
+[root@node1 ceph-cluster]# ceph-deploy rgw create node5
+
+
+修改55主机内置web服务监听端口号（默认端口为7480  修改为80 端口便于客户端连接）
+node5 ceph]# vim /etc/ceph/ceph.conf （在原有内容的上方添加）
+
+[client.rgw.node5]
+host = node5
+rgw_frontends = "civetweb port=80"
+
+:wq
+
+node5 ceph]# systemctl  stop  httpd
+node5 ceph]# systemctl  restart ceph-radosgw.target
+
+测试配置
+[root@node5 ceph]# curl http://192.168.4.55
+<?xml version="1.0" encoding="UTF-8"?><ListAllMyBucketsResult 
+
+xmlns="http://s3.amazonaws.com/doc/2006-03-
+
+01/"><Owner><ID>anonymous</ID><DisplayName></DisplayName></Owner><Buckets></Buckets
+
+></ListAllMyBucketsResult>
+
+
+
+在node5 创建客户端端连接时使用的用户名和密码
+
+node5 ceph]# radosgw-admin user create --uid="testuser" --display-name="First User"
+
+ "keys": [
+        {
+            "user": "testuser",
+            "access_key": "356O8JOHCM0D0NCW84W3",
+            "secret_key": "zE4ONNIc9st6OJMADvJAYAYH2rhbWAeDhwrLtwMA"
+        }
+    ],
+
+显示testuser用户密钥信息
+node5 ceph]#  radosgw-admin user info --uid=testuser
+
+
+客户端安装访问网关主机node5的工具（命令行访问工具）
+
+[root@client ~]# ls s3cmd-2.0.1-1.el7.noarch.rpm 
+s3cmd-2.0.1-1.el7.noarch.rpm
+[root@client ~]# 
+[root@client ~]# yum -y install s3cmd-2.0.1-1.el7.noarch.rpm
+
+
+[root@client ~]# s3cmd --configure
+
+Enter new values or accept defaults in brackets with Enter.
+Refer to user manual for detailed description of all options.
+
+Access key and Secret key are your identifiers for Amazon S3. Leave them empty for 
+
+using the env variables.
+Access Key: 356O8JOHCM0D0NCW84W3
+Secret Key: zE4ONNIc9st6OJMADvJAYAYH2rhbWAeDhwrLtwMA
+Default Region [US]: 
+
+Use "s3.amazonaws.com" for S3 Endpoint and not modify it to the target Amazon S3.
+S3 Endpoint [s3.amazonaws.com]: 192.168.4.55:80
+
+Use "%(bucket)s.s3.amazonaws.com" to the target Amazon S3. "%(bucket)s" and 
+
+"%(location)s" vars can be used
+if the target S3 system supports dns based buckets.
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)
+
+s.s3.amazonaws.com]: %(bucket)s.192.168.4.55:80
+
+Encryption password is used to protect your files from reading
+by unauthorized persons while in transfer to S3
+Encryption password: 
+Path to GPG program [/usr/bin/gpg]: 
+
+When using secure HTTPS protocol all communication with Amazon S3
+servers is protected from 3rd party eavesdropping. This method is
+slower than plain HTTP, and can only be proxied with Python 2.7 or newer
+Use HTTPS protocol [Yes]: No
+
+On some networks all internet access must go through a HTTP proxy.
+Try setting it here if you can't connect to S3 directly
+HTTP Proxy server name: 
+
+New settings:
+  Access Key: 356O8JOHCM0D0NCW84W3
+  Secret Key: zE4ONNIc9st6OJMADvJAYAYH2rhbWAeDhwrLtwMA
+  Default Region: US
+  S3 Endpoint: 192.168.4.55:80
+  DNS-style bucket+hostname:port template for accessing a bucket: %(bucket)
+
+s.192.168.4.55:80
+  Encryption password: 
+  Path to GPG program: /usr/bin/gpg
+  Use HTTPS protocol: False
+  HTTP Proxy server name: 
+  HTTP Proxy server port: 0
+
+Test access with supplied credentials? [Y/n] Y
+Please wait, attempting to list all buckets...
+Success. Your access key and secret key worked fine :-)
+
+Now verifying that encryption works...
+Not configured. Never mind.
+
+Save settings? [y/N] y
+Configuration saved to '/root/.s3cfg'
+[root@client ~]# 
+
++++++++++++++++++++++++++++++++++++++++++++++
+客户端上传、下载文件
+
+
+[root@client ~]# s3cmd ls
+[root@client ~]# s3cmd mb s3://my_bucket
+Bucket 's3://my_bucket/' created
+[root@client ~]# 
+[root@client ~]# s3cmd ls
+2018-10-12 09:49  s3://my_bucket
+[root@client ~]# 
+[root@client ~]# ls /etc/passwd
+/etc/passwd
+[root@client ~]# s3cmd put /etc/passwd s3://my_bucket/log/
+upload: '/etc/passwd' -> 's3://my_bucket/log/passwd'  [1 of 1]
+ 2168 of 2168   100% in    6s   343.79 B/s  done
+[root@client ~]# 
+[root@client ~]# s3cmd ls
+2018-10-12 09:49  s3://my_bucket
+[root@client ~]# 
+[root@client ~]# s3cmd ls s3://my_bucket
+                       DIR   s3://my_bucket/log/
+[root@client ~]# 
+[root@client ~]# s3cmd ls s3://my_bucket/log/
+2018-10-12 09:51      2168   s3://my_bucket/log/passwd
+[root@client ~]# 
+
+
+[root@client ~]# s3cmd get s3://my_bucket/log/passwd  /tmp/
+download: 's3://my_bucket/log/passwd' -> '/tmp/passwd'  [1 of 1]
+ 2168 of 2168   100% in    0s   213.10 kB/s  done
+[root@client ~]# 
+[root@client ~]# ls /tmp/passwd 
+/tmp/passwd
+
+
+[root@client ~]# s3cmd ls s3://my_bucket/log/
+2018-10-12 09:51      2168   s3://my_bucket/log/passwd
+[root@client ~]# 
+[root@client ~]# s3cmd del s3://my_bucket/log/passwd
+delete: 's3://my_bucket/log/passwd'
+[root@client ~]# 
+[root@client ~]# s3cmd ls s3://my_bucket/log/
+[root@client ~]# 
+
+

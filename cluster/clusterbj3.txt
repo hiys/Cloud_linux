@@ -1,0 +1,1236 @@
+
+url ---http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLUSTER/DAY03/COURSE/ppt.html
+uri ---/ttsPage/LINUX/NSDTN201801/CLUSTER/DAY03/COURSE/ppt.html
+
+LB : LVS软件  Haproxy软件  (nginx)
+HA : Keepalived软件
+
+一、配置LVS/NAT模式集群
+主机角色：
+real server   : 主机52 和 53 
+分发器         : 主机54
+vip  192.168.4.253
+dip  192.168.4.54
+
+客户端		： 主机50  cip
+
+1.1 准备实验环境
+分发器         : 主机54
+eth0  私有网络 ip 地址  192.168.4.54
+eth1  公有网络 IP 地址  192.168.2.54 
+
+
+开启内核路由转发功能，使其能够收发不同网段的IP包
+]# vim /etc/sysctl.conf
+net.ipv4.ip_forward = 1
+:wq
+
+/****本机执行删除realserver
+ipvsadm  -d  -t  192.168.4.253:80  -r  192.168.4.?x
+ipvsadm  -D  -t  192.168.4.253:3306 
+##添加虚拟服务
+ipvsadm -a  -t  192.168.4.253:80 -r  192.168.4.x:80  -g
+
+###vim /root/checklvs.sh
+#!/bin/bash
+
+
+========================================
+eth0  私有网络 ip 地址  192.168.4.54
+eth1  公有网络 IP 地址  192.168.2.54 
+
+
+[root@room9pc01 ~]# ssh -X 192.168.2.50
+
+[root@H50 ~]# systemctl is-active NetworkManager
+active
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@H50 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H50 ~]# curl http://192.168.4.57/test57.html
+ H57 
+[root@H50 ~]# curl http://192.168.4.55/test.html
+H53 test.html H53
+[root@H50 ~]# ping -c2 -i0.2 -w1 192.168.4.252
+--- 192.168.4.252 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.282/0.418/0.554/0.136 ms
+
+[root@H50 ~]# curl http://192.168.4.252/test.html
+ H57 
+[root@H50 ~]# curl http://192.168.4.252/test.html
+H53 test.html H53
+[root@H50 ~]# curl http://192.168.4.252/test.html
+curl: (7) Failed connect to 192.168.4.252:80; 拒绝连接 
+
+[root@H50 ~]# curl http://192.168.4.252/test.html
+H53 test.html H53
+[root@H50 ~]# curl http://192.168.4.253/test.html
+test H53
+[root@H50 ~]# curl http://192.168.4.253/test.html
+testH52h52
+[root@H50 ~]# curl http://192.168.4.253/test.html
+test H53
+
+[root@H50 ~]# curl http://192.168.4.56/test.html
+ H55 
+[root@H50 ~]# curl http://192.168.4.56/test.html
+ H57 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.4.51
+
+[root@H51 ~]# systemctl is-active NetworkManager
+active
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+[root@H51 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H51 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    6G  0 disk 
+└─vdc1        252:33   0    3G  0 part 
+[root@H51 ~]# blkid /dev/vdc
+/dev/vdc: PTTYPE="dos" 
+[root@H51 ~]# blkid /dev/vdc1
+/dev/vdc1: UUID="d4369411-10f5-4387-8863-b3e07df10b13" TYPE="ext4" 
+
+[root@H51 ~]# rpm -q nfs-utils rpcbind
+nfs-utils-1.3.0-0.48.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+ 
+[root@H51 ~]# cat /etc/exports
+/sharedir  *(rw,no_root_squash)
+##保留其root权限，注意应添加no_root_squash控制参数
+##(没有该参数，默认root会被自动降级为普通账户)；
+[root@H51 ~]# ls /sharedir/
+[root@H51 ~]# mount /dev/vdc1 /sharedir/
+
+[root@H51 ~]# ls /sharedir/
+a.html  h52.html  h53.html  lost+found
+
+[root@H51 ~]# ll /sharedir/a.html 
+-rw-r--r--. 1 root root 9 10月  9 20:25 /sharedir/a.html
+[root@H51 ~]# ll /sharedir/h52.html 
+-rw-r--r--. 1 root root 17 10月  9 21:14 /sharedir/h52.html
+[root@H51 ~]# ll /sharedir/h53.html 
+-rw-r--r--. 1 root root 15 10月  9 21:15 /sharedir/h53.html
+
+[root@H51 ~]# cat /sharedir/{a,h52,h53}.html
+server51
+H52 client 52 yy
+H53  client 53
+[root@H51 ~]# systemctl is-active nfs-utils.service  rpcbind
+inactive
+active
+[root@H51 ~]# systemctl start nfs-utils.service  && systemctl enable nfs-utils
+[root@H51 ~]# systemctl is-active nfs-utils.service  rpcbind
+active
+active
+[root@H51 ~]# systemctl enable rpcbind
+[root@H51 ~]# systemctl is-enabled  nfs-utils.service  rpcbind
+static
+indirect
+[root@H51 ~]# showmount -e localhost
+Export list for localhost:
+/sharedir *
+[root@H51 ~]# ls /sharedir/
+a.html  h52.html  h53.html  lost+found  test.html
+[root@H51 ~]# cat /sharedir/test.html 
+H53 test.html H53
+
+[root@H51 ~]# df -hT /sharedir/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vdc1      ext4  2.9G  9.1M  2.8G    1% /sharedir
+
+[root@H51 ~]# vim /etc/fstab 
+[root@H51 ~]# tail -n 4 /etc/fstab
+/dev/mapper/rhel-root   /       xfs     defaults   0   0
+UUID=5d6c8afe-b75a-4e6b-9de1-1a3eeeaf23d9  /boot    xfs     defaults    0   0
+/dev/mapper/rhel-swap   swap        swap    defaults    0   0
+/dev/vdc1         /sharedir/      ext4    defaults     0   0
+
+[root@H51 ~]# umount /sharedir/
+umount: /sharedir：目标忙。
+[root@H51 ~]# systemctl is-active nfs-utils.service  rpcbind
+active
+active
+[root@H51 ~]# systemctl stop  nfs-utils.service  rpcbind
+
+[root@H51 ~]# systemctl is-active nfs-utils.service  rpcbind
+inactive
+inactive
+[root@H51 ~]# pstree -anpul |grep rpcbind
+  |           `-grep,8009 --color=auto rpcbind
+
+[root@H51 ~]# fuser  -cu  /sharedir/
+[root@H51 ~]# fuser -ck /sharedir/
+[root@H51 ~]# fuser -c /sharedir/
+[root@H51 ~]# echo $?
+1
+[root@H51 ~]# umount -v /dev/vdc1
+umount: /sharedir：目标忙。
+[root@H51 ~]# fuser -m -v -i -k /sharedir/
+                     用户     进程号 权限   命令
+/sharedir:           root     kernel mount /sharedir
+[root@H51 ~]# umount /dev/vdc1
+umount: /sharedir：目标忙。
+[root@room9pc01 ~]# ssh -X 192.168.4.51
+
+[root@H51 ~]# vim /etc/fstab 
+[root@H51 ~]# tail -1 /etc/fstab
+/dev/vdc1         /sharedir/      ext4    defaults     0   0
+[root@H51 ~]# mount -a
+[root@H51 ~]# df -hT /sharedir/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vdc1      ext4  2.9G  9.0M  2.8G    1% /sharedir
+[root@H51 ~]# ls /sharedir/
+[root@H51 ~]# cat /etc/exports
+/sharedir  *(rw,no_root_squash)
+[root@H51 ~]# systemctl restart rpcbind
+[root@H51 ~]# systemctl restart nfs-server
+[root@H51 ~]# systemctl is-enabled nfs-server rpcbind
+enabled
+indirect
+[root@H51 ~]# showmount -e localhost
+Export list for localhost:
+/sharedir *
+[root@H51 ~]# ls /sharedir/
+[root@H51 ~]# echo H51 server > /sharedir/h51.html
+[root@H51 ~]# ls /sharedir/
+h51.html
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.4.52
+
+[root@H52 ~]# systemctl is-active NetworkManager
+active
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+[root@H52 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H52 ~]# systemctl stop NetworkManager
+[root@H52 ~]# route add default gw  192.168.4.54
+[root@H52 ~]# route del  default gw  192.168.4.254
+[root@H52 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.54
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H52 ~]# ifdown eth1
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+127.0.0.1
+192.168.122.1
+[root@H52 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.54
+0.0.0.0
+0.0.0.0
+[root@H52 ~]# echo "testH52h52" >/var/www/html/test.html
+[root@H52 ~]# ls /var/www/html/
+test.html
+[root@H52 ~]# systemctl restart httpd
+
+[root@H52 ~]# showmount  -e 192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+[root@H52 ~]# mount 192.168.4.51:/sharedir  /var/www/html/
+[root@H52 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found
+
+[root@H52 ~]# echo "testH52 test.html" >/var/www/html/test.html
+
+[root@H52 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found  test.html
+
+[root@H52 ~]# curl http://192.168.4.52/test.html
+H53 test.html H53
+
+[root@H52 ~]# ls /proc/sys/net/ipv4/conf/
+all  default  eth0  eth1  eth2  eth3  lo  virbr0  virbr0-nic
+
+[root@H52 ~]# cat /proc/sys/net/ipv4/conf/lo/arp_ignore 
+0
+[root@H52 ~]# echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore
+[root@H52 ~]# echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce
+[root@H52 ~]# echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore
+[root@H52 ~]# echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce
+[root@H52 ~]# vim /etc/rc.local 
+[root@H52 ~]# tail -4 /etc/rc.local
+echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce
+echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce
+[root@H52 ~]# ll /etc/rc.local
+lrwxrwxrwx. 1 root root 13 1月  30 2018 /etc/rc.local -> rc.d/rc.local
+
+[root@H52 ~]# chmod +x /etc/rc.d/rc.local 
+[root@H52 ~]# ll /etc/rc.d/rc.local
+-rwxr-xr-x. 1 root root 663 10月  9 21:21 /etc/rc.d/rc.local
+
+[root@H52 ~]# ifconfig  lo:1  192.168.4.253/32
+
+[root@H52 ~]# curl http://192.168.4.52/a.html
+server51
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+127.0.0.1
+192.168.4.253
+192.168.122.1
+[root@H52 ~]# 
+
+ 
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.4.53
+
+[root@H53 ~]# systemctl is-active NetworkManager
+active
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+[root@H53 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# systemctl stop NetworkManager
+[root@H53 ~]# route add default gw  192.168.4.54
+[root@H53 ~]# route del  default gw  192.168.4.254
+[root@H53 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.54
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# ifdown eth1
+[root@H53 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.54
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.122.1
+[root@H53 ~]# echo "test H53" >/var/www/html/test.html
+[root@H53 ~]# ls /var/www/html/
+index.html  test.html
+[root@H53 ~]# cat /var/www/html/index.html 
+H53  client 53
+[root@H53 ~]# systemctl restart httpd
+
+[root@H53 ~]# showmount  -e 192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+[root@H53 ~]# mount 192.168.4.51:/sharedir  /var/www/html/
+[root@H53 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found
+
+[root@H53 ~]# echo "H53 test.html H53" >/var/www/html/test.html
+
+[root@H53 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found  test.html
+[root@H53 ~]# curl http://192.168.4.53/test.html
+H53 test.html H53
+[root@H53 ~]# cat /proc/sys
+sys/           sysrq-trigger  sysvipc/       
+[root@H53 ~]# cat /proc/sys/net/ipv4/conf/lo/arp_ignore 
+0
+[root@H53 ~]# echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore
+[root@H53 ~]# echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce
+[root@H53 ~]#  echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore
+[root@H53 ~]# echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce
+[root@H53 ~]# ls /proc/sys/net/ipv4/conf/
+all  default  eth0  eth1  eth2  eth3  lo  virbr0  virbr0-nic
+[root@H53 ~]# vi /etc/rc.local 
+[root@H53 ~]# tail -5 /etc/rc.local
+touch /var/lock/subsys/local
+echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce
+echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce
+[root@H53 ~]# ifconfig lo:1  192.168.4.253/32
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.4.253
+192.168.122.1
+[root@H53 ~]# ll /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 1月  30 2018 /etc/rc.local -> rc.d/rc.local
+[root@H53 ~]# ll  /etc/rc.d/rc.local 
+-rw-r--r--. 1 root root 663 10月  9 20:57 /etc/rc.d/rc.local
+[root@H53 ~]# chmod +x /etc/rc.d/rc.local
+[root@H53 ~]# ll  /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 663 10月  9 20:57 /etc/rc.d/rc.local
+[root@H53 ~]# 
+ 
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.2.54
+
+[root@H54 ~]# systemctl is-active NetworkManager
+active
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.54
+192.168.2.54
+127.0.0.1
+192.168.122.1
+[root@H54 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+[root@H54 ~]# which nmap
+
+[root@H54 ~]# yum -y install nmap |tail -3
+
+  nmap.x86_64 2:6.40-7.el7                                                      
+完毕！
+[root@H54 ~]# rpm -q nmap
+nmap-6.40-7.el7.x86_64
+[root@H54 ~]# nmap -sS -n -p 80 192.168.4.53
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2018-10-10 09:19 CST
+Nmap scan report for 192.168.4.53
+Host is up (0.00027s latency).
+PORT   STATE SERVICE
+80/tcp open  http
+MAC Address: 52:54:00:FA:D7:AB (QEMU Virtual NIC)
+Nmap done: 1 IP address (1 host up) scanned in 0.03 seconds
+
+[root@H54 ~]# nmap -sS -n -p 80 192.168.4.52  |grep open
+80/tcp open  http
+[root@H54 ~]# systemctl is-enabled ipvsadm.service 
+enabled
+
+[root@H54 ~]# ls /etc/sysconfig/ipvsadm-config 
+/etc/sysconfig/ipvsadm-config
+[root@H54 ~]# cat /etc/sysconfig/ipvsadm-config  #不正确的操作,原有配置被覆盖X
+-A -t H54:http -s rr
+-a -t H54:http -r 192.168.4.52:http -g -w 1
+-a -t H54:http -r 192.168.4.53:http -g -w 1
+
+[root@H54 ~]# ls /etc/sysconfig/
+anaconda         grub              ksm              radvd          selinux
+atd              htcacheclean      libvirtd         raid-check     smartmontools
+authconfig       httpd             man-db           rdisc          sshd
+cbq              init              memcached        readonly-root  sysstat
+cgred            ip6tables-config  modules          rhn            sysstat.ioconf
+chronyd          iptables-config   netconsole       rpcbind        virtlockd
+console          ipvsadm           network          rpc-rquotad    virtlogd
+cpupower         ipvsadm-config    network-scripts  rsyncd         wpa_supplicant
+crond            irqbalance        nfs              rsyslog
+ebtables-config  kdump             ntpdate          run-parts
+fcoe             keepalived        php-fpm          samba
+firewalld        kernel            qemu-ga          saslauthd
+
+[root@H54 ~]# ipvsadm  -C       #全删除
+[root@H54 ~]# vim /etc/rc.local 
+[root@H54 ~]# tail -2 /etc/rc.local
+touch /var/lock/subsys/local
+#ifconfig  eth0:1  192.168.4.253/32
+
+[root@H54 ~]# ll /etc/rc.local
+lrwxrwxrwx. 1 root root 13 1月  30 2018 /etc/rc.local -> rc.d/rc.local
+[root@H54 ~]# ll /etc/rc.d/rc.local 
+-rw-r--r--. 1 root root 509 10月 10 14:32 /etc/rc.d/rc.local
+
+[root@H54 ~]# ip address show |grep 'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.54/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.2.54/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+[root@H54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+[root@H54 ~]# 
+[root@H54 ~]# yum -y install keepalived |tail -3
+
+  net-snmp-agent-libs.x86_64 1:5.7.2-28.el7                                     
+
+完毕！
+[root@H54 ~]# vim /etc/keepalived/keepalived.conf
+[root@H54 ~]# cat /etc/keepalived/keepalived.conf
+ 1 ! Configuration File for keepalived
+  2 
+  3 global_defs {
+  4    notification_email {
+  5      acassen@firewall.loc
+  6      failover@firewall.loc
+  7      sysadmin@firewall.loc
+  8    }
+  9    notification_email_from Alexandre.Cassen@firewall.loc
+ 10    smtp_server 192.168.200.1
+ 11    smtp_connect_timeout 30
+ 12    router_id LVS_DEVEL
+ 13    vrrp_skip_check_adv_addr
+ 14 #   vrrp_strict
+ 15    vrrp_garp_interval 0
+ 16    vrrp_gna_interval 0
+ 17 }
+ 18 
+ 19 vrrp_instance lvsha {
+ 20     state MASTER
+ 21     interface eth0 
+ 22     virtual_router_id 51
+ 23     priority 150
+ 24     advert_int 1
+ 25     authentication {
+ 26         auth_type PASS
+ 27         auth_pass 1234
+ 28     }
+ 29     virtual_ipaddress {
+ 30         192.168.4.253
+ 31     }
+ 32 }
+ 33 virtual_server 192.168.4.253 80 {
+ 34     delay_loop 6
+ 35     lb_algo rr
+ 36     lb_kind DR
+ 37  #   persistence_timeout 50
+ 38     protocol TCP
+ 39     connect_timeout 3
+ 40     nb_get_retry 3
+ 41     delay_before_retry 3
+ 42     real_server 192.168.4.52 80 {
+ 43         weight 1
+ 44     }
+ 45     real_server 192.168.4.53 80 {
+ 46         weight 1
+ 47     }
+ 48 }
+ 49 
+[root@H54 ~]# systemctl restart keepalived
+[root@H54 ~]# systemctl enable keepalived
+Created symlink from /etc/systemd/system/multi-user.target.wants/keepalived.service to /usr/lib/systemd/system/keepalived.service.
+[root@H54 ~]# ip address show |grep 'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.54/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.4.253/32 scope global eth0
+    inet 192.168.2.54/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+[root@H54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.4.253:80 rr persistent 50
+  -> 192.168.4.52:80              Route   1      0          0         
+  -> 192.168.4.53:80              Route   1      0          0  
+
+[root@H54 ~]# systemctl restart keepalived
+
+[root@H54 ~]# watch -n 2 ipvsadm -Ln  --stats
+
+[root@H54 ~]# ipvsadm  -Ln  --stats
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port               Conns   InPkts  OutPkts  InBytes OutBytes
+  -> RemoteAddress:Port
+TCP  192.168.4.253:80                   18      108        0     7308        0
+  -> 192.168.4.52:80                     9       54        0     3654        0
+  -> 192.168.4.53:80                     9       54        0     3654        0
+[root@H54 ~]# 
+[root@H54 ~]# vim /etc/keepalived/keepalived.conf
+
+1 ! Configuration File for keepalived
+  2 
+  3 global_defs {
+  4    notification_email {
+  5      acassen@firewall.loc
+  6      failover@firewall.loc
+  7      sysadmin@firewall.loc
+  8    }
+  9    notification_email_from Alexandre.Cassen@firewall.loc
+ 10    smtp_server 192.168.200.1
+ 11    smtp_connect_timeout 30
+ 12    router_id LVS_DEVEL
+ 13    vrrp_skip_check_adv_addr
+ 14 #   vrrp_strict
+ 15    vrrp_garp_interval 0
+ 16    vrrp_gna_interval 0
+ 17 }
+ 18 
+ 19 vrrp_instance lvsha {
+ 20     state MASTER
+ 21     interface eth0
+ 22     virtual_router_id 51
+ 23     priority 150
+ 24     advert_int 1
+25     authentication {
+ 26         auth_type PASS
+ 27         auth_pass 1234
+ 28     }
+ 29     virtual_ipaddress {
+ 30         192.168.4.253
+ 31     }
+ 32 }
+ 33 virtual_server 192.168.4.253 80 {
+ 34     delay_loop 6
+ 35     lb_algo rr
+ 36     lb_kind DR
+ 37 #    persistence_timeout 50
+ 38     protocol TCP
+ 39 #    connect_timeout 3
+ 40 #    nb_get_retry 3
+ 41 #    delay_before_retry 3
+ 42     real_server 192.168.4.52 80 {
+ 43         weight 1
+ 44         TCP_CHECK {
+ 45           connect_timeout 3
+ 46           nb_get_retry 3
+47           delay_before_retry 3
+ 48         }
+ 49     }
+ 50     real_server 192.168.4.53 80 {
+ 51         weight 1
+ 52         TCP_CHECK {
+ 53           connect_timeout 3
+ 54           nb_get_retry 3
+ 55           delay_before_retry 3
+ 56         }
+ 57     }
+ 58 }
+[root@H54 ~]# systemctl restart keepalived
+
+[root@H54 ~]# watch -n 2 ipvsadm -Ln  --stats
+[root@H54 ~]# systemctl stop  keepalived
+
+[root@H54 ~]# ip address show |grep 253
+[root@H54 ~]# systemctl restart keepalived
+[root@H54 ~]# ip address show |grep 253
+    inet 192.168.4.253/32 scope global eth0
+[root@H54 ~]# 
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.2.55
+
+[root@H55 ~]# systemctl is-active NetworkManager
+active
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.55
+192.168.2.55
+127.0.0.1
+192.168.122.1
+[root@H55 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H55 ~]# rpm -q httpd
+httpd-2.4.6-67.el7.x86_64
+[root@H55 ~]# systemctl start httpd
+[root@H55 ~]# showmount  -e 192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+[root@H55 ~]# mount 192.168.4.51:/sharedir  /var/www/html/
+[root@H55 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found  test.html
+[root@H55 ~]# cat /var/www/html/test.html 
+H53 test.html H53
+[root@H55 ~]# yum -y install keepalived
+ 已安装:
+  keepalived.x86_64 0:1.3.5-1.el7                                               
+
+作为依赖被安装:
+  net-snmp-agent-libs.x86_64 1:5.7.2-28.el7                                     
+
+完毕！
+[root@H55 ~]# rpm -q keepalived
+keepalived-1.3.5-1.el7.x86_64
+[root@H55 ~]# cp /etc/keepalived/keepalived.conf  /etc/keepalived/keepalived.conf.bak
+[root@H55 ~]# vim /etc/keepalived/keepalived.conf
+[root@H55 ~]# cat /etc/keepalived/keepalived.conf
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_strict    #这里如果不注释,会报错
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance webha {
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 150
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+    virtual_ipaddress {
+        192.168.4.252
+     #   192.168.200.17
+    }
+}
+[root@H55 ~]# systemctl start keepalived.service 
+[root@H55 ~]# systemctl status  keepalived.service 
+   Active: active (running) since 三 2018-10-10 11:20:49 CST; 11s ago
+[root@H55 ~]# ip addr show  |grep  'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.55/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.4.252/32 scope global eth0
+    inet 192.168.2.55/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+[root@H55 ~]# 
+[root@H55 ~]# vim /etc/keepalived/keepalived.conf
+ 12    router_id LVS_DEVEL
+ 13    vrrp_skip_check_adv_addr
+ 14   # vrrp_strict
+ 15    vrrp_garp_interval 0
+ 16    vrrp_gna_interval 0
+ 17 }
+[root@H55 ~]# systemctl restart keepalived.service
+
+[root@H55 ~]# systemctl stop  keepalived
+[root@H55 ~]# ip addr show  |grep  'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.55/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.2.55/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+[root@H55 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found  test.html 
+
+[root@H55 ~]# systemctl restart keepalived
+[root@H55 ~]# ip addr show  |grep  'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.55/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.4.252/32 scope global eth0
+    inet 192.168.2.55/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+
+[root@H55 ~]# systemctl stop httpd
+[root@H55 ~]# ip addr show  |grep  'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.55/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.4.252/32 scope global eth0
+    inet 192.168.2.55/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+
+[root@H55 ~]# systemctl restart  httpd
+[root@H55 ~]# ip addr
+address    addrlabel  
+[root@H55 ~]# ip address  show |grep 192.168.4
+    inet 192.168.4.55/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.4.252/32 scope global eth0
+
+[root@H55 ~]# ls /var/www/html/
+a.html  h52.html  h53.html  lost+found  test.html
+[root@H55 ~]# df -hT /var/www/html/
+文件系统               类型  容量  已用  可用 已用% 挂载点
+192.168.4.51:/sharedir nfs4  2.9G  9.2M  2.8G    1% /var/www/html
+[root@H55 ~]# umount /var/www/html/
+[root@H55 ~]# ls /var/www/html/
+[root@H55 ~]# echo " H55 " > /var/www/html/test.html
+[root@H55 ~]# ls /var/www/html/
+test.html
+[root@H55 ~]# curl http://192.168.4.55/test.html
+ H55 
+[root@H55 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.4.56
+
+[root@H56 ~]# systemctl is-active NetworkManager
+active
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.56
+192.168.2.56
+127.0.0.1
+192.168.122.1
+[root@H56 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H56 ~]# yum -y install ipvsadm |tail -4
+
+已安装:
+  ipvsadm.x86_64 0:1.27-7.el7                                                   
+完毕！
+[root@H56 ~]# rpm -q ipvsadm
+ipvsadm-1.27-7.el7.x86_64
+[root@H56 ~]# systemctl enable ipvsadm
+
+[root@H56 ~]#  yum -y install keepalived |tail -3
+
+  net-snmp-agent-libs.x86_64 1:5.7.2-28.el7                                     
+
+完毕！
+[root@H56 ~]# vim /etc/sysconfig/ipvsadm-config
+ 10 # Saves all ipvs rules to /etc/sysconfig/ipvsadm if ipvsadm gets stopped
+
+ 12 IPVS_SAVE_ON_STOP="yes"
+
+ 18 IPVS_SAVE_ON_RESTART="yes"
+[root@H56 ~]# cp /etc/keepalived/keepalived.conf /etc/keepalived/keepalived.conf.bak
+
+[root@H56 ~]# ls /etc/keepalived/keepalived.con*
+/etc/keepalived/keepalived.conf  /etc/keepalived/keepalived.conf.bak
+
+[root@H56 ~]# systemctl enable keepalived.service
+
+[root@H56 ~]# vim /etc/keepalived/keepalived.conf 
+  1 ! Configuration File for keepalived
+  2 
+  3 global_defs {
+  4    notification_email {
+  5      acassen@firewall.loc
+  6      failover@firewall.loc
+  7      sysadmin@firewall.loc
+  8    }
+  9    notification_email_from Alexandre.Cassen@firewall.loc
+ 10    smtp_server 192.168.200.1
+ 11    smtp_connect_timeout 30
+ 12    router_id LVS_DEVEL
+ 13    vrrp_skip_check_adv_addr
+ 14 #   vrrp_strict
+ 15    vrrp_garp_interval 0
+ 16    vrrp_gna_interval 0
+ 17 }
+ 18 
+ 19 vrrp_instance lvsha  {
+ 20     state BACKUP
+ 21     interface eth0
+ 22     virtual_router_id 51
+ 23     priority 100
+ 24     advert_int 1
+ 25     authentication {
+ 26         auth_type PASS
+ 27         auth_pass 1234
+ 28     }
+ 29     virtual_ipaddress {
+ 30         192.168.4.253
+ 31     }
+ 32 }
+ 33 virtual_server 192.168.4.253 80 {
+ 34     delay_loop 6
+ 35     lb_algo rr
+ 36     lb_kind DR
+ 37 #    persistence_timeout 50
+ 38     protocol TCP
+ 39     connect_timeout 3
+ 40     nb_get_retry 3
+ 41     delay_before_retry 3
+ 42     real_server 192.168.4.52 80 {
+ 43         weight 1
+ 44     }
+ 45     real_server 192.168.4.53 80 {
+ 46         weight 1
+ 47     }
+ 48 }
+ 49 
+[root@H56 ~]# systemctl restart keepalived.service 
+[root@H56 ~]# ip address show |grep 'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.56/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.2.56/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+[root@H56 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.4.253:80 rr
+  -> 192.168.4.52:80              Route   1      0          0         
+  -> 192.168.4.53:80              Route   1      0          0         
+[root@H56 ~]# 
+[root@H56 ~]# vim /etc/keepalived/keepalived.conf 
+  1 ! Configuration File for keepalived
+  2 
+  3 global_defs {
+  4    notification_email {
+  5      acassen@firewall.loc
+  6      failover@firewall.loc
+  7      sysadmin@firewall.loc
+  8    }
+  9    notification_email_from Alexandre.Cassen@firewall.loc
+ 10    smtp_server 192.168.200.1
+ 11    smtp_connect_timeout 30
+ 12    router_id LVS_DEVEL
+ 13    vrrp_skip_check_adv_addr
+ 14 #   vrrp_strict
+ 15    vrrp_garp_interval 0
+ 16    vrrp_gna_interval 0
+ 17 }
+ 18 
+ 19 vrrp_instance lvsha  {
+ 20     state BACKUP
+ 21     interface eth0
+ 22     virtual_router_id 51
+ 23     priority 100
+ 24     advert_int 1
+ 25     authentication {
+ 26         auth_type PASS
+ 27         auth_pass 1234
+ 28     }
+ 29     virtual_ipaddress {
+ 30         192.168.4.253
+ 31     }
+ 32 }
+ 33 virtual_server 192.168.4.253 80 {
+ 34     delay_loop 6
+ 35     lb_algo rr
+ 36     lb_kind DR 
+ 37 #    persistence_timeout 50
+ 38     protocol TCP
+ 39 #    connect_timeout 3
+ 40 #    nb_get_retry 3
+ 41 #    delay_before_retry 3
+ 42     real_server 192.168.4.52 80 {
+ 43         weight 1
+ 44        TCP_CHECK {
+ 45          connect_timeout 3
+ 46          nb_get_retry 3
+ 47          delay_before_retry 3
+ 48        }
+ 49     }
+ 50     real_server 192.168.4.53 80 {
+ 51         weight 1
+ 52         TCP_CHECK {
+ 53           connect_timeout 3
+ 54           nb_get_retry  3
+ 55           delay_before_retry  3
+ 56         }
+ 57     }
+ 58 }
+[root@H56 ~]# systemctl restart keepalived
+[root@H56 ~]# watch -n 2 ipvsadm -Ln  --stats
+[root@H56 ~]# ipvsadm  -Ln  --stats
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port               Conns   InPkts  OutPkts  InBytes OutBytes
+  -> RemoteAddress:Port
+TCP  192.168.4.253:80                    4       24        0     1624        0
+  -> 192.168.4.52:80                     2       12        0      812        0
+  -> 192.168.4.53:80                     2       12        0      812        0
+[root@H56 ~]# ip address show |grep 253
+    inet 192.168.4.253/32 scope global eth0
+[root@H56 ~]# ip address show |grep 253
+[root@H56 ~]# 
+[root@H56 ~]# systemctl stop keepalived.service 
+[root@H56 ~]# systemctl disable  keepalived.service 
+[root@H56 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+[root@H56 ~]# yum -y install haproxy  |tail -4
+已安装:
+  haproxy.x86_64 0:1.5.18-6.el7                                                 
+
+完毕！
+[root@H56 ~]# rpm -q haproxy
+haproxy-1.5.18-6.el7.x86_64
+[root@H56 ~]# ls /etc/haproxy/
+haproxy.cfg
+[root@H56 ~]# cp /etc/haproxy/haproxy.cfg  /etc/haproxy/haproxy.cfg.bak
+[root@H56 ~]# ls /etc/haproxy/
+haproxy.cfg  haproxy.cfg.bak
+[root@H56 ~]# vim /etc/haproxy/haproxy.cfg
+
+ 12 global
+ 26     log         127.0.0.1 local2
+ 27 
+ 28     chroot      /var/lib/haproxy
+ 29     pidfile     /var/run/haproxy.pid
+ 30     maxconn     4000
+ 31     user        haproxy
+ 32     group       haproxy
+ 33     daemon
+36     stats socket /var/lib/haproxy/stats
+ 42 defaults
+ 43     mode                    http
+ 44     log                     global
+ 45     option                  httplog
+ 46     option                  dontlognull
+ 47     option http-server-close
+ 48     option forwardfor       except 127.0.0.0/8
+ 49     option                  redispatch
+ 50     retries                 3
+ 51     timeout http-request    10s
+ 52     timeout queue           1m
+ 53     timeout connect         10s
+ 54     timeout client          1m
+ 55     timeout server          1m
+ 56     timeout http-keep-alive 10s
+ 57     timeout check           10s
+ 58     maxconn                 3000
+ 59     stats uri /admin
+ 60 listen  weblb 192.168.4.56:80
+ 61    cookie  SERVERID rewrite
+ 62    balance roundrobin
+ 63    server  weba 192.168.4.55:80 cookie app1inst1 check inter 2000 rise 2 fall 5
+ 64    server  webb 192.168.4.57:80 cookie app2inst2 check inter 2000 rise 2 fall 5
+[root@H56 ~]# tail -1 /etc/haproxy/haproxy.cfg
+   server  webb 192.168.4.57:80 cookie app2inst2 check inter 2000 rise 2 fall 5
+[root@H56 ~]# netstat -anputl |grep :80
+[root@H56 ~]# systemctl start haproxy
+[root@H56 ~]# netstat -anputl |grep :80
+tcp   0     0 192.168.4.56:80   0.0.0.0:*    LISTEN    7602/haproxy        
+[root@H56 ~]# 
+
+
+#chrome  浏览器访问http://192.168.4.56/admin#weba
+http://192.168.4.56/admin#webb
+http://192.168.4.56/admin
+AProxy version 1.5.18, released 2016/05/10
+
+Statistics Report for pid 7602
+> General process information
+pid = 7602 (process #1, nbproc = 1)
+uptime = 0d 0h08m18s
+system limits: memmax = unlimited; ulimit-n = 8033
+.................................
+weblb	
+Queue	Session rate	Sessions	Bytes	Denied	Errors	Warnings	Server
+Cur	Max	Limit	Cur	Max	Limit	Cur	Max	Limit	Total	LbTot	Last	In	Out	Req	Resp	Req	Conn	Resp	Retr	Redis	Status	LastChk	Wght	Act	Bck	Chk	Dwn	Dwntme	Thrtle
+Frontend		0
+4
+-	1	4	3000	19
+3238	84315	0	0	9					OPEN	
+weba	0	0	-	0	1		0	1	-	4
+4	1m11s	597	1296		0		0	0	0	0	8m18s UP	L4OK in 0ms	1	Y	-	0	0	0s	-
+webb	0	0	-	0	1		0	1	-	3
+3	1m15s	255	879		0		0	0	0	0	8m18s UP	L4OK in 0ms	1	Y	-	0	0	0s	-
+Backend	0	0		0	1		0	1	300	7
+7	0s	3238	84315	0	0		0	0	0	0	8m18s UP	 	2	2	0	 	0	
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -X 192.168.4.57
+
+[root@H57 ~]# systemctl is-active NetworkManager
+active
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.57
+192.168.2.57
+127.0.0.1
+192.168.122.1
+[root@H57 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H57 ~]# rpm -q httpd
+httpd-2.4.6-67.el7.x86_64
+[root@H57 ~]# systemctl start httpd
+[root@H57 ~]# echo " H57 " > /var/www/html/test57.html
+[root@H57 ~]# curl http://192.168.4.57/test57.html
+ H57 
+[root@H57 ~]# yum -y install keepalived |tail -4
+
+作为依赖被安装:
+  net-snmp-agent-libs.x86_64 1:5.7.2-28.el7                                     
+完毕！
+[root@H57 ~]# rpm -q keepalived 
+keepalived-1.3.5-1.el7.x86_64
+[root@H57 ~]# cp /etc/keepalived/keepalived.conf  /etc/keepalived/keepalived.conf.bak
+[root@H57 ~]# vim /etc/keepalived/keepalived.conf
+[root@H57 ~]# cat /etc/keepalived/keepalived.conf
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_strict     #这里如果不注释,会报错
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance webha {
+ #   state SLAVE
+    state BACKUP
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+    virtual_ipaddress {
+        192.168.4.252
+    }
+}
+#virtual_server 192.168.200.100 443 {
+#    delay_loop 6
+#    lb_algo rr
+#    lb_kind NAT
+[root@H57 ~]# systemctl start keepalived
+[root@H57 ~]# ip addr show  |grep  'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.57/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.2.57/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+
+ [root@H57 ~]# vim /etc/keepalived/keepalived.conf
+
+ 12    router_id LVS_DEVEL
+ 13    vrrp_skip_check_adv_addr
+ 14   # vrrp_strict    #注释此行
+ 15    vrrp_garp_interval 0
+ 16    vrrp_gna_interval 0
+ 17 }
+[root@H57 ~]# systemctl restart keepalived.service 
+[root@H57 ~]# ip addr show  |grep  'inet '
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.4.57/24 brd 192.168.4.255 scope global eth0
+    inet 192.168.4.252/32 scope global eth0
+    inet 192.168.2.57/24 brd 192.168.2.255 scope global eth1
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+[root@H57 ~]# echo " H57 " > /var/www/html/test.html
+[root@H57 ~]# ls /var/www/html/
+test57.html  test.html
+[root@H57 ~]# curl http://192.168.4.57/test.html
+ H57
+
+
+
+
+
+
+
+
+
+
+
+
+

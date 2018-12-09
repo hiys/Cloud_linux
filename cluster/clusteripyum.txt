@@ -1,0 +1,263 @@
+
+=======================console.sh========================[3]====
+[root@room9pc01 ~]# cat console.sh 
+#!/usr/bin/expect  -f
+set  timeout  -1
+set hostn     [lindex  $argv  0]
+set password  [lindex  $argv  1]
+set systn     [lindex  $argv  2]
+set eth0      [lindex  $argv  3]
+set eth1      [lindex  $argv  4]
+spawn  virsh  console  $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4-2
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "\r"}
+===========================cluster=======================[1]==
+[root@room9pc01 ~]# cat cluster
+#!/bin/bash
+password=123456;
+for i in `seq 8`
+do 
+  hostn=rh7_node$i;
+  systn=H1$[i-1];
+  let eth0=9+$i;
+  eth1=$eth0;
+  function  newhostn(){
+    hostn=Host1$[i-1];
+  }
+  function  newhostnH(){
+    hostn=H1$[i-1];
+  }
+  ipexp(){
+    expect  /root/clone.sh
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      virsh start $hostn;
+    else
+      echo "clone failed";
+      exit;
+    fi
+    expect /root/console.sh $hostn $password  $systn $eth0 $eth1
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo "ipyum well done";
+    else
+      echo  "ipyum failed";
+    fi
+  }
+  case $1 in
+  clone)
+    ipexp  &
+    wait  %  $i;;
+  start)
+    virsh start  $hostn;
+    if [ $? -ne 0 ];then
+     newhostn
+     virsh start $hostn;
+    fi;;
+  startH)
+    virsh start  $hostn;
+    if [ $? -ne 0 ];then
+     newhostnH
+     virsh start $hostn;
+    fi;;
+  stop)
+    virsh shutdown $hostn;
+    if [ $? -ne 0 ];then
+     newhostn
+     virsh shutdown $hostn;
+    fi;;
+  stopH)
+    virsh shutdown $hostn;
+    if [ $? -ne 0 ];then
+     newhostnH
+     virsh shutdown $hostn;
+    fi;;
+  scp)
+     expect /root/autoscp.sh  $eth0
+     if [ $? -eq 0 -o $? -eq 1 ];then
+       echo "scp is over";
+     else
+       echo  "scp failed";
+    fi;;
+  setlnmp)
+    expect  /root/setlnmp.sh  $eth0
+     if [ $? -eq 0 -o $? -eq 1 ];then
+       echo "setting up lnmp  well done";
+     else
+       echo  "setting up failed";
+    fi;;    
+  *)
+    echo "input-Error";;
+  esac
+done
+echo  "Amazing !"
+[root@room9pc01 ~]# 
+==========================clone.sh=================[2]==
+[root@room9pc01 ~]# cat clone.sh 
+#!/usr/bin/expect  -f
+set timeout  -1
+spawn clone-auto7
+expect "vms:"   {send "1\r"}
+expect "#"  {send "echo Clone successfully\r"}
+expect "#"  {send "\r"}
+[root@room9pc01 ~]# 
+=============================autoscp.sh============ [ 4 ]==
+[root@room9pc01 ~]# cat autoscp.sh 
+#!/usr/bin/expect  -f
+set timeout  -1
+set eth0    [lindex $argv 0]
+spawn  scp  -o  StrictHostKeyChecking=no  /root/lnmp.sh  /root/桌面/Discuz_X3.3_SC_UTF8.zip  /root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm   /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:"  {send  "123\r"}
+expect "#"  {send  "send date\r"}
+expect "#"  {send  "\r"}
+[root@room9pc01 ~]# 
+=========================setlnmp.sh================================[6]=====
+[root@room9pc01 ~]# cat setlnmp.sh 
+#!/usr/bin/expect  -f
+set timeout  -1
+set eth0    [lindex $argv 0]
+spawn  ssh  -o  StrictHostKeyChecking=no  -X  root@192.168.4.$eth0
+expect "password:" {send "123\r" }
+expect "#" {send "echo Hello world\r"}
+expect "#" {send "chmod +x /root/lnmp.sh\r"}
+expect "#"    {send "bash /root/lnmp.sh\r"}
+expect "#"    {send "sleep 5 && date\r"}
+expect "#"    {send "\r"}
+[root@room9pc01 ~]# 
+===================================lnmp.sh==============[ 5 ]==
+[root@room9pc01 ~]# cat lnmp.sh 
+#!/bin/bash
+ss -anputl |grep nginx 
+if [ $? -ne 0 ];then
+ nginx
+ if [ $? -eq 0 ];then
+  echo "nginx has already been installed";
+ else
+  echo "nginx will be installed";
+  tar -xzf /root/lnmp_soft.tar.gz;
+  if [ $? -eq 0 ];then
+    echo "tar lnmp_soft.tar.gz  has completed";
+  else
+    echo "tar lnmp_soft.tar.gz  Error!";
+    exit;
+  fi
+  yum -y install  httpd elinks telnet httpd-tools  gcc pcre-devel openssl-devel mariadb-devel mariadb-server  mariadb memcached php-pecl-memcache php php-mysql zlib-devel /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm ;
+  if [ $? -eq 0 ];then
+    echo "yum install has completed";
+  else
+    echo "yum install Error!";
+    exit;
+  fi
+  sleep 5 && date;
+  rpm -q  elinks telnet httpd-tools gcc  pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache  php php-mysql php-fpm zlib-devel ;
+  nginx -s stop;
+  rm  -rf /usr/local/nginx;
+  useradd -s /sbin/nologin nginx;
+  if [ $? -eq 0 ];then
+    echo "user nginx is added";
+  else
+    echo "user nginx  already exist !";
+  fi
+  tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz;
+  if [ $? -eq 0 ];then
+    echo "tar nginx-1.12.2.tar.gz  has completed";
+  else
+    echo "tar nginx-1.12.2.tar.gz Error!";
+    exit;
+  fi
+  cd nginx-1.12.2/;ls
+  ./configure  --prefix=/usr/local/nginx  --user=nginx  --group=nginx --with-http_ssl_module  --with-stream  --with-http_stub_status_module  --without-http_autoindex_module  --without-http_ssi_module ;
+  sleep 5 && date
+  make && make install
+#  echo 'export PATH=/usr/local/nginx/sbin/:$PATH' >>/etc/profile;
+#  source /etc/profile;
+#  which nginx;
+  ln -s /usr/local/nginx/sbin/nginx /sbin/
+  ls -l  /sbin/nginx
+  nginx
+  if [ $? -eq 0 ];then
+    echo "nginx startup successfully!";
+  else
+    echo "nginx startup failed !";
+    exit;
+  fi
+  systemctl start mariadb && systemctl enable mariadb
+  systemctl start php-fpm && systemctl enable php-fpm
+  systemctl start memcached && systemctl enable memcached
+  if [ $? -eq 0 ];then
+    echo "memcached is active and enabled ";
+  else
+    echo "Service memcached startup failed!";
+    exit;
+  fi
+  nginx -V
+  ss -anptul |egrep ':80|3306|:9000|:11211'
+  echo "nginx is setting up";
+ fi
+else
+  echo "`ifconfig |awk '/inet /{print $2}' |sed -n 1p` nginx is active"
+fi
+echo "[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1 " > /etc/yum.repos.d/ceph.repo
+yum clean all
+yum repolist
+[root@room9pc01 ~]# 
+================================================
+[root@room9pc01 ~]# 
+
+
+
+
+
+
+
+

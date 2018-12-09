@@ -1,0 +1,807 @@
+
+
+
+
+[root@H10 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.10
+192.168.2.10
+127.0.0.1
+192.168.122.1
+[root@H10 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H10 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    5G  0 disk 
+vdd           252:48   0    5G  0 disk 
+[root@H10 ~]# rpm -q httpd   php  mariadb
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+[root@H10 ~]# rpm -q  mariadb-server php-mysql
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+[root@H10 ~]# systemctl stop mariadb  php-fpm  memcached
+
+[root@H10 ~]# ss -anpult |grep -E ':80|:3306|:9000|:11211'
+
+[root@H10 ~]# curl  http://192.168.4.12/test.html
+web12 web
+[root@H10 ~]# curl  http://192.168.4.13/test.html
+web13 web13 web
+[root@H10 ~]# curl  http://192.168.4.14/test.html
+web14 web14
+[root@H10 ~]# curl  http://192.168.4.15/test.html
+web15 WEB15
+[root@H10 ~]# curl  http://192.168.4.15/test2.php
+hello world H15 WEB15
+[root@H10 ~]# curl  http://192.168.4.14/test2.php
+hello world H14 WEB14
+[root@H10 ~]# curl  http://192.168.4.13/test2.php
+hello world H13 WEB13
+[root@H10 ~]# curl  http://192.168.4.12/test2.php
+hello world H12
+[root@H10 ~]# curl  http://192.168.4.14/test3.php
+OK H14 h14
+[root@H10 ~]# curl  http://192.168.4.15/test3.php
+OK H15 H15
+
+[root@H10 ~]#
+[root@H10 ~]# ping -c2 -i0.2 -w1 192.168.4.11
+
+64 bytes from 192.168.4.11: icmp_seq=1 ttl=64 time=0.551 ms
+64 bytes from 192.168.4.11: icmp_seq=2 ttl=64 time=0.595 ms
+
+--- 192.168.4.11 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.551/0.573/0.595/0.022 ms
+[root@H10 ~]# curl http://192.168.4.11/test.html
+web15 WEB15
+[root@H10 ~]# curl http://192.168.4.11/test.html
+web14 web14
+[root@H10 ~]# curl http://192.168.4.11/test.html
+web13 web13 web
+[root@H10 ~]# curl http://192.168.4.11/test.html
+web12 web
+[root@H10 ~]# 
+[root@H10 ~]# curl http://192.168.4.11/test2.php
+hello world H12
+[root@H10 ~]# curl http://192.168.4.11/test2.php
+hello world H15 WEB15
+[root@H10 ~]# curl http://192.168.4.11/test2.php
+hello world H13 WEB13
+[root@H10 ~]#
+[root@H10 ~]# elinks -dump http://192.168.4.11/test.html
+                            503 Service Unavailable
+
+   No server is available to handle this request.
+
+[root@H10 ~]# curl http://192.168.4.11/test.html
+<html><body><h1>503 Service Unavailable</h1>
+No server is available to handle this request.
+</body></html>
+
+[root@H10 ~]# curl http://192.168.4.11/test2.php
+hello world H13 WEB13
+[root@H10 ~]# curl http://192.168.4.11/test2.php
+hello world H12
+[root@H10 ~]# curl http://192.168.4.11/test.html
+web14 web14
+[root@H10 ~]# curl http://192.168.4.11/test.html
+web15 WEB15
+[root@H10 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H11 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@H11 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H11 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-0
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-1
+
+[root@H11 ~]# rpm -q httpd   php  mariadb
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+[root@H11 ~]# rpm -q  mariadb-server php-mysql
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+[root@H11 ~]# systemctl is-active httpd mariadb
+inactive
+active
+[root@H11 ~]# systemctl start httpd
+
+[root@H11 ~]# ss -anpult |grep -E ':3306|:9000|:80'
+tcp  LISTEN   0   128  127.0.0.1:9000  *:*  users:(("php-fpm",pid=1665,fd=0),("php-fpm",pid=1664,fd=0),...
+tcp  LISTEN   0   50   *:3306     *:*     users:(("mysqld",pid=1385,fd=14))
+tcp  LISTEN   0   128  :::80      :::*    users:(("httpd",pid=3143,fd=4),("httpd",pid=3142,fd=4),...
+[root@H11 ~]# 
+[root@H11 ~]# rpm -q haproxy
+未安装软件包 haproxy 
+[root@H11 ~]# yum list |grep haproxy
+haproxy.x86_64        1.5.18-6.el7     rhel7   
+     
+[root@H11 ~]# yum -y install haproxy 
+已安装:
+  haproxy.x86_64 0:1.5.18-6.el7                                                               
+完毕！
+[root@H11 ~]# rpm -q haproxy
+haproxy-1.5.18-6.el7.x86_64
+[root@H11 ~]# systemctl is-active haproxy
+unknown
+[root@H11 ~]# cd /etc/haproxy/
+[root@H11 haproxy]# ls
+haproxy.cfg
+[root@H11 haproxy]# cp haproxy.cfg  /root/
+[root@H11 haproxy]# cp haproxy.cfg  haproxy.cfg.bak
+[root@H11 haproxy]# 
+[root@H11 haproxy]# vim haproxy.cfg
+ 12 global
+ 30     maxconn     4000
+ 31     user        haproxy
+ 32     group       haproxy
+
+ 42 defaults
+ 43     mode                    http
+ 44     log                     global
+
+ 55     timeout server          1m
+ 56     timeout http-keep-alive 10s
+ 57     timeout check           10s
+ 58     maxconn                 3000
+ 59     stats  uri  /admin
+ 60 listen  weblb  192.168.4.11:80
+ 61     cookie  SERVERID rewrite
+ 62     balance roundrobin
+ 63     server  weba  192.168.4.15:80  cookie  app1inst1 check inter 2000 rise 2 fall 5
+ 64     server  webb  192.168.4.14:80  cookie  app2inst2 check inter 2000 rise 2 fall 5
+ 65     server  webc  192.168.4.13:80  cookie  app3inst3 check inter 2000 rise 2 fall 5
+ 66     server  webd  192.168.4.12:80  cookie  app4inst4 check inter 2000 rise 2 fall 5
+ 67 
+[root@H11 haproxy]# systemctl is-active httpd
+active
+[root@H11 haproxy]# netstat  -utlnp |grep :80
+tcp6  0   0 :::80   :::*    LISTEN      3137/httpd          
+[root@H11 haproxy]# systemctl stop httpd  && systemctl disable httpd
+[root@H11 haproxy]# systemctl is-enabled httpd
+disabled
+[root@H11 haproxy]# netstat  -utlnp |grep :80
+[root@H11 haproxy]# systemctl start haproxy.service 
+[root@H11 haproxy]# systemctl enable haproxy.service 
+
+[root@H11 haproxy]# netstat  -utlnp |grep :80
+tcp   0      0 192.168.4.11:80    0.0.0.0:*     LISTEN      4102/haproxy        
+[root@H11 haproxy]# 
+[root@H11 haproxy]# systemctl stop haproxy.service 
+[root@H11 haproxy]# ls
+haproxy.cfg  haproxy.cfg.bak
+[root@H11 haproxy]# mv haproxy.cfg  haproxy.cfg-1
+[root@H11 haproxy]# ls
+haproxy.cfg-1  haproxy.cfg.bak
+[root@H11 haproxy]# cp /root/haproxy.cfg  /etc/haproxy/
+[root@H11 haproxy]# ls
+haproxy.cfg  haproxy.cfg-1  haproxy.cfg.bak
+[root@H11 haproxy]# 
+[root@H11 haproxy]# vim haproxy.cfg
+ 12 global
+
+ 26     log         127.0.0.1 local2
+ 27 
+ 28     chroot      /var/lib/haproxy
+ 29     pidfile     /var/run/haproxy.pid
+ 30     maxconn     4000
+ 31     user        haproxy
+ 32     group       haproxy
+
+ 42 defaults
+ 43     mode                    http
+ 58     maxconn                 3000
+ 59     stats  uri  /admin
+
+ 63 frontend  weblb  192.168.4.11:80
+ 64 #    acl url_static       path_beg       -i /static /images /javascript /stylesheets
+ 65     acl url_html      path_end     -i  .html
+ 66     acl url_php       path_end     -i  .php
+ 67     use_backend  htmlgrp         if  url_html
+ 68     use_backend  phpgrp          if  url_php
+ 69     default_backend           htmlgrp
+ 70 backend  htmlgrp
+ 71     balance     roundrobin
+ 72     server      weba  192.168.4.55:80  check #注意IP 地址写错,客户端4.10 报错503
+ 73     server      webb  192.168.4.54:80  check #503 Service Unavailable
+ 74 backend  phpgrp 
+ 75     balance     roundrobin
+ 76     server      webc  192.168.4.53:80  check #注意IP 地址写错,客户端4.10 报错503
+ 77     server      webd  192.168.4.52:80  check #503 Service Unavailable
+
+[root@H11 haproxy]# tail -1 haproxy.cfg  #注意IP 地址写错,客户端4.10 报错503
+    server      webd  192.168.4.52:80  check
+[root@H11 haproxy]# pwd
+/etc/haproxy
+[root@H11 haproxy]#
+[root@H11 haproxy]# vim haproxy.cfg
+ 70 backend  htmlgrp
+ 71     balance     roundrobin
+ 72     server      weba  192.168.4.15:80  check #修改正确IP4.15地址,客户端10恢复正常
+ 73     server      webb  192.168.4.14:80  check #修改正确IP4.15地址,客户端10恢复正常
+ 74 backend  phpgrp
+ 75     balance     roundrobin
+ 76     server      webc  192.168.4.13:80  check #修改正确IP4.15地址,客户端10恢复正常
+ 77     server      webd  192.168.4.12:80  check #修改正确IP4.15地址,客户端10恢复正常
+ 78 
+[root@H11 haproxy]# systemctl restart  haproxy.service 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H12 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.12
+192.168.2.12
+127.0.0.1
+192.168.122.1
+[root@H12 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H12 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-2
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-3
+
+[root@H12 ~]# rpm -q httpd   php  mariadb
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+[root@H12 ~]# rpm -q  mariadb-server php-mysql
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+
+[root@H12 ~]# systemctl start httpd && systemctl enable httpd
+
+[root@H12 ~]# echo "web12 web" >/var/www/html/test.html
+
+[root@H12 ~]# vim /var/www/html/test2.php
+[root@H12 ~]# cat /var/www/html/test2.php
+<?php
+echo   "hello world H12\n";
+?>
+[root@H12 ~]# php /var/www/html/test2.php 
+hello world H12
+[root@H12 ~]# curl  http://192.168.4.12/test2.php
+hello world H12
+[root@H12 ~]# curl  http://192.168.4.12/test.html
+web12 web
+[root@H12 ~]# ss -anpult |grep -E ':3306|:9000|:80'
+tcp    LISTEN    0   128    127.0.0.1:9000    *:*  users:(("php-fpm",pid=1505,fd=0),...
+tcp    LISTEN     0      50        *:3306     *:*  users:(("mysqld",pid=1401,fd=14))
+tcp    LISTEN     0      128      :::80      :::*    users:(("httpd",pid=2727,fd=4),...
+[root@H12 ~]# mysql
+MariaDB [(none)]> quit;
+Bye
+
+[root@H12 ~]# vim /var/www/html/test3.php
+[root@H12 ~]# php /var/www/html/test3.php
+OK H12
+[root@H12 ~]# systemctl stop mariadb.service 
+
+[root@H12 ~]# cat /var/www/html/test3.php
+<?php
+$x=mysql_connect("localhost","root","");
+if($x){echo "OK H12\n"; }else{echo "error H12\n"; };
+?>
+[root@H12 ~]# php /var/www/html/test3.php
+PHP Warning:  mysql_connect(): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2) in /var/www/html/test3.php on line 2
+error H12
+[root@H12 ~]# systemctl start  mariadb.service 
+[root@H12 ~]# php /var/www/html/test3.php
+OK H12
+[root@H12 ~]# echo "web12 index" >/var/www/html/index.html
+[root@H12 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html
+[root@H12 ~]# elinks -dump http://192.168.4.12
+   web12 index
+[root@H12 ~]# echo "web12 index.php" >/var/www/html/test.php
+[root@H12 ~]# curl localhost/test.php
+web12 index.php
+[root@H12 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html  test.php
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H13 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.13
+192.168.2.13
+127.0.0.1
+192.168.122.1
+[root@H13 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H13 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-4
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-5
+
+[root@H13 ~]# rpm -q httpd   php  mariadb
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+[root@H13 ~]# rpm -q  mariadb-server php-mysql
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+
+[root@H13 ~]# systemctl start httpd && systemctl enable httpd
+
+[root@H13 ~]# echo "web13 web13 web" >/var/www/html/test.html
+
+[root@H13 ~]# vim /var/www/html/test2.php
+[root@H13 ~]# cat /var/www/html/test2.php
+<?php
+echo   "hello world H13 WEB13\n";
+?>
+[root@H13 ~]# systemctl restart httpd
+
+[root@H13 ~]# curl  http://192.168.4.13/test2.php
+hello world H13 WEB13
+[root@H13 ~]# curl  http://192.168.4.13/test.html
+web13 web13 web
+[root@H13 ~]# ss -anpult |grep -E ':3306|:9000|:80'
+tcp    LISTEN     0     128    127.0.0.1:9000     *:*      users:(("php-fpm",pid=1633,fd=0),....
+tcp    LISTEN     0     50      *:3306          *:*        users:(("mysqld",pid=1405,fd=14))
+tcp    LISTEN     0    128   :::80    :::*   users:(("httpd",pid=3135,fd=4),...
+
+[root@H13 ~]# mysql
+
+MariaDB [(none)]> quit
+Bye
+[root@H13 ~]#  vim /var/www/html/test3.php
+[root@H13 ~]# cat /var/www/html/test3.php
+<?php
+$x=mysql_connect("localhost","root","");
+if($x){echo "OK H13 h13\n"; }else{echo "error H13 h13\n"; };
+?>
+[root@H13 ~]# php /var/www/html/test3.php
+OK H13 h13
+[root@H13 ~]# echo "web13 web13 index" >/var/www/html/index.html
+[root@H13 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html
+[root@H13 ~]# elinks -dump http://192.168.4.13
+   web13 web13 index
+[root@H13 ~]# echo "web13 index.php" >/var/www/html/test.php
+[root@H13 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html  test.php
+
+
+
+
+
+
+
+
+
+
+[root@H14 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.14
+192.168.2.14
+127.0.0.1
+192.168.122.1
+[root@H14 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H14 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    5G  0 disk 
+vdd           252:48   0    5G  0 disk 
+
+[root@H14 ~]# rpm -q httpd   php  mariadb   mariadb-server php-mysql
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+
+[root@H14 ~]# systemctl start httpd && systemctl enable httpd
+
+[root@H14 ~]# echo "web14 web14" >/var/www/html/test.html
+
+[root@H14 ~]# vim /var/www/html/test2.php
+[root@H14 ~]# cat /var/www/html/test2.php
+<?php
+echo   "hello world H14 WEB14\n";
+?>
+[root@H14 ~]# curl  http://192.168.4.14/test2.php
+hello world H14 WEB14
+[root@H14 ~]# curl  http://192.168.4.14/test.html
+web14 web14
+[root@H14 ~]# ss -anpult |grep -E ':3306|:9000|:80'
+tcp  LISTEN   0    128  127.0.0.1:9000    *:*   users:(("php-fpm",pid=1380,fd=0),...
+tcp  LISTEN   0    50    *:3306           *:*   users:(("mysqld",pid=1287,fd=14))
+tcp  LISTEN   0    128  :::80         :::*     users:(("httpd",pid=2059,fd=4),.....
+
+[root@H14 ~]# mysql
+
+MariaDB [(none)]> quit
+Bye
+[root@H14 ~]#  vim /var/www/html/test3.php
+[root@H14 ~]# cat /var/www/html/test3.php
+<?php
+$x=mysql_connect("localhost","root","");
+if($x){echo "OK H14 h14\n"; }else{echo "error H14 h14\n"; };
+?>
+[root@H14 ~]# php /var/www/html/test3.php
+OK H14 h14
+[root@H14 ~]# systemctl stop httpd
+[root@H14 ~]# systemctl start httpd
+
+[root@H14 ~]# echo "web14 hello index" >/var/www/html/index.html
+
+[root@H14 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html
+[root@H14 ~]# curl 192.168.4.14
+web14 hello index
+[root@H14 ~]# echo "web14  index.php" >/var/www/html/test.php
+[root@H14 ~]# curl localhost/test.php
+web14  index.php
+[root@H14 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html  test.php
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H15 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.15
+192.168.2.15
+127.0.0.1
+192.168.122.1
+[root@H15 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H15 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    5G  0 disk 
+vdd           252:48   0    5G  0 disk 
+[root@H15 ~]# ss -anpult |grep :80
+tcp    LISTEN   0   128   *:80     *:*     users:(("radosgw",pid=1026,fd=30))
+
+[root@H15 ~]# rpm -q httpd   php  mariadb   mariadb-server php-mysql
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+
+[root@H15 ~]# systemctl start httpd && systemctl enable httpd
+Job for httpd.service failed because the control process exited with error code. 
+See "systemctl status httpd.service" and "journalctl -xe" for details.
+
+[root@H15 ~]# systemctl is-active ceph
+ceph-radosgw@rgw.H15.service  ceph-radosgw.target     ceph.target
+
+[root@H15 ~]# systemctl is-active ceph-radosgw.target 
+active
+[root@H15 ~]# systemctl is-active ceph-radosgw@rgw.H15.service 
+active
+[root@H15 ~]# ss -anpult |grep  :80
+tcp    LISTEN     0      128       *:80       *:*     users:(("radosgw",pid=1026,fd=30))
+
+[root@H15 ~]# systemctl stop  ceph-radosgw.target   ceph-radosgw@rgw.H15.service 
+
+[root@H15 ~]# ss -anpult |grep  :80
+
+[root@H15 ~]# systemctl disable   ceph-radosgw.target   ceph-radosgw@rgw.H15.service 
+Removed symlink /etc/systemd/system/multi-user.target.wants/ceph-radosgw.target.
+Removed symlink /etc/systemd/system/ceph.target.wants/ceph-radosgw.target.
+Removed symlink /etc/systemd/system/ceph-radosgw.target.wants/ceph-radosgw@rgw.H15.service.
+
+[root@H15 ~]# systemctl start httpd  && systemctl enable httpd.service 
+
+[root@H15 ~]# ss -anpult |egrep  ':80|:9000|:3306'
+tcp  LISTEN   0   128  127.0.0.1:9000   *:*    users:(("php-fpm",pid=1392,fd=0),(.......
+tcp  LISTEN   0   50   *:3306        *:*      users:(("mysqld",pid=1258,fd=14))
+tcp  LISTEN   0   128  :::80       :::*      users:(("httpd",pid=2412,fd=4),("httpd",pid=2411,fd=4),(...
+
+[root@H15 ~]# echo "web15 WEB15" >/var/www/html/test.html
+
+[root@H15 ~]# vim /var/www/html/test2.php
+[root@H15 ~]# cat /var/www/html/test2.php
+<?php
+echo   "hello world H15 WEB15\n";
+?>
+[root@H15 ~]# curl http://192.168.4.15/test.html
+web15 WEB15
+[root@H15 ~]# curl http://192.168.4.15/test2.php
+hello world H15 WEB15
+
+[root@H15 ~]# mysql
+
+MariaDB [(none)]> quit
+Bye
+[root@H15 ~]#  vim /var/www/html/test3.php
+[root@H15 ~]# cat /var/www/html/test3.php
+<?php
+$x=mysql_connect("localhost","root","");
+if($x){echo "OK H15 H15\n"; }else{echo "error H15 H15\n"; };
+?>
+
+[root@H15 ~]# php /var/www/html/test3.php
+OK H15 H15
+
+[root@H15 ~]#  echo "web15 index H15" >/var/www/html/index.html
+[root@H15 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html
+[root@H15 ~]# curl localhost
+web15 index H15
+[root@H15 ~]#  
+[root@H15 ~]# echo "web15 index.php" >/var/www/html/test.php
+[root@H15 ~]# curl localhost/test.php
+web15 index.php
+[root@H15 ~]# ls /var/www/html/
+index.html  test2.php  test3.php  test.html  test.php
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H16 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.16
+192.168.2.16
+127.0.0.1
+192.168.122.1
+[root@H16 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H16 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+
+[root@H16 ~]# ss -anpult |grep :80
+[root@H16 ~]# rpm -q httpd   php  mariadb  mariadb-server php-mysql
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+
+[root@H16 ~]# ss -anpult |grep memcached
+udp    UNCONN     0   0     *:11211     *:*    users:(("memcached",pid=1041,fd=28))
+udp    UNCONN     0   0     :::11211     :::*   users:(("memcached",pid=1041,fd=29))
+tcp    LISTEN     0   128   *:11211      *:*   users:(("memcached",pid=1041,fd=26))
+tcp    LISTEN     0   128   :::11211     :::*   users:(("memcached",pid=1041,fd=27))
+
+[root@H16 ~]# systemctl stop memcached php-fpm  mariadb
+
+[root@H16 ~]# ss -anpult |grep -E ':3306|:9000|:11211'
+
+[root@H16 ~]# firefox http://192.168.4.11/admin
+http://192.168.4.11/admin
+
+HAProxy version 1.5.18, released 2016/05/10
+Statistics Report for pid 6635
+pid = 6635 (process #1, nbproc = 1)
+uptime = 0d 0h23m37s
+system limits: memmax = unlimited; ulimit-n = 8035
+maxsock = 8035; maxconn = 4000; maxpipes = 0
+current conns = 1; current pipes = 0/0; conn rate = 0/sec
+Running tasks: 1/10; idle = 100 %
+	
+ 	active UP 	 	backup UP
+	active UP, going down 		backup UP, going down
+	active DOWN, going up 		backup DOWN, going up
+	active or backup DOWN  		not checked
+
+
+
+
+
+
+
+
+
+[root@H17 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.17
+192.168.2.17
+127.0.0.1
+192.168.122.1
+[root@H17 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H17 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+[root@H17 ~]# ss -anpult |grep :80
+
+[root@H17 ~]# rpm -q httpd   php  mariadb  mariadb-server php-mysql
+httpd-2.4.6-67.el7.x86_64
+php-5.4.16-42.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+
+mariadb-server-5.5.56-2.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+
+[root@H17 ~]# systemctl stop memcached php-fpm  mariadb
+[root@H17 ~]# echo "hello world H12\n"
+hello world H12\n
+[root@H17 ~]# echo -e "hello world H12\n"
+hello world H12
+
+[root@H17 ~]#  systemctl stop memcached php-fpm  mariadb
+
+[root@H17 ~]# ss -anpult |grep -E ':3306|:9000|:11211'
+[root@H17 ~]# 
+
+
+
+
+
+

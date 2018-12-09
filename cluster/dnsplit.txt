@@ -1,0 +1,411 @@
+﻿一、红帽考试及环境介绍
+1. RHCSA（红帽认证系统管理员）
+    全机试，时长150分钟
+    约16道题，满分300分（210分合格）
+2. RHCE（红帽认证工程师）
+    全机试，时长210分钟
+    约22道题，满分300分（210分合格）
+3. 考试环境说明（X为考生编号）
+    !!每名考生一台真实机，这台真机上提供虚拟机，答题全部在虚拟机中完成
+    !!桌面上会提供访问考试平台及虚拟机的快捷方式
+    !!由考官服务器提供所需软件、DNS/DHCP/集中认证等必要的资源
+    !!真实机： foundation.domainX.example.com
+    !!虚拟机-RHCSA部分：station.domainX.example.com
+    !!虚拟机-RHCE部分：system1.domainX.example.com、system2.domainX.example.com
+
+二、练习环境说明
+1. 每人可使用3台虚拟机
+    !!虚拟机 classroom，相当于考官服务器：classroom.example.com
+    !!虚拟机 server，相当于答题机1：server0.example.com 
+    !!虚拟机 desktop，相当于答题机2：desktop0.example.com
+3. 快速重置练习环境
+    !! 按顺序执行，根据提示输入 y 确认
+    [root@room9pc13 ~]# rht-vmctl  reset  classroom
+    [root@room9pc13 ~]# rht-vmctl  reset  server
+    [root@room9pc13 ~]# rht-vmctl  reset  desktop
+    rht-vmctl 脚本控制参数说明：
+    rht-vmctl  reset  虚拟机名 		【断电-还原-开启虚拟机】
+    rht-vmctl  poweroff  虚拟机名 	【强制关闭虚拟机】
+    rht-vmctl  start  虚拟机名		【开启虚拟机】
+------------------------------------------------------------------------------------------------------
+
+虚拟机A 	   虚拟机B  	         虚拟机C  	              虚拟机D
+DNS         192.168.4.207          Web1  	              Web2
+192.168.4.7    split            192.168.4.10          192.168.4.20
+ split         B --> D          www.qq.com             www.qq.com
+A -->C                          www.163.com            www.163.com    
+                            
+[root@C-Web1 ~]# echo '<marquee><font color=purple>C-Web1</font></marquee>'> /var/www/html/index.html
+[root@C-Web1 ~]# echo '<h1><marquee><font color=purple>C-Web1</font></marquee></h1>'>> /var/www/html/index.html
+
+[root@C-Web1 ~]# vim /etc/httpd/conf/httpd.conf 
+[root@C-Web1 ~]# head -95 /etc/httpd/conf/httpd.conf | tail -1
+ServerName www0.example.com:80
+[root@D-Web2 ~]# echo '<marquee><font color=pink>D-Web2</font></marquee>'> /var/www/html/index.html
+[root@D-Web2 ~]# echo '<h1><marquee><font color=purple>D-Web2</font></marquee></h1>'>> /var/www/html/index.html
+
+[root@D-Web2 ~]# vim /etc/httpd/conf/httpd.conf 
+[root@D-Web2 ~]# head -95 /etc/httpd/conf/httpd.conf | tail -1
+ServerName www0.example.com:80
+
+[root@Adns ~]# yum install -y elinks
+[root@Adns ~]# systemctl start firewalld.service 
+[root@Adns ~]# systemctl enable firewalld.service
+[root@Adns ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@Adns ~]# getenforce
+Permissive
+[root@Adns ~]# elinks -dump http://192.168.4.10
+   C-Web1
+[root@Adns ~]# elinks -dump http://192.168.4.20
+   D-Web2
+[root@Adns ~]# yum install bind bind-chroot -y
+[root@Adns ~]# vim /etc/named.conf
+[root@Adns ~]# cat /etc/named.conf
+options {
+	directory 	"/var/named";
+	recursion yes;
+};
+acl test { 192.168.4.7;192.168.4.8; };
+view "Adns" {
+ match-clients { test; };
+  zone "qq.com" IN {
+	type master;
+	file "qq.com.zone";
+  };
+  zone "163.com" IN {
+     type master;
+     file "163.com.zone";
+  };
+};
+view "other" {
+ match-clients { any; };
+  zone "qq.com" IN {
+        type master;
+        file "qq.com.other";
+  };
+  zone "163.com" IN {
+     type master;
+     file "163.com.other";
+  };
+};
+[root@Adns ~]# named-checkconf /etc/named.conf
+[root@Adns ~]# ls /var/named/
+chroot  dynamic   named.empty      named.loopback
+data    named.ca  named.localhost  slaves
+[root@Adns ~]# cp -p /var/named/named.localhost /var/named/qq.com.zone
+[root@Adns ~]# vim /var/named/qq.com.zone
+[root@Adns ~]# cat /var/named/qq.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr
+;163.com. 	NS  	svr
+svr		A	192.168.4.7
+www		A	192.168.4.10	
+*		A 	192.168.4.10
+qq.com.		A	192.168.4.10
+;163.com.	A	192.168.4.10
+
+[root@Adns ~]# cp -p /var/named/qq.com.zone  /var/named/163.com.zone
+
+[root@Adns ~]# cat /var/named/163.com.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+;qq.com.		NS	svr
+163.com. 	NS  	svr
+svr		NS	192.168.4.7
+
+www		A	192.168.4.10	
+*		A 	192.168.4.10
+;qq.com.		A	192.168.4.10
+163.com.	A	192.168.4.10
+
+[root@Adns ~]# cp -p /var/named/163.com.zone /var/named/163.com.other
+[root@Adns ~]# vim /var/named/163.com.other
+[root@Adns ~]# cat /var/named/163.com.other
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+;qq.com.		NS	svr
+163.com. 	NS  	svr
+svr		A	192.168.4.7
+
+www		A	192.168.4.20	
+*		A 	192.168.4.20
+;qq.com.		A	192.168.4.20
+163.com.	A	192.168.4.20
+
+[root@Adns ~]# cp -p /var/named/qq.com.zone /var/named/qq.com.other
+[root@Adns ~]# vim /var/named/qq.com.other
+[root@Adns ~]# cat /var/named/qq.com.other
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr
+;163.com. 	NS  	svr
+svr		NS	192.168.4.7
+
+www		A	192.168.4.20	
+*		A 	192.168.4.20
+qq.com.		A	192.168.4.20
+;163.com.	A	192.168.4.20
+[root@Adns ~]# systemctl restart named 
+[root@Adns ~]# systemctl restart named-chroot
+named-chroot.service        named-chroot-setup.service
+[root@Adns ~]# systemctl restart named-chroot
+[root@Adns ~]# vim /etc/resolv.conf 
+[root@Adns ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+
+[root@Adns ~]# curl www.qq.com
+<marquee><font color=purple>C-Web1</font></marquee>
+<h1><marquee><font color=purple>C-Web1</font></marquee></h1>
+[root@Adns ~]# elinks  -dump www.163.com/private
+                                 C-Web1-Private
+
+[root@Adns ~]# curl www.163.com
+<h1><marquee><font color=gray>C-Web1-server0.example.com</font></marquee></h1>
+[root@Adns ~]# elinks -dump www.163.com
+                           C-Web1-server0.example.com
+
+
+
+[root@B ~]# yum install -y elinks.x86_64 
+[root@B ~]# systemctl start firewalld.service
+[root@B ~]# systemctl enable firewalld.service
+[root@B ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@B ~]# getenforce
+Permissive
+[root@B ~]# elinks -dump http://192.168.4.10
+   C-Web1
+[root@B ~]# elinks -dump http://192.168.4.20
+   D-Web2
+[root@B ~]# vim /etc/resolv.conf
+[root@B ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+
+
+
+
+[root@C-Web1 ~]# yum install -y httpd
+[root@C-Web1 ~]# systemctl start firewalld.service
+[root@C-Web1 ~]# systemctl enable firewalld.service
+[root@C-Web1 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@C-Web1 ~]# getenforce
+Permissive
+[root@C-Web1 ~]# systemctl enable httpd.service 
+[root@C-Web1 ~]# systemctl start httpd
+[root@C-Web1 ~]# vim /etc/httpd/conf.d/slave.conf
+[root@C-Web1 ~]# cat /etc/httpd/conf.d/slave.conf
+<VirtualHost *:80>
+ ServerName    www.qq.com
+ DocumentRoot  /var/www/html
+</VirtualHost>
+<VirtualHost *:80>
+ ServerName    www.163.com
+ DocumentRoot  /var/www/web
+</VirtualHost>
+[root@C-Web1 ~]# mkdir /var/www/web
+[root@C-Web1 ~]# ls -Zd /var/www/html
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/html
+
+[root@C-Web1 ~]# ls -Zd /var/www/web/
+drwxr-xr-x. root root unconfined_u:object_r:httpd_sys_content_t:s0 /var/www/web/
+
+[root@C-Web1 ~]# chcon -R  --reference=/var/www/  /var/www/web
+[root@C-Web1 ~]# ls -Zd /var/www/web
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/web
+
+[root@C-Web1 ~]# cd /var/www/web
+[root@C-Web1 web]# httpd -t    //确保语法检查OK
+Syntax OK
+[root@C-Web1 web]# cd /var/www/html
+[root@C-Web1 html]# httpd -t     //确保语法检查OK
+Syntax OK
+[root@C-Web1 ~]# chcon -R  --reference=/var/www/ /var/www/web/private
+[root@C-Web1 ~]# ls -Zd /var/www/web/private
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/web/private
+
+[root@C-Web1 html]# vim /etc/httpd/conf.d/dir.conf
+[root@C-Web1 html]# cat /etc/httpd/conf.d/dir.conf
+<Directory "/var/www/web">
+  Require all granted
+</Directory>
+<Directory "/var/www/web/private">
+  Require ip  127.0.0.1  ::1  192.168.4.7 
+</Directory>
+[root@C-Web1 ~]# cd /var/www/web/private
+[root@C-Web1 private]# httpd
+httpd (pid 2132) already running
+[root@C-Web1 private]# httpd -t
+Syntax OK
+[root@C-Web1 private]# cd ~
+[root@C-Web1 ~]# echo '<h1><marquee><font color=blue>C-Web1-Private</font></marquee></h1>' > /var/www/web/private/index.html
+[root@C-Web1 ~]# echo '<h1><marquee><font color=gray>C-Web1-server0.example.com</font></marquee></h1>'> /var/www/web/index.html
+[root@C-Web1 ~]# cat /var/www/web/index.html
+<h1><marquee><font color=gray>C-Web1-server0.example.com</font></marquee></h1>
+
+[root@C-Web1 ~]# cat /var/www/web/private/index.html
+<h1><marquee><font color=blue>C-Web1-Private</font></marquee></h1>
+[root@C-Web1 ~]# echo nameserver 192.168.4.7 > /etc/resolv.conf 
+[root@C-Web1 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+[root@C-Web1 ~]# echo "127.0.0.1 www0.example.com" >> /etc/hosts
+
+[root@C-Web1 ~]# curl www0.example.com
+<marquee><font color=purple>C-Web1</font></marquee>
+<h1><marquee><font color=purple>C-Web1</font></marquee></h1>
+
+[root@C-Web1 ~]# echo "127.0.0.1 server0.example.com" >> /etc/hosts
+[root@C-Web1 ~]# firefox server0.example.com/private
+[root@C-Web1 ~]# firefox server0.example.com
+[root@C-Web1 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1 www.qq.com
+127.0.0.1 www.163.com
+
+[root@C-Web1 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+[root@C-Web1 ~]# firefox http://www.163.com/private
+^C
+[root@C-Web1 ~]# vim /etc/resolv.conf 
+[root@C-Web1 ~]# cat /etc/resolv.conf
+;nameserver 192.168.4.7
+[root@C-Web1 ~]# systemctl restart httpd
+[root@C-Web1 ~]# firefox http://www.163.com/private
+[root@C-Web1 ~]# elinks -dump http://www.163.com/private
+                                 C-Web1-Private
+[root@C-Web1 ~]# elinks -dump http://www.163.com/
+                           C-Web1-server0.example.com
+[root@C-Web1 ~]# elinks -dump http://www.qq.com/
+   C-Web1
+
+                                     C-Web1
+
+[root@C-Web1 ~]# vim /etc/resolv.conf 
+[root@C-Web1 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+[root@C-Web1 ~]# elinks -dump http://www.163.com/private
+                                 C-Web1-Private
+
+[root@C-Web1 ~]# cat /etc/httpd/conf.d/dir.conf 
+<Directory "/var/www/web">
+  Require all granted
+</Directory>
+<Directory "/var/www/web/private">
+  Require ip  127.0.0.1  ::1  192.168.4.7 
+</Directory>
+
+
+
+
+
+
+[root@D-Web2 ~]# yum install -y httpd
+[root@D-Web2 ~]# systemctl start firewalld.service
+[root@D-Web2 ~]# systemctl enable firewalld.service
+[root@D-Web2 ~]# firewall-cmd --set-default-zone=trusted
+success
+[root@D-Web2 ~]# getenforce 
+Permissive
+[root@D-Web2 ~]# systemctl start httpd
+[root@D-Web2 ~]# systemctl enable  httpd
+[root@D-Web2 ~]# vim /etc/httpd/conf.d/slave.conf
+[root@D-Web2 ~]# cat /etc/httpd/conf.d/slave.conf
+<VirtualHost *:80>
+ ServerName    www.qq.com
+ DocumentRoot  /var/www/html
+</VirtualHost>
+<VirtualHost *:80>
+ ServerName    www.163.com
+ DocumentRoot  /var/www/web
+</VirtualHost>
+[root@D-Web2 ~]# cd /var/www/web
+
+[root@D-Web2 ~]# mkdir /var/www/web
+[root@D-Web2 ~]# httpd -t
+Syntax OK
+[root@D-Web2 ~]# cd /var/www/html/
+[root@D-Web2 html]# httpd -t
+Syntax OK
+[root@D-Web2 html]# chcon -R --reference=/var/www/ /var/www/web
+[root@D-Web2 html]# ls -Zd /var/www/web
+drwxr-xr-x. root root system_u:object_r:httpd_sys_content_t:s0 /var/www/web
+[root@D-Web2 html]# vim /etc/hosts
+[root@D-Web2 html]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1 www.qq.com
+127.0.0.1 www.163.com
+[root@D-Web2 html]# systemctl restart httpd
+
+[root@D-Web2 html]# vim /var/www/web/index.html
+[root@D-Web2 html]# cat /var/www/web/index.html
+<h1><marquee><font color=purple>D-Web2-163</font></marquee></h1>
+[root@D-Web2 html]# vim /var/www/html/index.html
+[root@D-Web2 html]# cat /var/www/html/index.html
+<marquee><font color=pink>D-Web2-www.qq.com</font></marquee>
+<h1><marquee><font color=purple>D-Web2-QQ</font></marquee></h1>
+
+[root@D-Web2 html]# curl www.163.com
+<h1><marquee><font color=purple>D-Web2-163</font></marquee></h1>
+[root@D-Web2 html]# curl www.qq.com
+<marquee><font color=pink>D-Web2-www.qq.com</font></marquee>
+<h1><marquee><font color=purple>D-Web2-QQ</font></marquee></h1>
+
+[root@D-Web2 html]# vim /etc/resolv.conf 
+[root@D-Web2 html]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

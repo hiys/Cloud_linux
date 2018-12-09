@@ -1,0 +1,178 @@
+张志刚
+5个月：选学 python
+集群和存储：
+存储
+集群
+分布式存储：ceph
+
+入门：
+提高：
+
+知识掌握的层次：操作 原理 troubleshooting排错
+软盘1.44M 内存64M 硬盘10G
+
+TB -> PB 
+
+
+
+块设备：
+文件（系统）：
+
+IP SAN: 基于ip网络的存储区域网络
+
+IQN名称约定：iqn.时间.域名反写.字符串:子字符串
+
+配置iSCSI:
+1、准备三台虚拟机
+[root@room8pc16 cluster]# clone-auto7 
+vh05.tedu.cn    192.168.4.5/24
+vh06.tedu.cn    192.168.4.6/24
+vh07.tedu.cn    192.168.4.7/24
+2、初始化：主机名、ip、yum、ssh免密钥登陆
+（1）配置IP地址：nmtui
+3、安装target服务端
+[root@vh05 ~]# yum install -y targetcli
+4、为存储端加一块硬盘
+在图形界面中，不关机情况下，可以直接加硬盘
+5、分区
+[root@vh05 ~]# parted /dev/vdb 
+(parted) mklabel gpt   设定分区格式为gpt
+(parted) mkpart primary 1M 20% 划分第一个主分区，1M/20%是起始和结束位置
+[root@vh05 ~]# lsblk   查看结果
+6、创建iSCSI服务端
+[root@vh05 ~]# targetcli 
+/> ls  查看当前配置状态
+/> /backstores/block create iscsidisk /dev/vdb1  引入vdb1到iscsi，起名为iscsidisk
+/> /iscsi create iqn.2018-05.cn.tedu.nsd1801  创建iqn
+/> /iscsi/iqn.2018-05.cn.tedu.nsd1801/tpg1/luns create /backstores/block/iscsidisk  将创建的iscsidisk关联到iqn中
+/> /iscsi/iqn.2018-05.cn.tedu.nsd1801/tpg1/acls create iqn.2018-05.cn.tedu.vh06  设置acl，指定哪个客户端可以访问该共享存储
+/> /iscsi/iqn.2018-05.cn.tedu.nsd1801/tpg1/acls create iqn.2018-05.cn.tedu.vh07
+/> /iscsi/iqn.2018-05.cn.tedu.nsd1801/tpg1/portals/ create 0.0.0.0  绑定服务监听在0.0.0.0上
+/> saveconfig   存盘
+/> exit  退出
+7、起动服务
+[root@vh05 ~]# systemctl start target
+[root@vh05 ~]# systemctl enable target
+8、配置vh06和vh07为客户端，使用vh05的共享存储
+[root@vh06 ~]# yum install -y iscsi-initiator-utils
+[root@vh06 ~]# vim /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.2018-05.cn.tedu.vh06  客户端名称，必须与targert的acl一致
+[root@vh06 ~]# man iscsiadm 
+[root@vh06 ~]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.4.5 --discover  发现存储
+[root@vh06 ~]# lsblk  此时还不会出现额外的硬盘
+[root@vh06 ~]# systemctl restart iscsi  重起iscsi即可自动login
+[root@vh06 ~]# lsblk  发现多出来了sda设备
+[root@vh06 ~]# systemctl enable iscsi    用于自动login
+[root@vh06 ~]# systemctl enable iscsid   iscsid服务
+9、在vh06上，将sda分区、格式化
+[root@vh06 ~]# parted /dev/sda  将所有空间分一个分区即可
+[root@vh06 ~]# mkfs.ext4 /dev/sda1 
+10、在vh06上配置mariadb
+[root@vh06 ~]# yum install -y mariadb-server
+[root@vh06 ~]# mount /dev/sda1 /var/lib/mysql/
+[root@vh06 ~]# chown mysql.mysql /var/lib/mysql/
+[root@vh06 ~]# systemctl start mariadb
+[root@vh06 ~]# mysql
+MariaDB [(none)]> create database tedu default charset utf8;
+MariaDB [(none)]> use tedu;
+MariaDB [tedu]> create table nsd1801(name varchar(20));
+MariaDB [tedu]> insert into nsd1801 values('刘兴达');
+MariaDB [tedu]> select * from nsd1801;
+[root@vh06 ~]# shutdown -h now
+11、在vh07上使用vh06的创建的数据库，继续提供服务
+不要试图多节点同时挂载共享存储，因为xfs/ext文件系统都是单一节点文件系统，如果多节点同时挂载，会导致分区结构损坏。红帽的GFS才能支持多节点同时挂载。
+
+UDEV:动态管理硬件文件的方法
+1、规则文件命名：数字-自定义名字.rules。数字编号是生效顺序
+2、udev规则只有在硬件设备连接上或是取下的时候才生效
+3、规则编写，判断是否满足条件用==或!=，赋值用=
+
+设置接入的U盘名字是/dev/udisk
+1、查看u盘信息在/sys/目录中的位置
+[root@room8pc16 ~]# udevadm info --query=path --name=/dev/sdb1
+2、查看U盘信息
+[root@room8pc16 ~]# udevadm info --query=all --attribute-walk --path=/devices/pci0000:00/0000:00:14.0/usb1/1-5/1-5:1.0/host7/target7:0:0/7:0:0:0/block/sdb/sdb1
+3、创建规则
+[root@room8pc16 ~]# cd /etc/udev/rules.d/
+[root@room8pc16 rules.d]# vim 90-udisk.rules
+ACTION=="add", KERNEL=="sd[a-z]*", SUBSYSTEMS=="usb", SYMLINK+="udisk%n"
+释义：如果系统接入硬件，内核识别出来的名字是sd[a-z]*，并且是usb的总线，那么就给它加上一个链接叫udisk1/2/3
+4、将U盘取下，再插上，查看新的名称
+[root@room8pc16 rules.d]# ll /dev/udisk*
+
+Windows下将fat32分区，如g盘，改为ntfs：    convert g: /fs:ntfs
+
+网络文件系统：
+CIFS：Common Internet FileSystem (SAMBA)
+NFS：Network FileSystem
+
+NFS:
+一、NFS本身只提供了共享功能，底层数据传输需要使用RPC服务(rpcbind)
+二、只读共享
+1、vh05作为服务器
+[root@vh05 ~]# yum install -y nfs-utils
+[root@vh05 ~]# mkdir -p /nfsroot/nfsro
+[root@vh05 ~]# cp /etc/hosts /nfsroot/nfsro/
+2、编辑共享输出，允许所有主机访问共享目录
+[root@vh05 ~]# vim /etc/exports
+/nfsroot/nfsro  *(ro)    注意*和()之间不能有空格
+3、起动相应服务并验证
+[root@vh05 ~]# systemctl restart rpcbind
+[root@vh05 ~]# systemctl restart nfs
+[root@vh05 ~]# showmount -e 192.168.4.5
+4、在vh07上使用vh05提供的共享
+[root@vh07 ~]# yum install -y nfs-utils
+[root@vh07 ~]# mkdir /mnt/roshare
+[root@vh07 ~]# showmount -e 192.168.4.5
+[root@vh07 ~]# mount 192.168.4.5:/nfsroot/nfsro /mnt/roshare
+[root@vh07 ~]# ls /mnt/roshare
+三、读写共享
+注意：不管用的是nfs还是samba还是ftp，只要是读写，都需要配置本地权限(如777)和配置文件内的权限
+1、服务器端配置
+[root@vh05 ~]# mkdir -m 777 /nfsroot/nfsrw
+[root@vh05 ~]# vim /etc/exports 追加一行
+/nfsroot/nfsrw  192.168.4.*(rw,sync)    sync表示客户机服务器同步读写
+[root@vh05 ~]# exportfs -rv   重新输入共享目录，不用重起服务
+2、客户端配置
+[root@vh07 ~]# mkdir /mnt/rwshare
+[root@vh07 ~]# mount 192.168.4.5:/nfsroot/nfsrw /mnt/rwshare
+[root@vh07 ~]# echo 'hello world' > /mnt/rwshare/hello.txt
+3、客户端写入的文件属主属组是nfsnobody
+[root@vh07 ~]# ll /mnt/rwshare/hello.txt 
+如果希望文件的属主属组还是root，可以在服务器上修改选项如下：
+/nfsroot/nfsrw  192.168.4.*(rw,sync,no_root_squash)
+
+
+
+多路径：
+1、为vh05和vh07再配置一个网络
+vh05.tedu.cn  192.168.2.5/24   vh07.tedu.cn  192.168.2.7/24
+2、在vh07上，通过192.168.2.5再发现一次设备，出现新的设备sdb
+[root@vh07 ~]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.2.5 --discover
+[root@vh07 ~]# systemctl restart iscsi
+[root@vh07 ~]# lsblk 
+3、在vh07上安装多路径软件
+[root@vh07 ~]# yum install -y device-mapper-multipath
+4、生成配置文件，不用系统自动生成设备名，由管理员自己指定
+[root@vh07 ~]# mpathconf --user_friendly_names n
+5、查看共享存储的wwid
+[root@vh07 ~]# /lib/udev/scsi_id --whitelisted --device=/dev/sda
+360014057e69aa7613c149269bb60d348
+6、编写配置文件
+[root@vh07 ~]# vim /etc/multipath.conf 
+defaults {
+        user_friendly_names no
+        find_multipaths yes
+        getuid_callout "/lib/udev/scsi_id --whitelisted --device=/dev/%n"
+}
+multipaths {
+    multipath {
+        wwid    "360014057e69aa7613c149269bb60d348"
+        alias   "mpatha"
+    }
+}
+7、起动服务并验证
+[root@vh07 ~]# systemctl start multipathd
+[root@vh07 ~]# ls /dev/mapper/mpatha*
+[root@vh07 ~]# mount /dev/mapper/mpatha1 /var/lib/mysql/
+[root@vh07 ~]# multipath -rr  查看多路径设备

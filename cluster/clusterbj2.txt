@@ -1,0 +1,1117 @@
+
+GPT分区表：（GPT含义：GUID分区表）
+支持最大卷：18EB，（E：exabytes,1EB=1024TB）
+每个磁盘最多支持128个分区
+所以如果要大于2TB的卷或分区就必须得用GPT分区表。
+
+parted工具对/dev/sda做GPT分区的过程：
+parted /dev/sdb # 使用parted来对GPT磁盘操作，进入交互式模式
+GNU Parted 1.8.1 Using /dev/sdb Welcome to GNU Parted! Type ‘help’ to view a list of commands.
+(parted) mklabel gpt           # 将MBR磁盘格式化为GPT
+(parted) print                       #打印当前分区
+(parted) mkpart primary 0 5TB                # 分一个5T的主分区
+(parted) mkpart primary 5TB 12TB      # 分一个8T的主分区
+(parted) print                         #打印当前分区
+(parted) quit 退出
+
+# parted /dev/sda
+(parted) mklabel gpt  
+(parted)mkpart primary 0KB 500GB
+
+然后格式化成ext4,需要安装包e4fsprogs.x86_64(yum install e4fsprogs.x86_64)即可。
+# mkfs.ext4 /dev/sdb1
+
+接着用mount挂载分区
+# mount -t ext4 /dev/sdb1 /bk
+
+最后修改/etc/fstab，添加如下两行，让其开机自动挂载.
+#vi /etc/fstab
+/dev/sdb1    /bk     ext4     defaults,noatime    1   2
+
+硬盘总分区大小10TB
+扩展：parted非交互分区
+parted /dev/sdb mklabel gpt
+parted /dev/sdb mkpart primary 0 5000000
+parted /dev/sdb mkpart primary 5000000 7000001
+parted /dev/sdb mkpart primary 7000000 8000000
+parted /dev/sdb p
+
+
+[root@VM1 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda             8:0    0   10G  0 disk  
+└─mpatha      253:2    0   10G  0 mpath 
+sdb             8:16   0   10G  0 disk  
+└─mpatha      253:2    0   10G  0 mpath 
+sr0            11:0    1 1024M  0 rom   
+vda           252:0    0   20G  0 disk  
+├─vda1        252:1    0    1G  0 part  /boot
+└─vda2        252:2    0   19G  0 part  
+  ├─rhel-root 253:0    0   17G  0 lvm   /
+  └─rhel-swap 253:1    0    2G  0 lvm   [SWAP]
+vdb           252:16   0   10G  0 disk  
+[root@VM1 ~]# ls /var/www/html/
+[root@VM1 ~]# ss -anptul |grep :80
+tcp    LISTEN     0      128      :::80    :::*     users:(("httpd",pid=1702,fd=4),("httpd",pid=1701,fd=4),
+[root@VM1 ~]# ls /etc/udev/rules.d/
+50-iscsidisk.rules.bak  70-persistent-ipoib.rules
+[root@VM1 ~]# cat /etc/udev/rules.d/50-iscsidisk.rules.bak 
+SUBSYSTEM=="block", ATTR{size}=="20971520", ATTRS{model}=="diskb           ", ATTRS{vendor}=="LIO-ORG ", SYMLINK+="iscsi/vdb"
+[root@VM1 ~]# multipath  -ll
+mpatha (3600140582462ff3c0a6442da3c653f3a) dm-2 LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=rw
+|-+- policy='service-time 0' prio=1 status=active
+| `- 3:0:0:0 sdb 8:16 active ready running
+`-+- policy='service-time 0' prio=1 status=enabled
+  `- 2:0:0:0 sda 8:0  active ready running
+[root@VM1 ~]# reboot
+[root@VM1 ~]# systemctl is-active NetworkManager
+active
+
+[root@VM1 ~]# route del default gw 192.168.2.254
+
+[root@VM1 ~]# route add  default gw 192.168.2.54
+
+[root@VM1 ~]# ls /var/www/html/
+[root@VM1 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.54
+0.0.0.0
+0.0.0.0
+[root@VM1 ~]# hostnamectl set-hostname host50
+[root@VM1 ~]# exit
+[root@room9pc01 ~]# ssh -X 192.168.4.50
+
+[root@host50 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@host50 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.54
+0.0.0.0
+[root@host50 ~]# curl http://192.168.4.52/a.html
+server51
+[root@host50 ~]# curl http://192.168.2.52/a.html
+server51
+
+[root@host50 ~]# ifdown eth0
+[root@host50 ~]# ifup eth0
+连接已成功激活（D-Bus 活动路径：/org/freedesktop/NetworkManager/ActiveConnection/5）
+[root@host50 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@host50 ~]# route del default gw 192.168.2.54
+[root@host50 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.4.254   0.0.0.0         UG    100    0        0 eth0
+192.168.2.0     0.0.0.0         255.255.255.0   U     100    0        0 eth1
+192.168.4.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+
+
+
+
+
+
+
+
+
+
+
+[root@server51 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+[root@server51 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+[root@server51 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0    5G  0 disk 
+[root@server51 ~]# ls /var/www/html/
+[root@server51 ~]# targetcli 
+/> ls
+o- / ..................................................................... [...]
+  o- backstores .......................................................... [...]
+  | o- block .............................................. [Storage Objects: 1]
+  | | o- diskb ....................... [/dev/vdb (10.0GiB) write-thru activated]
+  | |   o- alua ............................................... [ALUA Groups: 1]
+  | |     o- default_tg_pt_gp ................... [ALUA state: Active/optimized]
+  | o- fileio ............................................. [Storage Objects: 0]
+  | o- pscsi .............................................. [Storage Objects: 0]
+  | o- ramdisk ............................................ [Storage Objects: 0]
+  o- iscsi ........................................................ [Targets: 1]
+  | o- iqn.2018-10.cn.tedu:server51 .................................. [TPGs: 1]
+  |   o- tpg1 ........................................... [no-gen-acls, no-auth]
+  |     o- acls ...................................................... [ACLs: 1]
+  |     | o- iqn.2018-10.cn.tedu.client50 ..................... [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 ............................. [lun0 block/diskb (rw)]
+  |     o- luns ...................................................... [LUNs: 1]
+  |     | o- lun0 .................. [block/diskb (/dev/vdb) (default_tg_pt_gp)]
+  |     o- portals ................................................ [Portals: 1]
+  |       o- 0.0.0.0:3260 ................................................. [OK]
+/> /iscsi/iqn.2018-10.cn.tedu:server51/tpg1/acls create  iqn.2018-10.cn.tedu.client52
+Created Node ACL for iqn.2018-10.cn.tedu.client52
+Created mapped LUN 0.
+/> /iscsi/iqn.2018-10.cn.tedu:server51/tpg1/acls create  iqn.2018-10.cn.tedu.client53
+Created Node ACL for iqn.2018-10.cn.tedu.client53
+Created mapped LUN 0.
+/> ls
+o- / .......................................................................... [...]
+  o- backstores ............................................................... [...]
+  | o- block ................................................... [Storage Objects: 1]
+  | | o- diskb ............................ [/dev/vdb (10.0GiB) write-thru activated]
+  | |   o- alua .................................................... [ALUA Groups: 1]
+  | |     o- default_tg_pt_gp ........................ [ALUA state: Active/optimized]
+  | o- fileio .................................................. [Storage Objects: 0]
+  | o- pscsi ................................................... [Storage Objects: 0]
+  | o- ramdisk ................................................. [Storage Objects: 0]
+  o- iscsi ............................................................. [Targets: 1]
+  | o- iqn.2018-10.cn.tedu:server51 ....................................... [TPGs: 1]
+  |   o- tpg1 ................................................ [no-gen-acls, no-auth]
+  |     o- acls ........................................................... [ACLs: 3]
+  |     | o- iqn.2018-10.cn.tedu.client50 .......................... [Mapped LUNs: 1]
+  |     | | o- mapped_lun0 .................................. [lun0 block/diskb (rw)]
+  |     | o- iqn.2018-10.cn.tedu.client52 .......................... [Mapped LUNs: 1]
+  |     | | o- mapped_lun0 .................................. [lun0 block/diskb (rw)]
+  |     | o- iqn.2018-10.cn.tedu.client53 .......................... [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 .................................. [lun0 block/diskb (rw)]
+  |     o- luns ........................................................... [LUNs: 1]
+  |     | o- lun0 ....................... [block/diskb (/dev/vdb) (default_tg_pt_gp)]
+  |     o- portals ..................................................... [Portals: 1]
+  |       o- 0.0.0.0:3260 ...................................................... [OK]
+  o- loopback .......................................................... [Targets: 0]
+/> saveconfig 
+Last 10 configs saved in /etc/target/backup.
+Configuration saved to /etc/target/saveconfig.json
+/> exit
+Global pref auto_save_on_exit=true
+Last 10 configs saved in /etc/target/backup.
+Configuration saved to /etc/target/saveconfig.json
+[root@server51 ~]# 
+[root@server51 ~]# fdisk /dev/vdc
+使用磁盘标识符 0x13c1d4d6 创建新的 DOS 磁盘标签。
+命令(输入 m 获取帮助)：n
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p
+分区号 (1-4，默认 1)：
+起始 扇区 (2048-10485759，默认为 2048)：
+将使用默认值 2048
+Last 扇区, +扇区 or +size{K,M,G} (2048-10485759，默认为 10485759)：+2G
+分区 1 已设置为 Linux 类型，大小设为 2 GiB
+
+命令(输入 m 获取帮助)：p
+
+磁盘 /dev/vdc：5368 MB, 5368709120 字节，10485760 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+
+   设备 Boot      Start         End      Blocks   Id  System
+/dev/vdc1            2048     4196351     2097152   83  Linux
+
+命令(输入 m 获取帮助)：w
+
+[root@server51 ~]# mkfs.ext4 /dev/vdc1
+
+[root@server51 ~]# blkid /dev/vdc1
+/dev/vdc1: UUID="2901e616-dca5-45b8-b464-6975fab24ffb" TYPE="ext4" 
+[root@server51 ~]# mkdir /sharedir
+[root@server51 ~]# mount /dev/vdc1 /sharedir
+[root@server51 ~]# df -hT /sharedir
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/vdc1      ext4  2.0G  6.0M  1.8G    1% /sharedir
+
+[root@server51 ~]# blkid /dev/vdc
+/dev/vdc: PTTYPE="dos" 
+[root@server51 ~]# blkid /dev/vdc1
+/dev/vdc1: UUID="2901e616-dca5-45b8-b464-6975fab24ffb" TYPE="ext4" 
+  /*****软件包nfs-utils用来提供NFS共享服务及相关工具，而软件包rpcbind用来提供RPC协议的支持
+[root@server51 ~]# rpm -q  nfs-utils  rpcbind
+nfs-utils-1.3.0-0.48.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+
+[root@server51 ~]# systemctl is-active  nfs-utils rpcbind
+inactive
+inactive
+[root@server51 ~]# showmount -e localhost
+clnt_create: RPC: Program not registered
+
+[root@server51 ~]# vim  /etc/exports
+/****
+修改/etc/exports文件，添加共享目录设置
+默认情况下，来自NFS客户端的root用户会被降权，若要保留其root权限，
+注意应添加no_root_squash控制参数(没有该参数，默认root会被自动降级为普通账户)；
+限制只读的参数为ro、可读可写为rw，相关配置操作如下所示：
+[root@proxy ~]# vim  /etc/exports
+/root           192.168.2.100(rw,no_root_squash)
+/usr/src        192.168.2.0/24(ro)
+***/
+
+[root@server51 ~]# cat /etc/exports
+/sharedir  *(rw)
+[root@server51 ~]# systemctl restart  rpcbind  #依次启动rpcbiind、nfs服务：
+[root@server51 ~]# systemctl enable  rpcbind
+[root@server51 ~]# systemctl restart  nfs-server
+[root@server51 ~]# systemctl enable  nfs-server
+
+[root@server51 ~]# showmount -e localhost  #启动NFS共享相关服务，确认共享列表
+Export list for localhost:
+/sharedir *
+[root@server51 ~]# ls /sharedir/
+lost+found
+[root@server51 ~]# echo server51 > /sharedir/a.html
+[root@server51 ~]# ls /sharedir/
+a.html  lost+found
+[root@server51 ~]# ls -ld /sharedir/
+drwxr-xr-x. 3 root root 4096 10月  9 10:54 /sharedir/
+
+[root@server51 ~]# chmod +w /sharedir/
+[root@server51 ~]# ls -ld /sharedir/
+drwxr-xr-x. 3 root root 4096 10月  9 10:54 /sharedir/
+
+[root@server51 ~]# chmod a+w /sharedir/
+[root@server51 ~]# ls -ld /sharedir/
+drwxrwxrwx. 3 root root 4096 10月  9 10:54 /sharedir/
+[root@server51 ~]# 
+[root@server51 ~]# blkid /dev/vdb
+/dev/vdb: UUID="7a8d3298-363d-494d-9c32-24f2faa6abbc" TYPE="ext4" 
+[root@server51 ~]# ls /sharedir/
+a.html  lost+found  vm52.html  vm53.html
+[root@server51 ~]# route -n |awk  '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+[root@server51 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.51
+192.168.2.51
+127.0.0.1
+192.168.122.1
+[root@server51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+[root@VM3 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+[root@VM3 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+[root@VM3 ~]# ls /var/www/html/
+index.html
+[root@VM3 ~]# yum -y install httpd
+[root@VM3 ~]# ss -anptul |grep :80
+[root@VM3 ~]# systemctl start httpd
+[root@VM3 ~]# systemctl enable httpd
+[root@VM3 ~]# echo "VM3 client 52" >/var/www/html/index.html 
+[root@VM3 ~]# curl http://192.168.4.52
+VM3 client 52
+[root@VM3 ~]# yum -y install iscsi-initiator-utils |tail -4
+[root@VM3 ~]# yum -y install iscsi-initiator-utils.i686 |tail -4
+  xz-libs.i686 0:5.2.2-1.el7                                                    
+  zlib.i686 0:1.2.7-17.el7                                                      
+
+完毕！
+[root@VM3 ~]# rpm -q iscsi-initiator-utils
+iscsi-initiator-utils-6.2.0.874-4.el7.x86_64
+iscsi-initiator-utils-6.2.0.874-4.el7.i686
+[root@VM3 ~]# vim /etc/iscsi/initiatorname.iscsi 
+[root@VM3 ~]# cat /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.2018-10.cn.tedu.client52
+[root@VM3 ~]# systemctl daemon-reload 
+[root@VM3 ~]# systemctl restart iscsi
+iscsid.service          iscsi.service           iscsiuio.service
+iscsid.socket           iscsi-shutdown.service  iscsiuio.socket
+[root@VM3 ~]# systemctl restart iscsid
+[root@VM3 ~]# systemctl restart iscsi
+[root@VM3 ~]# systemctl enable  iscsi
+[root@VM3 ~]# systemctl enable  iscsid
+Created symlink from /etc/systemd/system/multi-user.target.wants/iscsid.service to /usr/lib/systemd/system/iscsid.service.
+[root@VM3 ~]# iscsiadm  --mode  discoverydb  --type  sendtargets \
+> --portal 192.168.4.51  --discover
+192.168.4.51:3260,1 iqn.2018-10.cn.tedu:server51
+[root@VM3 ~]# iscsiadm  --mode  discoverydb  --type  sendtargets --portal 192.168.2.51  --discover
+192.168.2.51:3260,1 iqn.2018-10.cn.tedu:server51
+[root@VM3 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51 --portal 192.168.4.51:3260  -l
+Logging in to [iface: default, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260] (multiple)
+Login to [iface: default, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260] successful.
+[root@VM3 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+[root@VM3 ~]# blkid /dev/sda
+/dev/sda: UUID="7a8d3298-363d-494d-9c32-24f2faa6abbc" TYPE="ext4" 
+[root@VM3 ~]# mount  /dev/sda1  /var/www/html/
+mount: 特殊设备 /dev/sda1 不存在
+[root@VM3 ~]# mount  /dev/sda  /var/www/html/
+[root@VM3 ~]# ls /var/www/html/
+lost+found  test.html
+[root@VM3 ~]# curl http://192.168.4.53/test.html
+new link iscsi
+[root@VM3 ~]# curl http://192.168.4.52/test.html
+new link iscsi
+[root@VM3 ~]# umount /var/www/html/
+[root@VM3 ~]# iscsiadm --mode node --targetname iqn.2018-10.cn.tedu:server51 --portal 192.168.4.51:3260  -u
+Logging out of session [sid: 1, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260]
+Logout of [sid: 1, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260] successful.
+[root@VM3 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+[root@VM3 ~]# 
+[root@VM3 ~]# ls /var/www/html/
+index.html
+[root@VM3 ~]# cat /var/www/html/index.html 
+VM3 client 52
+[root@VM3 ~]# showmount  -e 192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+[root@VM3 ~]# mount 192.168.4.51:/sharedir  /var/www/html/
+[root@VM3 ~]# ls /var/www/html/
+lost+found
+[root@VM3 ~]# ls /var/www/html/
+a.html  lost+found
+[root@VM3 ~]# echo "vm3 clinet 52 yy" > /var/www/html/vm52.html
+[root@VM3 ~]# ls /var/www/html/
+a.html  lost+found  vm52.html  vm53.html
+
+[root@VM3 ~]# curl http://192.168.4.52/a.html
+server51
+[root@VM3 ~]# curl http://192.168.4.52/vm52.html
+vm3 clinet 52 yy
+[root@VM3 ~]# curl http://192.168.4.52/vm53.html
+vm4 client 53 yy
+/***
+[root@VM3 ~]# useradd -M xxuser 
+[root@VM3 ~]# ls /home
+lisi  nginx
+[root@VM3 ~]# id xxuser
+uid=1002(xxuser) gid=1002(xxuser) 组=1002(xxuser)
+[root@VM3 ~]# grep xxuser /etc/group
+xxuser:x:1002:
+****/
+[root@VM3 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+[root@VM3 ~]# route add default gw 192.168.4.54
+
+[root@VM3 ~]# systemctl stop NetworkManager
+
+[root@VM3 ~]# route del default gw 192.168.4.254
+
+[root@VM3 ~]# ls /var/www/html/
+a.html  lost+found  vm52.html  vm53.html
+
+[root@VM3 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.54
+192.168.2.254
+0.0.0.0
+[root@VM3 ~]# hostnamectl set-hostname host52
+[root@VM3 ~]# exit
+
+[root@room9pc01 ~]# ssh -X 192.168.4.52
+
+[root@host52 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+192.168.2.52
+127.0.0.1
+192.168.122.1
+[root@host52 ~]# 
+[root@host52 ~]# route del default gw 192.168.4.54
+[root@host52 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.254   0.0.0.0         UG    101    0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     100    0        0 eth1
+192.168.4.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@host52 ~]# cd /proc/sys/net/ipv4/conf/
+[root@host52 conf]# ls
+all  default  eth0  eth1  eth2  eth3  lo  virbr0  virbr0-nic
+
+[root@host52 conf]# cat lo/arp_ignore
+0
+[root@host52 conf]# echo 1 > lo/arp_ignore
+[root@host52 conf]# cat lo/arp_ignore
+1
+[root@host52 conf]# 
+[root@host52 conf]# ls all/arp_ignore 
+all/arp_ignore
+[root@host52 conf]# echo 1 > all/arp_ignore
+[root@host52 conf]# cat all/arp_ignore
+1
+[root@host52 conf]# echo 2 > lo/arp_announce 
+[root@host52 conf]# cat lo/arp_announce
+2
+[root@host52 conf]# echo 2 > all/arp_announce 
+[root@host52 conf]# cat all/arp_announce
+2
+[root@host52 conf]# 
+[root@host52 conf]# vim /etc/rc.local 
+[root@host52 conf]# tail -5 /etc/rc.local
+touch /var/lock/subsys/local
+echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce 
+echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore 
+echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce
+
+[root@host52 conf]# ifconfig lo
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 1252  bytes 99486 (97.1 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1252  bytes 99486 (97.1 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@host52 ~]# ifconfig  lo:1  192.168.4.253/32
+[root@host52 ~]# echo $?
+0
+[root@host52 ~]# curl http://192.168.4.52/a.html
+server51
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@VM4 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+[root@VM4 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+[root@VM4 ~]# ls /var/www/html/
+[root@VM4 ~]# yum -y install httpd
+
+[root@VM4 ~]# ss -anptul |grep :80
+[root@VM4 ~]# ss -anptul |grep nginx
+[root@VM4 ~]# systemctl start httpd
+[root@VM4 ~]# systemctl enable httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+[root@VM4 ~]# echo "VM4 client 53" >/var/www/html/index.html
+[root@VM4 ~]# curl http://192.168.4.53
+VM4 client 53
+[root@VM4 ~]# yum -y install iscsi-initiator-utils |tail -4
+
+[root@VM4 ~]#  yum -y install iscsi-initiator-utils.i686 
+
+[root@VM4 ~]# rpm -q iscsi-initiator-utils
+iscsi-initiator-utils-6.2.0.874-4.el7.x86_64
+iscsi-initiator-utils-6.2.0.874-4.el7.i686
+[root@VM4 ~]# vim /etc/iscsi/initiatorname.iscsi 
+[root@VM4 ~]# cat /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.2018-10.cn.tedu.client53
+[root@VM4 ~]# systemctl daemon-reload 
+[root@VM4 ~]# systemctl restart iscsid
+[root@VM4 ~]# systemctl restart iscsi
+[root@VM4 ~]# systemctl enable iscsid
+Created symlink from /etc/systemd/system/multi-user.target.wants/iscsid.service to /usr/lib/systemd/system/iscsid.service.
+[root@VM4 ~]# systemctl enable iscsi
+[root@VM4 ~]# iscsiadm  --mode  discoverydb  --type  sendtargets --portal 192.168.2.51  --discover
+192.168.2.51:3260,1 iqn.2018-10.cn.tedu:server51
+[root@VM4 ~]# iscsiadm  --mode  discoverydb  --type  sendtargets --portal 192.168.4.51  --discover
+192.168.4.51:3260,1 iqn.2018-10.cn.tedu:server51
+[root@VM4 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51 --portal 192.168.4.51:3260  -l
+Logging in to [iface: default, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260] (multiple)
+Login to [iface: default, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260] successful.
+[root@VM4 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+[root@VM4 ~]# blkid /dev/sda
+/dev/sda: UUID="7a8d3298-363d-494d-9c32-24f2faa6abbc" TYPE="ext4" 
+[root@VM4 ~]# mount  /dev/sda  /var/www/html/
+[root@VM4 ~]# ls /var/www/html/
+lost+found  test.html
+[root@VM4 ~]# curl http://192.168.4.51/test.html
+curl: (7) Failed connect to 192.168.4.51:80; 拒绝连接
+[root@VM4 ~]# curl http://192.168.4.53/test.html
+new link iscsi
+[root@VM4 ~]# 
+[root@VM4 ~]# umount /var/www/html/
+[root@VM4 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51 --portal 192.168.4.51:3260  -u
+Logging out of session [sid: 1, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260]
+Logout of [sid: 1, target: iqn.2018-10.cn.tedu:server51, portal: 192.168.4.51,3260] successful.
+[root@VM4 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+[root@VM4 ~]# 
+[root@VM4 ~]# cat /var/www/html/index.html 
+VM4 client 53
+[root@VM4 ~]# showmount -e 192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+[root@VM4 ~]# mount 192.168.4.51:/sharedir /var/www/html/
+[root@VM4 ~]# ls /var/www/html/
+lost+found
+[root@VM4 ~]# ls /var/www/html/
+a.html  lost+found
+[root@VM4 ~]# elinks -dump http://192.168.4.53/a.html
+   server51
+[root@VM4 ~]# elinks -dump http://192.168.4.52/a.html
+   server51
+[root@VM4 ~]# echo "vm4 client 53 yy" > /var/www/html/vm53.html
+[root@VM4 ~]# ls /var/www/html/
+a.html  lost+found  vm52.html  vm53.html
+[root@VM4 ~]# elinks -dump http://192.168.4.53/vm53.html
+   vm4 client 53 yy
+[root@VM4 ~]# elinks -dump http://192.168.4.52/vm52.html
+   vm3 clinet 52 yy
+
+[root@VM4 ~]# route add default gw 192.168.4.54
+
+[root@VM4 ~]# systemctl stop NetworkManager
+
+[root@VM4 ~]# route del default gw 192.168.4.254
+[root@VM4 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.4.54    0.0.0.0         UG    0      0        0 eth0
+0.0.0.0         192.168.2.254   0.0.0.0         UG    101    0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     100    0        0 eth1
+192.168.4.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+[root@VM4 ~]# ls /var/www/html/
+a.html  lost+found  vm52.html  vm53.html
+[root@VM4 ~]# hostnamectl set-hostname host53
+[root@VM4 ~]# exit
+
+[root@room9pc01 ~]# ssh -X 192.168.4.53
+
+[root@host53 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+[root@host53 ~]# 
+[root@host53 ~]# route del default gw 192.168.4.54
+[root@host53 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.254   0.0.0.0         UG    101    0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     100    0        0 eth1
+192.168.4.0     0.0.0.0         255.255.255.0   U     100    0        0 eth0
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@host53 ~]# cd /proc/sys/net/ipv4/conf/
+[root@host53 conf]# ls
+all  default  eth0  eth1  eth2  eth3  lo  virbr0  virbr0-nic
+
+[root@host53 conf]# pwd
+/proc/sys/net/ipv4/conf
+[root@host53 conf]# echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore 
+[root@host53 conf]# echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce 
+[root@host53 conf]# echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore 
+[root@host53 conf]# echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce 
+
+[root@host53 conf]# vim /etc/rc.local 
+[root@host53 conf]# tail -5 /etc/rc.local 
+touch /var/lock/subsys/local
+echo 1 >/proc/sys/net/ipv4/conf/lo/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/lo/arp_announce
+echo 1 >/proc/sys/net/ipv4/conf/all/arp_ignore
+echo 2 >/proc/sys/net/ipv4/conf/all/arp_announce
+[root@host53 conf]# ifconfig  lo:1  192.168.4.253/32
+
+[root@host53 ~]# curl http://192.168.4.53/a.html
+server51
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@client ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.100
+192.168.2.15
+201.1.2.10
+127.0.0.1
+192.168.122.1
+[root@client ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda             8:0    0   10G  0 disk  
+└─mpatha      253:2    0   10G  0 mpath 
+sdb             8:16   0   10G  0 disk  
+└─mpatha      253:2    0   10G  0 mpath 
+sr0            11:0    1 1024M  0 rom   
+vda           252:0    0   20G  0 disk  
+├─vda1        252:1    0    1G  0 part  /boot
+└─vda2        252:2    0   19G  0 part  
+  ├─rhel-root 253:0    0   17G  0 lvm   /
+  └─rhel-swap 253:1    0    2G  0 lvm   [SWAP]
+vdb           252:16   0   10G  0 disk  
+[root@client ~]# ls /var/www/html/
+[root@client ~]# df -hT /var/www/html/
+文件系统              类型  容量  已用  可用 已用% 挂载点
+/dev/mapper/rhel-root xfs    17G  3.8G   14G   22% /
+[root@client ~]# 
+[root@client ~]# nmcli connection modify eth0 ipv4.method manual ipv4.addresses  192.168.4.54/24 ipv4.gateway 192.168.4.254 connection.autoconnect yes;
+[root@client ~]# nmcli connection up eth0
+[root@client ~]# nmcli connection modify eth1 ipv4.method manual ipv4.addresses  192.168.2.54/24  ipv4.gateway  192.168.2.254 connection.autoconnect yes;
+[root@client ~]# nmcli connection up eth1
+
+[root@client ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.2.10
+127.0.0.1
+192.168.122.1
+[root@client ~]# hostnamectl set-hostname host54
+ 
+[root@client ~]# sysctl -a |grep ip_forward
+.............
+sysctl: reading key "net.ipv6.conf.lo.stable_secret"
+net.ipv4.ip_forward = 1
+net.ipv4.ip_forward_use_pmtu = 0
+sysctl: reading key "net.ipv6.conf.virbr0.stable_secret"
+sysctl: reading key "net.ipv6.conf.virbr0-nic.stable_secret"
+[root@client ~]# vim /etc/sysctl.conf 
+[root@client ~]# tail -1 /etc/sysctl.conf 
+net.ipv4.ip_forward = 1
+[root@client ~]# ls /etc/sysctl*
+/etc/sysctl.conf
+
+/etc/sysctl.d:
+99-sysctl.conf
+[root@client ~]# sysctl  -p
+net.ipv4.ip_forward = 1
+[root@client ~]# exit
+[root@host54 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.2.10
+127.0.0.1
+192.168.122.1
+[root@host54 ~]# yum list |grep ipvsadm
+ipvsadm.x86_64                          1.27-7.el7                 rhel7        
+[root@host54 ~]# yum -y install ipvsadm |tail -3
+  ipvsadm.x86_64 0:1.27-7.el7                                                   
+
+完毕！
+[root@host54 ~]# rpm -q ipvsadm
+ipvsadm-1.27-7.el7.x86_64
+[root@host54 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+201.1.2.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@host54 ~]# man ipvsadm
+[root@host54 ~]# systemctl is-active NetworkManager
+active
+[root@host54 ~]# ipvsadm -L
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+[root@host54 ~]# ipvsadm -A -t  192.168.2.54:80 -s rr
+[root@host54 ~]# ipvsadm -L
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  host54:http rr
+[root@host54 ~]# 
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.2.54:80 rr
+[root@host54 ~]# ipvsadm -a -t  192.168.2.54:80 -r 192.168.4.52:80 -m
+[root@host54 ~]# ipvsadm -a -t  192.168.2.54:80 -r 192.168.4.53:80 -m
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.2.54:80 rr
+  -> 192.168.4.52:80              Masq    1      0          0         
+  -> 192.168.4.53:80              Masq    1      0          0  
+
+[root@host54 ~]# ipvsadm  -S #保存
+-A -t host54:http -s rr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+
+[root@host54 ~]# ipvsadm -C  #删除
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+      -----------------------------创建虚拟服务-------------------
+[root@host54 ~]# ipvsadm  -A  -t 192.168.2.54:80  -s  rr
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.2.54:80 rr
+-------------------------------------------------添加realserver----------------
+[root@host54 ~]# ipvsadm -a -t  192.168.2.54:80 -r 192.168.4.52:80  -m
+[root@host54 ~]# ipvsadm -a -t  192.168.2.54:80 -r 192.168.4.53:80  -m
+[root@host54 ~]# ipvsadm  -S  #保存配置
+-A -t host54:http -s rr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]#
+[root@host54 ~]# watch
+
+Usage:
+ watch [options] command
+
+Options:
+  -b, --beep             beep if command has a non-zero exit
+  -c, --color            interpret ANSI color and style sequences
+  -d, --differences[=<permanent>]
+                         highlight changes between updates
+  -e, --errexit          exit if command has a non-zero exit
+  -g, --chgexit          exit when output from command changes
+  -n, --interval <secs>  seconds to wait between updates
+  -p, --precise          attempt run command in precise intervals
+  -t, --no-title         turn off header
+  -x, --exec             pass command to exec instead of "sh -c"
+
+[root@host54 ~]# systemctl start httpd
+[root@host54 ~]# ss -anptul |grep :80
+tcp    LISTEN     0      128      :::80                   :::*                   users:(("httpd",pid=8981,fd=4),("httpd",pid=8980,fd=4),("httpd",pid=8979,fd=4),("httpd",pid=8978,fd=4),("httpd",pid=8977,fd=4),("httpd",pid=8975,fd=4))
+[root@host54 ~]# systemctl enable httpd
+
+[root@host54 ~]# curl http://192.168.2.54/a.html
+server51
+[root@host54 ~]# setenforce 0
+[root@host54 ~]# firewall-cmd --set-default-zone=trusted
+FirewallD is not running
+
+[root@host54 ~]# watch -n 2 ipvsadm -Ln --stats
+
+[root@host54 ~]# ipvsadm -E  -t  192.168.2.54:80 -s  wrr
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.2.54:80 wrr
+  -> 192.168.4.52:80              Masq    1      0          0         
+  -> 192.168.4.53:80              Masq    1      0          0         
+[root@host54 ~]# ipvsadm  -Ln  --stats
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port               Conns   InPkts  OutPkts  InBytes OutBytes
+  -> RemoteAddress:Port
+TCP  192.168.2.54:80                     4       23        4     1422      493
+  -> 192.168.4.52:80                     2       11        4      702      493
+  -> 192.168.4.53:80                     2       12        0      720        0
+[root@host54 ~]# ipvsadm  -Z
+[root@host54 ~]# ipvsadm  -Ln  --stats
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port               Conns   InPkts  OutPkts  InBytes OutBytes
+  -> RemoteAddress:Port
+TCP  192.168.2.54:80                     0        0        0        0        0
+  -> 192.168.4.52:80                     0        0        0        0        0
+  -> 192.168.4.53:80                     0        0        0        0        0
+[root@host54 ~]# 
+[root@host54 ~]# tail -3 /etc/sysconfig/ipvsadm-config
+#   Value: yes|no,  default: yes
+# Print IP addresses and port numbers in numeric format in the status output.
+IPVS_STATUS_NUMERIC="yes"
+[root@host54 ~]# systemctl enable ipvsadm.service 
+Created symlink from /etc/systemd/system/multi-user.target.wants/ipvsadm.service to /usr/lib/systemd/system/ipvsadm.service.
+[root@host54 ~]# ipvsadm -S >/etc/sysconfig/ipvsadm-config 
+
+[root@host54 ~]# rpm -q ipvsadm 
+ipvsadm-1.27-7.el7.x86_64
+[root@host54 ~]# systemctl is-active NetworkManager
+active
+
+[root@host54 ~]# systemctl stop NetworkManager
+
+[root@host54 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.2.10
+127.0.0.1
+192.168.122.1
+[root@host54 ~]# ipvsadm -Ln
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port Scheduler Flags
+  -> RemoteAddress:Port           Forward Weight ActiveConn InActConn
+TCP  192.168.2.54:80 wrr
+  -> 192.168.4.52:80              Masq    1      0          0         
+  -> 192.168.4.53:80              Masq    1      0          0         
+[root@host54 ~]# ipvsadm  -C
+[root@host54 ~]# tail -3 /etc/sysconfig/ipvsadm-config 
+-A -t host54:http -s wrr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# ipvsadm-save -n > /etc/sysconfig/ipvsadm
+[root@host54 ~]# tail -3 /etc/sysconfig/ipvsadm-config 
+-A -t host54:http -s wrr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# ipvsadm -C
+[root@host54 ~]# ipvsadm -S
+[root@host54 ~]# ipvsadm-save -n > /etc/sysconfig/ipvsadm
+[root@host54 ~]# tail -3 /etc/sysconfig/ipvsadm-config 
+-A -t host54:http -s wrr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# ipvsadm -S > /etc/sysconfig/ipvsadm
+[root@host54 ~]# tail -3 /etc/sysconfig/ipvsadm-config 
+-A -t host54:http -s wrr
+-a -t host54:http -r 192.168.4.52:http -m -w 1
+-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# vim /etc/sysconfig/ipvsadm-config
+[root@host54 ~]# cat /etc/sysconfig/ipvsadm-config
+#-A -t host54:http -s wrr
+#-a -t host54:http -r 192.168.4.52:http -m -w 1
+#-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.4.254   0.0.0.0         UG    100    0        0 eth0
+0.0.0.0         201.1.2.254     0.0.0.0         UG    101    0        0 eth3
+0.0.0.0         192.168.2.254   0.0.0.0         UG    102    0        0 eth1
+
+[root@host54 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.2.10
+127.0.0.1
+192.168.122.1
+[root@host54 ~]# ifconfig eth0:1  192.168.4.253/32
+[root@host54 ~]# vim /etc/rc.local 
+[root@host54 ~]# tail -2 /etc/rc.local
+touch /var/lock/subsys/local
+ifconfig  eth0:1  192.168.4.253
+
+[root@host54 ~]# ipvsadm  -A  -t  192.168.4.253:80  -s  rr
+[root@host54 ~]# ipvsadm  -a  -t  192.168.4.253:80  -r  192.168.4.52:80 -g
+[root@host54 ~]# ipvsadm  -a  -t  192.168.4.253:80  -r  192.168.4.53:80 
+[root@host54 ~]# ipvsadm  -S   #保存所有规则
+-A -t host54:http -s rr
+-a -t host54:http -r 192.168.4.52:http -g -w 1
+-a -t host54:http -r 192.168.4.53:http -g -w 1
+[root@host54 ~]# cat /etc/sysconfig/ipvsadm-config 
+#-A -t host54:http -s wrr
+#-a -t host54:http -r 192.168.4.52:http -m -w 1
+#-a -t host54:http -r 192.168.4.53:http -m -w 1
+[root@host54 ~]# ipvsadm  -S > /etc/sysconfig/ipvsadm-config 
+[root@host54 ~]# cat /etc/sysconfig/ipvsadm-config
+-A -t host54:http -s rr
+-a -t host54:http -r 192.168.4.52:http -g -w 1
+-a -t host54:http -r 192.168.4.53:http -g -w 1
+[root@host54 ~]# 
+[root@host54 ~]#  ipvsadm-save -n  #保存所有规则
+-A -t 192.168.4.253:80 -s rr
+-a -t 192.168.4.253:80 -r 192.168.4.52:80 -g -w 1
+-a -t 192.168.4.253:80 -r 192.168.4.53:80 -g -w 1
+[root@host54 ~]# ls /etc/sysconfig/ipvsadm
+/etc/sysconfig/ipvsadm
+[root@host54 ~]# cat /etc/sysconfig/ipvsadm
+[root@host54 ~]# 
+[root@host54 ~]# watch -n 2 ipvsadm -Ln --stats
+
+Every 2.0s: ipvsadm -Ln --stats                         Tue Oct  9 17:55:40 2018
+IP Virtual Server version 1.2.1 (size=4096)
+Prot LocalAddress:Port               Conns   InPkts  OutPkts  InBytes OutBytes
+  -> RemoteAddress:Port
+TCP  192.168.4.253:80                    0        0        0        0        0
+  -> 192.168.4.52:80                     0        0        0        0        0
+  -> 192.168.4.53:80                     0        0        0        0        0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@proxy ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.5
+192.168.2.5
+201.1.2.5
+127.0.0.1
+192.168.122.1
+[root@proxy ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+└─vdb1        252:17   0   10G  0 part 
+vdc           252:32   0    5G  0 disk 
+[root@proxy ~]# ls /var/www/html/
+[root@proxy ~]# 
+[root@proxy ~]# nmcli connection modify eth0 ipv4.method manual ipv4.addresses  192.168.4.55/24 ipv4.gateway 192.168.4.254 connection.autoconnect yes;nmcli connection up eth0
+错误：网络管理器未运行。
+错误：网络管理器未运行。
+[root@proxy ~]# systemctl is-active NetworkManager
+inactive
+[root@proxy ~]# systemctl restart  NetworkManager
+[root@proxy ~]# systemctl enable NetworkManager
+
+[root@proxy ~]# nmcli connection modify eth0 ipv4.method manual ipv4.addresses  192.168.4.55/24 ipv4.gateway 192.168.4.254 connection.autoconnect yes;nmcli connection up eth0
+
+[root@proxy ~]# nmcli connection modify eth1 ipv4.method manual ipv4.addresses  192.168.2.55/24 ipv4.gateway 192.168.2.254 connection.autoconnect yes;nmcli connection up eth1
+[root@proxy ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.2.5
+127.0.0.1
+192.168.122.1
+[root@proxy ~]# hostnamectl set-hostname host55
+[root@proxy ~]# exit
+[root@host55 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.2.5
+127.0.0.1
+192.168.122.1
+[root@host55 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+201.1.2.254
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+
+
+
+
+
+
+
+

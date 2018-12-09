@@ -1,0 +1,349 @@
+
+
+
+172.40.50.117  vnc 7000
+++++++++++++++++++++++++++++++++
+集群与存储 5天
+存储
+iscsi 共享存储
+ceph  分布式存储
+配置LB集群 
+配置HA集群
+
+day01 
+192.168.4.50  client50
+运行网站服务 并编写网页文件test.html
+在宿主机访问50主机的网站服务
+
+192.168.4.51  storage51 添加1块5G的硬盘
+
+配置yum源
+关闭防火墙 和 selinux 及 NetworkManager
+
+
+配置iscsi
+1 配置后端存储 51
+1.1 安装提供服务的软件包
+storage51 ~]# yum -y install  targetcli
+[root@storage51 ~]# rpm -q  targetcli
+targetcli-2.1.fb46-1.el7.noarch
+
+1.2 创建存储设备
+]# targetcli
+给存储设备起名字
+/> backstores/block create diskb /dev/vdb
+
+创建iqn名称（格式）
+/> /iscsi create iqn.2018-10.cn.tedu.storage51:vdb
+
+定义ACL
+/> /iscsi/iqn.2018-
+
+10.cn.tedu.storage51:vdb/tpg1/acls create iqn.2018-
+
+10.cn.tedu.client50
+
+绑定iqn和储存设备
+/> /iscsi/iqn.2018-
+
+10.cn.tedu.storage51:vdb/tpg1/luns create 
+
+/backstores/block/diskb
+
+定义服务使用的IP地址和端口号（默认）
+
+保存配置
+/> saveconfig
+
+退出配置
+/> exit
+
+查看配置文件
+storage51 ~]# cat /etc/target/saveconfig.json
+
+查看端口号
+storage51 ~]# netstat -utnlp  | grep :3260
+
+设置服务开机自启
+storage51 ~]# systemctl  enable  target.service
+
+2 配置前端应用 50
+2.1 装包
+[root@client50 ~]# rpm -q iscsi-initiator-utils
+iscsi-initiator-utils-6.2.0.874-4.el7.x86_64
+
+指定iqn名称
+[root@client50 ~]# cat 
+
+/etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.2018-10.cn.tedu.client50
+[root@client50 ~]#
+
+2.2 发现设备
+]#iscsiadm --mode discoverydb --type sendtargets --
+
+portal 192.168.4.51 --discover
+
+2.3 登入设备
+--login  登入
+--logout 登出
+]#iscsiadm --mode node --targetname iqn.2018-
+
+10.cn.tedu.storage51:vdb --portal 192.168.4.51:3260 
+
+--login
+
+]# lsblk
+]# ls /dev/sd*
+
+登出设备
+]#iscsiadm --mode node --targetname iqn.2018-
+
+10.cn.tedu.storage51:vdb --portal  192.168.1.1:3260 
+
+--logout
+
+
+分区 格式化 挂载
+52  fdisk  /dev/sda  -> n -> p -> 1 ->回车->回车 ->w
+53  lsblk 
+54  blkid  /dev/sda1
+56  mkfs.ext4 /dev/sda1
+54  blkid  /dev/sda1
+   59  rm -rf /var/www/html/test.html 
+   60  mount /dev/sda1 /var/www/html
+   61  df -h /var/www/html/
+   62  vim /var/www/html/test.html
+   63  vim /var/www/html/test2.html
+   64  ls /var/www/html/
+
+在客户端访问50主机的网站服务
+]# curl  http://192.168.4.50/test.html
+
+
+++++++++++++++++++++++++++++
+udev程序的主配置文件
+[root@client50 ~]# vim /etc/udev/udev.conf 
+[root@client50 ~]# man 5 udev.conf
+
+
+显示系统系统的设备信息
+~]# udevadm monitor --property
+
+
+获取已经设备的硬件设备的信息
+
+[root@client50 ~]# udevadm info -q path -n /dev/sdb
+ 
+
+/devices/platform/host8/session6/target8:0:0/8:0:0:0
+
+/block/sdb
+
+]# udevadm info -q all  -p 
+
+/devices/platform/host8/session6/target8:0:0/8:0:0:0
+
+/block/sdb  -a
+
+编写udev规则文件
+]# cat /etc/udev/rules.d/50-iscsidisk.rules
+SUBSYSTEM=="block", ATTR{size}=="10485760", ATTRS
+
+{model}=="diskb           ", ATTRS{vendor}=="LIO-ORG 
+
+", SYMLINK+="iscsi/vdb"
+[root@client50 ~]# 
+
+测试规则文件
+登出设备 后 再次登入设备， 在查是能够显示定义的连接文件
+[root@client50 ~]# ls /dev/iscsi/vdb -l
+lrwxrwxrwx. 1 。。。 /dev/iscsi/vdb -> ../sdb
+
+用udev设备名，使用后端的存储设备
+]#fdisk /dev/iscsi/vdb 
+d -> 1 -> w
+
+]#fdisk /dev/iscsi/vdb -> n -> p ->1 -> 回车-> 回车-> 
+
+w
+
+]#lsblk 
+]#mkfs.ext4 /dev/iscsi/vdb 
+]#mount  /dev/iscsi/vdb  /var/www/html/
+]#echo  1111 > /var/www/html/a.html
+]#curl  http://192.168.4.50/a.html
+
+
+多路径
+[root@client50 ~]# umount /var/www/html/
+[root@client50 ~]# iscsiadm --mode node --targetname 
+
+iqn.2018-10.cn.tedu.storage51:vdb --portal 
+
+192.168.4.51:3260 -u
+
+]# cd /etc/udev/rules.d/
+]# mv 50-iscsidisk.rules 50-iscsidisk.rules.bak
+
+
+]#iscsiadm --mode discoverydb --type sendtargets --
+
+portal 192.168.4.51 --discover
+
+]#iscsiadm --mode discoverydb --type sendtargets --
+
+portal 192.168.2.51 --discover
+  
+]#iscsiadm --mode node --targetname iqn.2018-
+
+10.cn.tedu.storage51:vdb --portal 192.168.4.51:3260 
+
+-l
+ 
+]#iscsiadm --mode node --targetname iqn.2018-
+
+10.cn.tedu.storage51:vdb --portal 192.168.2.51:3260 
+
+-l
+
+]#lsblk 
+client50 ~]# rpm -q device-mapper-multipath
+client50 ~]# mpathconf  --user_friendly_names n
+client50 ~]# ls /etc/multipath.conf 
+
+获取磁盘的wwid
+[root@client50 ~]# /usr/lib/udev/scsi_id --
+
+whitelisted --device=/dev/sda
+360014055a3c578a2da04edabff727663
+[root@client50 ~]# 
+[root@client50 ~]# /usr/lib/udev/scsi_id --
+
+whitelisted --device=/dev/sdb
+360014055a3c578a2da04edabff727663
+[root@client50 ~]# 
+
+编辑多路径服务的配置文件
+client50 ~]# vim /etc/multipath.conf
+ 23 defaults {
+ 24         user_friendly_names no
+ 25         find_multipaths yes
+ 26 }
+97 multipaths {
+ 98         multipath {
+ 99                 wwid 
+
+"360014055a3c578a2da04edabff727663"
+100                 alias    mpatha
+101         }
+102 }
+:wq
+
+client50 ~]# systemctl  start  multipathd.service
+
+[root@client50 ~]# ls /dev/mapper/mpatha 
+/dev/mapper/mpatha
+
+查看多路径信息
+client50 ~]# multipath -rr
+client50 ~]# multipath -ll
+client50 ~]# ifdown eth1
+client50 ~]# multipath -rr
+client50 ~]# multipath -ll
+
+
+++++++++++++++++++++++++++++
+扩展ISCSI
+不可以同时挂载
+适合 HA集群  不适合LB
+在51主机配置允许52 和  53 使用 5G 存储数据
+/> /iscsi/iqn.2018-10.cn.tedu.storage51:vdb/tpg1/acls 
+create iqn.2018-10.cn.tedu.client53
+
+/> /iscsi/iqn.2018-10.cn.tedu.storage51:vdb/tpg1/acls 
+create iqn.2018-10.cn.tedu.client52
+
+分别在52和53主机上发现和登入设备 并把磁盘挂载到本机的网页目录下
+]# cat /etc/iscsi/initiatorname.iscsi
+InitiatorName=iqn.2018-10.cn.tedu.client53
+
+]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.4.51 --discover
+
+]#iscsiadm --mode node --targetname iqn.2018-10.cn.tedu.storage51:vdb --portal 192.168.4.51:3260 -l
+
+]#yum -y  install  httpd
+]#mount /dev/sda  /var/www/html/
+]#systemctl   start httpd
+
+52和53主机分别在自己的网页目录下创建自己的网页文件，但在客户端分别访问52和53主机上的网站服务时，都访问不到对方创建的网页文件。
+所有 ISCSI 不可以同时挂载   适合HA集群  不适合LB
+要想LB 集群 也可以使用 要格式化为 GFS 文件系统
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+NFS服务
+
+把51主机新添加的2G磁盘分区格式化为ext4文件系统后，
+
+
+挂载到本机的/sharedir目录下
+]# mkdir /sharedir
+
+[root@storage51 ~]# mount /dev/vdc1 /sharedir/
+
+[root@storage51 ~]# df -h /sharedir/
+/dev/vdc1       2.0G  6.0M  1.9G    1% /sharedir
+ 
+
+使用nfs服务共享本机的/sharedir 目录给网络中的所有主机使用 且有读写权限。
+   39  rpm -q nfs-utils
+   40  rpm -q rpcbind
+
+[root@storage51 ~]# vim /etc/exports
+/sharedir *(rw)
+:wq
+
+[root@storage51 ~]# chmod  o+w /sharedir/
+
+   52  systemctl  restart nfs-server.service 
+   53  systemctl  restart nfs-utils.service
+
+[root@storage51 ~]# showmount  -e localhost
+Export list for localhost:
+/sharedir *
+[root@storage51 ~]#
+
+分别配置网站服务服务器52 和 53 把共享目录mount 到本机的网页目录下。
+[root@host52 ~]# showmount -e  192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+[root@host52 ~]# mount 192.168.4.51:/sharedir /var/www/html/
+[root@host52 ~]#
+
+[root@host53 ~]# showmount -e  192.168.4.51
+Export list for 192.168.4.51:
+/sharedir *
+
+[root@host53 ~]# mount 192.168.4.51:/sharedir /var/www/html/
+
+测试共享：
+在共享目录下创建文件 访问哪一台网站服务器都可以看到。
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

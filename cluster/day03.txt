@@ -1,0 +1,157 @@
+haproxy配置
+1、安装
+[root@vh08 ~]# yum install -y haproxy
+2、修改配置文件
+[root@vh08 ~]# vim /etc/haproxy/haproxy.cfg 
+#---------------------------------------------------------------------
+# main frontend which proxys to the backends
+#---------------------------------------------------------------------
+将main这部分以后的数据全部删除，添加以下内容：
+listen stats
+    bind 0.0.0.0:1080
+    stats refresh 30s
+    stats uri /stats
+    stats realm Haproxy Manager
+    stats auth admin:admin
+    
+listen web_backend 0.0.0.0:80
+    cookie SERVERID rewrite
+    balance roundrobin
+    server web1 192.168.4.6:80 cookie a1i1 check inter 2000 rise 2 fall
+5
+    server web2 192.168.4.7:80 cookie a1i2 check inter 2000 rise 2 fall 5
+3、起动haproxy服务： systemctl start haproxy
+
+配置调度器本身也是日志服务器， 可以接受通过网络发来的日志
+[root@vh08 ~]# vim /etc/rsyslog.conf 
+# Provides UDP syslog reception
+$ModLoad imudp
+$UDPServerRun 514
+
+# Provides TCP syslog reception
+$ModLoad imtcp
+$InputTCPServerRun 514
+[root@vh08 ~]# systemctl restart rsyslog.service 
+[root@vh08 ~]# netstat -tulpn | grep :514
+查看haproxy的日志
+[root@vh08 ~]# tail -f /var/log/messages 
+客户端访问负载均衡集群，将有日志产生
+
+
+
+
+
+
+
+
+
+HSRP：热备份路由协议  思科私有
+VRRP：虚拟冗余路由协议  IETF公共标准
+
+配置高可用的web集群
+1、在两台web服务器上安装keepalived
+[root@vh06 ~]# yum install -y keepalived
+2、配置
+[root@vh06 ~]# vim /etc/keepalived/keepalived.conf 
+将全局的vrrp_strict这一行注释掉
+vrrp_instance VI_1 {
+    state MASTER              # 从属的用BACKUP
+    interface eth0
+    virtual_router_id 51
+    priority 150
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.4.200
+    }
+}
+后续部分全部删除
+
+
+LVS+KEEPALIVED，实现高可用、负载均衡的web集群
+一、web服务器配置
+1、修改内核参数
+2、在lo网卡上配置vip
+二、调度器配置
+1、在两台调度器上安装ipvsadm，但是不要配置规则，因为规则将由keepalived配置文件进行配置
+2、打开调度器的路由转发功能，7版本默认就是打开的
+3、配置vip。注意，vip是通过keepalived配置的，不要手工配置
+三、清理
+1、将web服务器的keepalived卸载
+[root@vh06 ~]# yum remove -y keepalived
+2、将原来调度器的haproxy卸载
+[root@vh08 ~]# yum remove -y haproxy
+3、将原来调度器的lvs规则清除
+[root@vh08 ~]# ipvsadm -D -t 192.168.4.100:80
+4、清除原来调度器的eth0:0
+[root@vh08 ~]# rm -f /etc/sysconfig/network-scripts/ifcfg-eth0:0
+[root@vh08 ~]# systemctl restart network
+四、配置调度器
+0、安装额外的调度器vh09.tedu.cn 192.168.4.9/24
+1、在两台调度器上安装ipvsadm
+[root@vh09 ~]# yum install -y ipvsadm
+2、在两台调度器上安装keepalived
+[root@vh08 ~]# yum install -y keepalived
+3、配置主调度器
+[root@vh08 ~]# vim /etc/keepalived/keepalived.conf 
+! Configuration File for keepalived
+
+global_defs {
+   notification_email {
+     root@localhost
+   }
+   notification_email_from admin@tedu.cn
+   smtp_server 127.0.0.1
+   smtp_connect_timeout 30
+   router_id vh08
+   vrrp_skip_check_adv_addr
+   # vrrp_strict
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 150
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.4.100
+    }
+}
+
+virtual_server 192.168.4.100 80 {
+    delay_loop 6
+    lb_algo rr
+    lb_kind DR
+    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.4.6 80 {
+        weight 1
+        TCP_CHECK {
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        }
+    }
+    real_server 192.168.4.7 80 {
+        weight 1
+        TCP_CHECK {
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+        }
+    }
+}
+4、备份调度器，同上，注意state为BACKUP，优先级改小
+
+KeepAlived双主配置

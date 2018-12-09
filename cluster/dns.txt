@@ -1,0 +1,186 @@
+
+
+[root@svr7 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+
+[root@svr7 ~]# yum install  bind  bind-chroot -y
+
+[root@svr7 ~]# rpm -qa bind*
+bind-9.9.4-50.el7.x86_64
+bind-libs-lite-9.9.4-50.el7.x86_64
+bind-license-9.9.4-50.el7.noarch
+bind-chroot-9.9.4-50.el7.x86_64
+bind-utils-9.9.4-50.el7.x86_64
+bind-libs-9.9.4-50.el7.x86_64
+[root@svr7 ~]# cp -p /etc/named.conf /root/named.bak
+[root@svr7 ~]# vim /etc/named.conf
+[root@svr7 ~]# cat /etc/named.conf
+options {
+	directory "/var/named";
+	recursion yes;
+};
+zone "tedu.cn" IN {
+	type master;
+	file "tedu.cn.zone";
+};
+zone "qq.com" IN {
+        type master;
+        file "qq.com.zone";
+};
+[root@svr7 ~]# named-checkconf /etc/named.conf ---#检查语法是否正确
+
+[root@svr7 ~]# id named
+uid=25(named) gid=25(named) 组=25(named)
+[root@svr7 ~]# grep named /etc/passwd
+named:x:25:25:Named:/var/named:/sbin/nologin
+
+[root@svr7 ~]# cp -p /var/named/named.localhost  /var/named/tedu.cn.zone[root@svr7 ~]# vim /var/named/tedu.cn.zone
+[root@svr7 ~]# cat /var/named/tedu.cn.zone 
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+tedu.cn.	NS	svr7
+svr7		A	192.168.4.7	
+www		A	1.2.3.4
+ftp		A	5.6.7.8
+[root@svr7 ~]# ls /var/named/
+chroot  dynamic   named.empty      named.loopback  tedu.cn.zone
+data    named.ca  named.localhost  slaves
+
+[root@svr7 ~]# cp  -p  /var/named/tedu.cn.zone  /var/named/qq.com.zone
+[root@svr7 ~]# vim /var/named/qq.com.zone
+[root@svr7 ~]# cat  /var/named/qq.com.zone 
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+qq.com.		NS	svr7
+svr7		A	192.168.4.7	
+www		A	1.2.30.40
+ftp		A	5.6.70.80
+
+
+
+
+-------------------------------------svr7-------------------
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+--------------------------------pc207------------------------------
+[root@pc207 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+[root@pc207 ~]# yum install bind bind-chroot -y
+[root@pc207 ~]# rpm -qa bind*
+bind-9.9.4-50.el7.x86_64
+bind-libs-lite-9.9.4-50.el7.x86_64
+bind-license-9.9.4-50.el7.noarch
+bind-chroot-9.9.4-50.el7.x86_64
+bind-utils-9.9.4-50.el7.x86_64
+bind-libs-9.9.4-50.el7.x86_64
+[root@pc207 ~]# ls /etc/named.conf 
+/etc/named.conf
+[root@pc207 ~]# cp -p /etc/named.conf /root/named.bak
+[root@pc207 ~]# vim  /etc/named.conf 
+[root@pc207 ~]# cat  /etc/named.conf 
+options {
+	directory 	"/var/named";
+	recursion yes;
+};
+zone "bj.qq.com" IN {
+	type master;
+	file "bj.qq.com.zone";
+};
+zone "bj.tedu.cn" IN {
+	type master;
+	file "bj.tedu.cn.zone";
+};
+-------------------named-checkconf /etc/named.conf ---#检查语法是否正确
+[root@pc207 ~]# named-checkconf /etc/named.conf 
+
+[root@pc207 ~]# echo nameserver 192.168.4.7 > /etc/resolv.conf 
+[root@pc207 ~]# cat /etc/resolv.conf
+nameserver 192.168.4.7
+
+[root@pc207 ~]# cp -p /var/named/named.localhost  /var/named/bj.qq.com.zone
+[root@pc207 ~]# vim  /var/named/bj.qq.com.zone
+[root@pc207 ~]# cat  /var/named/bj.qq.com.zone 
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+bj.qq.com.	NS	pc207
+pc207		A	192.168.4.207
+www 		A	6.6.6.6
+bj.qq.com.	A	192.168.4.207
+
+[root@pc207 ~]# cp -p /var/named/bj.qq.com.zone  /var/named/bj.tedu.cn.zone
+[root@pc207 ~]# vim /var/named/bj.tedu.cn.zone
+[root@pc207 ~]# cat /var/named/bj.tedu.cn.zone
+$TTL 1D
+@	IN SOA	@ rname.invalid. (
+					0	; serial
+					1D	; refresh
+					1H	; retry
+					1W	; expire
+					3H )	; minimum
+bj.tedu.cn.	NS	pc207
+pc207		A	192.168.4.207
+www 		A	60.60.60.60
+bj.qq.com.	A	192.168.4.207
+
+[root@pc207 ~]# ls /var/named/
+bj.qq.com.zone   chroot  dynamic   named.empty      named.loopback
+bj.tedu.cn.zone  data    named.ca  named.localhost  slaves
+
+[root@pc207 ~]# named-checkzone  /var/named/bj.tedu.cn.zone  /var/named/bj.qq.com.zone 
+/var/named/bj.qq.com.zone:2: warning: /var/named/bj.tedu.cn.zone: bad name (check-names)
+/var/named/bj.qq.com.zone:8: ignoring out-of-zone data (bj.qq.com)
+[root@pc207 ~]# echo $?
+1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,133 @@
+排错：如果ceph节点关机重起，/dev/vdb1、/dev/vdb2属主属组又变成了root:disk，ceph-osd\*服务就起不来了。可以先chown ceph:ceph /dev/vdb1、chown ceph:ceph /dev/vdb2。然后systemctl start ceph-osd\*，将有报错提示，最后一行提示先执行systemctl reset xxxx，再执行systemctl start ceph-osd\*。
+
+重起系统，还希望vdb1/vdb2属主属组是ceph，则
+[root@node1 ceph-cluster]# vim /etc/udev/rules.d/10-chowndis.rules
+ACTION=="add", KERNEL=="vdb[12]", OWNER="ceph", GROUP="ceph"
+
+
+
+
+ceph实战：创建KVM虚拟机，虚机的硬盘使用ceph存储
+1、在ceph上为远程服务器创建镜像
+[root@node1 ceph-cluster]# rbd create vm1-image --image-feature layering --size 10G
+[root@node1 ceph-cluster]# rbd create vm2-image --image-feature layering --size 10G
+2、查看
+[root@node1 ceph-cluster]# qemu-img info rbd:rbd/vm1-image
+3、将物理主机作为ceph客户端
+[root@room8pc16 ~]# yum install -y ceph-common
+[root@node1 ceph-cluster]# scp /etc/ceph/ceph.conf 192.168.4.254:/etc/ceph/
+[root@node1 ceph-cluster]# scp /etc/ceph/ceph.client.admin.keyring 192.168.4.254:/etc/ceph/
+4、正常创建一台虚拟机，点击完成时，虚拟机将会运行起来，此时强制将其关闭
+5、把虚拟机的配置生成配置文件
+[root@room8pc16 ~]# virsh dumpxml vm1 > /tmp/vm1.xml
+6、删除虚拟机vm1，以后再通过修改的vm1.xml生成虚拟机vm1
+7、虚拟机使用ceph存储，需要有个“通行证”，编写xml文件，生成通行证
+[root@room8pc16 ~]# vim /tmp/secret.xml
+<secret ephemeral='no'  private='no'>
+    <usage type='ceph'>
+        <name>client.admin secret</name>
+    </usage>                        
+</secret> 
+[root@room8pc16 ~]# virsh secret-define /tmp/secret.xml 
+生成 secret 58cd5e56-627d-4e1c-8b61-312af9181d29
+[root@room8pc16 ~]# virsh secret-list
+8、查看ceph的client.admin的key
+[root@room8pc16 ~]# ceph auth get-key client.admin
+AQBsaQJb2M6xFhAAP3/2saHMHB325mNulwIbaw==
+9、将第7、8步的虚拟机secret和ceph的client.admin进行关联
+[root@room8pc16 ~]# virsh secret-set-value --secret 58cd5e56-627d-4e1c-8b61-312af9181d29 --base64 AQBsaQJb2M6xFhAAP3/2saHMHB325mNulwIbaw==
+10、修改生成的虚拟机配置文件
+[root@room8pc16 ~]# vim /tmp/vm1.xml 
+找到以下内容：
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/vm1.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </disk>
+修改为以下内容：
+    <disk type='network' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <auth username='admin'>
+      <secret type='ceph' uuid='58cd5e56-627d-4e1c-8b61-312af9181d29' />
+      </auth>
+      <source protocol='rbd' name='rbd/vm1-image'>
+        <host name='192.168.4.11' port='6789' />
+      </source>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </disk>
+11、生成虚拟机
+[root@room8pc16 ~]# virsh define /tmp/vm1.xml
+
+
+cephFS的使用：注意，这种方法还不成熟，不要应用在生产环境
+1、部署mds服务器
+配置主机名、yum、NTP、名称解析、node1可以免密登陆mds节点
+[root@node4 ~]# yum install -y ceph-mds
+2、创建元数据服务器
+[root@node1 ceph-cluster]# ceph-deploy mds create node4
+3、同步配置文件和key
+[root@node1 ceph-cluster]# ceph-deploy admin node4
+4、为cephFS创建数据池和元数据池，指定每个OSD有128个pg
+关于pg的说明：http://www.wzxue.com/ceph-osd-and-pg/
+[root@node4 ~]# ceph osd pool create cephfs_data 128
+[root@node4 ~]# ceph osd pool create cephfs_metadata 128
+5、查看mds状态
+[root@node4 ~]# ceph mds stat
+6、创建名为myfs1的文件系统
+[root@node4 ~]# ceph fs new myfs1 cephfs_metadata cephfs_data
+7、查看信息
+[root@node4 ~]# ceph mds stat
+[root@node4 ~]# ceph fs ls
+8、Linux内核已支持cephFS，只要挂载即可
+[root@client ~]# mkdir /mnt/ceph_root
+[root@client ~]# ceph auth list  查看admin的key
+[root@client ~]# mount -t ceph 192.168.4.11:6789:/ /mnt/ceph_root/ -o name=admin,secret=AQBsaQJb2M6xFhAAP3/2saHMHB325mNulwIbaw==
+[root@client ~]# df -h 
+
+对象存储
+1、什么是对象存储
+http://storage.ctocio.com.cn/281/12110781.shtml
+2、安装rgw
+[root@node1 ceph-cluster]# ceph-deploy install --rgw node5
+3、同步配置文件和key
+[root@node1 ceph-cluster]# ceph-deploy admin node5
+4、起动RGW服务
+[root@node1 ceph-cluster]# ceph-deploy rgw create node5
+5、修改RGW端口
+[root@node5 ~]# vim /etc/ceph/ceph.conf 
+加入以下几行：
+[client.rgw.node5]
+host = node5
+rgw_frontends = "civetweb port=8081"
+6、重起服务
+[root@node5 ~]# systemctl restart ceph-radosgw@\*
+7、客户端访问RGW，验证
+[root@client ~]# curl http://node5:8081
+
+8、创建对象访问的用户
+[root@node5 ~]# radosgw-admin user create --uid="testuser" --display-name="First User"
+9、查看用户信息
+[root@node5 ~]# radosgw-admin user info --uid="testuser"
+10、客户端安装s3工具
+[root@client ~]# yum localinstall -y s3cmd-2.0.1-1.el7.noarch.rpm 
+11、配置客户端
+[root@client ~]# s3cmd --configure
+Access Key: 18O1IUYZ4B0N3ECQVNGV
+Secret Key: MViBoEracVSY4hdlJWvnUWFlxVyPowVCJJhQ2rck
+S3 Endpoint [s3.amazonaws.com]: 192.168.4.15:8081
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)s.s3.amazonaws.com]: %(bucket)s.192.168.4.15:8081
+Use HTTPS protocol [Yes]: N
+Test access with supplied credentials? [Y/n] y
+Save settings? [y/N] y
+12、客户端上传下载测试
+[root@client ~]# s3cmd ls   # 查看数据
+[root@client ~]# s3cmd mb s3://my_bucket  创建bucket
+上传
+[root@client ~]# s3cmd put /var/log/messages s3://my_bucket/log/
+[root@client ~]# s3cmd ls s3://my_bucket  # 查看内容
+下载
+[root@client ~]# s3cmd get s3://my_bucket/log/messages /tmp/
+删除
+[root@client ~]# s3cmd del s3://my_bucket/log/messages
