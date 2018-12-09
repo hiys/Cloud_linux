@@ -1,0 +1,126 @@
+一、权限
+[root@node5 tmp]# ll /etc/hosts
+-rw-r--r--. 1 root root 158 6月   7 2013 /etc/hosts
+第一个字符是文件类型：-表示普通文件，d表示目录，l表示链接，b表示块设备，c表示字符设备
+接下来每三个字符分成一组，分别代表属主、属组和其他人的权限。r表示读，用4表示；w表示写，用2表示；x表示执行，用1表示。
+
+二、特殊权限
+系统中，程序、命令总是以某一用户的身份运行
+1、SUID：以属主的身份执行命令
+(1)
+[root@node5 tmp]# ls /root/
+[user1@node5 ~]$ ls /root/   # 失败
+[root@node5 tmp]# chmod u+s /bin/ls
+[user1@node5 ~]$ ls /root/   # 成功
+(2)
+[user1@node5 ~]$ touch u1.txt
+[root@node5 tmp]# chmod u+s /bin/touch 
+[user1@node5 ~]$ touch u2.txt
+[user1@node5 ~]$ ll    # 属主不一样
+
+
+SGID：新建的文件继承所在目录的属组
+[root@node5 tmp]# mkdir /tmp/demo
+[root@node5 tmp]# chgrp user1 /tmp/demo
+[root@node5 tmp]# ll -d /tmp/demo
+[root@node5 tmp]# cp /etc/hosts /tmp/demo
+[root@node5 tmp]# ll /tmp/demo  # hosts属组是root
+[root@node5 tmp]# chmod g+s /tmp/demo
+[root@node5 tmp]# cp /etc/passwd /tmp/demo
+[root@node5 tmp]# ll /tmp/demo  # passwd属组是user1
+
+sticky bit：用户只能修改、删除自己的文件
+[root@node5 tmp]# ll -d /tmp/ /var/tmp/
+
+LVM:逻辑卷管理。它是一种动态管理存储空间的方法。首先，可以将磁盘或分区转化成物理卷PV，然后将一到多个PV组合成一个卷组VG，再从VG上划分逻辑卷。逻辑卷就可以像普通分区一样，进行格式化、挂载使用了。如果LV的空间不足，还可以实现在线动态扩容。
+
+三、SELINUX安全增强的Linux
+1、模式
+Disabled：禁用
+Permissive：宽松，有违规只记录，仍然允许访问
+Enforcing：强制，违规则拒绝访问
+2、修改
+(1)临时：setenforce 0 | 1
+(2)永久：/etc/selinux/config
+3、配置selinux
+(1)文件的上下文环境值
+[root@node5 ~]# echo '<h1>Hello World</h1>' > index.html
+[root@node5 ~]# mv index.html /var/www/html/
+[root@node5 ~]# systemctl start httpd
+访问http://192.168.4.5/没有得到预期的主页
+[root@node5 ~]# sealert -b
+根据提示修改，或按恢复标签值按钮
+－－－－－－－－－－－－－－－
+文件的上下文环境值主要查看type，它相当于是文件的锁。服务器进程有与之对的钥匙就可以查看其内容，否则不行。
+[root@node5 ~]# ls -Z /var/www/html/
+[root@node5 ~]# ps xZ | grep httpd
+[root@node5 ~]# chcon -t admin_home_t /var/www/html/index.html 
+(2)布尔值。相当于是功能开关
+[root@node5 ~]# yum install -y vsftpd
+[root@node5 ~]# vim /etc/vsftpd/vsftpd.conf 
+anon_upload_enable=YES
+[root@node5 ~]# chmod 777 /var/ftp/pub/
+[root@node5 ~]# systemctl start vsftpd
+上传文件到服务器，将会出错
+[root@node5 ~]# sealert -b
+[root@node5 ~]# chcon -t public_content_rw_t /var/ftp/pub/
+[root@node5 ~]# getsebool -a | grep ftp
+[root@node5 ~]# setsebool -P ftpd_anon_write 1
+再次上传文件到服务器，成功
+(3)端口号
+[root@node5 ~]# vim /etc/httpd/conf/httpd.conf 
+Listen 12345
+[root@node5 ~]# systemctl restart httpd   # 失败
+[root@node5 ~]# sealert -b
+[root@node5 ~]# semanage port -l | grep http
+[root@node5 ~]# semanage port -a -t http_port_t -p tcp 12345
+[root@node5 ~]# systemctl restart httpd
+
+
+bonding：多网卡绑定、链路聚合。在RHEL7中新增的功能team可以取代它
+http://www.cnblogs.com/huangweimin/articles/6527058.html
+
+
+防火墙
+1、状态
+[root@node5 ~]# firewall-cmd  --state
+[root@node5 ~]# systemctl start firewalld
+2、区域：相当于是检查站
+[root@node5 ~]# firewall-cmd --get-zones 
+trusted: 进入该区域的数据包，默认全部放行
+block：进入该区域的数据包，默认全部拒绝
+drop：进入该区域的数据包，默认全部丢弃
+其他区域，默认除明确允许以外的，全部拒绝
+3、生效区域
+[root@node5 ~]# firewall-cmd --get-active-zones 
+4、数据包根据以下顺序，决定进入哪个区域
+（1）检查数据包的源IP地址
+[root@node5 ~]# firewall-cmd --add-source=192.168.4.0/24 --zone=work
+(2)检查数据包是通过哪块网卡收到的
+[root@node5 ~]# firewall-cmd --add-interface=eth1 --zone=dmz
+(3)进入默认区域
+5、向work区域加入允许http的规则
+[root@node5 ~]# firewall-cmd --add-service=http --zone=work 
+6、向work区域加入允许12345端口的规则
+[root@node5 ~]# firewall-cmd --add-port=12345/tcp --zone=work
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

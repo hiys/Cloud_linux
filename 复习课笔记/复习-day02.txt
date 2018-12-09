@@ -1,0 +1,102 @@
+服务器一般用多少U表示，1U=44.45mm
+IDC: Internet数据中心
+
+IP地址的分类：
+A：前8位作为网络位，第一位必须是0
+   0NNNNNNN
+B：前16位作为网络位，前2位必须是10
+   10NNNNNN NNNNNNNN
+C：前24作为网络位，前3位必须是110
+   110NNNNN NNNNNNNN NNNNNNNN
+D：用于多播（组播）
+E：保留
+
+单播：一对一通信
+多播：一对多通信
+广播：一对所有
+
+如果上不了网了，怎么排错？
+1、ping网关   ping底层使用icmp，工作第三层
+2、如果ping通找高层次问题，否则找低层次
+3、ping 域名  可以检测DNS和远程通信
+
+什么是Linux？ Linux本质上是一个内核。
+GNU：GNU is Not Unix
+RPM：RPM Package Management
+安装Linux最少需要1个分区。
+windows分区方案：
+C：100G 系统
+D：200G 软件
+E：剩余空间的1/2   常用文件
+F：不常用文件
+Linux分区：
+/boot
+/
+/var
+/home 视情况而定
+磁盘分区模式：
+MBR：2.2T左右大小，最多4个分区
+GPT：EB级别磁盘大小，最多128个主分区
+文件系统：
+ext4: 适合小文件
+xfs: 适合大文件
+
+命令行提示符是PS1定义的
+[root@node5 ~]# PS1='\u@\t \w\$ '
+root@19:42:43 /etc/sysconfig# PS1='[\u@\h \W]\$ '
+
+查看内核版本：[root@node5 ~]# uname -r
+touch作用：创建文件或更新文件的时间
+[root@node5 ~]# stat anaconda-ks.cfg 
+[root@node5 ~]# touch anaconda-ks.cfg 
+[root@node5 ~]# stat anaconda-ks.cfg 
+
+查看/etc/passwd文件第5行：
+[root@node5 ~]# head -5 /etc/passwd | tail -1
+
+命令的查找顺序： 函数 > 别名 > 内部命令 > 外部命令
+(1)函数
+[root@node5 ~]# vim ~/.bashrc
+lh (){
+    ls -lh $*
+}
+[root@node5 ~]# source ~/.bashrc
+[root@node5 ~]# lh
+(2)别名
+alias ls='ls --color=auto'
+[root@node5 ~]# \ls   执行命令，而不是别名
+(3)内部命令：是系统与生俱来的功能，不用有命令文件
+[root@node5 ~]# enable   列出所有的内部命令
+(4)外部命令：必须有与之对应的命令文件
+[root@node5 ~]# type lh   查看lh是哪种类型
+
+通配符：
+*表示0到多个任意字符
+?表示1个任意字符
+正则表达式：
+.*表示0到多个任意字符
+.表示1个任意字符
+数据库：
+%表示0到多个任意字符
+_表示1个任意字符
+
+网络yum
+http://mirrors.163.com/
+mirrors.aliyun.com/
+https://fedoraproject.org/wiki/EPEL  提供更多的软件包
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

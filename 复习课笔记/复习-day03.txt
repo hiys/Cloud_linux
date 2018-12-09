@@ -1,0 +1,132 @@
+1、传统网卡命名： ethX
+2、RHEL7开始新的命名方式：
+en: 以太网  wl无线局域网  ww无线广域网
+第三个字母可以反映出网关的类别，o表示在主板上集成的网卡，p表示位置，s表示插槽slot
+3、将RHEL7网卡命名改为传统的方式：
+编辑grub配置文件”/etc/sysconfig/grub“:
+在”GRUB_CMDLINE_LINUX“变量中添加一句”net.ifnames=0 biosdevname=0“
+＃ grub2-mkconfig -o /boot/grub2/grub.cfg
+重启后，网卡名字就改回到ethX
+4、配置IP地址
+AS4: netconf    AS4: Advanced Server高级服务器
+RHEL5/6: setup
+RHEL7: nmtui
+配置文件/etc/sysconfig/network-scripts/ifcfg-eth0
+5、主机名存在/etc/hostname，RHEL7之前用的文件/etc/sysconfig/network
+6、查找/etc/passwd文件中包含adm的行
+[root@node5 ~]# grep -n 'adm' /etc/passwd
+7、查找/etc/passwd文件中包含adm的行，再额外显示它前面2行和后面3行
+[root@node5 ~]# grep -B2 -A3 -n 'adm' /etc/passwd
+8、将/etc/postfix/main.cf文件的有效配置列出
+[root@node5 ~]# egrep -v '^#|^ *$' /etc/postfix/main.cf
+9、标准文件
+标准输入：键盘，文件描述符0
+标准输出：终端，文件描述符1
+标准错误：终端，文件描述符2
+10、重定向
+(1)标准输出重定向
+[root@node5 ~]# ls 1> /tmp/root.out
+[root@node5 ~]# ls > /tmp/root.out
+[root@node5 ~]# ls >> /tmp/root.out
+(2)错误重定向
+[root@node5 ~]# ls abcd 2> /tmp/root.err
+[root@node5 ~]# ls abcd 2>> /tmp/root.err
+(3)全部重定向
+[root@node5 ~]# ls /root abcd &> /tmp/root.all
+[root@node5 ~]# ls /root abcd &>> /tmp/root.all
+(4)输入重定向
+[root@node5 ~]# tr 'a-z' 'A-Z'   # ctrl+d结束
+[root@node5 ~]# tr 'a-z' 'A-Z' < ~/.bashrc 
+(5)结束标志 here document
+[root@node5 ~]# tr 'a-z' 'A-Z' << EOF
+[root@node5 ~]# vim mkrepo.sh
+#!/bin/bash
+
+cat <<EOF > /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7
+baseurl=ftp://192.168.4.254/rhel7/
+enabled=1
+gpgcheck=0
+EOF
+echo -e "create\t\t\t\t\033[32;1m[DONE]\033[0m"
+
+11、管道：将有一命令的输出作为后一命令的输入
+[root@node5 ~]# cat ~/.bashrc | tr 'a-z' 'A-Z'
+
+[root@node5 ~]# vim myfile
+/etc/hosts
+/etc/passwd
+[root@node5 ~]# cat myfile | ls -l    # 结果不是预期的
+[root@node5 ~]# cat myfile | xargs ls -l
+
+12、查找5M以上的文件
+[root@node5 ~]# find /boot -size +5M
+[root@node5 ~]# find /boot -size +5M -exec cp {} /opt \;
+13、查找名字以vmlinuz开头的文件
+[root@node5 ~]# find /boot/ -name 'vmlinuz*'
+14、查找三天内改动过的文件
+[root@node5 ~]# find -mtime -3
+---------------------------------------------
+:8,15s/^/    /     # 将8到15行缩进4个空格
+---------------------------------------------
+
+15、创建脚本，用于批量创建用户，用户名是user1/user2/user3...。新用户默认的密码是123456；用户初次登陆的时候，需要强制改密码。默认创建5个用户，也可以执行脚本的时候指定数量。
+[root@node5 bin]# vim adduser.sh 
+#!/bin/bash
+
+if [ -n "$1" ]; then
+    if [[ ! "$1" =~ ^[0-9]+$ ]]; then
+        echo '位置参数$1不是数字'
+        exit 2
+    fi
+    number=$1
+else
+    number=5
+fi
+counter=0
+
+while [ $counter -lt $number ]
+do
+    let n++
+    id user$n &> /dev/null
+    if [ $? -ne 0 ]; then
+        useradd user$n
+        echo 123456 | passwd --stdin user$n &> /dev/null
+        chage -d0 user$n
+        echo -e "create user${n}...\t\t\t\033[32;1m[Done]\033[0m"
+        let counter++
+    fi
+done
+
+16、压缩
+[root@node5 bin]# cp -r /etc/security/ /tmp/
+[root@node5 bin]# cd /tmp/
+[root@node5 tmp]# tar caf security.tar.gz security/
+[root@node5 tmp]# tar caf security.tar.bz2 security/
+[root@node5 tmp]# tar caf security.tar.xz security/
+[root@node5 tmp]# file security.*
+
+17、计划任务的时间格式
+01 * * * * cmd   每小时的01分执行
+10 21 * * * cmd  每天21:10执行
+10 21 5 * * cmd  每月5号21:10执行
+10 21 5 12 * cmd  每年12月5号21:10执行
+10 21 * * 1 cmd  每周一21:10执行
+*/5 8-18 * * 1,3,5  每周一三五从早上8点到晚18点每隔5分钟
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
