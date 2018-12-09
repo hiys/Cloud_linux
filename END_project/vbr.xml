@@ -1,0 +1,11 @@
+<network>
+  <name>vbr</name>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <forward mode="nat"/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start="192.168.1.100" end="192.168.1.200"/>
+    </dhcp>
+  </ip>
+</network>

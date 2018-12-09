@@ -1,0 +1,274 @@
+
+
+单磁盘（根和数据放在不同分区）创建第一台kvm虚拟机、克隆虚拟机
+
+版权声明：	https://blog.csdn.net/zhuangzi123456/article/details/80654970
+一，创建第一台虚拟机（此步是在宿主机系统上进行的操作；目的是作为克隆虚拟机的模板）：
+1，虚拟机磁盘规划
+磁盘A：大小260G
+分区规划，swap分区2048M，boot分区300M，根分区60G(lvm+xfs)，数据分区（lvm+xfs）将剩余的空间创建扩展分区，再创建逻辑分区，初步为150G，剩余空间备用；
+2，创建磁盘映像文件
+# qemu-img create -f qcow2 -o size=260G /data/kvm/imgs/template-centos7-3-1611.img
+3，virt-install创建第一台kvm虚拟机：
+# virt-install \
+--connect qemu:///system \
+--virt-type kvm \
+--name "template" \
+--metadata title="template1" \
+--memory 2048,maxmemory=4096 \
+--vcpus 4,maxvcpus=8 \
+--disk path=/data/kvm/imgs/template-centos7-3-1611.img,bus=virtio,format=qcow2,size=100,sparse,cache=none \
+--location=/data/kvm/os/CentOS-7-x86_64-DVD-1611.iso \
+--network bridge=br0,model=virtio \
+--os-type=linux \
+--os-variant=rhel7 \
+--graphics vnc \
+--autostart \
+--accelerate \
+--noautoconsole \
+--force
+开始安装......
+搜索文件 .treeinfo......                                                                                         |  366 B  00:00:00     
+搜索文件 vmlinuz......                                                                                           | 5.1 MB  00:00:00     
+搜索文件 initrd.img......                                                                                        |  41 MB  00:00:00     
+创建域......                                                                                                      |    0 B  00:00:00     
+域安装仍在进行。您可以重新连接
+到控制台以便完成安装进程。
+参数说明：
+--name：必不可少，虚拟机实例名称，virsh可以通过虚拟机实例的运行ID号及该名称对实例进程操作；
+--metadata：title选项是虚拟机实例的简短描述信息，可自行定义，通过virsh list --title进行查看；
+--memeory：设定maxmemory，目的是后续可以对虚拟机的内存进行热扩容；
+--vcpus：设定maxvcpus，目的是后续可以对虚拟机的VCPU数量进行热扩容；
+4，虚拟机操作系统说明
+guest OS发行版：CentOS Linux release 7.3.1611 (Core) 
+guest OS内核版本：3.10.0-514.el7.x86_64
+5，使用virt-manager+xmanager来图形化界面安装操作系统
+1）在远程宿主机上配置变量如下：
+# LANG=en_US.utf8
+# export DISPLAY='192.168.13.105:0.0'
+2）在本地电脑安装了xmamager，并且配置xshell如下，通过xshell连接的远程宿主机：
+
+3）启动xmanager-passive
+
+
+4）然后，在远程宿主机上执行virt-manager命令，会在本地打开图形化管理界面来安装操作系统
+# virt-manager
+!!!提示：若本地窗口出现乱码，则需要在远程宿主机上执行yum -y install xorg-x11-font*这些字体包；
+
+
+
+
+
+通过图形界面窗口控制台做下面的二和三操作：
+
+
+以下第二到第十步的操作是在创建好的第一台虚拟机中进行的；
+二，关闭NetworkManager、firewalld和SELinux服务；
+# systemctl stop NetworkManager
+# systemctl disable NetworkManager
+# systemctl stop firelwalld
+# systemctl disable firelwalld
+# setenforce 0
+# sed -i '/^SELINUX=/c\SELINUX=permissive' /etc/selinux/config
+
+三，配置网络参数
+1，网卡配置，这里配置一个临时地址使用，用于ssh连接过去方便复制粘贴及文件传输
+# cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth0.bak
+# vi /etc/sysconfig/network-scripts/ifcfg-eth0
+TYPE=Ethernet
+BOOTPROTO=static
+DEFROUTE=yes
+PEERDNS=no
+PEERROUTES=no
+IPV4_FAILURE_FATAL=no
+IPV6INIT=no
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=eth0
+#UUID=2030e1ef-3890-4f56-a3e6-47f9de376d58
+DEVICE=eth0
+ONBOOT=yes
+IPADDR=10.1.73.9
+NETMASK=255.255.255.0
+GATEWAY=10.1.73.1
+NM_CONTROLLED=no
+2，主机名配置
+# hostnamectl set-hostname YOUR_HOSTNAME
+3，DNS配置：/etc/hosts和/etc/resolv.conf（根据实际需要看是否要配置）
+重启network
+# systemctl restart network
+
+四，配置虚拟机可以在宿主机上通过virsh console命令连接控制台：
+# grep -i "ttyS0" /etc/securetty || echo "ttyS0" >> /etc/securetty
+# vi /boot/grub2/grub.cfg
+linux16 /vmlinuz-3.10.0-514.el7.x86_64 root=/dev/mapper/rootvg-rootlv ro crashkernel=auto rd.lvm.lv=rootvg/rootlv rhgb quiet LANG=zh_
+CN.UTF-8 console=ttyS0
+linux16 /vmlinuz-0-rescue-98a6cc2774a14f4fad9b048d99d54d37 root=/dev/mapper/rootvg-rootlv ro crashkernel=auto rd.lvm.lv=rootvg/rootlv
+ rhgb quiet console=ttyS0
+# reboot
+# virsh console template1
+连接成功
+
+五，创建目录结构：
+# mkdir -pv /data/{logs,src,scripts}
+
+六，上传文件
+上传iso系统镜像文件、所有组件安装包、配置文件模板到第一台虚拟机/data/src目录下；
+上传部署脚本到/data/scripts目录下；
+
+七，系统初始化配置
+# sh -x /data/scripts/osInit_centos7.sh
+
+八，配置本地yum源（可选）
+注意：务必确保有yum源可以正常使用。
+# mkdir -pv /media/cdrom
+# mount -t iso9660 -o loop /data/src/CentOS-7-x86_64-DVD-1611.iso /media/cdrom
+# sed -i '$a\/data/src/CentOS-7-x86_64-DVD-1611.iso  /media/cdrom iso9660 defaults,ro,loop 0 0' /etc/fstab
+# mount -a
+# cd  /etc/yum.repos.d/
+# for i in $(ls);do mv ./$i ./${i}.bak;done
+# cat > /etc/yum.repos.d/CentOS-Local.repo <<EOF
+[local]
+name=CentOS7.3.1611
+baseurl=file:///media/cdrom
+enabled=1
+gpgcheck=0
+EOF
+# yum repolist
+
+九，安装zabbix_agent和zabbix_proxy，根据需要启用
+# sh -x /data/scripts/zabbix_proxy_and_agent_centos7.sh
+
+十，ssh升级及相关配置：
+# sh -x /data/scripts/sshUpdate_centos7.sh
+注意：任何脚本在执行之前要保证脚本的格式是linux系统的格式
+# dos2unix script_name.sh
+
+
+十一，在宿主机1上准备虚拟机的克隆模板到指定目录：
+在宿主机1上：
+# cp /data/kvm/imgs/template-centos7-3-1611.img /data/kvm/templates/
+# cp /etc/libvirt/qemu/template.xml /data/kvm/templates/template-centos7-3-1611.xml
+然后将宿主机1上的模板传输拷贝到宿主机2上：
+# cd /data/kvm/templates/
+# scp ./* root@10.1.73.16:/data/kvm/templates/
+克隆虚拟机通过shell脚本实现，对应的脚本存放在/data/scripts目录下，脚本名称分别为：7sys.sh和mac.py；
+
+十二，克隆新的虚拟机：
+# cd /data/scripts/
+# sh -x /data/7sys_single.sh
+根据提示输入相应的信息；
+
+十三，克隆出来的虚拟机需要做的操作：
+# virsh list --all
+ Id    名称                         状态
+----------------------------------------------------
+ -     10.1.73.17                     关闭
+启动虚拟机
+# virsh start 10.1.73.17
+连接到虚拟机的控制台
+# virsh console 10.1.73.17
+连接到域 10.1.73.17
+换码符为 ^]--------到这个界面之后，按回车，即可；
+ Authorized users only. All activity may be monitored and reported 
+localhost login:root
+配置虚拟机的网络参数：
+# cd /etc/sysconfig/network-scripts/
+# vi ./ifcfg-eth0----修改ip地址即可；
+IPADDR=10.1.73.17
+NETMASK=255.255.255.0
+GATEWAY=10.1.73.1
+另一种修改方法：注意这里的ip地址改成自己实际需要配置的的ip地址；
+sed -i '/IPADDR=/c\IPADDR=10.1.73.19' /etc/sysconfig/network-scripts/ifcfg-eth0
+# systemctl restart network
+修改主机名：
+# hostnamectl set-hostname proxyserver2---代理层服务器名称
+配置DNS（可选，根据需要来配置）
+
+
+十四，组件部署
+以福建电信节点为例，这里首先需要部署nginx+squid的代理层：
+部署nginx：
+通过xshell连接到新开的虚拟机上：使用admin账号
+$ su root
+# sh -x /data/scripts/nginx_centos7.sh
+# exit
+$ 
+nginx的启动、关闭等可以使用sudo systemctl，nginx进程运行身份为admin；
+
+部署squid：
+通过xshell连接到新开的虚拟机上：使用admin账号
+$ su root
+# sh -x /data/scripts/squid_centos7.sh
+# exit
+$ 
+squid的启动、关闭等可以使用sudo systemctl，squid进程运行身份为admin；
+
+部署keepalived：
+$ su root
+# sh -x /data/scripts/keepalived_centos7.sh
+# exit
+$
+keepalived的启动、关闭等必须使用root权限，可以使用sudo systemctl；
+
+十五，FAQ
+1，有时候使用virsh连接虚拟机的控制台时会有报错如下：
+[root@localhost ~]# virsh console 10.1.73.12
+连接到域 10.1.73.12
+换码符为 ^]
+错误：操作失败: 这个域有活跃控制台会话
+原因及解决办法：如果你之前连接过去，而后面没有退出，但是你与宿主机的ssh断了，则会出现这种问题，也就是你之前的连接控制台的连接还存在；
+[root@localhost ~]# ps -ef | grep virsh
+root      13749  13734  0 22:48 pts/0    00:00:09 virsh console 10.1.73.12
+root      14184  14159  0 23:26 pts/2    00:00:00 grep --color=auto virsh
+[root@localhost ~]# kill -15 13749
+问题解决。
+
+虚拟机和宿主机登录规范：
+首登录必须使用普通用户admin账号，日常管理都使用admin账号；
+必要的时候可以切换到root账号；
+
+附录1：
+使用--cdrom可以显示如下截图Install CentOS Linux7的界面，这样可以向内核传递参数，而使用--location则直接进入安装过程，当磁盘空间小于2T的时候，默认就是用MBR分区方法,这种情况下就不能修改内核分区方法了,无法输入内核参数inst.gpt了；已经验证
+
+--cdrom OPTIONS
+           File or device used as a virtual CD-ROM device.  It can be path to an ISO image or a URL from which to fetch/access a minimal boot ISO image. The URLs take the same format as
+           described for the "--location" argument. If a cdrom has been specified via the "--disk" option, and neither "--cdrom" nor any other install option is specified, the "--disk"
+           cdrom is used as the install media.
+-l LOCATION
+--location OPTIONS
+           Distribution tree installation source. virt-install can recognize certain distribution trees and fetches a bootable kernel/initrd pair to launch the install.
+           With libvirt 0.9.4 or later, network URL installs work for remote connections.  virt-install will download kernel/initrd to the local machine, and then upload the media to the
+           remote host. This option requires the URL to be accessible by both the local and remote host.
+           --location allows things like --extra-args for kernel arguments, and using --initrd-inject. If you want to use those options with CDROM media, you have a few options:
+* Run virt-install as root and do --location ISO
+           * Mount the ISO at a local directory, and do --location DIRECTORY
+           * Mount the ISO at a local directory, export that directory over local http, and do --location http://localhost/DIRECTORY
+           The "LOCATION" can take one of the following forms:
+           http://host/path
+               An HTTP server location containing an installable distribution image.
+           ftp://host/path
+               An FTP server location containing an installable distribution image.
+           nfs:host:/path or nfs://host/path
+               An NFS server location containing an installable distribution image. This requires running virt-install as root.
+           DIRECTORY
+               Path to a local directory containing an installable distribution image. Note that the directory will not be accessible by the guest after initial boot, so the OS installer
+               will need another way to access the rest of the install media.
+           ISO Mount the ISO and probe the directory. This requires running virt-install as root, and has the same VM access caveat as DIRECTORY.
+           Some distro specific url samples:
+           Fedora/Red Hat Based
+               http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x86_64/os
+           Debian
+               http://ftp.us.debian.org/debian/dists/stable/main/installer-amd64/
+           Ubuntu
+               http://us.archive.ubuntu.com/ubuntu/dists/wily/main/installer-amd64/
+           Suse
+               http://download.opensuse.org/distribution/11.0/repo/oss/
+           Mandriva
+               ftp://ftp.uwsg.indiana.edu/linux/mandrake/official/2009.0/i586/
+           Mageia
+               ftp://distrib-coffee.ipsl.jussieu.fr/pub/linux/Mageia/distrib/1
