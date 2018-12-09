@@ -1,22 +1,9 @@
 
-
+[root@room9pc01 ~]# vim /etc/bashrc 
 [root@room9pc01 ~]# tail -2 /etc/bashrc
 
 /usr/sbin/ifconfig rhce:0 172.25.0.250
 #echo Taren1 | passwd --stdin root &> /dev/null
-
-[root@hiys ~]# passwd -d root
-清除用户的密码 root。
-passwd: 操作成功
-[root@hiys ~]# echo 123 |passwd --stdin root 
-更改用户 root 的密码 。
-passwd：所有的身份验证令牌已经成功更新。
-
-[root@room9pc01 ~]# vim /etc/bashrc 
-
-[root@hiys ~]# tail -1 /etc/bashrc 
-echo 123 | passwd --stdin root &> /dev/null
-[root@hiys ~]# 
 
 [root@room9pc01 ~]# source /etc/bashrc
 [root@room9pc01 ~]# echo $?

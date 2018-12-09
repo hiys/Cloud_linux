@@ -1413,7 +1413,7 @@ openstack-packstack-9.0.0-3.el7ost.noarch
 [root@openstack ~]# ls
 eip  RPM-GPG-KEY-CentOS-7
 
-[root@openstack ~]# packstack  --gen-answer-file  answer.ini
+[root@openstack ~]# packstack  --gen-answer-file  answer.ini  ## 生成应答文件
 
 Packstack changed given value  to required value /root/.ssh/id_rsa.pub
 
@@ -1525,11 +1525,9 @@ answer.ini  eip  keystonerc_admin  RPM-GPG-KEY-CentOS-7
 ifcfg-br-ex  ifdown-eth   ifdown-post      ifdown-tunnel  ifup-ippp   ifup-post      ifup-tunnel
 ifcfg-eth0   ifdown-ib    ifdown-ppp       ifup           ifup-ipv6   ifup-ppp       ifup-wireless
 ifcfg-eth1   ifdown-ippp  ifdown-routes    ifup-aliases   ifup-isdn   ifup-routes    init.ipv6-global
-ifcfg-lo     ifdown-ipv6  ifdown-sit       ifup-bnep      ifup-ovs    ifup-sit       network-functions
-ifdown       ifdown-isdn  ifdown-Team      ifup-eth       ifup-plip   ifup-Team      network-functions-ipv6
-ifdown-bnep  ifdown-ovs   ifdown-TeamPort  ifup-ib        ifup-plusb  ifup-TeamPort
+。。。。。。。。。。。。。。。。。。。。。。。。。。
 
-[root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-br-ex 
+[root@openstack ~]# cat /etc/sysconfig/network-scripts/ifcfg-br-ex  ## 虚拟交换机 ifcfg-br-ex
 ONBOOT="yes"
 NM_CONTROLLED="no"
 IPADDR="192.168.1.10"
@@ -1739,12 +1737,6 @@ http://192.168.1.10/dashboard/settings/password/
  fe3630yin
 
 
-
-
-
-
-
-
 -------------------------------------------- 虚拟机 nova01 ----------------------------
 
 [root@nova01 ~]# yum -y install qemu-kvm  libvirt-client  libvirt-daemon  \
@@ -1776,6 +1768,99 @@ yum -y install cloud-utils-growpart  ## 安装扩展分区软件
 /usr/sbin/xfs_growfs  /  # 文件系统扩容
 
 ifconfig -a 查看包括未开机自动启动的所有网卡
+
+[root@openstack ~]# cat  /etc/sysconfig/network-scripts/ifcfg-br-ex 
+ONBOOT=yes
+NM_CONTROLLED="no"
+IPADDR="192.168.0.10"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.0.254"
+DEVICE=br-ex
+NAME=br-ex
+DEVICETYPE=ovs
+OVSBOOTPROTO="static"
+TYPE=OVSBridge
+[root@openstack ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE=eth0
+NAME=eth0
+DEVICETYPE=ovs
+TYPE=OVSPort
+OVS_BRIDGE=br-ex
+ONBOOT=yes
+BOOTPROTO=none
+[root@openstack ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth1
+NAME="eth1"
+DEVICE="eth1"
+ONBOOT=yes
+NM_CONTROLLED="no"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL="no"
+BOOTPROTO="static"
+IPADDR="192.168.1.10"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.0.254"
+[root@openstack ~]# which ovs-vsctl
+/usr/bin/ovs-vsctl
+[root@openstack ~]# ovs-vsctl  show
+6ea64b6d-dfd3-4d0c-a84f-dba81132bfec
+    Manager "ptcp:6640:127.0.0.1"
+        is_connected: true
+    Bridge br-ex
+        Controller "tcp:127.0.0.1:6633"
+            is_connected: true
+        fail_mode: secure
+        Port phy-br-ex
+            Interface phy-br-ex
+                type: patch
+                options: {peer=int-br-ex}
+        Port br-ex
+            Interface br-ex
+                type: internal
+        Port "eth0"
+            Interface "eth0"
+    Bridge br-tun
+        Controller "tcp:127.0.0.1:6633"
+            is_connected: true
+        fail_mode: secure
+        Port patch-int
+            Interface patch-int
+                type: patch
+                options: {peer=patch-tun}
+        Port br-tun
+            Interface br-tun
+                type: internal
+    Bridge br-int
+        Controller "tcp:127.0.0.1:6633"
+            is_connected: true
+        fail_mode: secure
+        Port patch-tun
+            Interface patch-tun
+                type: patch
+                options: {peer=patch-int}
+        Port int-br-ex
+            Interface int-br-ex
+                type: patch
+                options: {peer=phy-br-ex}
+        Port br-int
+            Interface br-int
+                type: internal
+    ovs_version: "2.5.0"
+[root@openstack ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

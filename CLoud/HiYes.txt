@@ -1,0 +1,1237 @@
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]
+                HTTP  FTP  TFTP  SMTP  SNMP  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包
+                ICMP  IGMP    IP   ARP   RARP
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流
+
+          层            主机A                              主机B          数据单元
+------------------------------------------------------------------------------------------------------
+
+TCP的优点： 可靠，稳定 
+TCP的可靠体现在TCP在传递数据之前，
+会有三次握手来建立连接，
+而且在数据传递时，
+有确认、窗口、重传、拥塞控制机制，
+在数据传完后，
+还会断开连接用来节约系统资源。 
+
+TCP的缺点： 慢，效率低，占用系统资源高，易被攻击 
+TCP在传递数据之前，要先建连接，这会消耗时间，
+而且在数据传递时，
+确认机制、重传机制、拥塞控制机制等都会消耗大量的时间，
+而且要在每台设备上维护所有的传输连接，
+事实上，每个连接都会占用系统的CPU、内存等硬件资源。
+因为TCP有确认机制、三次握手机制，
+这些也导致TCP容易被人利用，实现DOS、DDOS、CC等攻击。
+
+UDP的优点： 快，比TCP稍安全 
+UDP没有TCP的握手、确认、窗口、重传、拥塞控制等机制，
+UDP是一个无状态的传输协议，
+所以它在传递数据时非常快。
+没有TCP的这些机制，
+UDP较TCP被攻击者利用的漏洞就要少一些。
+
+但UDP也是无法避免攻击的，
+比如：UDP Flood攻击…… 
+
+UDP的缺点： 不可靠，不稳定 
+因为UDP没有TCP那些可靠的机制，
+在数据传递时，如果网络质量不好，就会很容易丢包。 
+
+ 什么时候应该使用TCP： 
+当对网络通讯质量有要求的时候，
+比如：整个数据要准确无误的传递给对方，
+这往往用于一些要求可靠的应用，比如HTTP、HTTPS、FTP等传输文件的协议，POP、SMTP等邮件传输的协议。 
+在日常生活中，常见使用TCP协议的应用如下： 
+  浏览器，用的HTTP FlashFXP，
+  FTP Outlook，
+  POP、SMTP Putty，
+  Telnet、SSH QQ文件传输 ………… 
+
+什么时候应该使用UDP： 
+当对网络通讯质量要求不高的时候，要求网络通讯速度能尽量的快，这时就可以使用UDP。
+
+ 比如，日常生活中，常见使用UDP协议的应用如下： 
+QQ语音 QQ视频 TFTP ……
+有些应用场景对可靠性要求不高会用到UPD，比如长视频，要求速率
+
+
+小结TCP与UDP的区别：
+1.基于连接与无连接；
+2.对系统资源的要求（TCP较多，UDP少）；
+3.UDP程序结构较简单；
+4.流模式与数据报模式 ；
+
+5.TCP保证数据正确性，UDP可能丢包，TCP保证数据顺序，UDP不保证。
+
+tcp协议和udp协议的差别 
+TCP UDP 
+是否连接 面向连接 面向非连接 
+传输可靠性 可靠 不可靠 
+应用场合 传输大量数据 少量数据 
+速度 慢 快
+
+TCP与UDP区别总结：
+
+1、TCP面向连接（如打电话要先拨号建立连接）;UDP是无连接的，即发送数据之前不需要建立连接
+
+2、TCP提供可靠的服务。也就是说，通过TCP连接传送的数据，无差错，不丢失，不重复，且按序到达;UDP尽最大努力交付，即不保证可靠交付
+
+3、TCP面向字节流，实际上是TCP把数据看成一连串无结构的字节流;UDP是面向报文的
+
+UDP没有拥塞控制，因此网络出现拥塞不会使源主机的发送速率降低（对实时应用很有用，如IP电话，实时视频会议等）
+
+4、每一条TCP连接只能是点到点的;UDP支持一对一，一对多，多对一和多对多的交互通信
+
+5、TCP首部开销20字节;UDP的首部开销小，只有8个字节
+6、TCP的逻辑通信信道是全双工的可靠信道，UDP则是不可靠信道
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+APDU 是应用层协议数据单元
+报文，message，一般指完整的信息，传输层实现报文交付。我们将位于应用层的信息分组称为报文。
+frame，Datagram，segment是基于所在协议层不同而取了不同的名字
+
+PPDU 是表示层协议数据单元
+SPDU 是会话层协议数据单元
+TPDU 是传输层协议数据单元，即 "数据段”
+传输层 segment（报文段）
+报文段，segment，组成报文的每个分组。我们将传输层分组称为报文段。
+抓包抓到的是传输层的包，所以packet，frame，Datagram，segment是存在于同条记录中的
+
+网络层的协议数据单元，即 "数据包”
+网络层 packet （数据包）
+
+数据链路层的协议数据单元，即 "数据帧”
+数据链路层 frame（数据帧）
+帧，frame，数据链路层的协议数据单元。我们将链路层分组称为帧。
+
+物理层的协议数据单元，即 数据“比特”
+物理层 bit （比特）
+
+1.报文(message)
+报文是网络中交换与传输的数据单元，也是网络传输的单元。
+报文包含了将要发送的完整的数据信息，其长短不需一致。
+报文在传输过程中会不断地封装成分组、包、帧来传输，
+封装的方式就是添加一些控制信息组成的首部，那些就是报文头。
+ 
+2.分组(packet)
+分组是在网络中传输的二进制格式的单元，
+为了提供通信性能和可靠性，每个用户发送的数据会被分成多个更小的部分。
+在每个部分的前面加上一些必要的控制信息组成的首部，
+有时也会加上尾部，就构成了一个分组。
+ 
+3.数据包(data packet)
+数据包是TCP/IP协议通信传输中的数据单元，也称为“包”。
+是指自包含的，带有足够寻址信息，可独立地从源主机传输到目的主机，
+而不需要依赖早期的源主机和目的主机之间交换信息以及传输网络的数据包。
+ 
+4.数据报(datagram)
+面向无连接的数据传输，其工作过程类似于报文交换。
+采用数据报方式传输时，被传输的分组称为数据报。
+ 
+5.帧(frame)
+帧是数据链路层的传输单元。它将上层传入的数据添加一个头部和尾部，组成了帧。
+ 
+应用层——消息
+传输层——数据段(segment)
+网络层——分组、数据包（packet）
+链路层——帧（frame）
+
+ICMP是“Internet Control Message Ptotocol”（Internet控制消息协议）的缩写。
+它是TCP/IP协议族的一个子协议，用于在IP主机、路由器之间传递控制消息
+
+ping命令通常用来作为网络可用性的检查。
+ping命令可以对一个网络地址发送测试数据包，看该网络地址是否有响应并统计响应时间，以此测试网络。
+
+ping和ICMP的关系
+ping命令发送数据使用的是ICMP协议。
+
+ping的原理
+向指定的网络地址发送一定长度的数据包，按照约定，若指定网络地址存在的话，会返回同样大小的数据包，
+若在特定时间内没有返回，就是“超时”，会被认为指定的网络地址不存在。
+---------------------------------------------------------------------------------------------------------------------------
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# tail   -3   /etc/bashrc  ##  开机自动执行命令
+# vim:ts=4:sw=4
+/usr/sbin/ifconfig rhce:0 172.25.0.250
+#echo Hiyes1 | passwd --stdin root &> /dev/null
+
+========================= 挂载  U 盘 =========================
+
+[root@hiys ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 465.8G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part 
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0 935.4M  0 loop /var/ftp/ceph
+
+[root@hiys ~]# rpm  -q  ntfs-3g_ntfsprogs
+ntfs-3g_ntfsprogs-2013.1.13-1.el6.x86_64
+
+[root@hiys ~]# rpm  -qa  |grep  fuse
+fuse-libs-2.9.2-8.el7.x86_64
+fuse-2.9.2-8.el7.x86_64
+gvfs-fuse-1.30.4-3.el7.x86_64
+
+[root@hiys ~]# lsmod |egrep  'uas|usb_storage'
+uas                    22429  0 
+usb_storage            66615  1 uas
+
+[root@hiys ~]# more  /proc/partitions 
+major minor  #blocks  name
+
+   8        0  488386584 sda
+   8        1  209715200 sda1
+   8        2  125829120 sda2
+   7        0    3963904 loop0
+   7        1     957812 loop1
+   8       16  122880000 sdb
+   8       17  122879776 sdb1
+
+[root@hiys ~]# fdisk  -l  /dev/sdb 
+
+磁盘 /dev/sdb：125.8 GB, 125829120000 字节，245760000 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+磁盘标识符：0x00000000
+
+   设备 Boot      Start         End      Blocks   Id  System
+/dev/sdb1             448   245759999   122879776    c  W95 FAT32 (LBA)
+
+
+[root@hiys ~]# mkdir  /hiyes
+
+[root@hiys ~]# ls  /hiyes/
+[root@hiys ~]# mount.
+mount.fuse        mount.lowntfs-3g  mount.nfs         mount.nfs4        mount.ntfs-3g
+
+[root@hiys ~]# mount.ntfs-3g  /dev/sdb1 
+
+ntfs-3g: No mountpoint is specified.
+
+ntfs-3g 2013.1.13 integrated FUSE 27 - Third Generation NTFS Driver
+........................................
+Usage:    ntfs-3g [-o option[,...]] <device|image_file> <mount_point>
+
+Options:  ro (read-only mount), windows_names, uid=, gid=,
+          umask=, fmask=, dmask=, streams_interface=.
+          Please see the details in the manual (type: man ntfs-3g).
+
+Example: ntfs-3g /dev/sda1 /mnt/windows
+
+News, support and information:  http://tuxera.com
+
+[root@hiys ~]# mount.ntfs-3g  /dev/sdb1   /hiyes/
+
+[root@hiys ~]# lsblk
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 465.8G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part /hiyes
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0 935.4M  0 loop /var/ftp/ceph
+
+======================================================
+
+================= 安装 linux 自定义虚拟机 制作 模板 配置yum 网卡   配 置 转发 DNS  ===============
+
+===================  配 置 ftp 服务 [ 1  ] =====================
+
+[root@hiys ~]# rpm  -q  vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+
+[root@hiys ~]# vim  /etc/vsftpd/vsftpd.conf 
+
+112 listen=YES
+117 listen_ipv6=NO
+
+[root@hiys ~]# cat  -n  /etc/vsftpd/vsftpd.conf  |sed  -n  '112p;117p'
+   112	listen=YES
+   117	listen_ipv6=NO
+
+[root@hiys ~]# systemctl  enable  vsftpd
+
+[root@hiys ~]# systemctl  restart  vsftpd
+
+[root@hiys ~]# systemctl  is-active  vsftpd
+active
+
+====================  =  搭建 网络 yum 源   [ 2  ]== 准备 光盘 iso 文件 ==========================
+
+[root@hiys ~]# stat  /var/lib/libvirt/images/iso/
+  文件："/var/lib/libvirt/images/iso/"
+  大小：4096      	块：8          IO 块：4096   目录
+设备：801h/2049d	Inode：4587521     硬链接：4
+权限：(0755/drwxr-xr-x)  Uid：(    0/    root)   Gid：(    0/    root)
+最近访问：2018-12-02 11:00:21.605040342 +0800
+最近更改：2018-12-02 10:59:53.053037400 +0800
+最近改动：2018-12-02 10:59:53.053037400 +0800
+创建时间：-
+
+[root@hiys ~]# cp  /hiyes/ISO-RPM-TAR-ZIP/CentOS7-1708.iso   /var/lib/libvirt/images/iso/
+cp：是否覆盖"/var/lib/libvirt/images/iso/CentOS7-1708.iso"？ y
+
+[root@hiys ~]# du  -sh  /var/lib/libvirt/images/iso/CentOS7-1708.iso 
+8.1G	/var/lib/libvirt/images/iso/CentOS7-1708.iso
+
+[root@hiys ~]# ll  /var/lib/libvirt/images/iso/CentOS7-1708.iso
+-rwxr-xr-x 1 root root 8694792192 12月  2 11:04 /var/lib/libvirt/images/iso/CentOS7-1708.iso
+
+[root@hiys ~]# du  -s  /var/lib/libvirt/images/iso/CentOS7-1708.iso 
+8491012	/var/lib/libvirt/images/iso/CentOS7-1708.iso
+
+[root@hiys ~]# echo  "scale=2;8694792192/1024" |bc
+8491008.00
+
+========================  搭建 网络 yum 源 [ 2  ] ============================
+
+[root@hiys ~]# ls  /var/ftp/rhel7/
+addons  extra_files.json  isolinux    Packages                 RPM-GPG-KEY-redhat-release
+EFI     GPL               LiveOS      repodata                 TRANS.TBL
+EULA    images            media.repo  RPM-GPG-KEY-redhat-beta
+
+[root@hiys ~]# cat  /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+baseurl=file:///var/ftp/rhel7/
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# ifconfig  enp1s0  |sed -n  '/inet /p'
+        inet 176.121.209.122  netmask 255.255.255.0  broadcast 176.121.209.255
+
+[root@hiys ~]# vim  /etc/yum.repos.d/centos.repo
+
+[root@hiys ~]# cat   /etc/yum.repos.d/centos.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://176.121.209.122/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@hiys ~]# mkdir  /var/ftp/CentOS7-1708
+ 
+[root@hiys ~]# ls  /var/ftp/CentOS7-1708/
+
+[root@hiys ~]# ls  /var/lib/libvirt/images/iso/CentOS7-1708.iso 
+/var/lib/libvirt/images/iso/CentOS7-1708.iso
+
+[root@hiys ~]# mount  -o  loop  -t  iso9660  /var/lib/libvirt/images/iso/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+mount: /dev/loop2 is write-protected, mounting read-only
+
+[root@hiys ~]# df  -hT  |grep  CentOS7
+/dev/loop2     iso9660   8.1G  8.1G     0 100% /var/ftp/CentOS7-1708
+
+[root@hiys ~]# du  -sh  /var/lib/libvirt/images/iso/CentOS7-1708.iso 
+8.1G	/var/lib/libvirt/images/iso/CentOS7-1708.iso
+
+[root@hiys ~]# umount   /var/ftp/CentOS7-1708/
+
+[root@hiys ~]# df  -hT  |grep  CentOS7
+
+[root@hiys ~]# ll  /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 Mar 19  2018 /etc/rc.local -> rc.d/rc.local
+
+[root@hiys ~]# ll  /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 499 Nov 11 13:09 /etc/rc.d/rc.local
+
+[root@hiys ~]# vim  /etc/rc.local   ## 开机自动挂载
+
+[root@hiys ~]# tail  -1  /etc/rc.local
+mount  -o  loop  -t  iso9660  /var/lib/libvirt/images/iso/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+
+[root@hiys ~]# source  /etc/rc.local
+mount: /dev/loop2 is write-protected, mounting read-only
+
+[root@hiys ~]# ls  /var/ftp/CentOS7-1708/
+CentOS_BuildTag  EULA  images    LiveOS    repodata              RPM-GPG-KEY-CentOS-Testing-7
+EFI              GPL   isolinux  Packages  RPM-GPG-KEY-CentOS-7  TRANS.TBL
+
+[root@hiys ~]# df  -hT  |grep  CentOS7
+/dev/loop2     iso9660   8.1G  8.1G     0 100% /var/ftp/CentOS7-1708
+
+[root@hiys ~]# yum  clean all >/dev/null  &&  yum repolist |tail  -4
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9,591
+rhel7                                rhel7.4                              4,986
+repolist: 14,577
+
+[root@hiys ~]# blkid  |tail  -2
+
+/dev/sdb1: UUID="562FB3196A04A1C8" TYPE="ntfs" 
+
+/dev/loop2: UUID="2017-09-06-10-53-42-00" LABEL="CentOS 7 x86_64" TYPE="iso9660" PTTYPE="dos" 
+
+[root@hiys ~]# blkid  /dev/sda
+/dev/sda: PTTYPE="dos" 
+
+
+-----===================-- 设置语言环境 为英文  [ 3  ] ========================
+
+[root@hiys ~]# echo  $LANG
+zh_CN.UTF-8
+
+[root@hiys ~]# LANG=en_US.UTF-8
+
+[root@hiys ~]# echo  $LANG
+en_US.UTF-8
+
+[root@hiys ~]# locale  ## 查看系统安装的语言包
+
+LANG=en_US.UTF-8
+LC_CTYPE="en_US.UTF-8"
+........................
+LC_IDENTIFICATION="en_US.UTF-8"
+LC_ALL=
+
+================================ 查看电脑 环境 是否支持 虚拟化 [ 4  ] ==================
+
+[root@hiys ~]# cat  /etc/issue    ##查看Linux系统版本的命令
+\S
+Kernel \r on an \m
+
+
+[root@hiys ~]# lsb_release  -a   ## 查看Linux系统版本的命令
+
+LSB Version:	:core-4.1-amd64:core-4.1-noarch:cxx-4.1-amd64:cxx-4.1-noarch:desktop-4.1-amd64:desktop-4.1-noarch:languages-4.1-amd64:languages-4.1-noarch:printing-4.1-amd64:printing-4.1-noarch
+Distributor ID:	CentOS
+Description:	CentOS Linux release 7.4.1708 (Core) 
+Release:	7.4.1708
+Codename:	Core
+
+[root@hiys ~]# ll  /etc/redhat-release 
+lrwxrwxrwx. 1 root root 14 3月  10 2018 /etc/redhat-release -> centos-release
+[root@hiys ~]# cat  /etc/redhat-release   ## 查看Linux系统版本的命令
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@hiys ~]# cat  /etc/centos-release
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@hiys ~]# ll  /etc/issue
+-rw-r--r--. 1 root root 23 8月  30 2017 /etc/issue
+[root@hiys ~]# cat  /etc/issue   ##查看Linux系统版本的命令
+\S
+Kernel \r on an \m
+
+[root@hiys ~]# cat  /proc/version    ## 查看Linux内核版本命令
+Linux version 3.10.0-693.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) ) #1 SMP Tue Aug 22 21:09:27 UTC 2017
+
+[root@hiys ~]# uname  -a     #查看Linux内核版本命令
+Linux hiys 3.10.0-693.el7.x86_64 #1 SMP Tue Aug 22 21:09:27 UTC 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+[root@hiys ~]# lsmod  |grep  kvm
+kvm_intel             170086  0 
+kvm                   566340  1 kvm_intel
+irqbypass              13503  1 kvm
+
+[root@hiys ~]# ls  /sys/module/kvm/
+...............................
+
+[root@hiys ~]# ls  /sys/module/kvm_intel/
+............................
+
+[root@hiys ~]# cat  /proc/cpuinfo   |grep  vmx |head  -1
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ..................... xsaveopt xsavec xgetbv1 dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp
+
+[root@hiys ~]# egrep  -o 'svm|vmx' /proc/cpuinfo  ##查看电脑是否支持 虚拟化# #-o参数(只输出匹配的部分),
+vmx
+vmx
+vmx
+vmx
+
+========================  安装 创建 虚拟机 模版 需要的软件包 [ 5  ]============================
+
+[root@hiys ~]# rpm  -q  qemu-kvm  libvirt  libvirt-client  libvirt-daemon  libvirt-daemon-driver-qemu \
+> libguestfs-tools  libvirt-python   python-setuptools   virt-install   virt-manager \
+> virt-v2v  virt-p2v  virt-viewer  bind-chroot  bind  chrony  vsftpd
+>  bash-completion   lrzsz   tree
+
+
+qemu-kvm-1.5.3-141.el7.x86_64      ## 为 kvm 提供底层仿真支持  【虚拟化平台 安装必备软件】
+libvirt-3.2.0-14.el7.x86_64
+libvirt-client-3.2.0-14.el7.x86_64   ## 用户端软件,提供客户端管理命令 【虚拟化平台 安装必备软件】
+libvirt-daemon-3.2.0-14.el7.x86_64    ## 守护进程,管理虚拟机     【虚拟化平台 安装必备软件】
+libvirt-daemon-driver-qemu-3.2.0-14.el7.x86_64   ## libvirtd 连接 qemu 的驱动  【虚拟化平台 安装必备软件】
+
+libguestfs-tools-1.36.3-6.el7.noarch
+libvirt-python-3.2.0-3.el7.x86_64
+python-setuptools-0.9.8-7.el7.noarch
+virt-install-1.4.1-7.el7.noarch       ## 系统安装工具 【可选功能】
+virt-manager-1.4.1-7.el7.noarch       ## 图形管理工具 【可选功能】
+
+virt-v2v-1.36.3-6.el7.x86_64        ## 虚拟机 迁移 工具【可选功能】
+未安装软件包 virt-p2v                ## 物理机 迁移 工具 【可选功能】
+
+virt-viewer-5.0-7.el7.x86_64
+bind-chroot-9.9.4-50.el7.x86_64
+bind-9.9.4-50.el7.x86_64
+chrony-3.1-2.el7.centos.x86_64
+vsftpd-3.0.2-22.el7.x86_64
+
+bash-completion-2.1-6.el7.noarch   ## 支持table键
+lrzsz-0.12.20-36.el7.x86_64        ## xshell 上传下载工具 软件包[上传rz、下载sz命令]
+tree-1.6.0-10.el7.x86_64
+
+[root@hiys ~]# yum list  |grep virt-p2v
+virt-p2v-maker.x86_64                    1:1.36.3-6.el7            CentOS7-1708 
+
+[root@hiys ~]# yum  -y install  virt-p2v
+............................
+没有可用软件包 virt-p2v。
+错误：无须任何处理
+
+[root@hiys ~]# systemctl is-active  libvirtd
+active
+[root@hiys ~]# systemctl is-enabled  libvirtd
+enabled
+[root@hiys ~]# systemctl restart  libvirtd
+
+-========================  禁止 firewalld 并且 屏蔽 防火墙服务 [ 6  ] ==============
+
+[root@hiys ~]# systemctl is-active  firewalld
+unknown
+[root@hiys ~]# systemctl is-enabled  firewalld
+disabled
+[root@hiys ~]# systemctl  mask  firewalld  ## 屏蔽 防火墙服务 
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@hiys ~]# systemctl is-enabled  firewalld
+masked
+
+[root@hiys ~]# getenforce 
+Disabled
+[root@hiys ~]# sed  -n  7p  /etc/sysconfig/selinux 
+SELINUX=disabled
+
+===============================   配 置 转发 DNS  [  7  ] ================================
+
+Domain Name System Security Extensions (DNSSEC)DNS安全扩展，
+是由IETF提供的一系列DNS安全认证的机制（可参考RFC2535）。
+它提供了一种来源鉴定和数据完整性的扩展，但不去保障可用性、加密性和证实域名不存在。
+DNSSEC是为解决DNS欺骗和缓存污染而设计的一种安全机制。
+开发DNSSEC技术的目的之一是通过对数据进行数字“签名”来抵御此类攻击，从而使您确信数据有效。
+但是，为了从互联网中消除该漏洞，
+必须在从 根区域 到 最终域名（例如， www. icann. org ）的查找过程中的每一步部署该项技术。
+对根区域进行签名（在根区域部署 DNSSEC ）是整个过程中的必要步骤。
+需要说明的是，该技术并不对数据进行加密。
+它只是验证您所访问的站点地址是否有效。
+完全部署 DNSSEC 可以确保最终用户连接到与特定域名相对应的实际网站或其他服务。
+尽管这不会解决互联网的所有安全问题，但它确实保护了互联网的关键部分（即目录查找），
+从而对 SSL (https:) 等其他保护“会话”的技术进行了补充，并且为尚待开发的安全改进技术提供了平台。
+
+一、DNSSEC概念与原理
+DNSSEC通过为通过为DNS中的数据添加数字签名信息，
+使得客户端在得到应答消息后, 可以通过检查此签名信息 来判断应答数据是否权威和真实，
+从而为DNS数据 提供 数据来源 验证 和 数据完整性 检验，
+可以防止针对 可以防止针对DNS的相关攻击
+
+[root@hiys ~]# rpm  -q  bind-chroot  bind  bind-utils
+bind-chroot-9.9.4-50.el7.x86_64
+bind-9.9.4-50.el7.x86_64
+bind-utils-9.9.4-50.el7.x86_64
+
+[root@hiys ~]# vim  /etc/named.conf 
+
+[root@hiys ~]# cat  -n  /etc/named.conf |sed  -n  '12,22p;33,35p'
+    12	options {
+    13		listen-on port 53 { 192.168.1.254; };
+    14	//	listen-on-v6 port 53 { ::1; };
+    15		directory 	"/var/named";
+    16		dump-file 	"/var/named/data/cache_dump.db";
+    17		statistics-file "/var/named/data/named_stats.txt";
+    18		memstatistics-file "/var/named/data/named_mem_stats.txt";
+    19		allow-query     { any; };
+    20	        forwarders   { 114.114.114.114; };
+    21		/* 
+    22		 - If you are building an AUTHORITATIVE DNS server, do NOT enable recursion.
+    33		dnssec-enable no;   ## 关闭dnssec 服务 , 不支持DNSSEC开关
+    34		dnssec-validation no; ## 是否进行DNSSEC确认开关 ,no
+    35	
+[root@hiys ~]# 
+/**************
+　114.114.114.114是国内移动、电信和联通通用的DNS，手机和电脑端都可以使用，是国内用户上网常用的DNS
+
+　8.8.8.8是GOOGLE公司提供的DNS，该地址是全球通用的，相对来说，更适合国外以及访问国外网站的用户使用
+**************/
+[root@hiys ~]# systemctl  restart  named
+[root@hiys ~]# systemctl  enable   named
+[root@hiys ~]# systemctl is-active  named
+active
+[root@hiys ~]# systemctl  is-enabled  named
+enabled
+
+[root@hiys ~]# dig  +trace  ntp.aliyun.com
+.....................
+ntp.aliyun.com.		300	IN	A	203.107.6.88
+aliyun.com.		172800	IN	NS	ns3.aliyun.com.
+aliyun.com.		172800	IN	NS	ns5.aliyun.com.
+aliyun.com.		172800	IN	NS	ns4.aliyun.com.
+;; Received 209 bytes from 140.205.71.248#53(ns4.aliyun.com) in 30 ms
+
+[root@hiys ~]# dig  ntp.aliyun.com
+..............
+;; ANSWER SECTION:
+ntp.aliyun.com.		35	IN	A	203.107.6.88
+.............................
+;; Query time: 25 msec
+;; SERVER: 176.121.0.100#53(176.121.0.100)
+;; WHEN: Sun Dec 02 16:29:00 CST 2018
+;; MSG SIZE  rcvd: 855
+
+[root@hiys ~]# cat  /etc/resolv.conf 
+# Generated by NetworkManager
+search tedu.com
+nameserver 176.121.0.100
+
+[root@hiys ~]# nslookup  ntp.aliyun.com
+Server:		176.121.0.100
+Address:	176.121.0.100#53
+
+Non-authoritative answer:
+Name:	ntp.aliyun.com
+Address: 203.107.6.88
+
+==================== 配置  时间服务 [  8  ] ==================
+
+[root@hiys ~]# rpm  -q  chrony
+chrony-3.1-2.el7.centos.x86_64
+[root@hiys ~]# vim  /etc/chrony.conf 
+[root@hiys ~]# sed  -n  '3,11p'  /etc/chrony.conf
+
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+server  ntp.aliyun.com iburst
+bindacqaddress  0.0.0.0
+#allow  0/0
+allow   all
+cmdallow 127.0.0.1
+
+[root@hiys ~]# systemctl restart  chronyd
+
+[root@hiys ~]# systemctl  is-enabled  chronyd
+enabled
+
+[root@hiys ~]# systemctl  is-active  chronyd
+active
+
+[root@hiys ~]# chronyc  sources  -v    # # 查看时间同步源* 203.107.6.88
+210 Number of sources = 1
+
+  .-- Source mode  '^' = server, '=' = peer, '#' = local clock.
+ / .- Source state '*' = current synced, '+' = combined , '-' = not combined,
+| /   '?' = unreachable, 'x' = time may be in error, '~' = time too variable.
+||                                                 .- xxxx [ yyyy ] +/- zzzz
+||      Reachability register (octal) -.           |  xxxx = adjusted offset,
+||      Log2(Polling interval) --.      |          |  yyyy = measured offset,
+||                                \     |          |  zzzz = estimated error.
+||                                 |    |           \
+MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+===============================================================================
+^* 203.107.6.88                  2   6    17    34   +281us[+4512us] +/-   34ms
+
+[root@hiys ~]# chronyc  sourcestats  -v    ##  #查看同步状态
+210 Number of sources = 1
+                             .- Number of sample points in measurement set.
+                            /    .- Number of residual runs with same sign.
+                           |    /    .- Length of measurement set (time).
+                           |   |    /      .- Est. clock freq error (ppm).
+                           |   |   |      /           .- Est. error in freq.
+                           |   |   |     |           /         .- Est. offset.
+                           |   |   |     |          |          |   On the -.
+                           |   |   |     |          |          |   samples. \
+                           |   |   |     |          |          |             |
+Name/IP Address            NP  NR  Span  Frequency  Freq Skew  Offset  Std Dev
+==============================================================================
+203.107.6.88                4   3     6   +575.789   9923.880    +35ms  1415us
+
+
+========================  设置 ssh  免 询问 登陆   [  9   ]  =================
+
+[root@hiys ~]# vim  /etc/ssh/ssh_config 
+
+ 41   Port 22
+
+ 58 Host *
+ 59         GSSAPIAuthentication   yes
+ 60         StrictHostKeyChecking  no
+
+[root@hiys ~]# systemctl  is-enabled  sshd
+enabled
+[root@hiys ~]# systemctl  restart   sshd
+[root@hiys ~]# systemctl  is-active  sshd
+active
+
+====================  创建  虚拟网络  vbr   vbr1  private2  [ 10 ] ===========================
+
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# cd  /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr.xml
+
+<network>
+  <name>vbr</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# cp  /etc/libvirt/qemu/networks/vbr.xml  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr1.xml
+
+<network>
+  <name>vbr1</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# virsh  net-define  vbr.xml 
+Network vbr defined from vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr1.xml 
+Network vbr1 defined from vbr1.xml
+
+[root@hiys networks]# virsh  net-autostart  vbr
+Network vbr marked as autostarted
+
+[root@hiys networks]# virsh  net-autostart  vbr1
+Network vbr1 marked as autostarted
+
+[root@hiys networks]# virsh  net-start  vbr
+Network vbr started
+
+[root@hiys networks]# virsh  net-start  vbr1
+Network vbr1 started
+
+[root@hiys networks]# ifconfig  vbr
+vbr: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.0.254  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:e7:9b:14  txqueuelen 1000  (Ethernet)
+.......................................
+
+[root@hiys networks]# ifconfig  vbr1
+vbr1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
+        ether 52:54:00:b0:ad:85  txqueuelen 1000  (Ethernet)
+..................................
+
+[root@hiys networks]# ifconfig  private2
+private2: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.2.254  netmask 255.255.255.0  broadcast 192.168.2.255
+        ether 52:54:00:f8:f9:d7  txqueuelen 1000  (Ethernet)
+..........................................
+
+[root@hiys networks]# pwd
+/etc/libvirt/qemu/networks
+
+[root@hiys networks]# cd
+
+[root@hiys ~]# virsh  -c  qemu:///system net-dumpxml  vbr   ##虚拟网络vbr --> eth0
+<network>
+  <name>vbr</name>
+  <uuid>4c71be3c-1f88-4e54-9101-df03f7d23865</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:e7:9b:14'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys ~]# virsh  -c  qemu:///system net-dumpxml  vbr1  ##虚拟网络vbr1 --> eth1
+<network>
+  <name>vbr1</name>
+  <uuid>610fbee3-a231-4bc5-b995-74daa37c9504</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <mac address='52:54:00:b0:ad:85'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys ~]# virsh  -c  qemu:///system net-dumpxml  private2  ##虚拟网络private2 -->  eth2
+<network>
+  <name>private2</name>
+  <uuid>dca824f3-cdfc-4fcd-9b98-f8a46656c27d</uuid>
+  <bridge name='private2' stp='on' delay='0'/>
+  <mac address='52:54:00:f8:f9:d7'/>
+  <domain name='private2'/>
+  <ip address='192.168.2.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+============================   CentOS1708 虚拟机模版 制作  [ 11  ] ===========
+
+[root@hiys ~]# qemu-img  create  -f  qcow2  /var/lib/libvirt/images/Hiyes.qcow2  3G 
+
+Formatting '/var/lib/libvirt/images/Hiyes.qcow2', fmt=qcow2 size=3221225472 encryption=off cluster_size=65536 lazy_refcounts=off 
+
+[root@hiys ~]# chmod  777  /var/lib/libvirt/images/Hiyes.qcow2 
+
+[root@hiys ~]# du  -sh   /var/lib/libvirt/images/Hiyes.qcow2
+
+196K	/var/lib/libvirt/images/Hiyes.qcow2
+
+[root@hiys ~]# ls   /var/lib/libvirt/images/
+bin      exam         qemu            server.qcow2                vsftpd.conf
+conf.d   Hiyes.qcow2  rh7_node1.img   Student.sh                  Weekend.sh
+.............................
+
+/**
+KDUMP 【dump整个系统的内存空间，以便于系统管理员debug分析系统挂掉的原因；
+kdump专用内核，通过kexec工具load到预留的内存中，供故障引导使用】
+----------------------------------------------------------
+***/
+
+[root@hiys ~]# virt-manager 
+
+====================================================================
+      虚拟系统管理器                                                                                   |
+-----------------------------------------------------                                                                      |
+   点击菜单  文件 ---> 新建虚拟机（N）                                                    |
+                                                                                                       |
+生成新虚拟机                                                                                           |
+
+  选择  网络安装，可为 HTTP，FTP 或者 NFS
+
+点击  前进
+---------------------------------------------------------
+生成新虚拟机
+提供操作系统安装 URL
+URL ： yum 源地址  ftp://176.121.213.151/CentOS7-1708/
+           baseurl=ftp://176.121.209.122/CentOS7-1708
+
+默认勾 上 根据安装介质 自动侦测 操作系统（U）
+
+点击  前进
+-----------------------------------------------
+/*****
+[root@hiys ~]# echo "1024*4" |bc
+4096
+[root@hiys ~]# echo  "1024*2" |bc
+2048
+***/
+-------------------------------
+生成新虚拟机
+
+内存（M），RAM   2048 MiB
+         CPU    2
+
+点击  前进
+------------------------------------------------------------
+
+生成新虚拟机
+
+默认勾 上 为虚拟机启用存储（E）
+
+选择或创建自定义存储（S）
+ 点击 管理（M）...  /var/lib/libvirt/images/Moban.qcow2
+                 /var/lib/libvirt/images/Hiyes.qcow2
+
+点击  前进
+------------------------------------------------------------
+
+生成新虚拟机
+名称（N）  Mob  【自定义虚拟机名称】Hiyes
+
+选择网络
+    虚拟网络‘vbr’：NAT
+
+点击 完成
+----------------------------------------------------------------
+
+WELCOME TO CENTOS 7.
+选择语言必须是 英语
+English        English(United States)
+
+           点击     Continue
+---------------------------------------------------------
+Installation  Summary
+------------------------------------------
+INSTALLATION   SUMMARY
+
+LOCALIZATION
+  DATE  & TIME                   KEYBOARD
+ Asia/Shanghai timezone          English(US)
+
+LANGUAGE SUPPORT
+English (United States)
+
+SOFTWARE
+
+INSTALLATION  SOURCE                      注意 SOFTWARE SELECTION  
+ftp://176.121.213.151/CentOS7-1708/        Minimal Install
+                                                        最小化安装
+
+                                               点击  KDUMP 
+                                     ---------------------------------------------------
+                                       去掉 勾 Enable  kdump
+                                                 点击Done
+                                       ----------------------------------------------
+    installation  destination
+ 点击INSTALLATION  DESTINATION           KDUMP
+         |                              Kdump is disabled
+            |
+            |
+----------------------------------    
+
+Device Selection
+ 
+Other  Storage  Options
+选择 I will configure partitioning
+
+点击左上角 Done
+
+--------------------------------------------------
+MANUAL  PARTITIONING
+
+
+New CentOS 7 Installation
+
+
+Create  new  mount  points  by clicking  the  '+' button.
+New  mount points  will user the following  partitioning scheme:
+
+选择  Standard Partition  标准分区
+
+点击 左下角 加号 + 
+-----------------------------------------
+ADD   A  NEW  MOUNT  POINT
+
+Mount  Point:   /  只选择根分区
+
+Desired Capacity:
+
+     点击  Add mount point 确定
+------------------------------------------------------
+MANUAL  PARTITIONING
+点击左上角 Done  (需要点击二次）
+--------------------------------------
+New CentOS 7 Installation
+   SYSTEM 
+  /               3071 MiB
+  vda1
+---------------------------------------------------------
+------------------------------------------------
+弹出对话框 
+  SUMMARY  OF  CHANGES
+1   Destroy  Format    Unknow                    vda
+2   Create   Format    partition  table (MSDOS)  vda
+3   Create   Device    partition                 vda1
+4   Create   Format     xfs             vda1          /
+
+选择 Accept Changes
+-----------------------------------------
+------------------------------------------
+INSTALLATION   SUMMARY
+
+
+             点击 Begin Installation
+----------------------------------------------------
+CONFIGURATION
+
+USER SETTINGS  
+
+ROOT  PASSWORD              USER  CREATION
+         1                   lily     1
+----------------------------(需要点击二次）---------------------                                                        |
+                                                                                                      |
+最后点击 Reboot                                                                    |
+====================================================================
+
+[root@hiys ~]# ls  /var/log/libvirt/qemu/
+[root@hiys ~]# ll /var/log/libvirt/qemu/Hiyes.log 
+-rw------- 1 root root 6360 Dec  2 17:39 /var/log/libvirt/qemu/Hiyes.log
+
+------------------打开 虚拟机 Hiyes 图形窗口 -----------------------------------
+
+localhost  login: root
+Password:  1
+[root@localhost ~]# yum  provides  ifconfig
+.................
+[root@localhost ~]# yum  -y install  net-tools   vim-enhanced
+
+[root@localhost ~]# ifconfig  |awk '/inet /&&/192.168/{print $2}'
+192.168.0.?
+[root@localhost ~]# echo Hiyes > /etc/hostname
+
+[root@localhost ~]#  cat  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+[root@localhost ~]# shutdown  -h  now
+
+[root@hiys ~]# virsh  start  Hiyes
+Domain Hiyes started
+
+[root@hiys ~]# ssh  -X  192.168.0.198
+
+root@192.168.0.198's password: 1
+
+[root@Hiyes ~]# tty
+/dev/pts/0
+
+[root@Hiyes ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.198  netmask 255.255.255.0  broadcast 192.168.0.255
+        inet6 fe80::5054:ff:fecf:5efc  prefixlen 64  scopeid 0x20<link>
+...........................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+........................
+---------------------------------------------------- 真机 ---------------------------------------
+[root@hiys ~]# vim  local.repo.txt
+[root@hiys ~]# cat  local.repo.txt
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[rhel7]
+name=rhel7.4
+baseurl=ftp://192.168.0.254/rhel7/
+gpgcheck=0
+enabled=1
+------------------------------------------------------
+[root@Hiyes ~]# mkdir /etc/yum.repos.d/repo
+[root@Hiyes ~]# mv  /etc/yum.repos.d/*.repo  /etc/yum.repos.d/repo
+[root@Hiyes ~]# ls  /etc/yum.repos.d/
+repo
+
+[root@Hiyes ~]# scp  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt  /etc/yum.repos.d/local.repo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@hiys ~]# virsh  nodeinfo
+
+CPU model:           x86_64
+CPU(s):              4
+CPU frequency:       1747 MHz
+CPU socket(s):       1
+Core(s) per socket:  4
+Thread(s) per core:  1
+NUMA cell(s):        1
+Memory size:         16671328 KiB
+
+##yum -y install  tree
+
+
+====================  =============================
+
+[root@hiys ~]# blkid 
+/dev/sda1: UUID="d60728be-85d6-4b5d-8ca8-b29016db27f1" TYPE="ext4" 
+/dev/sda2: UUID="bb62e9f9-f903-40e2-be01-730eb61cc7ea" TYPE="ext4" 
+
+/dev/loop0: UUID="2017-07-11-01-39-24-00" LABEL="RHEL-7.4 Server.x86_64" TYPE="iso9660" PTTYPE="dos" 
+
+/dev/loop1: UUID="2016-11-14-13-57-42-00" LABEL="rhcs2.0-rhosp9-20161113-x86_64" TYPE="iso9660" 
+
+/dev/sdb1:   UUID="562FB3196A04A1C8"           TYPE="ntfs" 
+
+
+[root@hiys ~]# tail  -3  /etc/fstab 
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1    /var/lib/libvirt/images   ext4    defaults      1   2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7  iso9660 defaults  0  0
+.......................................
+[root@hiys ~]# type  cp
+cp 是 `cp -i' 的别名
+[root@hiys ~]# type  cd
+cd 是 shell 内嵌
+[root@hiys ~]# type  ls
+ls 是 `ls --color=auto' 的别名
+
+[root@hiys ~]# echo  "scale=2;2/3" |bc
+.66
+[root@hiys ~]# echo  "scale=2;20/3" |bc
+6.66
+[root@hiys ~]# vim  test.txt
+hah                                                                                                                                 
+~                                                                     
+~                                                                     
+:split
+------------------------------------------
+hah
+~                                                                       
+~                                                                       
+~                                                                       
+test.txt                       1,1           全部
+hah
+~                                                                       
+~                                                                       
+~                                                                       
+test.txt                       1,1           全部
+:split
+----------------------------------
+:split
+ vim 分屏幕
+------------------------------
+[root@hiys ~]# vim  b.txt
+aaa
+iii
+ooo
+aaa
+aaa                                                                                        
+iii                                                                                        
+ooo     
+~           Ctrl  + n  快捷键 组合
+-- 关键字补全 (^N^P) 匹配 2 / 3 【上下键 可以切换补全选项】
+
+[root@hiys ~]# enable   ## 列出所有内部命令
+enable .
+enable :
+enable [
+enable alias
+enable bg
+enable bind
+enable break
+enable builtin
+enable caller
+enable cd
+enable command
+enable compgen
+enable complete
+enable compopt
+enable continue
+enable declare
+enable dirs
+enable disown
+enable echo
+enable enable
+enable eval
+enable exec
+enable exit
+enable export
+enable false
+enable fc
+enable fg
+enable getopts
+enable hash
+enable help
+enable history
+enable jobs
+enable kill
+enable let
+enable local
+enable logout
+enable mapfile
+enable popd
+enable printf
+enable pushd
+enable pwd
+enable read
+enable readarray
+enable readonly
+enable return
+enable set
+enable shift
+enable shopt
+enable source
+enable suspend
+enable test
+enable times
+enable trap
+enable true
+enable type
+enable typeset
+enable ulimit
+enable umask
+enable unalias
+enable unset
+enable wait
+[root@hiys ~]# 
+
+[root@hiys ~]# echo  $PS1
+[\u@\h \W]\$
+[root@hiys ~]# echo  $PS2
+>
+sed  -i  's/root@room9cp01/root@hiys/'  /root/桌面/END_project/HiYes.txt
+
+
