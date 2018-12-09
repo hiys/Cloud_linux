@@ -1,0 +1,564 @@
+
+<!-- saved from url=(0080)http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>CASE</title>
+    
+    <script type="text/javascript" src="./vpnCASE_files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="./vpnCASE_files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="./vpnCASE_files/main.js">
+    </script>
+    <link type="text/css" href="./vpnCASE_files/index.css" rel="Stylesheet">
+    <link type="text/css" href="./vpnCASE_files/jquery.snippet.css" rel="Stylesheet">
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor">
+      </a><a id="link_top" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#page_top_case">Top</a>
+      <h1>NSD OPERATION DAY07</h1>
+      <ol class="index">
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#case1">案例1：配置GRE VPN</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#case2">案例2：创建PPTP VPN</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#case3">案例3：创建L2TP+IPSec VPN</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#case4">案例4：NTP时间同步</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#case5">案例5：pssh远程套件工具</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 案例1：配置GRE VPN</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求搭建一个GRE VPN环境，并测试该VPN网络是否能够正常通讯，要求如下：</p>
+      <ul class="list">
+        <li>启用内核模块ip_gre
+</li>
+        <li>创建一个虚拟VPN隧道(10.10.10.0/24)
+</li>
+        <li>实现两台主机点到点的隧道通讯
+</li>
+      </ul>
+      <h3>1.2 方案</h3>
+      <p>使用lsmod查看当前计算机已经加载的模块，使用modprobe加载Linux内核模块，使用modinfo可以查看内核模块的信息。</p>
+      <p>准备实验所需的虚拟机环境，实验环境所需要的主机及对应的IP设置列表如表-1所示，正确配置IP地址、主机名称，并且为每台主机配置YUM源。</p>
+      <div class="table">
+        <p>表－1 主机列表</p>
+        <img src="./vpnCASE_files/table001.png">
+      </div>
+      <p>实验拓扑如图-1所示。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image001.png">
+        <p>图-1</p>
+      </div>
+      <h3>1.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：启用GRE模块（client和proxy都需要操作，下面以client为例）</p>
+      <p>1）查看计算机当前加载的模块</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># lsmod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//显示模块列表</span></li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># lsmod  <span class="sh_symbol">|</span> grep ip_gre&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//确定是否加载了gre模块</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# lsmod							//显示模块列表
+[root@client ~]# lsmod  | grep ip_gre			//确定是否加载了gre模块
+</pre></div></div>
+      <p>2)加载模块ip_gre</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># modprobe  ip_gre </li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# modprobe  ip_gre 
+</pre></div></div>
+      <p>3）查看模块信息</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># modinfo ip_gre</li><li>filename<span class="sh_symbol">:</span>       <span class="sh_regexp">/lib/m</span><span class="sh_normal">odules</span><span class="sh_symbol">/</span><span class="sh_number">3.10.0-693</span><span class="sh_symbol">.</span>el7<span class="sh_symbol">.</span><span class="sh_normal">x86_64</span><span class="sh_symbol">/</span><span class="sh_normal">kernel</span><span class="sh_symbol">/</span><span class="sh_normal">net</span><span class="sh_symbol">/</span><span class="sh_normal">ipv4</span><span class="sh_symbol">/</span>ip_gre<span class="sh_symbol">.</span>ko<span class="sh_symbol">.</span>xz</li><li>alias<span class="sh_symbol">:</span>          netdev<span class="sh_symbol">-</span>gretap0</li><li>alias<span class="sh_symbol">:</span>          netdev<span class="sh_symbol">-</span>gre0</li><li>alias<span class="sh_symbol">:</span>          rtnl<span class="sh_symbol">-</span>link<span class="sh_symbol">-</span>gretap</li><li>alias<span class="sh_symbol">:</span>          rtnl<span class="sh_symbol">-</span>link<span class="sh_symbol">-</span>gre</li><li>license<span class="sh_symbol">:</span>        GPL</li><li>rhelversion<span class="sh_symbol">:</span>    <span class="sh_number">7.4</span></li><li>srcversion<span class="sh_symbol">:</span>     F37A2BF90692F86E3A8BD15</li><li>depends<span class="sh_symbol">:</span>        ip_tunnel<span class="sh_symbol">,</span>gre</li><li>intree<span class="sh_symbol">:</span>         Y</li><li>vermagic<span class="sh_symbol">:</span>       <span class="sh_number">3.10.0-693</span><span class="sh_symbol">.</span>el7<span class="sh_symbol">.</span>x86_64 SMP mod_unload modversions </li><li>signer<span class="sh_symbol">:</span>         CentOS Linux kernel signing key</li><li>sig_key<span class="sh_symbol">:</span>        DA<span class="sh_symbol">:</span><span class="sh_number">18</span><span class="sh_symbol">:</span>7D<span class="sh_symbol">:</span>CA<span class="sh_symbol">:</span>7D<span class="sh_symbol">:</span>BE<span class="sh_symbol">:</span><span class="sh_number">53</span><span class="sh_symbol">:</span>AB<span class="sh_symbol">:</span><span class="sh_number">05</span><span class="sh_symbol">:</span>BD<span class="sh_symbol">:</span><span class="sh_number">13</span><span class="sh_symbol">:</span>BD<span class="sh_symbol">:</span>0C<span class="sh_symbol">:</span>4E<span class="sh_symbol">:</span><span class="sh_number">21</span><span class="sh_symbol">:</span>F4<span class="sh_symbol">:</span><span class="sh_number">22</span><span class="sh_symbol">:</span>B6<span class="sh_symbol">:</span>A4<span class="sh_symbol">:</span>9C</li><li>sig_hashalgo<span class="sh_symbol">:</span>   sha256</li><li>parm<span class="sh_symbol">:</span>           log_ecn_error<span class="sh_symbol">:</span>Log packets received <span class="sh_keyword">with</span> corrupted <span class="sh_function">ECN</span> <span class="sh_symbol">(</span>bool<span class="sh_symbol">)</span></li><li>      </li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# modinfo ip_gre
+filename:       /lib/modules/3.10.0-693.el7.x86_64/kernel/net/ipv4/ip_gre.ko.xz
+alias:          netdev-gretap0
+alias:          netdev-gre0
+alias:          rtnl-link-gretap
+alias:          rtnl-link-gre
+license:        GPL
+rhelversion:    7.4
+srcversion:     F37A2BF90692F86E3A8BD15
+depends:        ip_tunnel,gre
+intree:         Y
+vermagic:       3.10.0-693.el7.x86_64 SMP mod_unload modversions 
+signer:         CentOS Linux kernel signing key
+sig_key:        DA:18:7D:CA:7D:BE:53:AB:05:BD:13:BD:0C:4E:21:F4:22:B6:A4:9C
+sig_hashalgo:   sha256
+parm:           log_ecn_error:Log packets received with corrupted ECN (bool)
+      
+</pre></div></div>
+      <p class="number">步骤二：Client主机创建VPN隧道</p>
+      <p>1）创建隧道</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># ip tunnel add tun0  mode gre <span class="sh_symbol">\</span> </li><li><span class="sh_symbol">&gt;</span>  remote <span class="sh_number">201.1.2.5</span> local <span class="sh_number">201.1.2.10</span></li><li><span class="sh_comment">//ip tunnel add创建隧道（隧道名称为tun0），ip tunnel help可以查看帮助</span></li><li><span class="sh_comment">//mode设置隧道使用gre模式</span></li><li><span class="sh_comment">//local后面跟本机的IP地址，remote后面是与其他主机建立隧道的对方IP地址</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# ip tunnel add tun0  mode gre \ 
+&gt;  remote 201.1.2.5 local 201.1.2.10
+//ip tunnel add创建隧道（隧道名称为tun0），ip tunnel help可以查看帮助
+//mode设置隧道使用gre模式
+//local后面跟本机的IP地址，remote后面是与其他主机建立隧道的对方IP地址
+</pre></div></div>
+      <p>2）启用该隧道（类似与设置网卡up）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># ip link show</li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># ip link set tun0 up &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//设置UP</span></li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># ip link show</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# ip link show
+[root@client ~]# ip link set tun0 up 		//设置UP
+[root@client ~]# ip link show
+</pre></div></div>
+      <p>2）为VPN配置隧道IP地址</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># ip addr add <span class="sh_number">10.10.10.10</span><span class="sh_symbol">/</span><span class="sh_number">24</span> peer <span class="sh_number">10.10.10.5</span><span class="sh_symbol">/</span><span class="sh_number">24</span> <span class="sh_symbol">\</span></li><li><span class="sh_symbol">&gt;</span>  dev tun0</li><li><span class="sh_comment">//为隧道tun0设置本地IP地址（10.10.10.10.10/24）</span></li><li><span class="sh_comment">//隧道对面的主机IP的隧道IP为10.10.10.5/24</span></li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># ip a s                      <span class="sh_comment">//查看IP地址</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# ip addr add 10.10.10.10/24 peer 10.10.10.5/24 \
+&gt;  dev tun0
+//为隧道tun0设置本地IP地址（10.10.10.10.10/24）
+//隧道对面的主机IP的隧道IP为10.10.10.5/24
+[root@client ~]# ip a s                      //查看IP地址
+</pre></div></div>
+      <p>3）关闭防火墙</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># firewall<span class="sh_symbol">-</span>cmd <span class="sh_symbol">--</span>set<span class="sh_symbol">-</span><span class="sh_keyword">default</span><span class="sh_symbol">-</span>zone<span class="sh_symbol">=</span>trusted</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# firewall-cmd --set-default-zone=trusted
+</pre></div></div>
+      <p class="number">步骤三：Proxy主机创建VPN隧道</p>
+      <p>1）创建隧道</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># <span class="sh_symbol">~]</span># ip tunnel add tun0  mode gre <span class="sh_symbol">\</span> </li><li><span class="sh_symbol">&gt;</span>  remote <span class="sh_number">201.1.2.10</span> local <span class="sh_number">201.1.2.5</span></li><li><span class="sh_comment">//ip tunnel add创建隧道（隧道名称为tun0），ip tunnel help可以查看帮助</span></li><li><span class="sh_comment">//mode设置隧道使用gre模式</span></li><li><span class="sh_comment">//local后面跟本机的IP地址，remote后面是与其他主机建立隧道的对方IP地址</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# ~]# ip tunnel add tun0  mode gre \ 
+&gt;  remote 201.1.2.10 local 201.1.2.5
+//ip tunnel add创建隧道（隧道名称为tun0），ip tunnel help可以查看帮助
+//mode设置隧道使用gre模式
+//local后面跟本机的IP地址，remote后面是与其他主机建立隧道的对方IP地址
+</pre></div></div>
+      <p>2）启用该隧道（类似与设置网卡up）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ip link show</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ip link set tun0 up &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//设置UP</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ip link show</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# ip link show
+[root@proxy ~]# ip link set tun0 up 		//设置UP
+[root@proxy ~]# ip link show
+</pre></div></div>
+      <p>2）为VPN配置隧道IP地址</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ip addr add <span class="sh_number">10.10.10.5</span><span class="sh_symbol">/</span><span class="sh_number">24</span> peer <span class="sh_number">10.10.10.10</span><span class="sh_symbol">/</span><span class="sh_number">24</span> <span class="sh_symbol">\</span></li><li><span class="sh_symbol">&gt;</span>  dev tun0</li><li><span class="sh_comment">//为隧道tun0设置本地IP地址（10.10.10.10.5/24）</span></li><li><span class="sh_comment">//隧道对面的主机IP的隧道IP为10.10.10.10/24</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ip a s                      <span class="sh_comment">//查看IP地址</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# ip addr add 10.10.10.5/24 peer 10.10.10.10/24 \
+&gt;  dev tun0
+//为隧道tun0设置本地IP地址（10.10.10.10.5/24）
+//隧道对面的主机IP的隧道IP为10.10.10.10/24
+[root@proxy ~]# ip a s                      //查看IP地址
+</pre></div></div>
+      <p>3）开启路由转发、关闭防火墙</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># echo <span class="sh_string">"1"</span> <span class="sh_symbol">&gt;</span> <span class="sh_regexp">/proc/</span><span class="sh_normal">sys</span><span class="sh_symbol">/</span><span class="sh_normal">net</span><span class="sh_symbol">/</span><span class="sh_normal">ipv4</span><span class="sh_symbol">/</span>ip_forward</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># firewall<span class="sh_symbol">-</span>cmd <span class="sh_symbol">--</span>set<span class="sh_symbol">-</span><span class="sh_keyword">default</span><span class="sh_symbol">-</span>zone<span class="sh_symbol">=</span>trusted</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# echo "1" &gt; /proc/sys/net/ipv4/ip_forward
+[root@proxy ~]# firewall-cmd --set-default-zone=trusted
+</pre></div></div>
+      <p>4)测试连通性</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span>#  ping <span class="sh_number">10.10.10.5</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span>#   ping <span class="sh_number">10.10.10.10</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]#  ping 10.10.10.5
+[root@proxy ~]#   ping 10.10.10.10
+</pre></div></div>
+      <a name="case2">
+      </a>
+      <h2>2 案例2：创建PPTP VPN</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求搭建一个PPTP VPN环境，并测试该VPN网络是否能够正常通讯，要求如下:</p>
+      <ul class="list">
+        <li>使用PPTP协议创建一个支持身份验证的隧道连接
+</li>
+        <li>使用MPPE对数据进行加密
+</li>
+        <li>为客户端分配192.168.3.0/24的地址池
+</li>
+        <li>客户端连接的用户名为jacob，密码为123456
+</li>
+      </ul>
+      <h3>2.2 方案</h3>
+      <p>准备实验所需的虚拟机环境，实验环境所需要的主机及对应的IP设置列表如表-2所示，正确配置IP地址、主机名称，并且为每台主机配置YUM源。</p>
+      <div class="table">
+        <p>表－2 主机列表</p>
+        <img src="./vpnCASE_files/table002.png">
+      </div>
+      <p>实验拓扑如图-2所示。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image002.png">
+        <p>图-2</p>
+      </div>
+      <h3>2.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署VPN服务器</p>
+      <p>1）安装软件包（软件包参考lnmp_soft）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># yum localinstall pptpd<span class="sh_number">-1.4.0-2</span><span class="sh_symbol">.</span>el7<span class="sh_symbol">.</span>x86_64<span class="sh_symbol">.</span>rpm</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># rpm <span class="sh_symbol">-</span>qc pptpd</li><li><span class="sh_regexp">/etc/</span><span class="sh_normal">ppp</span><span class="sh_symbol">/</span>options<span class="sh_symbol">.</span>pptpd</li><li><span class="sh_regexp">/etc/</span>pptpd<span class="sh_symbol">.</span>conf</li><li><span class="sh_regexp">/etc/</span><span class="sh_normal">sysconfig</span><span class="sh_symbol">/</span>pptpd</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# yum localinstall pptpd-1.4.0-2.el7.x86_64.rpm
+[root@proxy ~]# rpm -qc pptpd
+/etc/ppp/options.pptpd
+/etc/pptpd.conf
+/etc/sysconfig/pptpd
+</pre></div></div>
+      <p>2)修改配置文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># <span class="sh_normal">vim </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>pptpd<span class="sh_symbol">.</span>conf</li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span></li><li>localip <span class="sh_number">201.1.2.5</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//服务器本地IP</span></li><li>remoteip <span class="sh_number">192.168.3.1-50</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//分配给客户端的IP池</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># <span class="sh_normal">vim </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">ppp</span><span class="sh_symbol">/</span>options<span class="sh_symbol">.</span>pptpd</li><li>require<span class="sh_symbol">-</span>mppe<span class="sh_number">-128</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//使用MPPE加密数据</span></li><li>ms<span class="sh_symbol">-</span>dns <span class="sh_number">8.8.8.8</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//DNS服务器</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># <span class="sh_normal">vim </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">ppp</span><span class="sh_symbol">/</span>chap<span class="sh_symbol">-</span>secrets&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//修改账户配置文件</span></li><li>jacob   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_symbol">*</span>      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="sh_number">123456</span>  &nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_symbol">*</span></li><li><span class="sh_comment">//用户名&nbsp;&nbsp;&nbsp;&nbsp;服务器标记&nbsp;&nbsp;&nbsp;&nbsp;密码&nbsp;&nbsp;&nbsp;&nbsp;客户端</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># echo <span class="sh_string">"1"</span> <span class="sh_symbol">&gt;</span> <span class="sh_regexp">/proc/</span><span class="sh_normal">sys</span><span class="sh_symbol">/</span><span class="sh_normal">net</span><span class="sh_symbol">/</span><span class="sh_normal">ipv4</span><span class="sh_symbol">/</span>ip_forward&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//开启路由转发</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# vim /etc/pptpd.conf
+.. ..
+localip 201.1.2.5									//服务器本地IP
+remoteip 192.168.3.1-50							//分配给客户端的IP池
+
+[root@proxy ~]# vim /etc/ppp/options.pptpd
+require-mppe-128									//使用MPPE加密数据
+ms-dns 8.8.8.8									//DNS服务器
+
+[root@proxy ~]# vim /etc/ppp/chap-secrets			//修改账户配置文件
+jacob   		*      		 123456  	*
+//用户名	服务器标记	密码	客户端
+
+[root@proxy ~]# echo "1" &gt; /proc/sys/net/ipv4/ip_forward	//开启路由转发
+</pre></div></div>
+      <p>3）启动服务</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># systemctl start pptpd</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># systemctl enable pptpd</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># firewall<span class="sh_symbol">-</span>cmd <span class="sh_symbol">--</span>set<span class="sh_symbol">-</span><span class="sh_keyword">default</span><span class="sh_symbol">-</span>zone<span class="sh_symbol">=</span>trusted</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# systemctl start pptpd
+[root@proxy ~]# systemctl enable pptpd
+[root@proxy ~]# firewall-cmd --set-default-zone=trusted
+</pre></div></div>
+      <p>4）翻墙设置（非必需操作）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># iptables <span class="sh_symbol">-</span>t nat <span class="sh_symbol">-</span>A POSTROUTING <span class="sh_symbol">-</span>s <span class="sh_number">192.168.3.0</span><span class="sh_symbol">/</span><span class="sh_number">24</span> <span class="sh_symbol">\</span></li><li><span class="sh_symbol">&gt;</span>  <span class="sh_symbol">-</span>j SNAT <span class="sh_symbol">--</span>to<span class="sh_symbol">-</span>source <span class="sh_number">201.1.2.5</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# iptables -t nat -A POSTROUTING -s 192.168.3.0/24 \
+&gt;  -j SNAT --to-source 201.1.2.5
+</pre></div></div>
+      <p class="number">步骤二：客户端设置</p>
+      <p>启动一台Windows虚拟机，将虚拟机网卡桥接到public2，配置IP地址为201.1.2.20。</p>
+      <p>新建网络连接（具体操作如图-3所示），输入VPN服务器账户与密码（具体操作如图-4所示），连接VPN并测试网络连通性（如图-5所示）。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image003.png">
+        <p>图-3</p>
+      </div>
+      <div class="image">
+        <img src="./vpnCASE_files/image004.png">
+        <p>图-4</p>
+      </div>
+      <div class="image">
+        <img src="./vpnCASE_files/image005.png">
+        <p>图-5</p>
+      </div>
+      <a name="case3">
+      </a>
+      <h2>3 案例3：创建L2TP+IPSec VPN</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求搭建一个L2TP+IPSec VPN环境，并测试该VPN网络是否能够正常通讯，具体要求如下：</p>
+      <ul class="list">
+        <li>使用L2TP协议创建一个支持身份验证与加密的隧道连接
+</li>
+        <li>使用IPSec对数据进行加密
+</li>
+        <li>为客户端分配192.168.3.0/24的地址池
+</li>
+        <li>客户端连接的用户名为：jacob，密码为：123456
+</li>
+        <li>预共享密钥为：randpass
+</li>
+      </ul>
+      <h3>3.2 方案</h3>
+      <p>准备实验所需的虚拟机环境，实验环境所需要的主机及对应的IP设置列表如表-3所示，正确配置IP地址、主机名称，并且为每台主机配置YUM源。</p>
+      <div class="table">
+        <p>表－3 主机列表</p>
+        <img src="./vpnCASE_files/table003.png">
+      </div>
+      <p>实验拓扑如图-6所示。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image006.png">
+        <p>图-6</p>
+      </div>
+      <h3>3.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署IPSec服务</p>
+      <p>1）安装软件包</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># yum <span class="sh_symbol">-</span>y install libreswan</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# yum -y install libreswan
+</pre></div></div>
+      <p>2)新建IPSec密钥验证配置文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># <span class="sh_normal">cat </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>ipsec<span class="sh_symbol">.</span>conf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//仅查看一下该主配置文件</span></li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span></li><li><span class="sh_normal">include </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>ipsec<span class="sh_symbol">.</span>d<span class="sh_comment">/*.conf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//加载该目录下的所有配置文件</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_comment">[</span><a class="sh_url" href="mailto:root@client">root@client</a><span class="sh_comment"> ~]# vim /etc/ipsec.d/myipsec.conf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li><span class="sh_comment">//新建该文件，参考lnmp_soft/vpn/myipsec.conf&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li><span class="sh_comment">conn IDC-PSK-NAT</span></li><li><span class="sh_comment">    rightsubnet=vhost:%priv&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//允许建立的VPN虚拟网络</span></li><li><span class="sh_comment">    also=IDC-PSK-noNAT</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_comment">conn IDC-PSK-noNAT</span></li><li><span class="sh_comment">    authby=secret&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//加密认证</span></li><li><span class="sh_comment">        ike=3des-sha1;modp1024&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//算法</span></li><li><span class="sh_comment">        phase2alg=aes256-sha1;modp2048&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//算法</span></li><li><span class="sh_comment">    pfs=no</span></li><li><span class="sh_comment">    auto=add</span></li><li><span class="sh_comment">    keyingtries=3</span></li><li><span class="sh_comment">    rekey=no</span></li><li><span class="sh_comment">    ikelifetime=8h</span></li><li><span class="sh_comment">    keylife=3h</span></li><li><span class="sh_comment">    type=transport</span></li><li><span class="sh_comment">    left=201.1.2.200&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//重要，服务器本机的外网IP</span></li><li><span class="sh_comment">    leftprotoport=17/1701</span></li><li><span class="sh_comment">    right=%any&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//允许任何客户端连接</span></li><li><span class="sh_comment">    rightprotoport=17/%any</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# cat /etc/ipsec.conf				//仅查看一下该主配置文件
+.. ..
+include /etc/ipsec.d/*.conf					//加载该目录下的所有配置文件
+
+[root@client ~]# vim /etc/ipsec.d/myipsec.conf			
+//新建该文件，参考lnmp_soft/vpn/myipsec.conf	
+conn IDC-PSK-NAT
+    rightsubnet=vhost:%priv						//允许建立的VPN虚拟网络
+    also=IDC-PSK-noNAT
+
+conn IDC-PSK-noNAT
+    authby=secret									//加密认证
+        ike=3des-sha1;modp1024						//算法
+        phase2alg=aes256-sha1;modp2048				//算法
+    pfs=no
+    auto=add
+    keyingtries=3
+    rekey=no
+    ikelifetime=8h
+    keylife=3h
+    type=transport
+    left=201.1.2.200								//重要，服务器本机的外网IP
+    leftprotoport=17/1701
+    right=%any									//允许任何客户端连接
+    rightprotoport=17/%any
+</pre></div></div>
+      <p>3)创建IPSec预定义共享密钥</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># <span class="sh_normal">cat </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>ipsec<span class="sh_symbol">.</span>secrets &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//仅查看，不要修改该文件</span></li><li><span class="sh_normal">include </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>ipsec<span class="sh_symbol">.</span>d<span class="sh_comment">/*.secrets</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_comment">[</span><a class="sh_url" href="mailto:root@client">root@client</a><span class="sh_comment"> ~]# vim /etc/ipsec.d/mypass.secrets&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//新建该文件</span></li><li><span class="sh_comment">201.1.2.200   %any:    PSK    "randpass" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//randpass为密钥</span></li><li><span class="sh_comment">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//201.1.2.200是VPN服务器的IP</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# cat /etc/ipsec.secrets 				//仅查看，不要修改该文件
+include /etc/ipsec.d/*.secrets
+
+[root@client ~]# vim /etc/ipsec.d/mypass.secrets		//新建该文件
+201.1.2.200   %any:    PSK    "randpass" 			//randpass为密钥
+												//201.1.2.200是VPN服务器的IP
+</pre></div></div>
+      <p>4)启动IPSec服务</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># systemctl start ipsec&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># netstat <span class="sh_symbol">-</span>ntulp <span class="sh_symbol">|</span>grep pluto</li><li>udp        <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">127.0.0.1</span><span class="sh_symbol">:</span><span class="sh_number">4500</span>          <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>           <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto          </li><li>udp        <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">192.168.4.200</span><span class="sh_symbol">:</span><span class="sh_number">4500</span>      <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>           <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto          </li><li>udp        <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">201.1.2.200</span><span class="sh_symbol">:</span><span class="sh_number">4500</span>        <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>           <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto          </li><li>udp        <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">127.0.0.1</span><span class="sh_symbol">:</span><span class="sh_number">500</span>           <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>           <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto          </li><li>udp        <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">192.168.4.200</span><span class="sh_symbol">:</span><span class="sh_number">500</span>       <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>           <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto          </li><li>udp        <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">201.1.2.200</span><span class="sh_symbol">:</span><span class="sh_number">500</span>         <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>           <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto          </li><li>udp6       <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_symbol">::</span><span class="sh_number">1</span><span class="sh_symbol">:</span><span class="sh_number">500</span>                 <span class="sh_symbol">:::*</span>                 <span class="sh_number">3148</span><span class="sh_symbol">/</span>pluto</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# systemctl start ipsec		
+[root@client ~]# netstat -ntulp |grep pluto
+udp        0      0 127.0.0.1:4500          0.0.0.0:*           3148/pluto          
+udp        0      0 192.168.4.200:4500      0.0.0.0:*           3148/pluto          
+udp        0      0 201.1.2.200:4500        0.0.0.0:*           3148/pluto          
+udp        0      0 127.0.0.1:500           0.0.0.0:*           3148/pluto          
+udp        0      0 192.168.4.200:500       0.0.0.0:*           3148/pluto          
+udp        0      0 201.1.2.200:500         0.0.0.0:*           3148/pluto          
+udp6       0      0 ::1:500                 :::*                 3148/pluto
+</pre></div></div>
+      <p class="number">步骤二：部署XL2TP服务</p>
+      <p>1）安装软件包（软件包参考lnmp_soft）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># yum localinstall xl2tpd<span class="sh_number">-1.3.8-2</span><span class="sh_symbol">.</span>el7<span class="sh_symbol">.</span>x86_64<span class="sh_symbol">.</span>rpm</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# yum localinstall xl2tpd-1.3.8-2.el7.x86_64.rpm
+</pre></div></div>
+      <p>2) 修改xl2tp配置文件（修改3个配置文件的内容）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span>#  <span class="sh_normal">vim  </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">xl2tpd</span><span class="sh_symbol">/</span>xl2tpd<span class="sh_symbol">.</span>conf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//修改主配置文件</span></li><li><span class="sh_symbol">[</span>global<span class="sh_symbol">]</span></li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span>&nbsp;&nbsp;&nbsp;&nbsp;</li><li><span class="sh_symbol">[</span>lns <span class="sh_keyword">default</span><span class="sh_symbol">]</span></li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span></li><li>ip range <span class="sh_symbol">=</span> <span class="sh_number">192.168.3.128-192.168.3.254</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//分配给客户端的IP池</span></li><li>local ip <span class="sh_symbol">=</span> <span class="sh_number">201.1.2.200</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//VPN服务器的IP地址</span></li><li><span style="display:none;">&nbsp;</span></li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># <span class="sh_normal">vim </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">ppp</span><span class="sh_symbol">/</span>options<span class="sh_symbol">.</span>xl2tpd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//认证配置</span></li><li>require<span class="sh_symbol">-</span>mschap<span class="sh_symbol">-</span>v2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//添加一行，强制要求认证</span></li><li>#crtscts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//注释或删除该行</span></li><li>#lock&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//注释或删除该行</span></li><li><span style="display:none;">&nbsp;</span></li><li>root@client <span class="sh_symbol">~]</span># <span class="sh_normal">vim </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">ppp</span><span class="sh_symbol">/</span>chap<span class="sh_symbol">-</span>secrets&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//修改密码文件</span></li><li>jacob   <span class="sh_symbol">*</span>       <span class="sh_number">123456</span>  <span class="sh_symbol">*</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//账户名称   服务器标记   密码   客户端IP</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]#  vim  /etc/xl2tpd/xl2tpd.conf				//修改主配置文件
+[global]
+.. ..	
+[lns default]
+.. ..
+ip range = 192.168.3.128-192.168.3.254					//分配给客户端的IP池
+local ip = 201.1.2.200								//VPN服务器的IP地址
+
+[root@client ~]# vim /etc/ppp/options.xl2tpd				//认证配置
+require-mschap-v2				 						//添加一行，强制要求认证
+#crtscts												//注释或删除该行
+#lock												//注释或删除该行
+
+root@client ~]# vim /etc/ppp/chap-secrets					//修改密码文件
+jacob   *       123456  *				//账户名称   服务器标记   密码   客户端IP
+</pre></div></div>
+      <p>3）启动服务</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># systemctl start xl2tpd</li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># netstat  <span class="sh_symbol">-</span>ntulp <span class="sh_symbol">|</span>grep xl2tpd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li><li>udp     <span class="sh_number">0</span>      <span class="sh_number">0</span> <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:</span><span class="sh_number">1701</span>      <span class="sh_number">0.0.0.0</span><span class="sh_symbol">:*</span>          <span class="sh_number">3580</span><span class="sh_symbol">/</span>xl2tpd</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# systemctl start xl2tpd
+[root@client ~]# netstat  -ntulp |grep xl2tpd		
+udp     0      0 0.0.0.0:1701      0.0.0.0:*          3580/xl2tpd
+</pre></div></div>
+      <p>4）设置路由转发，防火墙</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># echo <span class="sh_string">"1"</span> <span class="sh_symbol">&gt;</span> <span class="sh_regexp">/proc/</span><span class="sh_normal">sys</span><span class="sh_symbol">/</span><span class="sh_normal">net</span><span class="sh_symbol">/</span><span class="sh_normal">ipv4</span><span class="sh_symbol">/</span>ip_forward</li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># firewall<span class="sh_symbol">-</span>cmd <span class="sh_symbol">--</span>set<span class="sh_symbol">-</span><span class="sh_keyword">default</span><span class="sh_symbol">-</span>zone<span class="sh_symbol">=</span>trusted</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# echo "1" &gt; /proc/sys/net/ipv4/ip_forward
+[root@client ~]# firewall-cmd --set-default-zone=trusted
+</pre></div></div>
+      <p>5）翻墙设置（非必需操作）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># iptables <span class="sh_symbol">-</span>t nat <span class="sh_symbol">-</span>A POSTROUTING <span class="sh_symbol">-</span>s <span class="sh_number">192.168.3.0</span><span class="sh_symbol">/</span><span class="sh_number">24</span> <span class="sh_symbol">\</span></li><li><span class="sh_symbol">&gt;</span>  <span class="sh_symbol">-</span>j SNAT <span class="sh_symbol">--</span>to<span class="sh_symbol">-</span>source <span class="sh_number">201.1.2.200</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# iptables -t nat -A POSTROUTING -s 192.168.3.0/24 \
+&gt;  -j SNAT --to-source 201.1.2.200
+</pre></div></div>
+      <p class="number">步骤二：客户端设置</p>
+      <p>启动一台Windows虚拟机，将虚拟机网卡桥接到public2，配置IP地址为201.1.2.20。</p>
+      <p>1. 新建网络连接（参考案例2），输入VPN服务器账户与密码（参考案例2）。</p>
+      <p>设置VPN连接的属性，预共享密钥是IPSec配置文件中填写的randpass，具体操作如图-7所示。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image007.png">
+        <p>图-7</p>
+      </div>
+      <p>2. 设置Windows注册表（不修改注册表，连接VPN默认会报789错误），具体操作如下：</p>
+      <ul class="list">
+        <li>单击"开始"，单击"运行"，键入"regedit"，然后单击"确定"
+</li>
+        <li>找到下面的注册表子项，然后单击它：
+</li>
+        <li>HKEY_LOCAL_MACHINE\ System\CurrentControlSet\Services\Rasman\Parameters
+</li>
+        <li>在"编辑"菜单上，单击"新建"-&gt;"DWORD值"
+</li>
+        <li>在"名称"框中，键入"ProhibitIpSec"
+</li>
+        <li>在"数值数据"框中，键入"1"，然后单击"确定"
+</li>
+        <li>退出注册表编辑器，然后重新启动计算机
+</li>
+      </ul>
+      <p>连接VPN并测试网络连通性（参考案例2）。</p>
+      <a name="case4">
+      </a>
+      <h2>4 案例4：NTP时间同步</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求搭建一个NTP服务器，为整个网络环境中的所有主机提供时间校准服务，具体要求如下：</p>
+      <ul class="list">
+        <li>部署一台NTP时间服务器
+</li>
+        <li>设置时间服务器上层与0.centos.pool.ntp.org同步
+</li>
+        <li>设置本地服务器层级数量为10
+</li>
+        <li>允许192.168.4.0/24网络的主机同步时间
+</li>
+        <li>客户端验证时间是否同步
+</li>
+      </ul>
+      <h3>4.2 方案</h3>
+      <p>准备实验所需的虚拟机环境，实验环境所需要的主机及对应的IP设置列表如表-4所示，正确配置IP地址、主机名称，并且为每台主机配置YUM源。</p>
+      <div class="table">
+        <p>表－4 主机列表</p>
+        <img src="./vpnCASE_files/table004.png">
+      </div>
+      <p>实验拓扑如图-8所示。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image008.png">
+        <p>图-8</p>
+      </div>
+      <p>Network Time Protocol（网络时间协议）采用的是分层设计，如图-9所示，Stratum层的总数限制在15以内（包括15）。</p>
+      <div class="image">
+        <img src="./vpnCASE_files/image009.png">
+        <p>图-9</p>
+      </div>
+      <h3>4.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：部署NTP服务</p>
+      <p>1）安装软件包</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># yum <span class="sh_symbol">-</span>y install chrony</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># rpm <span class="sh_symbol">-</span>qc chrony&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//查看配置文件列表</span></li><li><span class="sh_regexp">/etc/</span>chrony<span class="sh_symbol">.</span>conf</li><li><span class="sh_regexp">/etc/</span>chrony<span class="sh_symbol">.</span>keys</li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# yum -y install chrony
+[root@proxy ~]# rpm -qc chrony						//查看配置文件列表
+/etc/chrony.conf
+/etc/chrony.keys
+.. ..
+</pre></div></div>
+      <p>2)修改配置文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># <span class="sh_normal">cat </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>chrony<span class="sh_symbol">.</span>conf</li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span></li><li>server <span class="sh_number">0</span><span class="sh_symbol">.</span>centos<span class="sh_symbol">.</span>pool<span class="sh_symbol">.</span>ntp<span class="sh_symbol">.</span>org iburst         <span class="sh_comment">//server用户客户端指向上层NTP服务器</span></li><li>allow <span class="sh_number">192.168.4.0</span><span class="sh_symbol">/</span><span class="sh_number">24</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//允许那个IP或网络访问NTP</span></li><li>#deny  <span class="sh_number">192.168.4.1</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//拒绝那个IP或网络访问NTP</span></li><li>local stratum <span class="sh_number">10</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//设置NTP服务器的层数量</span></li><li><span class="sh_symbol">..</span> <span class="sh_symbol">..</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# cat /etc/chrony.conf
+.. ..
+server 0.centos.pool.ntp.org iburst         //server用户客户端指向上层NTP服务器
+allow 192.168.4.0/24						//允许那个IP或网络访问NTP
+#deny  192.168.4.1						//拒绝那个IP或网络访问NTP
+local stratum 10							//设置NTP服务器的层数量
+.. ..
+</pre></div></div>
+      <p>4)启动NTP服务</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># systemctl  restart  chronyd</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># systemctl  enable  chronyd</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# systemctl  restart  chronyd
+[root@proxy ~]# systemctl  enable  chronyd
+</pre></div></div>
+      <p>5)设置防火墙</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># firewall<span class="sh_symbol">-</span>cmd <span class="sh_symbol">--</span>set<span class="sh_symbol">-</span><span class="sh_keyword">default</span><span class="sh_symbol">-</span>zone<span class="sh_symbol">=</span>trusted</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# firewall-cmd --set-default-zone=trusted
+</pre></div></div>
+      <p class="number">步骤二：配置客户端</p>
+      <p>1）安装软件包</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># yum –y install chrony</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# yum –y install chrony
+</pre></div></div>
+      <p>2) 修改配置文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># <span class="sh_normal">vim </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>chrony<span class="sh_symbol">.</span>conf</li><li>server <span class="sh_number">192.168.4.5</span> iburst&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//设置与哪台服务器同步数据</span></li><li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//iburst参数设置重启服务后尽快同步时间</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# vim /etc/chrony.conf
+server 192.168.4.5 iburst				//设置与哪台服务器同步数据
+										//iburst参数设置重启服务后尽快同步时间
+</pre></div></div>
+      <p>3) 将客户端时间修改为错误的时间</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span>#  date  <span class="sh_symbol">-</span>s  <span class="sh_string">"hour:minute"</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//调整时间（小时：分钟）</span></li><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span>#  date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//查看修改后的时间</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]#  date  -s  "hour:minute" 		//调整时间（小时：分钟）
+[root@client ~]#  date							//查看修改后的时间
+</pre></div></div>
+      <p>4) 重启chrony与服务器同步时间</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># systemctl  restart  chronyd</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# systemctl  restart  chronyd
+</pre></div></div>
+      <p>5) 确认时间是否已经同步</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@client <span class="sh_symbol">~]</span># date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//多执行几次查看结果</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@client ~]# date							//多执行几次查看结果
+</pre></div></div>
+      <a name="case5">
+      </a>
+      <h2>5 案例5：pssh远程套件工具</h2>
+      <h3>5.1 问题</h3>
+      <p>本案例要求使用pssh套件工具并发远程其他主机，具体要求如下：</p>
+      <ul class="list">
+        <li>使用密码批量、多并发远程其他主机
+</li>
+        <li>使用密钥批量、多并发远程其他主机
+</li>
+        <li>批量、多并发拷贝数据到其他主机
+</li>
+        <li>批量、多并发从其他主机下载数据到本机
+</li>
+        <li>批量、多并发杀死其他主机的进程
+</li>
+      </ul>
+      <h3>5.2 方案</h3>
+      <p>准备实验所需的虚拟机环境，实验环境所需要的主机及对应的IP设置列表如表-5所示，正确配置IP地址、主机名称，并且为每台主机配置YUM源。</p>
+      <div class="table">
+        <p>表－5 主机列表</p>
+        <img src="./vpnCASE_files/table005.png">
+      </div>
+      <p>安装pssh后会提供如下命令：</p>
+      <p>/usr/bin/pnuke</p>
+      <p>/usr/bin/prsync</p>
+      <p>/usr/bin/pscp.pssh</p>
+      <p>/usr/bin/pslurp</p>
+      <p>/usr/bin/pssh</p>
+      <h3>5.3 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：准备工作</p>
+      <p>1）安装软件包</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># rpm <span class="sh_symbol">-</span>ivh  pssh<span class="sh_number">-2.3.1-5</span><span class="sh_symbol">.</span>el7<span class="sh_symbol">.</span>noarch<span class="sh_symbol">.</span>rpm</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# rpm -ivh  pssh-2.3.1-5.el7.noarch.rpm
+</pre></div></div>
+      <p>2)修改/etc/hosts本地解析文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_normal">cat </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span>hosts</li><li>… …</li><li><span class="sh_number">192.168.2.100</span>  host1</li><li><span class="sh_number">192.168.2.200</span>  host2</li><li><span class="sh_number">192.168.4.100</span>  host3</li><li>… …</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">cat /etc/hosts
+… …
+192.168.2.100  host1
+192.168.2.200  host2
+192.168.4.100  host3
+… …
+</pre></div></div>
+      <p>3)创建主机列表文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># <span class="sh_normal">cat </span><span class="sh_symbol">/</span><span class="sh_normal">root</span><span class="sh_symbol">/</span>host<span class="sh_symbol">.</span>txt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//每行一个用户名、IP或域名</span></li><li>… …</li><li>root@host1</li><li>host2</li><li>host3</li><li>… …</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# cat /root/host.txt			//每行一个用户名、IP或域名
+… …
+root@host1
+host2
+host3
+… …
+</pre></div></div>
+      <p class="number">步骤二：使用密码批量、多并发远程其他主机</p>
+      <p>1）语法格式</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># man pssh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//通过man帮助查看工具选项的作用</span></li><li>pssh提供并发远程连接功能</li><li><span class="sh_symbol">-</span>A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;使用密码远程其他主机（默认使用密钥）</li><li><span class="sh_symbol">-</span>i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;将输出显示在屏幕</li><li><span class="sh_symbol">-</span>H&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设置需要连接的主机</li><li><span class="sh_symbol">-</span>h&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设置主机列表文件</li><li><span class="sh_symbol">-</span>p&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设置并发数量</li><li><span class="sh_symbol">-</span>t&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设置超时时间</li><li><span class="sh_symbol">-</span>o dir&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设置标准输出信息保存的目录</li><li><span class="sh_symbol">-</span>e dir&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;设置错误输出信息保存的目录</li><li><span class="sh_symbol">-</span>x&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;传递参数给ssh</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# man pssh					//通过man帮助查看工具选项的作用
+pssh提供并发远程连接功能
+-A				使用密码远程其他主机（默认使用密钥）
+-i				将输出显示在屏幕
+-H				设置需要连接的主机
+-h				设置主机列表文件
+-p				设置并发数量
+-t				设置超时时间
+-o dir			设置标准输出信息保存的目录
+-e dir			设置错误输出信息保存的目录
+-x				传递参数给ssh
+</pre></div></div>
+      <p>2)使用密码远程多台主机执行命令，屏幕显示标准和错误输出信息</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pssh <span class="sh_symbol">-</span>i  <span class="sh_symbol">-</span>A <span class="sh_symbol">-</span>H  <span class="sh_string">'host1 host2 host3'</span>   <span class="sh_symbol">\</span></li><li><span class="sh_symbol">&gt;</span>  <span class="sh_symbol">-</span>x <span class="sh_string">'-o StrictHostKeyChecking=no'</span>   echo hello</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pssh -i  -A -H  'host1 host2 host3'   \
+&gt;  -x '-o StrictHostKeyChecking=no'   echo hello
+</pre></div></div>
+      <p>3)使用密码远程多台主机执行命令，不显示标准和错误输出信息，通过读取host.txt读取主机信息</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pssh <span class="sh_symbol">-</span>A <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt   echo hello</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pssh -A -h host.txt   echo hello
+</pre></div></div>
+      <p class="number">步骤三：使用密钥批量、多并发远程其他主机</p>
+      <p>1）生成密钥并发送密钥到其他主机</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ssh<span class="sh_symbol">-</span>keygen <span class="sh_symbol">-</span>N  <span class="sh_string">''</span>   <span class="sh_symbol">-</span><span class="sh_normal">f </span><span class="sh_symbol">/</span><span class="sh_normal">root</span><span class="sh_symbol">/.</span><span class="sh_normal">ssh</span><span class="sh_symbol">/</span>id_rsa     <span class="sh_comment">//非交互生成密钥文件</span></li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ssh<span class="sh_symbol">-</span>copy<span class="sh_symbol">-</span>id  host1</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ssh<span class="sh_symbol">-</span>copy<span class="sh_symbol">-</span>id  host2</li><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># ssh<span class="sh_symbol">-</span>copy<span class="sh_symbol">-</span>id  host3</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# ssh-keygen -N  ''   -f /root/.ssh/id_rsa     //非交互生成密钥文件
+[root@proxy ~]# ssh-copy-id  host1
+[root@proxy ~]# ssh-copy-id  host2
+[root@proxy ~]# ssh-copy-id  host3
+</pre></div></div>
+      <p>2)使用密钥远程其他主机</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pssh <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt  echo hello</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pssh -h host.txt  echo hello
+</pre></div></div>
+      <p>3)使用密钥远程其他主机，将标准输出信息写入到/tmp目录</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pssh <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt <span class="sh_symbol">-</span><span class="sh_normal">o </span><span class="sh_symbol">/</span><span class="sh_normal">tmp</span><span class="sh_symbol">/</span>  echo hello</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pssh -h host.txt -o /tmp/  echo hello
+</pre></div></div>
+      <p class="number">步骤四：批量、多并发拷贝数据到其他主机</p>
+      <p>1）语法格式</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># man pscp<span class="sh_symbol">.</span>pssh&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//通过man帮助查看工具选项的作用</span></li><li>pscp<span class="sh_symbol">.</span>pssh提供并发拷贝文件功能</li><li><span class="sh_symbol">-</span>r&nbsp;&nbsp;&nbsp;&nbsp;递归拷贝目录</li><li>其他选项基本与pssh一致</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# man pscp.pssh					//通过man帮助查看工具选项的作用
+pscp.pssh提供并发拷贝文件功能
+-r	递归拷贝目录
+其他选项基本与pssh一致
+</pre></div></div>
+      <p>2)将本地的/etc/hosts拷贝到远程主机的/tmp目录下</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pscp<span class="sh_symbol">.</span>pssh <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span><span class="sh_normal">txt  </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">hosts  </span><span class="sh_symbol">/</span> tmp</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pscp.pssh -h host.txt  /etc/hosts  / tmp
+</pre></div></div>
+      <p>3)递归将本地的/etc目录拷贝到远程主机的/tmp目录下</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pscp<span class="sh_symbol">.</span>pssh <span class="sh_symbol">-</span>r <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span><span class="sh_normal">txt   </span><span class="sh_symbol">/</span><span class="sh_normal">etc   </span><span class="sh_symbol">/</span>tmp </li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pscp.pssh -r -h host.txt   /etc   /tmp 
+</pre></div></div>
+      <p class="number">步骤五：批量、多并发从其他主机下载数据到本机</p>
+      <p>1）语法格式</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># man pslurp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//通过man帮助查看工具选项的作用</span></li><li>pslurp提供远程下载功能</li><li>选项与pscp<span class="sh_symbol">.</span>pssh基本一致</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# man pslurp					//通过man帮助查看工具选项的作用
+pslurp提供远程下载功能
+选项与pscp.pssh基本一致
+</pre></div></div>
+      <p>2)将远程主机的/etc/passwd，拷贝到当前目录下，存放在对应IP下的pass文件中</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pslurp  <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span><span class="sh_normal">txt  </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">passwd  </span><span class="sh_symbol">/</span>pass</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pslurp  -h host.txt  /etc/passwd  /pass
+</pre></div></div>
+      <p>注意：最后的pass是文件名</p>
+      <p>3)将远程主机的/etc/passwd目录，拷贝到media下，存放在对应IP下的pass文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pslurp <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt <span class="sh_symbol">-</span><span class="sh_normal">L  </span><span class="sh_symbol">/</span><span class="sh_normal">media   </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">passwd   </span><span class="sh_symbol">/</span>pass</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pslurp -h host.txt -L  /media   /etc/passwd   /pass
+</pre></div></div>
+      <p class="number">步骤六：批量、多并发杀死其他主机的进程</p>
+      <p>1）语法格式</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># man pnuke&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//通过man帮助查看工具选项的作用</span></li><li>pnuke提供远程杀死进程的功能</li><li>选项与pssh基本一致</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# man pnuke					//通过man帮助查看工具选项的作用
+pnuke提供远程杀死进程的功能
+选项与pssh基本一致
+</pre></div></div>
+      <p>2)将远程主机上的sleep进程杀死</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pnuke  <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt  sleep</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pnuke  -h host.txt  sleep
+</pre></div></div>
+      <p>3)将远程主机上的test相关脚本都杀死（如：test1,testtt,test2等等）</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pnuke  <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt  test</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pnuke  -h host.txt  test
+</pre></div></div>
+      <p>4)将远程主机上的test.sh脚本杀死</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/OPERATION/DAY07/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@proxy <span class="sh_symbol">~]</span># pnuke  <span class="sh_symbol">-</span>h host<span class="sh_symbol">.</span>txt  test<span class="sh_symbol">.</span>sh</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@proxy ~]# pnuke  -h host.txt  test.sh
+</pre></div></div>
+    </div>
+  
+</body></html>
