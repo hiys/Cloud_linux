@@ -1,0 +1,49 @@
+内存配置
+  <memory unit='KiB'>1048576</memory>
+  <currentMemory unit='KiB'>1048576</currentMemory>
+
+添加光驱配置文件
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='hda' bus='ide'/>
+      <readonly/>
+    </disk>
+
+添加硬盘配置文件
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk02.img'/>
+      <target dev='sdb' bus='scsi'/>
+    </disk>
+
+添加网卡配置文件
+    <interface type='bridge'>
+      <source bridge='你机器上网桥的名称'/>
+      <model type='virtio'/>
+    </interface>
+
+修改完配置文件需要 virsh define xx.xml 进行定义更新，然后 reboot 虚拟机
+
+更换光盘
+change-media 虚拟机名称  设备名称  --source iso路径  [--eject拔出 | --insert插入]
+change-media  node1        sda     --source  /var/ftp/iso/Centos7-1708.iso --insert
+
+查看块设备信息
+domblklist node1
+
+查看网卡信息
+domiflist node1
+
+命令添加网卡
+virsh -c qemu:///system attach-interface 虚拟机名称 bridge 网桥名称 --model virtio
+
+命令添加硬盘
+virsh -c qemu:///system attach-disk 虚拟机名称 /var/lib/libvirt/images/disk.img sdb --subdriver qcow2 --sourcetype file
+
+命令添加即时生效，重启后失效
+
+
+使用 eth0 网卡 dhcp 动态获取ip地址
+dhclient -I eth0 -v 
+
+dd if=读取设备路径  of=写入设备 bs=块大小 count=块总数
