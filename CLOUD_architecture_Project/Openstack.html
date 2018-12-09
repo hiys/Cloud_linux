@@ -1,0 +1,380 @@
+
+<!-- saved from url=(0076)http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>CASE</title>
+    
+    <script type="text/javascript" src="./Openstack_files/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="./Openstack_files/jquery.snippet.js">
+    </script>
+    <script type="text/javascript" src="./Openstack_files/main.js">
+    </script>
+    <link type="text/css" href="./Openstack_files/index.css" rel="Stylesheet">
+    <link type="text/css" href="./Openstack_files/jquery.snippet.css" rel="Stylesheet">
+  </head>
+  <body>
+    <div class="source_style_case">
+      <a name="page_top_case" id="top_anchor">
+      </a><a id="link_top" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#page_top_case">Top</a>
+      <h1>NSD CLOUD DAY03</h1>
+      <ol class="index">
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case1">案例1：用户和配额管理</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case2">案例2：新建云主机类型</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case3">案例3：上传镜像</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case4">案例4：创建网络</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case5">案例5：管理浮动IP地址</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case6">案例6：创建安全组及规则</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case7">案例7：创建云主机</a>
+        </li>
+        <li>
+          <a href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#case8">案例8：安装额外计算节点</a>
+        </li>
+      </ol>
+      <a name="case1">
+      </a>
+      <h2>1 案例1：用户和配额管理</h2>
+      <h3>1.1 问题</h3>
+      <p>本案例要求：</p>
+      <ul class="list">
+        <li>创建myproject项目
+</li>
+        <li>通过Horizon创建user1用户
+</li>
+        <li>通过CLI创建user2用户，练习相关用户管理命令
+</li>
+        <li>通过Horizon和CLI对myproject进行配额调整
+</li>
+      </ul>
+      <h3>1.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建项目</p>
+      <p>1）创建myproject项目，如图-1所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image001.png">
+        <p>图-1</p>
+      </div>
+      <p>2）通过Horizon创建user1用户，如图-2所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image002.png">
+        <p>图-2</p>
+      </div>
+      <p>3）通过命令创建user2用户</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~(</span>keystone_admin<span class="sh_symbol">)]</span># openstack user create  <span class="sh_symbol">--</span>password tedu<span class="sh_symbol">.</span>cn user2</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@openstack ~(keystone_admin)]# openstack user create  --password tedu.cn user2
+</pre></div></div>
+      <p>4）通过Horizon进行配额调整，如图-3所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image003.png">
+        <p>图-3</p>
+      </div>
+      <a name="case2">
+      </a>
+      <h2>2 案例2：新建云主机类型</h2>
+      <h3>2.1 问题</h3>
+      <p>本案例要求通过命令和Horizon创建云主机类型：</p>
+      <ul class="list">
+        <li>名字：m2.tiny
+</li>
+        <li>ID：自动
+</li>
+        <li>虚拟内核：1个
+</li>
+        <li>内存：512M
+</li>
+        <li>根磁盘：10GB
+</li>
+        <li>临时磁盘和swap无要求
+</li>
+        <li>
+</li>
+      </ul>
+      <h3>2.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：新建云主机类型</p>
+      <p>1）通过命令创建云主机类型</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~(</span>keystone_admin<span class="sh_symbol">)]</span># openstack flavor create <span class="sh_symbol">--</span><span class="sh_keyword">public</span> demo<span class="sh_symbol">.</span>tiny <span class="sh_symbol">--</span>id auto <span class="sh_symbol">--</span>ram <span class="sh_number">512</span> <span class="sh_symbol">--</span>disk <span class="sh_number">10</span> <span class="sh_symbol">--</span>vcpus <span class="sh_number">1</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@openstack ~(keystone_admin)]# openstack flavor create --public demo.tiny --id auto --ram 512 --disk 10 --vcpus 1
+</pre></div></div>
+      <p>2）通过Horizon创建云主机类型，如图-4所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image004.png">
+        <p>图-4</p>
+      </div>
+      <a name="case3">
+      </a>
+      <h2>3 案例3：上传镜像</h2>
+      <h3>3.1 问题</h3>
+      <p>本案例要求上传一个镜像：</p>
+      <ul class="list">
+        <li>将本机上的rhel6磁盘镜像文件small.img上传
+</li>
+        <li>上传到Openstack的名称为small_rhel6
+</li>
+        <li>设置镜像属性为public
+</li>
+        <li>镜像最小磁盘大小为10GB，最小内存为512MB
+</li>
+      </ul>
+      <h3>3.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：上传镜像，如图-5所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image005.png">
+        <p>图-5</p>
+      </div>
+      <a name="case4">
+      </a>
+      <h2>4 案例4：创建网络</h2>
+      <h3>4.1 问题</h3>
+      <p>本案例要求：</p>
+      <ul class="list">
+        <li>在myproject中创建两个网络，一个内网，用于连接实例，一个外网，用于对外通信
+</li>
+        <li>创建一个路由器，将两个网络连接起来
+</li>
+      </ul>
+      <h3>4.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建网络</p>
+      <p>1）登陆admin用户，创建外网public，如图-6所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image006.png">
+        <p>图-6</p>
+      </div>
+      <p>2）退出admin用户 ，登陆user1用户，创建public的子网wan，如图-7所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image007.png">
+        <p>图-7</p>
+      </div>
+      <p>3）public外网不需要激活DHCP，如图-8所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image008.png">
+        <p>图-8</p>
+      </div>
+      <p>4）创建内网lan，如图-9所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image009.png">
+        <p>图-9</p>
+      </div>
+      <p>5）创建lan的子网，如图-10所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image010.png">
+        <p>图-10</p>
+      </div>
+      <p>7）给内网分配地址池，如图-11所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image011.png">
+        <p>图-11</p>
+      </div>
+      <p>8）新建路由，如图-12所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image012.png">
+        <p>图-12</p>
+      </div>
+      <p>9）选择路由子网，如图-13所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image013.png">
+        <p>图-13</p>
+      </div>
+      <a name="case5">
+      </a>
+      <h2>5 案例5：管理浮动IP地址</h2>
+      <h3>5.1 问题</h3>
+      <p>本案例要求：</p>
+      <ul class="list">
+        <li>通过Horizon创建一个浮动IP地址
+</li>
+        <li>通过命令行创建一个浮动IP地址
+</li>
+      </ul>
+      <h3>5.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建浮动IP</p>
+      <div class="image">
+        <img src="./Openstack_files/image014.png">
+        <p>图-14</p>
+      </div>
+      <a name="case6">
+      </a>
+      <h2>6 案例6：创建安全组及规则</h2>
+      <h3>6.1 问题</h3>
+      <p>本案例要求：</p>
+      <ul class="list">
+        <li>新建一个安全组
+</li>
+        <li>添加规则，允许任意主机可以通过SSH访问虚拟机实例
+</li>
+        <li>添加规则，允许任意主机可以通过HTTPS访问虚拟机实例
+</li>
+        <li>添加规则，只允许本组内的主机可以通过HTTP访问到虚拟机实例
+</li>
+      </ul>
+      <h3>6.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：建立安全组</p>
+      <div class="image">
+        <img src="./Openstack_files/image015.png">
+        <p>图15</p>
+      </div>
+      <p>2）允许ssh访问，如图-16</p>
+      <div class="image">
+        <img src="./Openstack_files/image016.png">
+        <p>图-16</p>
+      </div>
+      <p>3）允许HTTPS访问，如图-17所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image017.png">
+        <p>图-17</p>
+      </div>
+      <a name="case7">
+      </a>
+      <h2>7 案例7：创建云主机</h2>
+      <h3>7.1 问题</h3>
+      <p>本案例要求：</p>
+      <ul class="list">
+        <li>使用m2.tiny云主机类型
+</li>
+        <li>将云主机加入到内部网络
+</li>
+        <li>设置安全规则，允许外界ping通云主机
+</li>
+        <li>设置外界可以ssh到云主机
+</li>
+      </ul>
+      <h3>7.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：创建云主机</p>
+      <p>1）创建云主机，如图-18所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image018.png">
+        <p>图-18</p>
+      </div>
+      <div class="image">
+        <img src="./Openstack_files/image019.png">
+        <p>图-19</p>
+      </div>
+      <p>4）云主机类型，如图-20所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image020.png">
+        <p>图-20</p>
+      </div>
+      <p>5）云主机网络，如图-21所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image021.png">
+        <p>图-21</p>
+      </div>
+      <p class="number">步骤二：设置安全组规则，允许外界ping通云主机</p>
+      <p>1）添加规则，如图-22所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image022.png">
+        <p>图-22</p>
+      </div>
+      <p>2）增加ping规则，如图-23所示</p>
+      <div class="image">
+        <img src="./Openstack_files/image023.png">
+        <p>图-23</p>
+      </div>
+      <p>7）进入控制台，配置dns的ip为172.40.1.10，浮动ip在案例5已经设置，这里不再重复，通过浮动ip可以ssh连接，如图-24所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image024.png">
+        <p>图-24</p>
+      </div>
+      <a name="case8">
+      </a>
+      <h2>8 案例8：安装额外计算节点</h2>
+      <h3>8.1 问题</h3>
+      <p>本案例要求安装额外的计算节点：</p>
+      <ul class="list">
+        <li>添加两块网卡，均能与第一个节点通信
+</li>
+        <li>能够准确地进行DNS解析
+</li>
+        <li>配置yum仓库
+</li>
+        <li>安装计算节点
+</li>
+      </ul>
+      <h3>8.2 步骤</h3>
+      <p>实现此案例需要按照如下步骤进行。</p>
+      <p class="number">步骤一：安装计算节点</p>
+      <p>备注：day02的案例里面在安装openstack时，nova.tedu.cn已经配置过网卡，DNS解析，yum源，这里不再赘述，不会的可以看day02的案例</p>
+      <p>1）更改answer.ini文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~]</span># vi answer<span class="sh_symbol">.</span>ini&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sh_comment">//在openstack.tedu.cn上面操作</span></li><li>CONFIG_COMPUTE_HOSTS<span class="sh_symbol">=</span><span class="sh_number">192.168.1.1</span><span class="sh_symbol">,</span><span class="sh_number">192.168.1.2</span></li><li>CONFIG_NETWORK_HOSTS<span class="sh_symbol">=</span><span class="sh_number">192.168.1.1</span><span class="sh_symbol">,</span><span class="sh_number">192.168.1.2</span></li><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~]</span># packstack <span class="sh_symbol">--</span>answer<span class="sh_symbol">-</span>file answer<span class="sh_symbol">.</span>ini</li><li><span class="sh_symbol">****</span> Installation completed successfully <span class="sh_symbol">******</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@openstack ~]# vi answer.ini		//在openstack.tedu.cn上面操作
+CONFIG_COMPUTE_HOSTS=192.168.1.1,192.168.1.2
+CONFIG_NETWORK_HOSTS=192.168.1.1,192.168.1.2
+[root@openstack ~]# packstack --answer-file answer.ini
+**** Installation completed successfully ******
+</pre></div></div>
+      <p>2）这时浏览器访问时不出现页面，15-horizon_vhost.conf文件被还原，需要重新修改这个文件</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~]</span># <span class="sh_normal">cd </span><span class="sh_symbol">/</span><span class="sh_normal">etc</span><span class="sh_symbol">/</span><span class="sh_normal">httpd</span><span class="sh_symbol">/</span>conf<span class="sh_symbol">.</span><span class="sh_normal">d</span><span class="sh_symbol">/</span></li><li><span class="sh_symbol">[</span>root@openstack conf<span class="sh_symbol">.</span>d<span class="sh_symbol">]</span># vi <span class="sh_number">15</span><span class="sh_symbol">-</span>horizon_vhost<span class="sh_symbol">.</span>conf</li><li>     <span class="sh_number">35</span>   WSGIProcessGroup apache</li><li>     <span class="sh_number">36</span>   WSGIApplicationGroup <span class="sh_symbol">%</span><span class="sh_cbracket">{</span>GLOBAL<span class="sh_cbracket">}</span>     <span class="sh_comment">//添加这一行</span></li><li><span class="sh_symbol">[</span>root@openstack conf<span class="sh_symbol">.</span>d<span class="sh_symbol">]</span># apachectl  graceful  <span class="sh_comment">//重新载入配置文件</span></li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@openstack ~]# cd /etc/httpd/conf.d/
+[root@openstack conf.d]# vi 15-horizon_vhost.conf
+     35   WSGIProcessGroup apache
+     36   WSGIApplicationGroup %{GLOBAL}     //添加这一行
+[root@openstack conf.d]# apachectl  graceful  //重新载入配置文件
+</pre></div></div>
+      <p>3）浏览器访问，出现页面</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@openstack conf<span class="sh_symbol">.</span>d<span class="sh_symbol">]</span># firefox <span class="sh_number">192.168.1.1</span></li><li><span class="sh_symbol">[</span>root@localhost conf<span class="sh_symbol">.</span>d<span class="sh_symbol">]</span># cd</li><li><span class="sh_symbol">[</span>root@localhost <span class="sh_symbol">~]</span># ls</li><li>answer<span class="sh_symbol">.</span>ini   keystonerc_admin   </li><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~]</span># cat keystonerc_admin   </li><li>unset OS_SERVICE_TOKEN</li><li>    <span class="sh_keyword">export</span> OS_USERNAME<span class="sh_symbol">=</span>admin</li><li>    <span class="sh_keyword">export</span> OS_PASSWORD<span class="sh_symbol">=</span>1bb4c987345c45ba</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@openstack conf.d]# firefox 192.168.1.1
+[root@localhost conf.d]# cd
+[root@localhost ~]# ls
+answer.ini   keystonerc_admin   
+[root@openstack ~]# cat keystonerc_admin   
+unset OS_SERVICE_TOKEN
+    export OS_USERNAME=admin
+    export OS_PASSWORD=1bb4c987345c45ba
+</pre></div></div>
+      <p>4）安装后的节点状态，如图-25所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image025.png">
+        <p>图-25</p>
+      </div>
+      <p>5）云主机热迁移，如图-26所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image026.png">
+        <p>图-26</p>
+      </div>
+      <p>热迁移选择，如图-27所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image027.png">
+        <p>图-27</p>
+      </div>
+      <p>迁移状态，如图-28所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image028.png">
+        <p>图-28</p>
+      </div>
+      <p>迁移结果，如图-29所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image029.png">
+        <p>图-29</p>
+      </div>
+      <p>openstack错误分析：</p>
+      <p>1）进入控制台不显示内容，如图-30所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image030.png">
+        <p>图-30</p>
+      </div>
+      <p>解决办法：可以换一个云主机类型（m1.tiny）</p>
+      <p>2）若出现云主机处于错误状态，如图-31所示：</p>
+      <div class="image">
+        <img src="./Openstack_files/image031.png">
+        <p>图-31</p>
+      </div>
+      <p>解决办法：可能是内网出现了问题，检查内网，或者把内网删除（不会建立的可以参考案例4），重新建立，之后重新启动openstack</p>
+      <div class="snippet-container" style="undefined;"><div class="sh_acid snippet-wrap"><div class="snippet-menu sh_sourceCode" style="display:none;"><pre style="display: none;"><a class="snippet-copy sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#" style="display: none;">copy</a><a class="snippet-text sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">text</a><a class="snippet-window sh_url" href="http://tts.tmooc.cn/ttsPage/LINUX/NSDTN201801/CLOUD/DAY03/CASE/01/index.html#">pop-up</a></pre></div><pre class="code sh_javascript snippet-formatted sh_sourceCode"><ol class="snippet-num"><li><span class="sh_symbol">[</span>root@openstack <span class="sh_symbol">~]</span># systemctl restart openstack<span class="sh_symbol">-</span>nova<span class="sh_symbol">-</span>compute</li></ol></pre><pre class="snippet-textonly sh_sourceCode" style="display:none;">[root@openstack ~]# systemctl restart openstack-nova-compute
+
+</pre></div></div>
+      <p>3）云主机热迁移失败</p><p></p><p></p>
+    </div>
+  
+</body></html>
