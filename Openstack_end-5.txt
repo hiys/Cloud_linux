@@ -7012,8 +7012,21 @@ setlocale: No such file or directory
 ----------------------------------------------------
  1     instance-00000001              running
 
-[root@nova01 ~]# 
+[root@nova01 ~]# virsh  destroy  instance-00000001
+setlocale: No such file or directory
+Domain instance-00000001 destroyed
 
+[root@nova01 ~]# virsh  list
+setlocale: No such file or directory
+ Id    Name                           State
+----------------------------------------------------
+---------------------------------------- 页面有变化 nova01------------------------------------
+云主机数量
+	项目 	   主机 	名称   镜像名称 	IP 地址 	大小 	状态 	任务 	电源状态 	创建后的时间 	动作
+	nsd1807  nova01 	h1	CentOS6   10.10.10.109
+                                                          浮动IP:
+                                       192.168.0.5     test01  关机  	无 	运行中 	1 小时，45 分钟	
+正在显示 1 项
 
 
 
