@@ -1,0 +1,6 @@
+#!/bin/bash
+echo -e "\033[36m正确的命令为： \033[0m"
+echo -e "\033[32m  clone-vm6 \033[0m\033[34m 可以快速产生一台RHEL6虚拟机 \033[0m"
+echo -e "\033[32m  clone-vm7 \033[0m\033[34m 可以快速产生一台RHEL7虚拟机 \033[0m"
+echo -e "\033[32m  clone-auto6 \033[0m\033[34m 可以快速产生多台RHEL6虚拟机 \033[0m"
+echo -e "\033[32m  clone-auto7 \033[0m\033[34m 可以快速产生多台RHEL7虚拟机 \033[0m"

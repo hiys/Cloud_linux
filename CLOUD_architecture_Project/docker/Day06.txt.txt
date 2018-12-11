@@ -1,0 +1,278 @@
+热备份路由选择协议Hot Standby Routing Protocol
+HSRP------Cisco私有协议
+HSRP成员  活跃[优先级],   备份,   虚拟   路由器,  其它 路由器
+          MS1[105]    MS2[100]  *.*.*.254网关
+STP  Spanning Tree Protocol生成树协议
+网桥BID值最小的交换机 是网络中的根网桥
+默认值32768 
+网桥优先级取值范围0 ~ 65535
+PVST 实现网络的负载分担
+NAT Network Address Translation 网络地址转换
+私有IP地址10.0.0.0-10.255.255.254
+        172.16.0.0-176.31.255.254
+       192.168.0.0-192.168.255.254
+
+
+===========================R1------------
+R1(config)#line console 0
+R1(config-line)#exec-timeout 0 0
+R1(config-line)#logging synchronous
+
+
+R1(config)#ip route 0.0.0.0 0.0.0.0 100.0.0.10
+R1(config)#route ospf 1
+  #添加默认路由 到RIP路由协议中     
+R1(config-router)#default-information originate 
+#添加默认路由 到RIP路由协议中default-information originate 
+
+#静态NAT的配置(静态转换static translation)建立静态地址转换
+R1(config)#ip nat inside source static 192.168.40.1 100.0.0.3
+
+R1(config)#interface gigabitEthernet 0/2
+R1(config-if)#ip nat outside
+
+R1(config)#interface range gigabitEthernet 0/0-1
+
+R1(config-if-range)#ip nat inside 
+
+
+============================R2--------------
+Router(config)#hostname R2
+R2(config)#line console 0
+R2(config-line)#exec-timeout 0 0
+R2(config-line)#logging synchronous
+
+R2(config)#ip route 0.0.0.0  0.0.0.0 100.0.0.10
+
+R2(config)#router ospf 1
+R2(config-router)#default-information originate
+
+
+
+===================MS1---------------
+Switch(config)#hostname MS1
+MS1(config)#line console 0
+MS1(config-line)#exec-timeout 0 0
+MS1(config-line)#logging synchronous
+MS1#write
+MS1#reload 
+Proceed with reload? [confirm]y
+
+
+
+
+
+
+#--启用生成树命令spanning-tree vlan 10并且
+指定根网桥root primary
+MS1(config)#spanning-tree vlan 10 root primary 
+MS1(config)#spanning-tree vlan 20 root primary
+MS1(config)#spanning-tree vlan 30 root secondary 
+MS1(config)#spanning-tree vlan 40 root secondary
+#--查看生成树的配置
+MS1#show spanning-tree 
+
+
+MS1(config)#interface vlan 10
+#配置为HSRP 的成员  HSRP备份组号 ip 虚拟网关地址
+MS1(config-if)#standby 10 ip 192.168.10.254
+
+#配置HSRP成员--组号10 的优先级
+{范围[0-255],默认[100],数值越大,优先级越高}
+MS1(config-if)#standby 10 priority 105
+
+#HSRP 组号10的成员 占先权配置(允许优先占有权preempt)
+MS1(config-if)#standby 10 preempt
+
+MS1(config)#interface vlan 20
+MS1(config-if)#standby 20 ip 192.168.20.254
+MS1(config-if)#standby 20 priority 105
+
+#HSRP占先权配置(允许优先占有权preempt)
+MS1(config-if)#standby 20 preempt
+
+MS1(config)#interface vlan 30
+MS1(config-if)#standby 30 ip 192.168.30.254
+MS1(config-if)#exit
+MS1(config)#interface vlan 40
+MS1(config-if)#standby 40 ip 192.168.40.254
+
+
+MS1(config)#ip routing
+#查看HSRP摘要信息
+MS1#show standby brief
+
+MS1#show ip route 
+
+MS1(config)#route ospf 1
+MS1(config-router)#network 192.168.10.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.20.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.30.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.40.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.50.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.60.0 0.0.0.255 area 0
+
+
+=====================MS2-----------------
+Switch(config)#hostname MS2
+MS2(config)#line console 0
+MS2(config-line)#exec-timeout 0 0
+MS2(config-line)#logging synchronous
+
+
+
+
+MS2(config)#interface vlan 40
+MS2(config-if)#ip address 192.168.40.253 255.255.255.0
+MS2(config-if)#no shutdown
+MS2#write
+MS2#reload 
+MS2(config)#spanning-tree vlan 10 root secondary 
+MS2(config)#spanning-tree vlan 20 root secondary
+MS2(config)#spanning-tree vlan 30 root primary
+MS2(config)#spanning-tree vlan 40 root primary
+
+MS2(config)#interface vlan 10
+MS2(config-if)#standby 10 ip 192.168.10.254
+
+MS2(config)#interface vlan 20
+MS2(config-if)#standby 20 ip 192.168.20.254
+
+MS2(config)#interface vlan 30 
+MS2(config-if)#standby 30 ip 192.168.30.254
+MS2(config-if)#standby 30 priority 105
+MS2(config-if)#standby 30 preempt
+
+MS2(config)#interface  vlan 40
+MS2(config-if)#standby 40 ip 192.168.40.254
+MS2(config-if)#standby 40 priority 105
+
+MS2(config-if)#standby 40 preempt
+
+MS2#show standby brief 
+
+MS2(config)#ip routing
+MS2#show ip route
+
+MS2(config)#route ospf 1
+MS2(config-router)#network 192.168.10.0 0.0.0.255 area 0
+MS2(config-router)#network 192.168.20.0 0.0.0.255 area 0
+MS2(config-router)#network 192.168.30.0 0.0.0.255 area 0
+MS2(config-router)#network 192.168.40.0 0.0.0.255 area 0
+MS2(config-router)#network 192.168.70.0 0.0.0.255 area 0
+MS2(config-router)#network 192.168.80.0 0.0.0.255 area 0
+
+
+===================S1--------------
+Switch(config)#hostname S1
+S1(config)#line console 0
+S1(config-line)#exec-timeout 0  0
+S1(config-line)#logging synchronous
+
+
+
+
+#--查看vlan 10 生成树的详细信息
+S1#show spanning-tree vlan 10
+
+
+
+
+===========================S2-----------------
+Switch(config)#hostname S2
+S2(config)#line console 0
+S2(config-line)#exec-timeout 0 0
+S2(config-line)#logging synchronous
+
+
+S2(config)#interface range  fa0/1-2
+S2(config-if-range)#channel-group 1 mode on
+
+S2(config)#interface range fastEthernet 0/3-4
+S2(config-if-range)#channel-group 2 mode on
+
+S2#show etherchannel summary 
+
+S2(config)#interface Port-channel 1
+S2(config-if)#switchport mode trunk
+
+S2(config)#interface Port-channel 2
+S2(config-if)#switchport mode trunk
+
+S2#show interfaces fastEthernet 0/1 switchport
+
+S2# show spanning-tree vlan 20
+
+
+
+
+
+===================S3---------------------------
+Switch(config)#hostname S3
+S3(config)#line console 0
+S3(config-line)#exec-timeout 0 0
+S3(config-line)#logging synchronous
+
+
+
+S3(config)#interface range fastEthernet 0/1-2
+S3(config-if-range)#channel-group 1 mode on
+
+S3(config)#interface range fastEthernet 0/3-4
+S3(config-if-range)#channel-group 2 mode on
+
+
+S3#show etherchannel summary 
+
+S3(config)#interface Port-channel 1
+S3(config-if)#switchport mode trunk
+
+S3(config)#interface Port-channel 2
+S3(config-if)#switchport mode trunk
+
+S3#show interfaces fastEthernet 0/1 switchport
+
+
+
+
+=========================S4----------------------
+Switch(config)#hostname S4
+S4(config)#line console 0
+S4(config-line)#exec-timeout 0 0
+S4(config-line)#logging synchronous
+
+
+
+
+S4#show etherchannel summary
+
+
+S4#show interfaces fastEthernet 0/1 switchport
+
+S4# show spanning-tree vlan 40
+
+
+
+
+
+
+
+
+----------------V10------------
+vlan 10   192.168.10.1/192.168.10.254
+
+
+----------------V20  ------------
+vlan 10   192.168.20.1/192.168.20.254
+
+
+----------------V30  ------------
+vlan 10   192.168.30.1/192.168.30.254
+
+
+----------------V40  ------------
+vlan 10   192.168.40.1/192.168.40.254
+
+----------------V40-2 ------------
+vlan 10   192.168.40.2/192.168.40.254
+

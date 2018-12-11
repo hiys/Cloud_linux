@@ -1,0 +1,857 @@
+Switch>e?
+enable  exit
+Switch#c?
+clear  clock  configure  connect  copy
+S2#w?
+write
+Switch#conf t
+Switch(config)#
+
+Switch(config)#in f0/1
+Switch(config-if)#
+
+Switch(config-if)#^Z  Ctrl + z 相当于 end
+Switch#
+
+Switch>enable
+Switch#exit
+
+Switch#conf t?
+terminal  
+Switch#conf terminal
+
+Switch(config)#interface FastEthernet 0/1
+Switch(config-if)#e?
+exit  
+Switch(config-if)#exit
+Switch(config)#e?
+enable  end  exit
+
+Switch(config)#hostname S1
+S1(config)#
+
+S2#show running-config
+
+S2#s?
+setup  show  ssh 
+S2#sh r?
+running-config  
+S2#sh r
+Building configuration...
+S2(config-if)#sh?
+shutdown 
+S2(config)#s?
+service  snmp-server  spanning-tree 
+S2#p?
+ping  
+
+S2(config)#p?
+port-channel  privilege  
+S2(config)#ena?
+enable  
+
+S2(config)#enable password 123
+S2(config)#exit
+
+S2>enable
+
+Password: 123  ## 输入密码
+S2#write
+Building configuration...
+[OK]
+
+S2#erase startu?
+startup-config  
+S2#erase startup-config
+Continue? [confirm]y[OK]
+
+S2#reload
+
+Proceed with reload? [confirm]
+
+
+Switch(config)#enable password Taren1  ## 为交换机配置特权密码
+Switch#reload
+Proceed with reload? [confirm]
+
+Switch#conf 回车2次
+Switch(config)#
+Switch#conf t
+Switch(config)#
+
+S2(config)# no ip domain-lookup 配置禁止使用DNS查询 
+S2(config)# no ip domain-?
+domain-lookup  domain-name 
+
+S2(config)#line console 0      #阻止命令被打断
+S2(config-line)#logging synchronous
+S2(config)#line console 0
+S2(config-line)#exec?
+exec-timeout  
+S2(config-line)#exec-timeout 0 0  控制台永不超时
+S2(config-line)#exit
+
+PC>ipconfig /all
+
+FastEthernet0 Connection:(default port)
+
+   Connection-specific DNS Suffix..: 
+   Physical Address................: 00D0.D3E3.BD19
+   Link-local IPv6 Address.........: FE80::2D0:D3FF:FEE3:BD19
+   IP Address......................: 192.168.0.2
+   Subnet Mask.....................: 255.255.255.0
+   Default Gateway.................: 0.0.0.0
+   DNS Servers.....................: 0.0.0.0
+   DHCP Servers....................: 0.0.0.0
+   DHCPv6 Client DUID..............: 00-01-00-01-04-A8-36-C2-00-D0-D3-E3-BD-19
+
+
+PC>
+PC>ping 192.168.0.1
+
+Pinging 192.168.0.1 with 32 bytes of data:
+
+Reply from 192.168.0.1: bytes=32 time=14ms TTL=128
+
+Switch#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.17de.eedd    DYNAMIC     Fa0/1
+   1    00d0.d3e3.bd19    DYNAMIC     Fa0/2
+
+S1#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.1767.3b04    DYNAMIC     Fa0/4
+   1    0060.2f25.0926    DYNAMIC     Fa0/1
+   1    0060.474c.d4e1    DYNAMIC     Fa0/2
+   1    0090.2127.5d34    DYNAMIC     Fa0/3
+
+S0#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.17de.eedd    DYNAMIC     Fa0/1
+   1    000a.f368.595b    DYNAMIC     Fa0/3
+   1    0060.5cb5.7404    DYNAMIC     Fa0/4
+   1    00d0.d3e3.bd19    DYNAMIC     Fa0/2
+Scp1#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    000d.bd80.9512    DYNAMIC     Fa0/1
+   1    0060.5cb5.7405    DYNAMIC     Fa0/3
+   1    00e0.a314.e11b    DYNAMIC     Fa0/2
+
+S1#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.170b.3b71    DYNAMIC     Fa0/5
+   1    0002.1767.3b04    DYNAMIC     Fa0/4
+   1    0002.17de.eedd    DYNAMIC     Fa0/4
+   1    000a.f368.595b    DYNAMIC     Fa0/4
+   1    000d.bd80.9512    DYNAMIC     Fa0/5
+   1    0060.2f25.0926    DYNAMIC     Fa0/1
+   1    0060.474c.d4e1    DYNAMIC     Fa0/2
+   1    0090.2127.5d34    DYNAMIC     Fa0/3
+   1    00d0.d3e3.bd19    DYNAMIC     Fa0/4
+
+
+Switch#configure terminal 
+Switch(config)#hostname S0
+S0(config)#interface fastEthernet 0/1
+S0(config-if)#interface range fa0/1-10
+
+S0(config-if-range)#switchport access vlan 10
+S0#show vlan id 10
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+10   VLAN0010                         active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
+                                                Fa0/5, Fa0/6, Fa0/7, Fa0/8
+                                                Fa0/9, Fa0/10
+
+VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+10   enet  100010     1500  -      -      -        -    -        0      0
+
+S0(config)#interface range  fa 0/1-10
+S0(config-if-range)#no switchport access vlan 10
+
+
+
+
+
+
+S0(config)#vlan 2
+S0(config-vlan)#interface range f0/2-3
+S0(config-if-range)#switchport access vlan 2
+
+S0(config-if-range)#vlan 3
+S0(config-vlan)#interface range f0/1,f0/4
+S0(config-if-range)#switchport access vlan 3
+S0(config-if-range)#end
+S0#show vlan brief
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/5, Fa0/6, Fa0/7, Fa0/8
+                                                Fa0/9, Fa0/10, Fa0/11, Fa0/12
+                                                Fa0/13, Fa0/14, Fa0/15, Fa0/16
+                                                Fa0/17, Fa0/18, Fa0/19, Fa0/20
+                                                Fa0/21, Fa0/22, Fa0/23, Fa0/24
+                                                Gig0/1, Gig0/2
+2    VLAN0002                         active    Fa0/2, Fa0/3
+3    VLAN0003                         active    Fa0/1, Fa0/4
+10   VLAN0010                         active    
+1002 fddi-default                     active   
+
+S0#show vlan  id 2
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/2, Fa0/3
+
+S0#show vlan id 3
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+3    VLAN0003                         active    Fa0/1, Fa0/4
+
+
+S0(config)#interface fastEthernet 0/1
+S0(config-if)#no switchport access vlan 3
+
+S0(config-if)#interface fastEthernet 0/5
+S0(config-if)#switchport access vlan 3
+S0#show vlan id 3
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+3    VLAN0003                         active    Fa0/4, Fa0/5
+
+VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+
+S0#show vlan id 2
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/2, Fa0/3
+
+S0(config)#interface fastEthernet 0/1
+S0(config-if)#switchport mode trunk
+
+S0#show interface fastEthernet 0/1 switchport
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1(config)#interface fastEthernet 0/1 
+S1(config-if)#switchport mode trunk
+
+S1#show interface fastEthernet 0/1 switchport
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1(config)#interface fastEthernet 0/2
+S1(config-if)#switchport mode trunk
+
+S1#show interface fastEthernet 0/2 switchport 
+Name: Fa0/2
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S2(config)#interface fastEthernet 0/1
+S2(config-if)#switchport mode trunk
+S2#show interface fastEthernet 0/1 switchport 
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1(config)#vlan 3
+S1(config-vlan)#interface range fastEthernet 0/5-6
+S1(config-if-range)#switchport access vlan 3
+S1#show vlan id 3
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+3    VLAN0003                         active    Fa0/5, Fa0/6
+
+S2(config)#vlan 2
+S2(config-vlan)#interface fastEthernet 0/5 
+S2(config-if)#switchport access vlan 2
+S2#show vlan id 2
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/5
+
+S1(config)#interface fastEthernet 0/7
+S1(config-if)#vlan 2
+S1(config-if)#switchport access vlan 2
+
+S1#show vlan id 2
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/7
+
+
+S0(config)#interface range fastEthernet 0/1,f0/6
+
+S0(config-if-range)#channel-group 1 mode on
+
+S0(config-if-range)#interface Port-channel 1
+
+S0(config-if)#switchport mode trunk
+
+S1(config)#interface range fastEthernet 0/1,fa 0/8
+S1(config-if-range)#channel-group 1 mode on
+
+S1(config-if-range)#interface Port-channel 1
+S1(config-if-range)#switchport mode trunk
+
+
+
+R3(config)#
+Router(config)#interface gigabitEthernet 0/0
+Router(config-if)#ip address 192.168.4.254 255.255.255.0
+Router(config-if)#no shutdown
+
+Router(config)#interface gigabitEthernet 0/1
+Router(config-if)#ip address 192.168.3.254 255.255.255.0
+Router(config-if)#no shutdown
+Router(config)#hostname R3
+
+R3#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+     D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+Gateway of last resort is not set
+     192.168.3.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.3.0/24 is directly connected, GigabitEthernet0/1
+L       192.168.3.254/32 is directly connected, GigabitEthernet0/1
+     192.168.4.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.4.0/24 is directly connected, GigabitEthernet0/0
+L       192.168.4.254/32 is directly connected, GigabitEthernet0/0
+
+
+R2(config)#interface gigabitEthernet 0/2
+R2(config-if)#ip address 192.168.2.254 255.255.255.0
+
+R2(config-if)#no ip address
+R2(config-if)#ip address 192.168.2.254 255.255.255.0
+R2(config-if)#no shutdown
+
+R2(config-if)#interface gigabitEthernet 0/1
+R2(config-if)#ip address 192.168.5.1 255.255.255.0
+R2(config-if)#no shutdown
+R2#show ip route
+     192.168.2.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.2.0/24 is directly connected, GigabitEthernet0/2
+L       192.168.2.254/32 is directly connected, GigabitEthernet0/2
+     192.168.5.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.5.0/24 is directly connected, GigabitEthernet0/1
+L       192.168.5.1/32 is directly connected, GigabitEthernet0/1
+
+
+R3(config)#interface gigabitEthernet 0/2
+R3(config-if)#ip address 192.168.2.2  255.255.255.0
+R3(config-if)#no shutdown
+R3(config-if)#interface gigabitEthernet 0/2
+R3(config-if)#no ip address
+R3(config-if)#ip address 192.168.5.2  255.255.255.0
+R3(config-if)#no shutdown
+
+R3#show ip route
+     192.168.3.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.3.0/24 is directly connected, GigabitEthernet0/1
+L       192.168.3.254/32 is directly connected, GigabitEthernet0/1
+     192.168.4.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.4.0/24 is directly connected, GigabitEthernet0/0
+L       192.168.4.254/32 is directly connected, GigabitEthernet0/0
+     192.168.5.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.5.0/24 is directly connected, GigabitEthernet0/2
+L       192.168.5.2/32 is directly connected, GigabitEthernet0/2
+
+R2(config)#ip route 192.168.3.0 255.255.255.0 192.168.5.2
+         ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+R3(config)#ip route 192.168.2.0 255.255.255.0 192.168.5.1
+
+R2(config)#ip route 192.168.4.0 255.255.255.0 192.168.5.2
+R2(config)#interface gigabitEthernet 0/0
+R2(config-if)#ip address 192.168.6.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config)#ip route 192.168.1.0  255.255.255.0 192.168.6.1
+  #删除错误路由配置no ip route 192.168.1.0  255.255.255.0 192.168.6.1
+
+R1(config-if)#ip route 192.168.2.0  255.255.255.0  192.168.6.2
+R1(config)#ip route 192.168.5.0 255.255.255.0 192.168.6.2
+R1(config)#ip route 192.168.3.0  255.255.255.0  192.168.6.2
+R1(config)#ip route 192.168.4.0 255.255.255.0 192.168.6.2
+R1(config)#ip route 0.0.0.0 0.0.0.0 192.168.6.2
+
+R3(config)#ip route 192.168.1.0 255.255.255.0 192.168.5.1
+R3(config)#ip route 192.168.6.0 255.255.255.0 192.168.5.1
+
+R1#show running-config
+ip classless
+ip route 192.168.2.0 255.255.255.0 192.168.6.2 
+ip route 192.168.5.0 255.255.255.0 192.168.6.2 
+ip route 192.168.3.0 255.255.255.0 192.168.6.2 
+ip route 192.168.4.0 255.255.255.0 192.168.6.2 
+ip route 0.0.0.0 0.0.0.0 192.168.6.2 
+R1(config)#no ip route 192.168.2.0 255.255.255.0 192.168.6.2
+R1(config)#no ip route 192.168.5.0 255.255.255.0 192.168.6.2
+R1(config)#no ip route 192.168.3.0 255.255.255.0 192.168.6.2
+R1(config)#no ip route 192.168.4.0 255.255.255.0 192.168.6.2
+
+Switch(config)#vlan 2
+Switch(config-vlan)#hostname v2
+v2(config)#inter f0/1
+v2(config-if)#switchport access vlan 2
+
+v2(config)#vlan 3
+v2(config-vlan)#hostname v3
+v3(config)#inter f0/2
+v3(config-if)#switchport access vlan 3
+
+v3(config)#vlan 4
+v3(config-vlan)#hostname v4
+v4(config)#inter f0/3
+v4(config-if)#switchport access vlan 4
+
+v4#show running-config 
+
+v4(config)#inter f0/1
+v4(config-if)#in vlan 2
+v4(config-if)#ip address 192.168.1.254 255.255.255.0
+v4(config-if)#no shutdown
+
+v4(config-if)#in vlan 3
+v4(config-if)#ip address 192.168.2.254 255.255.255.0
+v4(config-if)#no shutdown
+
+v4(config-if)#in vlan 4
+v4(config-if)#ip address 192.168.3.254 255.255.255.0
+v4(config-if)#no shutdown
+
+v4#show running-config
+
+interface FastEthernet0/1
+ switchport access vlan 2
+!
+interface FastEthernet0/2
+ switchport access vlan 3
+!
+interface FastEthernet0/3
+ switchport access vlan 4
+
+interface Vlan2
+ ip address 192.168.1.254 255.255.255.0
+!
+interface Vlan3
+ ip address 192.168.2.254 255.255.255.0
+!
+interface Vlan4
+ ip address 192.168.3.254 255.255.255.0
+
+
+v4#show vlan brief
+2    VLAN0002                         active    Fa0/1
+3    VLAN0003                         active    Fa0/2
+4    VLAN0004                         active    Fa0/3
+
+v4(config)#vlan 2
+v4(config-vlan)#name v2
+v4(config-vlan)#hostname S0
+S0(config)#vlan 3
+S0(config-vlan)#name v3
+S0(config-vlan)#vlan 4
+S0(config-vlan)#name v4
+
+
+S0#show vlan brief
+2    v2                               active    Fa0/1
+3    v3                               active    Fa0/2
+4    v4                               active    Fa0/3
+
+
+S0(config)#ip routing
+S0(config)#end
+S0#show ip route
+C    192.168.1.0/24 is directly connected, Vlan2
+C    192.168.2.0/24 is directly connected, Vlan3
+C    192.168.3.0/24 is directly connected, Vlan4
+SERVER>ping 192.168.3.254
+SERVER>ping 192.168.2.254
+SERVER>ping 192.168.3.1
+SERVER>ping 192.168.2.1
+SERVER>ping 192.168.1.1
+
+Switch(config)#interface range f0/1-10
+Switch(config-if-range)#switchport access vlan 2
+
+Switch(config-if-range)#interf range f0/11-15
+Switch(config-if-range)#switchport access vlan 3
+
+Switch(config-if-range)#interf range f0/16-22
+Switch(config-if-range)#switchport access vlan 4
+
+S0(config-if)#interface fastEthernet 0/24
+S0(config-if)#switchpor trunk encapsulation dot1q 
+S0(config-if)#switchpor trunk encapsulation dot1q 
+S0(config-if)#switchport mode trunk
+
+S0(config)#interface range fastEthernet 0/23-24
+S0(config-if-range)#channel-group 1 mode on
+
+S0(config-if-range)#interface Port-channel 1
+S0(config-if)#switchport mode trunk
+
+
+Switch(config)#interface range fa 0/23-24
+Switch(config-if-range)#channel-group 1 mode on
+Switch(config-if-range)#interface Port-channel 1
+Switch(config-if)#switchport mode trunk
+ 
+Switch#show interfaces f0/23 switchport
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+Negotiation of Trunking: On
+Access Mode VLAN: 1 (default)
+
+Switch#show etherchannel summary 
+
+Number of channel-groups in use: 1
+Number of aggregators:           1
+
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+----------------------------------------------
+
+1      Po1(SU)           -      Fa0/23(P) Fa0/24(P)
+
+
+S0(config)#interface fastEthernet 0/22
+S0(config-if)#no switchport    ########
+S0(config-if)#ip address 192.168.4.1 255.255.255.0
+S0(config-if)#no shutdown
+R4(config)#interface gigabitEthernet 0/1
+R4(config-if)#ip address 192.168.4.2 255.255.255.0
+R4(config-if)#no shutdown
+
+R4(config-if)#interface gigabitEthernet 0/2
+R4(config-if)#ip address 192.168.5.254 255.255.255.0
+R4(config-if)#no shutdown
+
+R4(config)#ip route 192.168.1.0 255.255.255.0 192.168.4.1
+R4(config)#ip route 192.168.2.0 255.255.255.0 192.168.4.1
+R4(config)#ip route 192.168.3.0 255.255.255.0 192.168.4.1
+
+S0(config)#ip route 0.0.0.0 0.0.0.0  192.168.4.2
+
+========================
+====================================
+===========================================================
+S0(config)#line console  0
+S0(config-line)#exec-timeout 0  0
+S0(config-line)#logging synchronous
+
+S0(config)#vlan 2
+S0(config-vlan)#interface range fastEthernet 0/1-10
+S0(config-if-range)#switchport access vlan 2
+S0(config-if-range)#exit
+
+S0(config)#vlan 3
+S0(config-vlan)#interface range fastEthernet 0/11-15
+S0(config-if-range)#switchport access vlan 3
+
+S0(config)#vlan 4
+S0(config-vlan)#interface range fastEthernet 0/16-22
+S0(config-if-range)#switchport access vlan 4
+
+S0(config)#interface range fastEthernet 0/23-24
+S0(config-if-range)#channel-group 1 mode on
+Creating a port-channel interface Port-channel 1
+
+S0(config-if-range)#interface Port-channel 1
+S0(config-if)#switchport mode trunk
+
+
+R0(config)#
+Router(config)#line console 0
+Router(config-line)#exec-timeout 0  0
+Router(config-line)#logging synchronous
+Router(config-line)#exit
+Router(config)#hostname R0
+R0(config)#interface gigabitEthernet 0/0
+R0(config-if)#ip address 192.168.4.2 255.255.255.0
+R0(config-if)#no shutdown
+R0(config-if)#interface gigabitEthernet 0/1
+R0(config-if)#ip address 192.168.5.254 255.255.255.0
+R0(config-if)#no shutdown
+
+R0(config)#ip route 192.168.1.0 255.255.255.0 192.168.4.1
+R0(config)#ip route 192.168.2.0 255.255.255.0 192.168.4.1
+R0(config)#ip route 192.168.3.0 255.255.255.0 192.168.4.1
+
+####clear ip  ospf process
+    Reset all ospf processes? :yes
+
+SR0(config-if)#no switchport 
+SR0(config-if)#interface fast 0/22
+SR0(config-if)#ip address 192.168.4.1 255.255.255.0
+SR0(config-if)#no shutdown
+SR0(config)#line console 0
+SR0(config-line)#exec-timeout  0  0
+SR0(config-line)#logging synchronous
+SR0(config)#ip route 0.0.0.0 0.0.0.0 192.168.4.2
+
+SR0#show ip route
+C    192.168.4.0/24 is directly connected, FastEthernet0/22
+S*   0.0.0.0/0 [1/0] via 192.168.4.2
+
+SR0(config)#ip routing
+
+SR0(config)#interface range fastEthernet 0/23-24
+SR0(config-if-range)#switchport trunk encapsulation  dot1q
+SR0(config-if-range)#channel-group 1 mode on 
+SR0(config-if-range)#
+Creating a port-channel interface Port-channel 1
+
+SR0(config-if-range)#switchport mode trunk
+
+SR0(config-if-range)#interface Port-channel 1
+##SR0(config-if)#switchport mode trunk
+SR0#show interface fastEthernet 0/23 switchport
+
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SR0#show interface fastEthernet 0/24 switchport
+
+Name: Fa0/24
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SR0(config-if)#vlan 2
+SR0(config-vlan)#vlan 3
+SR0(config-vlan)#vlan 4
+
+SR0(config)#interface vlan 2
+SR0(config-if)#ip address 192.168.1.254 255.255.255.0
+
+SR0(config-if)#interface vlan 3
+SR0(config-if)#ip address 192.168.2.254 255.255.255.0
+
+SR0(config-if)#interface vlan 4 
+SR0(config-if)#ip address 192.168.3.254 255.255.255.0
+SR0(config-if)#no shutdown
+
+SR0(config)#interface vlan 2
+SR0(config-if)#no shutdown
+SR0(config-if)#interface vlan 3
+SR0(config-if)#no shutdown
+
+SR0(config-if)#ip routing
+
+
+R1(config)#access-list 1 deny  192.168.2.1 0.0.0.0
+R1(config)#interface gigabitEthernet 0/1
+R1(config-if)#ip access-group 1 in
+
+R1(config)#access-list 1 permit any
+
+R1(config)#interface gigabitEthernet 0/1
+R1(config-if)#ip access-group 1 in
+R1(config-if)#access-list 1 deny host 192.168.2.1
+
+R1(config)#no access-list 1
+R1(config)#access-list 1 permit host 192.168.2.1
+
+R1(config)#do show access-list
+Standard IP access list 1
+    10 permit host 192.168.2.1 (6 match(es))
+
+R1#show access-lists 
+Standard IP access list 1
+    10 permit host 192.168.2.1 (6 match(es))
+
+R1(config-if)#ip access-group 1 in
+
+R3(config-if)#do show access-list
+Extended IP access list 100
+    10 deny tcp host 192.168.2.1 host 192.168.2.1 eq ftp
+    20 deny tcp host 192.168.2.1 host 192.168.2.1 eq www
+    30 permit ip any any
+
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.2.1 eq 21
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.2.1 eq 80
+R3(config)#access-list 100 permit ip any  any
+R3(config)#interface gigabitEthernet 0/1
+R3(config-if)#ip access-group 100 in  
+
+ 
+R3(config)#ip access-list extended 100
+
+R3(config-ext-nacl)#no 10
+R3(config-ext-nacl)#no 20
+
+R3(config-ext-nacl)#do show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+
+R3(config-ext-nacl)#exit
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 21
+R3(config)#do show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+    40 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 80
+R3(config)#exit
+
+R3#show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+    40 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+    50 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+
+R3(config-if)#ip access-group 100 in  
+
+R3(config)#no access-list 100
+R3(config)#do show access-list
+
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 80
+R3(config)#do show access-list
+Extended IP access list 100
+    10 deny tcp host 192.168.2.1 host 192.168.2.1 eq www
+    20 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+R3(config)#ip access-list extended 100
+R3(config-ext-nacl)#no 10
+
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 21
+R3(config)#do show access-list
+Extended IP access list 100
+    20 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+    30 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+	
+R3(config)#access-list 100 permit ip any any
+R3#show access-list
+Extended IP access list 100
+    20 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+    30 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+    40 permit ip any any
+=========================================
+
+R4(config)#ip nat inside source static 192.168.1.1 100.0.0.2
+R4(config)#ip nat inside source static 192.168.1.2 100.0.0.3
+
+R4(config)#inte gigabitEthernet 0/1
+R4(config-if)#ip nat inside
+
+R4(config)#interface gigabitEthernet 0/0
+R4(config-if)#ip nat outside
+
+R4#show running-config 
+ip nat inside source static 192.168.1.1 100.0.0.2 
+ip nat inside source static 192.168.1.2 100.0.0.3 
+
+R4(config)#no ip nat inside source static 192.168.1.1 100.0.0.2 
+R4(config)#ip nat inside source static tcp 192.168.1.1 80 100.0.0.2 80
+
+SERVER>ftp  100.0.0.3
+Trying to connect...100.0.0.3
+Connected to 100.0.0.3
+220- Welcome to PT Ftp server
+Username:quit
+
+SERVER>ftp  100.0.0.2
+Trying to connect...100.0.0.2
+%Error opening ftp://100.0.0.2/ (Timed out)
+
+R4#debug ip nat
+IP NAT debugging is on
+
+SERVER>ping 100.0.0.10
+
+Pinging 100.0.0.10 with 32 bytes of data:
+
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [46]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [90]
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [47]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [91]
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [48]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [92]
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [49]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [93]
+
+R4#undebug ip nat
+IP NAT debugging is off
+
+
+
+
+
+Switch(config)#spanning-tree vlan 1
+Switch(config)#spanning-tree vlan 1 priority 24576
+Switch(config)#hostname S1
+S1(config)#spanning-tree vlan 1 priority 23
+% Bridge Priority must be in increments of 4096.
+% Allowed values are:
+  0     4096  8192  12288 16384 20480 24576 28672
+  32768 36864 40960 45056 49152 53248 57344 61440
+
+
+Switch(config)#spanning-tree vlan 1 priority 28672
+S2(config)#
+
+S3(config)#spanning-tree vlan 1 priority 32768
+
+
+
+
+
+
+

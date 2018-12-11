@@ -1,0 +1,134 @@
+禁用系统防火墙，在物理机和虚拟机上都需要执行
+systemctl stop firewalld
+systemctl mask firewalld
+
+复习和回顾
+问题 1，虚拟机不能上网
+前提条件，物理机能上网
+
+1 物理机执行以下命令
+sysctl  -w  net.ipv4.ip_forward=1
+
+查找物理机上网的网卡名称  enp2s0  ，通过  ifconfig 查找的
+systemctl stop firewalld
+iptables -t nat -I POSTROUTING  -s  192.168.4.0/24 -o enp2s0 -j MASQUERADE
+
+查找物理机和虚拟机通讯的 ip 地址，通过 ifconfig    192.168.4.254
+
+2  在虚拟机上执行
+ip  route replace default via 192.168.4.254
+
+ping 202.106.196.115
+
+问题 2，给容器配置 yum 源
+查看宿主机的 yum 源配置
+[rhel7]
+name=rhel
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+gpgcheck=0
+
+练习： 创建一个容器，配置 yum 源，并且安装  ifconfig 命令
+
+自定义镜像 
+1、创建一个容器 docker run -itd centos
+2、进入容器进行修改配置  docker exec -it  容器id  bash
+2.5   停止容器，不是必须的
+3、创建镜像并验证 docker  commit  容器id   镜像名称：标签
+
+使用 Dockerfile 编排镜像
+FROM centos
+RUN  rm -f /etc/yum.repos.d/*.repo
+ADD  local.repo /etc/yum.repos.d/local.repo
+RUN  yum install net-tools vim-enhanced psmisc iproute -y
+
+编排命令
+docker  build  -t  myos:latest  .
+
+基于 myos 创建 httpd 的镜像
+FROM myos
+RUN  yum install -y httpd
+ENV  EnvironmentFile=/etc/sysconfig/httpd
+EXPOSE 80
+CMD  ["/usr/sbin/httpd", "-DFOREGROUND"]
+
+创建私有仓库
+1  添加配置文件  /etc/docker/daemon.json
+touch  /etc/docker/daemon.json
+{
+  "insecure-registries" : ["192.168.4.10:5000"]
+}
+重启 docker 服务
+systemctl restart docker
+
+2 启动私有仓库
+docker run -d -p 5000:5000 registry
+
+3 测试上传镜像到私有仓库
+3.1  标记一下哪个镜像要上传
+docker  tag   busybox:latest   镜像服务器ip:5000/busybox:latest
+3.2 上传镜像
+docker  images
+docker  push  镜像服务器ip:5000/busybox:latest
+
+4 私有仓库的使用 
+查看私有仓库里面的 镜像
+http://192.168.4.10:5000/v2/_catalog
+查看私有仓库里面镜像的标签
+http://192.168.4.10:5000/v2/myos/tags/list
+
+5 使用私有仓库运行容器
+5.1  添加配置文件  /etc/docker/daemon.json
+touch  /etc/docker/daemon.json
+{
+  "insecure-registries" : ["192.168.4.10:5000"]
+}
+
+5.2 重启 docker 服务
+systemctl  restart  docker
+
+5.3 启动容器
+docker run -itd 192.168.4.10:5000/myos:latest
+docker run -itd 192.168.4.10:5000/myos:python
+
+容器的存储与端口映射
+存储卷的映射
+docker run -d  -v /var/webroot:/var/www/html   myos:httpd
+
+扩展实验
+目标：使用 nfs 共享，所有容器内的web 页面统一
+配置启动一个 apache 的容器
+配置 NFS 服务器，使用 docker  mount nfs ，利用卷映射到 容器
+
+容器网络
+查看 docker 网络配置
+docker network list
+
+创建一个网桥 br0
+docker network create --driver bridge br0
+
+删除一个网桥 br0
+docker network rm br0
+
+创建一个网桥
+docker network create --driver bridge --subnet=192.168.1.0/24 br0
+
+在新的网桥上创建容器
+docker  run -it --network=br0  myos
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

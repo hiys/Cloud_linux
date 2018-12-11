@@ -1,0 +1,88 @@
+S1(config)#spanning-tree vlan 1 priority 24576
+S1(config)#spanning-tree vlan 1 root primary
+
+S2(config)#spanning-tree vlan 1 priority 28672
+S2(config)#spanning-tree vlan 1 root secondary
+=================================================
+
+====================================================
+R(config)#interface gigabitEthernet 0/0
+R(config-if)#ip address 192.168.2.1 255.255.255.0
+R(config-if)#no shutdown
+R(config)#interface gigabitEthernet 0/1
+R(config-if)#ip address 192.168.3.1 255.255.255.0
+R(config-if)#no shutdown
+R(config)#interface gigabitEthernet 0/2
+R(config-if)#ip address 192.168.4.1 255.255.255.0
+R(config-if)#no shutdown
+
+R(config)#router ospf 1
+R(config-router)#network 192.168.4.0 0.0.0.255 area 0
+R(config-router)#network 192.168.3.0 0.0.0.255 area 0
+R(config-router)#network 192.168.2.0 0.0.0.255 area 0
+
+
+
+
+
+MS1(config)#interface fastEthernet 0/1
+MS1(config-if)#no switchport
+MS1(config-if)#ip address 192.168.2.2 255.255.255.0
+MS1(config-if)#no shutdown
+
+MS1(config)#interface vlan 1
+MS1(config-if)#ip address 192.168.1.252 255.255.255.0
+MS1(config-if)#no shutdown
+----，在两台三层交换机中开启热备份功能，使用192.168.1.254作为
+   虚拟路由器的地址，并由MS1承担活跃路由器。
+
+MS1(config-if)#standby 1 ip 192.168.1.254
+MS1(config-if)#standby 1 priority 105
+
+MS1(config)#ip routing 
+
+MS1(config)#router ospf 1
+MS1(config-router)#network 192.168.1.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.2.0 0.0.0.255 area 0
+
+MS1(config)#interface vlan 1
+MS1(config-if)#standby 1 preempt
+
+MS2(config)#interface fastEthernet 0/1
+MS2(config-if)#no switchport
+MS2(config-if)#ip address 192.168.3.2 255.255.255.0
+MS2(config-if)#no shutdown
+
+MS2(config)#interface vlan 1
+MS2(config-if)#ip address 192.168.1.253 255.255.255.0
+MS2(config-if)#no shutdown
+
+MS2(config)#ip routing
+
+MS2(config)#router ospf 1
+
+MS2(config-router)#no network 192.168.1.0  255.255.255.0 area 0
+MS2(config-router)#network 192.168.1.0  0.0.0.255  area 0
+MS2(config-router)#network 192.168.3.0 0.0.0.255 area 0
+
+MS2(config)#interface vlan 1
+MS2(config-if)#standby 1 ip 192.168.1.254
+
+MS2(config-if)#standby 1 priority 95
+
+
+
+
+
+
+
+
+
+
+
+
+
+shutdown /s  关机
+         /r   重启
+
+占先权 preempt
