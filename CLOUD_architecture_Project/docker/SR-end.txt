@@ -1,0 +1,503 @@
+
+==========================  TCP/IP三次握手四次断开  =================
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+发送SYN,请求建立连接(seq=100,ctl=SYN) send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                            receive SYN+ACK |<-- SYN+ACK ---| SYN+ACK send 发送SYN，ACK(seq=300,ack=101,ctl=SYN,ACK)
+                                            |            | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+            发送ACK(seq=101  ack=301  ctl=ACK) |-------------- ACK --------------->| receive ACK
+ 代表一个打开的连接，数据可以传送给用户 ESTABLISHED|                                  | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+                                send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                receive ACK |<------------- ACK ----------------| send ACK
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                                 receive FIN |<------------- FIN ----------------| send FIN
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                                    send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)
+
+Acknowledge number(确认号码)
+established   已建立的; 已设立的; 已制定的; 确定的
+receive 收到; 接待; 接到; 接纳;
+          接收; 受理; 欢迎; 承受;
+TCP(Transmission Control Protocol)　传输控制协议
+
+=============================== 以太网桢格式  =======================
+
+                MAC头部  IP头部   TCP头部   上层数据
+Destination Address  Source Address                          循环冗余校验 【Cyclic Redundancy Check 】
+    DA                    SA               Type         Data               CRC
+  目的地址                      源地址               类型/长度         数据                桢校验序列
+6Byte[48bit]          6Byte【本机地址】  2Byte【16bit】 46~1500Byte       4Byte【32bit】
+
+Mac 地址第 8 位（bit）= 0时，
+即 第 2 位 16进制数 是 0，2，4，6，8，A，C，E 时，
+表示该Mac地址为 “ 单 播 ”地址【物理地址】； 一对一
+
+Mac 地址 第 8 位(bit) = 1 时
+即 第 2 位 16进制数 是  1，3，5，7，9，B，D，F 时，
+表示该Mac地址为 “ 组 播 ” 地址【逻辑地址】； 一对多
+
+===============================================================
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]【网络服务与最终用户的一个接口】
+                HTTP  FTP  TFTP  SMTP【邮件协议】  SNMP【Simple Network Management Protocol 简单网络管理协议，SNMP就是为了让别人能够获得路由器上的统计数据而约定好的数据交流的规则】  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]【数据的表现形式，如加密、压缩】
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]【建立、管理、中止会话，例如断点续传】
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]【定义传输数据的协议端口号，以及流控和差错校验】
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包 【用抓包工具抓到的一条条记录就是包】【进行逻辑地址寻址，实现不同网络之间的通信，定义了  基于IP 协议的逻辑地址】
+                ICMP【ping这个工具 使用的协议】  IGMP【Internet Group Manage Protocol ： Internet组管理协议，提供internet网际多点 传送的功能,即将一个ip包拷贝给多个host，是一个尚处于实验阶段的协议】    IP   ARP【地址解析协议 Address Resolution Protocol】   RARP【Reverse Address Resolution Protocol 反向地址转换协议，允许局域网的物理机 从网关服务器的 ARP 表 或者缓存上 请求转换 其 IP 地址】
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧 【数据链路层协议数据单元 以太网桢格式 】【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流  【建立、维护、断开物理连接】
+
+          层            主机A                              主机B          数据单元
+-------------------------------------------------------------------------------------------------------------------------------------
+
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]  组播地址
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+
+----------------------------------------------------------
+0.0.0.0
+　　严格说来，0.0.0.0已经不是一个真正意义上的IP地址了。
+它表示的是这样一个集合：所有不清楚的主机和目的网络。
+这里的“不清楚”是指在本机的路由表里没有特定条目指明如何到达。
+对本机来说，它就是一个“收容所”，所有不认识的“三无”人员，一律送进去。
+
+255.255.255.255
+　　限制广播地址。
+对本机来说，这个地址指本网段内(同一广播域)的所有主机。
+如果翻译成人类的语言，应该是这样：“这个房间里的所有人都注意了！”
+这个地址不能被路由器转发。
+ 
+224.0.0.1
+　　组播地址，注意它和广播的区别。
+从224.0.0.0到239.255.255.255都是这样的地址。
+224.0.0.1特指所有主机，
+224.0.0.2特指所有路由器。
+这样的地址多用于一些特定的程序以及多媒体程序。
+如果你的主机开启了IRDP(Internet路由发现协议，使用组播功能)功能，那么你的主机路由表中应该有这样一条路由
+====================================================================
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+----------------------------------------------------------------------------------------------------------------
+1物理层【网卡】 2 数据链路层 【交换机】3 网络层 【路由器】4 传输层 【防火墙】 会话层 表示层 5 应用层 【计算机 软件平台】
+
+Mac 地址第 8 位（bit）= 0时，
+即 第 2 位 16进制数 是 0，2，4，6，8，A，C，E 时，
+表示该Mac地址为 “ 单 播 ”地址【物理地址】；
+
+Mac 地址 第 8 位(bit) = 1 时
+即 第 2 位 16进制数 是  1，3，5，7，9，B，D，F 时，
+表示该Mac地址为 “ 组 播 ” 地址【逻辑地址】；
+
+Mac 地址 48 位都是 1 ，表示 广播地址；
+
+
+Router(config)#line console 0
+Router(config-line)#exec-timeout 0  0
+Router(config-line)#logging synchronous
+Router(config-line)#exit
+Router(config)#hostname R1
+
+R1(config)#interface g 0/0
+R1(config-if)#ip address 192.168.1.254 255.255.255.0
+R1(config-if)#no shutdown
+
+R1(config-if)#interface g0/1
+R1(config-if)#ip addres 192.168.2.1 255.255.255.0
+R1(config-if)#no shutdown
+R1(config-if)#exit
+         ##  ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+R1(config)#ip route 192.168.3.0 255.255.255.0 192.168.2.2
+R1(config)#ip route 0.0.0.0 0.0.0.0 192.168.2.2
+R1(config)#no ip route 192.168.3.0 255.255.255.0 192.168.2.2
+
+R2(config)#interface gigabitEthernet 0/1
+R2(config-if)#ip address 192.168.2.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#interface gigabitEthernet 0/0
+R2(config-if)#ip address 192.168.3.254 255.255.255.0 
+R2(config-if)#no shutdown
+R2(config-if)#ip route 192.168.1.0 255.255.255.0 192.168.2.1
+
+R2(config)#interface gigabitEthernet 0/2
+R2(config-if)#ip address 192.168.4.1 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#exit
+R2(config)#ip route 192.168.5.0 255.255.255.0 192.168.4.2
+
+
+R3(config)#interface gigabitEthernet 0/0
+R3(config-if)#ip address 192.168.5.254 255.255.255.0
+R3(config-if)#no shutdown
+
+R3(config-if)#interface g 0/1
+R3(config-if)#ip address 192.168.4.2 255.255.255.0
+R3(config-if)#no shutdown
+R3(config)#ip route 0.0.0.0 0.0.0.0 192.168.4.1
+==========================================================
+
+
+
+R2(config)#interface gigabitEthernet 0/0
+R2(config-if)#ip address 192.168.4.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config)#interface gigabitEthernet 0/1
+R2(config-if)#ip address 192.168.5.254 255.255.255.0
+R2(config-if)#no shutdown
+       ##  ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+R2(config)#ip route 192.168.1.0 255.255.255.0 192.168.4.1
+R2(config)#ip route 192.168.2.0 255.255.255.0 192.168.4.1
+R2(config)#ip route 192.168.3.0 255.255.255.0 192.168.4.1
+
+R2#show ip route
+
+S    192.168.1.0/24 [1/0] via 192.168.4.1
+S    192.168.2.0/24 [1/0] via 192.168.4.1
+S    192.168.3.0/24 [1/0] via 192.168.4.1
+
+S1(config)#interface range fastEthernet 0/11-15
+S1(config-if-range)#switchport access vlan 2
+% Access VLAN does not exist. Creating vlan 2
+
+S1(config)#interface range fastEthernet 0/16-22
+S1(config-if-range)#switchport access vlan 3
+% Access VLAN does not exist. Creating vlan 3
+
+S1(config)#interface range fastEthernet 0/23-24
+S1(config-if-range)#channel-group 1 mode on
+
+S1(config)#interface Port-channel 1
+
+S1(config-if)#switchport mode trunk
+
+S1#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1#show interfaces fastEthernet 0/24 switchport 
+Name: Fa0/24
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+===================三层交换机================================
+
+三层交换技术
+1、作用
+使用三层交换技术实现VLAN间通信 
+三层交换=二层交换+三层转发
+2、虚拟接口（SVI）
+三层交换机上配置的VLAN接口为虚接口
+3、三层交换机的配置
+1）、在三层交换机启用路由功能 
+全局：ip  routing
+2）、配置虚拟接口的IP 地址
+全局：interface  vlan  1
+ip  address  192.168.2.254  255.255.255.0 
+no  shutdown 
+3）在三层交换机上配置Trunk并指定接口封装为802.1q
+接口模式：switchport  trunk  encapsulation  dot1q 
+switchport  mode  trunk
+4）、配置路由接口
+进入接口：no  switchport 
+
+启动OSPF路由进程
+Router(config)# router ospf process-id
+指定OSPF协议运行的接口和所在的区域
+Router(config-router)# network address inverse-mask area area-id
+
+
+
+SR(config)#vlan 2
+SR(config-vlan)#name v2
+SR(config-vlan)#exit
+SR(config)#vlan 3
+SR(config-vlan)#name v3
+
+SR#show vlan brief
+
+VLAN Name                          Status    Ports
+---- ----------------------------- -------------------------------
+1    default                       active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
+2    v2                               active    
+3    v3                               active  
+SR(config)#interface vlan 1
+SR(config-if)#ip address 192.168.1.254 255.255.255.0
+SR(config-if)#no shutdown
+
+SR(config)#interface vlan 2
+SR(config-if)#ip address 192.168.2.254 255.255.255.0
+SR(config-if)#no shutdown
+
+SR(config)#interface vlan 3
+SR(config-if)#ip address 192.168.3.254 255.255.255.0
+SR(config-if)#no shutdown
+
+SR(config)#ip routing  #开启路由功能
+
+SR#show ip route
+
+C    192.168.1.0/24 is directly connected, Vlan1
+C    192.168.2.0/24 is directly connected, Vlan2
+C    192.168.3.0/24 is directly connected, Vlan3
+
+SR(config)#interface range fastEthernet 0/23-24
+SR(config-if-range)#channel-group 1 mode on 
+
+Creating a port-channel interface Port-channel 1
+
+SR(config-if-range)#exit
+SR(config)#interface Port-channel 1  
+                                                #三层交换机配置
+SR(config-if)#switchport trunk encapsulation dot1q 
+SR(config-if)#switchport mode trunk
+
+SR#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SR#show interfaces fastEthernet 0/24 switchport 
+Name: Fa0/24
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+SR(config)#interface fastEthernet 0/22
+
+SR(config-if)#no switchport  ## 配置路由接口
+
+SR(config-if)#ip address 192.168.4.1 255.255.255.0
+SR(config-if)#no shutdown
+SR(config-if)#exit
+
+缺省路由（默认路由）
+缺省路由是一种特殊的静态路由
+简单地说,缺省路由就是在没有找到任何匹配的具体路由条目的情况下才使用的路由，适用于只有一个出口的末节网络（比如企业的网关出口）
+       ##  ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+        全局 # ip  route  0.0.0.0  0.0.0.0  下一跳
+SR(config)#ip route 0.0.0.0 0.0.0.0 192.168.4.2
+
+SR#show ip route 
+C    192.168.1.0/24 is directly connected, Vlan1
+C    192.168.2.0/24 is directly connected, Vlan2
+C    192.168.3.0/24 is directly connected, Vlan3
+C    192.168.4.0/24 is directly connected, FastEthernet0/22
+S*   0.0.0.0/0 [1/0] via 192.168.4.2
+=======================================
+===========================================
+===================动态============================
+
+动态路由 
+1、动态路由特点 
+根据网络拓扑或流量变化，由路由器通过路由协议自动设置, 减少了管理任务，但占用了网络带宽
+适合ISP服务商、广域网、园区网等大型网络
+===========================================
+OSPF协议
+•Open Shortest Path First ( 开放式最短路径优先）
+•OSPF区域
+•为了适应大型的网络，OSPF在AS内划分多个区域
+•每个OSPF路由器只维护所在区域的完整链路状态信息
+•区域ID
+•区域ID可以表示成一个十进制的数字
+•也可以表示成一个IP
+•骨干区域Area 0
+•负责区域间路由信息传播
+
+
+SS1(config)#interface range fastEthernet 0/11-15 
+SS1(config-if-range)#switchport access vlan 2
+% Access VLAN does not exist. Creating vlan 2
+
+SS1(config-if-range)#interface range fastEthernet 0/16-22
+SS1(config-if-range)#switchport access vlan 3
+% Access VLAN does not exist. Creating vlan 3
+
+SS1(config-if-range)#interface range fastEthernet 0/23-24
+SS1(config-if-range)#channel-group 1 mode on
+SS1(config-if-range)#
+Creating a port-channel interface Port-channel 1
+
+SS1(config)#interface Port-channel  1
+SS1(config-if)#switchport mode trunk
+
+SS1#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SS1#show interfaces fastEthernet 0/24 switchport 
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SRSR(config)#vlan 2
+SRSR(config-vlan)#name v2
+SRSR(config-vlan)#vlan 3
+SRSR(config-vlan)#name v3
+
+SRSR#show vlan brief
+1    default                          active    Fa0/1, Fa0/2,
+2    v2                               active    
+3    v3                               active  
+
+SRSR(config)#interface vlan 1
+SRSR(config-if)#ip address 192.168.1.254 255.255.255.0
+SRSR(config-if)#no shutdown
+
+SRSR(config-if)#exit
+SRSR(config)#interface vlan 2
+SRSR(config-if)#ip address 192.168.2.254 255.255.255.0
+SRSR(config-if)#no shutdown
+
+SRSR(config)#interface vlan 3
+SRSR(config-if)#ip address 192.168.3.254 255.255.255.0
+SRSR(config-if)#no shutdown
+SRSR(config-if)#exit
+SRSR(config)#ip routing
+
+SRSR#show ip route
+
+C    192.168.1.0/24 is directly connected, Vlan1
+C    192.168.2.0/24 is directly connected, Vlan2
+C    192.168.3.0/24 is directly connected, Vlan3
+
+
+SRSR(config)#interface range fastEthernet 0/23-24
+SRSR(config-if-range)#channel-group 1 mode on
+SRSR(config-if-range)#
+Creating a port-channel interface Port-channel 1
+
+SRSR(config)#interface Port-channel 1
+
+SRSR(config-if)#switchport trunk encapsulation dot1q
+SRSR(config-if)#switchport mode trunk
+
+SRSR#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+SRSR(config)#interface fastEthernet 0/22
+SRSR(config-if)#no switchport 
+SRSR(config-if)#ip address 192.168.4.1 255.255.255.0
+SRSR(config-if)#no shutdown
+
+RR2(config)#interface gigabitEthernet 0/0
+RR2(config-if)#ip address 192.168.4.2 255.255.255.0
+RR2(config-if)#no shutdown
+
+RR2(config)#interface gigabitEthernet 0/1
+RR2(config-if)#ip address 192.168.5.254 255.255.255.0
+RR2(config-if)#no shutdown
+
+
+启动OSPF路由进程
+Router(config)# router ospf process-id
+指定OSPF协议运行的接口和所在的区域
+Router(config-router)# network address inverse-mask area area-id
+
+      ## 格式 # router ospf process-id
+RR2(config)#router  ospf  1   ## 启动OSPF路由进程
+
+              ## 格式  network  address     inverse-mask  area area-id
+RR2(config-router)#network 192.168.4.0   0.0.0.255    area  0  ## 指定OSPF协议运行的接口和所在的区域
+RR2(config-router)#network 192.168.5.0   0.0.0.255    area  0
+
+SRSR(config)#router ospf 1
+SRSR(config-router)#network 192.168.1.0 0.0.0.255 area 0
+SRSR(config-router)#network 192.168.2.0 0.0.0.255 area 0
+SRSR(config-router)#network 192.168.3.0 0.0.0.255 area 0
+SRSR(config-router)#network 192.168.4.0 0.0.0.255 area 0
+
+
+
+
+===================================================================
+Switch(config)#no spanning-tree vlan 1
+S1#show spanning-tree vlan 2
+VLAN0002
+  Spanning tree enabled protocol ieee
+  Root ID    Priority    32770
+             Address     00D0.9721.B143
+             This bridge is the root
+             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
+
+  Bridge ID  Priority    32770  (priority 32768 sys-id-ext 2)
+             Address     00D0.9721.B143
+             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
+             Aging Time  20
+
+Interface        Role Sts Cost      Prio.Nbr Type
+---------------- ---- --- --------- -------- --------------------------------
+Fa0/1            Desg FWD 19        128.1    P2p
+Fa0/2            Desg FWD 19        128.2    P2p
+
+
+
+
+MS2(config)#spanning-tree vlan 1  root secondary 
+MS2(config)#spanning-tree vlan 2 root primary 
+
+MS1(config)#spanning-tree vlan 2 root secondary 
+MS1(config)#spanning-tree vlan 1 root primary 
+
+VRRPG公共协议
+思科私有协议HSRP
+服务器有的能够识别 中继链路 trunk  【trunk  可以传递多个vlan】
+普通电脑 只能识别  接入链路 access 【access 可以承载 一个vlan】
+
