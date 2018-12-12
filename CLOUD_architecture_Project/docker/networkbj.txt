@@ -1,0 +1,1781 @@
+
+
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]【网络服务与最终用户的一个接口】
+                HTTP  FTP  TFTP  SMTP【邮件协议】  SNMP【Simple Network Management Protocol 简单网络管理协议，SNMP就是为了让别人能够获得路由器上的统计数据而约定好的数据交流的规则】  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]【数据的表现形式，如加密、压缩】
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]【建立、管理、中止会话，例如断点续传】
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]【定义传输数据的协议端口号，以及流控和差错校验】
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包 【用抓包工具抓到的一条条记录就是包】【进行逻辑地址寻址，实现不同网络之间的通信】
+                ICMP【ping这个工具 使用的协议】  IGMP【Internet Group Manage Protocol ： Internet组管理协议，提供internet网际多点 传送的功能,即将一个ip包拷贝给多个host，是一个尚处于实验阶段的协议】    IP   ARP【地址解析协议 Address Resolution Protocol】   RARP【Reverse Address Resolution Protocol 反向地址转换协议，允许局域网的物理机 从网关服务器的 ARP 表 或者缓存上 请求转换 其 IP 地址】
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机【MAC 地址表的缓存时间是 300 秒】)  frame  数据帧 【数据链路层协议数据单元 以太网桢格式 】【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流  【建立、维护、断开物理连接】
+
+          层            主机A                              主机B          数据单元
+-------------------------------------------------------------------------------------------------------------------------------------
+1物理层【网卡】 2 数据链路层 【交换机】3 网络层 【路由器】4 传输层 【防火墙】 会话层 表示层 5 应用层 【计算机 软件平台】
+
+ARP【地址解析协议 Address Resolution Protocol
+
+ARP协议就是将IP地址转换为MAC物理地址,
+
+在 数据链路层 中传输的 数据报(Datagram) 只能识别MAC地址，
+
+所以只能将IP地址转换为MAC物理地址再进行传输和定向；
+
+ARP server先将目的地的IP地址转换成物理地址，
+发出一个ARP request,
+这个request是个没有指定目的地的广播，
+
+当网络中有匹配的物理地址时，
+就将这个物理地址返回，即ARP reply，
+
+但ARP reply是有明确的目标地址的，是单播。
+这时，数据包就有方向了，就可以继续向目的地进发了。
+】 
+
+ARP Address  Resolution  Protocol  地址转换协议，
+在以太网中，所有对IP的访问最终都转化为对
+网卡MAC地址的访问
+=================================
+
+ RARP【
+     Reverse Address Resolution Protocol 反向地址转换协议，
+允许局域网的物理机 从网关服务器的 ARP 表 或者缓存上 请求 转换 其 IP 地址,
+也就是将MAC物理地址转换为IP地址
+
+RARP协议是为了
+获取无磁盘操作系统的IP地址而设计的。
+具有本地磁盘的系统通常是从磁盘中的配置文件中读取IP地址的，
+
+但是无盘系统无法这样操作，
+所以就需要将MAC地址转换成IP地址了
+】
+
+无盘系统
+比如有些网吧的机器本身没有硬盘，
+而是通过局域网连接到服务器。
+从这些机器上看到的磁盘实际上是共享的服务器的磁盘
+
+交换机MAC 地址表的缓存时间是 300 秒
+=========================
+
+Mac 地址第 8 位（bit）= 0时，
+即 第 2 位 16进制数 是 0，2，4，6，8，A，C，E 时，
+表示该Mac地址为 “ 单 播 ”地址【物理地址】；
+
+Mac 地址 第 8 位(bit) = 1 时
+即 第 2 位 16进制数 是  1，3，5，7，9，B，D，F 时，
+表示该Mac地址为 “ 组 播 ” 地址【逻辑地址】；
+
+
+====   MAC 地址【也叫 物理地址，或者 硬件地址 】 由 12 位 16进制数 组成   ==============
+
+== [2] 数据链路层 (交换机)  frame  数据帧 【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】 ==
+== [2] 数据链路层 (交换机)  frame  数据帧 【数据链路层协议数据单元 以太网桢格式 】【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】  MAC头部  IP头部   TCP头部   上层数据  ==================
+
+======== 以太网桢格式  =======================
+
+                MAC头部  IP头部   TCP头部   上层数据
+Destination Address  Source Address                          循环冗余校验 【Cyclic Redundancy Check 】
+    DA                    SA               Type         Data               CRC
+  目的地址                      源地址               类型/长度         数据                桢校验序列
+6Byte[48bit]          6Byte【本机地址】  2Byte【16bit】 46~1500Byte       4Byte【32bit】
+
+Mac 地址第 8 位（bit）= 0时，
+即 第 2 位 16进制数 是 0，2，4，6，8，A，C，E 时，
+表示该Mac地址为 “ 单 播 ”地址【物理地址】； 一对一
+
+Mac 地址 第 8 位(bit) = 1 时
+即 第 2 位 16进制数 是  1，3，5，7，9，B，D，F 时，
+表示该Mac地址为 “ 组 播 ” 地址【逻辑地址】； 一对多
+
+ ==========  Mac 地址 48 位都是 1 ，表示 广播地址； 一对所有 ==================
+
+ (0F)16=(0000 1111)2  ---- 第8位 是1
+   ff:ff:ff:ff:ff:ff
+
+一块物理网卡的地址一定是 单播地址【物理地址】【即 第 8 bit = 0 】
+
+以太网 MAC地址-----用来 识别 一个 以太网上的 某个 单独的 设 备 或 一组设备
+
+ |<--    24bit 【供应商标识】    -->|<-- 24bit 【供应商对网卡的唯一编号】-->|
+ |  0000 0000    0000 0000   0000 0000   |  0000 0000      0000 0000     0000 0000 |
+例如 00-06-1b -e3-93-6c  前24bit 是 00-06-1b  表明这是 IMB  供应商生产的设备
+    00-0d-28-be-b6-42  前 24位 是  00-0d-28 表明这是 CISCO 供应商生产的设备
+
+[root@Va1 ~]# ifconfig eth2  down  ## 先把网卡eth2 关闭
+
+[root@Va1 ~]# ifconfig eth2  hw  ether 52:54:00:7f:d5:ee ## 临时修改 MAC地址52:54:00:7f:d5:df 最后二位改成ee
+[root@Va1 ~]# echo  $?
+0
+[root@Va1 ~]# ifconfig eth2  up  ## 把网卡eth2 打开
+
+[root@Va1 ~]# ifconfig eth2 |grep ether  ## 查看 eth2 的MAC 地址已经改变
+        ether 52:54:00:7f:d5:ee  txqueuelen 1000  (Ethernet)
+
+[root@Va1 ~]# reboot   ## 重启
+[root@hiys ~]# ssh  -X  192.168.0.11
+[root@Va1 ~]# ifconfig eth2 |grep ether  ## 重启后又恢复原先的MAC 地址了
+        ether 52:54:00:7f:d5:df  txqueuelen 1000  (Ethernet)
+
+[root@Va1 ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth2
+[root@Va1 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth2
+NAME="eth2"
+DEVICE="eth2"
+ONBOOT=yes
+NM_CONTROLLED="no"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL="no"
+BOOTPROTO="static"
+IPADDR="192.168.2.11"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.0.254"
+MACADDR=52:54:00:7f:d5:bb ## 最后这一行MAC是手动添加的【永久修改MAC地址】
+
+[root@Va1 ~]# systemctl  restart  network  ## 重启网络
+
+[root@Va1 ~]# ifconfig eth2 |grep ether  ## 查看 eth2 的MAC 地址最后二位 已经改变 52:54:00:7f:d5:bb
+        ether 52:54:00:7f:d5:bb  txqueuelen 1000  (Ethernet)
+
+[root@Va1 ~]# reboot
+Connection to 192.168.0.11 closed by remote host.
+Connection to 192.168.0.11 closed.
+[root@hiys ~]# ssh  -X  192.168.0.11
+[root@Va1 ~]# ifconfig eth2 |grep ether  ## 查看 eth2 的MAC 地址最后二位 已经永久改变 52:54:00:7f:d5:bb
+        ether 52:54:00:7f:d5:bb  txqueuelen 1000  (Ethernet)
+
+-------------------------------------------------------------------------------------------------------------------------------------
+“ 单 播 ” 地址【物理地址】【即 第 8 bit = 0 】
+“ 组 播 ” 地址【逻辑地址】【即 第 8 bit = 1 】
+ 0，2，4，6，8，A，C，E  ------ 二进制尾数 是 0
+  1，3，5，7，9，B，D，F ------ 二进制尾数 是 1
+
+   0      0      0     0     0      0      0      0 
+   1      1       1     1      1      1      1      1
+ 2^7    2^6    2^5   2^4   2^3   2^2   2^1    2^0
+  128    64     32     16     8     4      2      1
+  128=(1000 0000)2
+   64=(0100 0000)2
+   32=(0010 0000)2
+    16=(0001 0000)2
+   15=(0000 1111)2 = (F)16
+   14=(0000 1110)2 = (E)16
+   13=(0000 1101)2 = (D)16
+   12=(0000 1100)2 = (C)16
+   11=(0000 1011)2 = (B)16
+   10=(0000 1010)2 = (A)16
+    9=(0000 1001)2 = (9)16
+    8=(0000 1000)2
+    7=(0000 0111)2
+    6=(0000 0110)2
+   0    1    2    3    4    5    6    7    8    9   10    11    12    13    14    15
+  0   1   2   3   4   5   6   7   8   9   A   B    C   D    E    F
+
+一个 16进制数 等于 4 个 二进制数
+48bit = 12 位 16进制数 = 6 Byte
+1Byte=8bit
+
+   (0F)16=(0000 1111)2  ---- 第8位 是1
+   (0E)16=(0000 1110)2 
+   (0D)16=(0000 1101)2 --- 第8位 是1
+   (0C)16=(0000 1100)2  
+   (0B)16=(0000 1011)2 --- 第8位 是1
+   (0A)16=(0000 1010)2   
+    (09)16=(0000 1001)2   --- 第8位 是1
+    (08)16=(0000 1000)2
+    (07)16=(0000 0111)2   --- 第8位 是1
+.................
+    (01)16=(0000 0001)2   --- 第8位 是1
+    (00)16=(0000 0000)2  --- 第8位 是0
+总结
+    0，2，4，6，8，A，C，E  ------ 二进制尾数 是 0
+     1，3，5，7，9，B，D，F ------ 二进制尾数 是 1
+一个 16进制数 等于 4 个 二进制数
+48bit = 12 位 16进制数 = 6 Byte
+1Byte=8bit
+
+===================  TCP/IP三次握手四次断开  =======================
+
+TCP(Transmission Control Protocol)　传输控制协议
+
+establish   建立，创建; 确立或使安全; 使被安排好; 使成为
+established   已建立的; 已设立的; 已制定的; 确定的
+SYN(synchronous建立联机)
+ACK(acknowledgement 确认)
+
+TCP是主机对主机层的传输控制协议，提供可靠的连接服务，采用三次握手确认建立一个连接:
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)
+
+Acknowledge number(确认号码)
+
+客户端TCP状态迁移：
+CLOSED->SYN_SENT->ESTABLISHED->FIN_WAIT_1->FIN_WAIT_2->TIME_WAIT->CLOSED
+
+CLOSED->LISTEN->SYN收到->ESTABLISHED->CLOSE_WAIT->LAST_ACK->CLOSED
+服务器TCP状态迁移： 【作为服务器，尽量不要主动断开连接 】
+
+TCP端口状态说明
+
+TCP状态转移要点
+TCP协议规定，对于已经建立的连接，
+网络双方要进行四次握手才能成功断开连接，
+如果缺少了其中某个步骤，
+将会使连接处于假死状态，
+连接本身占用的资源不 会被释放。
+网络服务器程序要同时管理大量连接，
+所以很有必要保证无用连接完全断开，
+否则大量僵死的连接会浪费许多服务器资源。
+在众多TCP状态中，最值得 注意的状态有两个：CLOSE_WAIT和TIME_WAIT。  
+
+1、LISTENING状态
+FTP服务启动后首先处于侦听（LISTENING）状态。
+
+2、ESTABLISHED状态 【established   已建立的; 已设立的; 已制定的; 确定的】
+ESTABLISHED的意思是建立连接。表示两台机器正在通信。
+
+3、CLOSE_WAIT
+    对方主动关闭连接或者网络异常导致连接中断，这时我方的状态会变成CLOSE_WAIT 
+此时我方要调用close()来使得连接正确关闭
+
+4 TIME_WAIT
+    我方主动调用close()断开连接，
+ socket将进入TIME_WAIT状态,
+  收到对方确认后状态变为TIME_WAIT。
+ TCP协议规定 TIME_WAIT 状态 将持续 2个MSL(Max Segment Lifetime【即两倍的分 段最大生存期】),
+          在Windows下默认为4分钟,即240秒,
+        TIME_WAIT状态下的socket不能被回收使用. 
+        MSL 是Maximum Segment Lifetime英文的缩写，
+          中文可以译为“报文最大生存时间”，他是任何报文在网络上存在的最长时间，
+          超过这个时间报文将被丢弃。
+          因为tcp报文 （segment）是ip数据报（datagram）的数据部分  
+  以此来确保旧的连接状态不会对新连接产生影响。
+  处于TIME_WAIT状态的连接占用的资源不会被内核释放，
+所以作为服务器，在可能的情 况下，
+尽量不要主动断开连接，
+  以减少TIME_WAIT状态造成的资源浪费。
+
+TIME_WAIT状态下的socket不能被回收使用. 
+具体现象是
+对于一个处理大量短连接的服务器,
+如果是由服务器主动关闭客户端的连接,
+将导致服务器端存在大量的处于TIME_WAIT状态的socket, 
+甚至比处于Established状态下的socket多的多,
+严重影响服务器的处理能力,
+甚至耗尽可用的socket,停止服务. 
+TIME_WAIT是TCP协议用以保证被重新分配的socket不会受到之前残留的延迟重发报文影响的机制,
+是必要的逻辑保证.
+
+一般情况下，系统的socket资源默认5000个。（非官方）
+
+TCP协议中有TIME_WAIT这个状态
+主要有两个原因
+
+1。防止上一次连接中的包，迷路后重新出现，
+影响新连接（经过2MSL，上一次连接中所有的重复包都会消失）
+
+2。可靠的关闭TCP连接。
+在主动关闭方发送的最后一个 ack(fin) ，有可能丢失，
+这时被动方会重新发fin, 
+如果这时主动方处于 CLOSED 状态 ，就会响应 rst 【RST(reset重置)】
+而不是 ack(acknowledgement 确认)。
+所以主动方要处于 TIME_WAIT 状态，而不能是 CLOSED 。
+
+
+
+
+5、SYN_SENT状态  【SYN(synchronous建立联机)】
+　 　SYN_SENT状态表示请求连接，
+当你要访问其它的计算机的服务时首先要发个同步信号给该端口，
+此时状态为SYN_SENT，
+如果连接成功了就变为 ESTABLISHED，【established   已建立的; 已设立的; 已制定的; 确定的】
+此时SYN_SENT状态非常短暂。
+但如果发现SYN_SENT非常多且在向不同的机器发出，
+那你的机器可能中了冲击波或震荡波 之类的病毒了。
+这类病毒为了感染别的计算机，它就要扫描别的计算机，
+在扫描的过程中对每个要扫描的计算机都要发出了同步请求，
+这也是出现许多 SYN_SENT的原因。
+
+established   已建立的; 已设立的; 已制定的; 确定的
+SYN(synchronous建立联机)
+ACK(acknowledgement 确认)
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)
+
+Acknowledge number(确认号码)
+established   已建立的; 已设立的; 已制定的; 确定的
+receive 收到; 接待; 接到; 接纳;
+          接收; 受理; 欢迎; 承受;
+TCP(Transmission Control Protocol)　传输控制协议
+
+==========================  TCP/IP三次握手四次断开  =================
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+                                   send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                            receive SYN+ACK |<------------ SYN+ACK -------------| SYN+ACK sent
+                                            |                                   | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+代表一个打开的连接，数据可以传送给用户 ESTABLISHED |-------------- ACK --------------->| receive ACK
+                                            |                                   | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+                                send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                receive ACK |<------------- ACK ----------------| send ACK
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                                 receive FIN |<------------- FIN ----------------| send FIN
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                                    send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+各个状态的意义如下： 
+LISTEN - 侦听来自远方TCP端口的连接请求； 
+SYN-SENT -在发送连接请求后等待匹配的连接请求； 
+SYN-RECEIVED - 在收到和发送一个连接请求后等待对连接请求的确认； 
+ESTABLISHED- 代表一个打开的连接，数据可以传送给用户； 
+
+FIN-WAIT-1 - 等待远程TCP的连接中断请求，或先前的连接中断请求的确认；
+FIN-WAIT-2 - 从远程TCP等待连接中断请求； 
+CLOSE-WAIT - 等待从本地用户发来的连接中断请求； 
+CLOSING -等待远程TCP对连接中断的确认； 
+LAST-ACK - 等待原来发向远程TCP的连接中断请求的确认； 
+TIME-WAIT -等待足够的时间以确保远程TCP接收到连接中断请求的确认； 
+CLOSED - 没有任何连接状态；
+
+TCP使用窗口机制进行流量控制
+什么是窗口？
+连接建立时，客户端 和 服务端 各自 分配 一块缓冲区 用来 存储 接收的 数据，
+并将缓冲区的尺寸 发送给 另一端
+
+接收方 发送的 确认信息 中 包含了 接收方自己 剩余的 缓冲区尺寸【单位是字节】
+
+剩余缓冲区空间的数量 叫做 窗口
+
+三次握手
+
+TCP是主机对主机层的传输控制协议，提供可靠的连接服务，采用三次握手确认建立一个连接:
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)
+
+Acknowledge number(确认号码)
+
+客户端TCP状态迁移：
+CLOSED->SYN_SENT->ESTABLISHED->FIN_WAIT_1->FIN_WAIT_2->TIME_WAIT->CLOSED
+服务器TCP状态迁移：
+CLOSED->LISTEN->SYN收到->ESTABLISHED->CLOSE_WAIT->LAST_ACK->CLOSED
+
+==========================  TCP/IP三次握手四次断开  =================
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                    Client                                   Server
+                  CLOSED |                                   | CLOSED
+                         |                                   | LISTEN 
+    主动打开建立联机send SYN |------------- SYN --------------->| receive SYN 【被动打开建立联机】
+ 在发送连接请求后等待匹配的连接请求 SYN_SENT |                      | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+          receive SYN+ACK |<------------ SYN+ACK -------------| SYN+ACK sent
+                          |                                   | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+             ESTABLISHED |------------- ACK ---------------->| receive ACK
+                 |                                   | ESTABLISHED
+                 | <=== TCP session established ===> |
+                      |                                              |
+            send FIN |--------------- FIN -------------->| receive FIN
+    主动关闭联机 FIN_WAIT1 |                                   | CLOSE_WAIT 【被动关闭联机】
+     receive ACK |<------------- ACK ----------------| send ACK
+       FIN_WAIT2 |                                   |
+     receive FIN |<------------ FIN -----------------| send FIN
+       TIME_WAIT |                                   | LAST_ACK
+        send ACK |-------------- ACK --------------->| receive ACK
+         TimeOut |                                   | CLOSED
+          CLOSED |                                   |
+
+（1）第一次握手：建立连接时，客户端A发送SYN包（SYN=j）到服务器B，并进入SYN_SEND状态，等待服务器B确认。
+
+（2）第二次握手：服务器B收到SYN包，必须确认客户A的SYN（ACK=j+1），同时自己也发送一个SYN包（SYN=k），即SYN+ACK包，此时服务器B进入SYN_RECV状态。
+
+（3）第三次握手：客户端A收到服务器B的SYN＋ACK包，向服务器B发送确认包ACK（ACK=k+1），此包发送完毕，客户端A和服务器B进入ESTABLISHED状态，完成三次握手。
+
+完成三次握手，客户端与服务器开始传送数据。
+
+SYN_RECV 
+服务端收到建立连接的SYN没有收到ACK包的时候处在SYN_RECV状态
+
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+                                   send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                            receive SYN+ACK |<------------ SYN+ACK -------------| SYN+ACK sent
+                                            |                                   | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+代表一个打开的连接，数据可以传送给用户 ESTABLISHED |-------------- ACK --------------->| receive ACK
+                                            |                                   | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+                                send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                receive ACK |<------------- ACK ----------------| send ACK
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                                 receive FIN |<------------- FIN ----------------| send FIN
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                                    send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+
+关闭连接：
+
+由于TCP连接是全双工的，
+因此每个方向都必须单独进行关闭。
+这个原则是当一方完成它的数据发送任务后就能发送一个FIN来终止这个方向的连接。
+收到一个 FIN只意味着这一方向上没有数据流动，
+一个TCP连接在收到一个FIN后仍能发送数据。
+首先进行关闭的一方将执行主动关闭，
+而另一方执行被动关闭。
+
+ CP的连接的拆除需要发送四个包，因此称为四次挥手(four-way handshake)。
+客户端或服务器均可主动发起挥手动作，
+在socket编程中，任何一方执行close()操作即可产生挥手操作。
+
+（1）客户端A发送一个FIN，用来关闭客户A到服务器B的数据传送。 
+
+（2）服务器B收到这个FIN，它发回一个ACK，确认序号为收到的序号加1。和SYN一样，一个FIN将占用一个序号。 
+
+（3）服务器B关闭与客户端A的连接，发送一个FIN给客户端A。 
+
+（4）客户端A发回ACK报文确认，并将确认序号设置为收到序号加1。 
+
+TCP协议的连接是全双工连接，一个TCP连接存在双向的读写通道。 
+简单说来是 “先关读，后关写”，一共需要四个阶段。以客户机发起关闭连接为例：
+1.服务器读通道关闭
+2.客户机写通道关闭
+3.客户机读通道关闭
+4.服务器写通道关闭
+
+关闭行为是在发起方数据发送完毕之后，给对方发出一个FIN（finish）数据段。
+直到接收到对方发送的FIN，
+且对方收到了接收确认ACK之后，双方的数据通信完全结束，
+过程中每次接收都需要返回确认数据段ACK。
+详细过程：
+    第一阶段   客户机发送完数据之后，向服务器发送一个FIN数据段，序列号为i；
+    1.服务器收到FIN(i)后，返回确认段ACK，序列号为i+1，关闭服务器读通道；
+    2.客户机收到ACK(i+1)后，关闭客户机写通道；
+   （此时，客户机仍能通过读通道读取服务器的数据，服务器仍能通过写通道写数据）
+    第二阶段 服务器发送完数据之后，向客户机发送一个FIN数据段，序列号为j；
+    3.客户机收到FIN(j)后，返回确认段ACK，序列号为j+1，关闭客户机读通道；
+    4.服务器收到ACK(j+1)后，关闭服务器写通道。
+这是标准的TCP关闭两个阶段，服务器和客户机都可以发起关闭，完全对称。
+
+FIN标识是通过发送最后一块数据时设置的，
+标准的例子中，服务器还在发送数据，
+所以要等到发送完的时候，
+设置FIN（此时可称为TCP连接处于半关闭状态，
+因为数据仍可从被动关闭一方向主动关闭方传送）。
+如果在服务器收到FIN(i)时，已经没有数据需要发送，
+可以在返回ACK(i+1)的时候就设置FIN(j)标识，
+这样就相当于可以合并第二步和第三步。
+
+SYN_RECV 
+
+服务端收到建立连接的SYN没有收到ACK包的时候处在SYN_RECV状态
+
+1，net.ipv4.tcp_synack_retries ：INTEGER
+
+默认值是5
+
+对于远端的连接请求SYN，内核会发送SYN ＋ ACK数据报，以确认收到上一个 SYN连接请求包。
+这是所谓的三次握手( threeway handshake)机制的第二个步骤。
+这里决定内核在放弃连接之前所送出的 SYN+ACK 数目。
+不应该大于255，默认值是5，对应于180秒左右时间。
+通常我们不对这个值进行修改，因为我们希望TCP连接不要因为偶尔的丢包而无法建立。
+
+2，net.ipv4.tcp_syncookies
+
+一般服务器都会设置net.ipv4.tcp_syncookies=1来防止SYN Flood攻击。
+假设一个用户向服务器发送了SYN报文后突然死机或掉线，
+那么服务器在发出SYN+ACK应答报文后是无法收到客户端的ACK报文的（第三次握手无法完成），
+这种情况下服务器端一般会重试（再次发送SYN+ACK给客户端）并等待一段时间后丢弃这个未完成的连接，
+这段时间的长度我们称为SYN Timeout，
+一般来说这个时间是分钟的数量级（大约为30秒-2分钟）。
+
+net.ipv4.tcp_fin_timeout，默认60s，减小fin_timeout，减少TIME_WAIT连接数量。
+
+net.ipv4.tcp_tw_reuse = 1表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；
+
+net.ipv4.tcp_tw_recycle = 1表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭。
+
+windows 机器设置
+在HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters,
+右键添加名为TcpTimedWaitDelay的
+DWORD键,设置为60,以缩短TIME_WAIT的等待时间
+
+ubuntu机器设置
+vi /etc/sysctl.conf
+
+编辑文件，加入以下内容：
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_tw_recycle = 1
+net.ipv4.tcp_fin_timeout = 30
+ 
+然后执行 /sbin/sysctl -p 让参数生效。
+net.ipv4.tcp_syncookies = 1 表示开启SYN Cookies。
+当出现SYN等待队列溢出时，启用cookies来处理，可防范少量SYN攻击，默认为0，表示关闭；
+
+net.ipv4.tcp_tw_reuse = 1 表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；
+
+net.ipv4.tcp_tw_recycle = 1 表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭。
+
+net.ipv4.tcp_fin_timeout 修改系統默认的 TIMEOUT 时间
+
+查看系统TCP连接资源命令
+netstat 
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+
+[root@Va1 ~]# netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+ESTABLISHED 1
+
+[root@Va1 ~]# netstat -n | awk '/^tcp/{print $0}'
+tcp        0      0 192.168.0.11:22         192.168.0.254:36292     ESTABLISHED
+
+[root@Va1 ~]# netstat  -n  |head   -7
+Active Internet connections (w/o servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State      
+tcp        0      0 192.168.0.11:22         192.168.0.254:36292     ESTABLISHED
+Active UNIX domain sockets (w/o servers)
+Proto RefCnt Flags       Type       State         I-Node   Path
+unix  2      [ ]         DGRAM                    8755     /run/systemd/shutdownd
+unix  2      [ ]         DGRAM                    7509     /run/systemd/notify
+
+======================================
+
+ARP Address  Resolution  Protocol  地址转换协议，
+在以太网中，所有对IP的访问最终都转化为对
+网卡MAC地址的访问
+
+[root@hiys ~]# cat  -n /etc/ethertypes  |sed  -n  '13p;28p'
+    13	ARP		0806	ether-arp	#
+    28	802_1Q		8100	8021q 1q 802.1q	dot1q # 802.1Q Virtual LAN tagged frame
+
+电气和电子工程师协会
+( IEEE，全称是Institute of Electrical and Electronics Engineers)
+以太网 上 实现 中继可用的 2 种 封装类型
+ ISL （Cisco 私有协议）
+IEEE  802.1q  协议  【CRC 4字节】
+
+====   MAC 地址【也叫 物理地址，或者 硬件地址 】 由 12 位 16进制数 组成   ==============
+
+== [2] 数据链路层 (交换机)  frame  数据帧 【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】 ==
+
+Destination Address  Source Address                          循环冗余校验 【Cyclic Redundancy Check 】
+    DA                    SA               Type         Data               CRC
+  目的地址                      源地址               类型/长度         数据                桢校验序列
+6Byte[48bit]          6Byte【本机地址】  2Byte【16bit】 46~1500Byte       4Byte【32bit】
+
+Mac 地址第 8 位（bit）= 0时，
+即 第 2 位 16进制数 是 0，2，4，6，8，A，C，E 时，
+表示该Mac地址为 “ 单 播 ”地址【物理地址】；
+
+Mac 地址 第 8 位(bit) = 1 时
+即 第 2 位 16进制数 是  1，3，5，7，9，B，D，F 时，
+表示该Mac地址为 “ 组 播 ” 地址【逻辑地址】；
+
+Mac 地址 48 位都是 1 ，表示 广播地址；
+
+一块物理网卡的地址一定是 单播地址【物理地址】【即 第 8 bit = 0 】
+
+
+一个交换机虚拟接口
+（Switch Virtual Interface，SVI）
+代表一个由交换端口构成的VLAN（其实就是通常所说的VLAN接口），
+以便于实现系统中路由和桥接的功能。
+一个交换机虚拟接口对应一个VLAN，
+当需要  路由 虚拟局域网之间的 流量 或 桥接 VLAN之间 不可路由的 协议，
+ 以及 提供IP主机 到 交换机 的连接 的时候，
+ 就需要为 相应的虚拟局域网 配置 相应的 交换机虚拟接口，
+ 其实 SVI 就是指通常所说的VLAN接口，
+ 只不过它是虚拟的，
+  用于连接整个VLAN，
+ 所以通常也把这种接口称为逻辑三层接口，也是三层接口。
+
+  SVI 接口 是 当在 interface vlan 全局配置命令 后面 键入 具体的VLAN ID时创建的。
+  可以用no interface vlan vlan_id全局配置命令来删除对应的SVI接口，
+ 只是不能删除VLAN 1的SVI接口（VLAN 1），
+因为VLAN 1接口是默认已创建的，用于远程交换机管理。
+
+Switch>e?
+enable  exit
+Switch#c?
+clear  clock  configure  connect  copy
+S2#w?
+write
+Switch#conf t
+Switch(config)#
+
+Switch(config)#in f0/1
+Switch(config-if)#
+
+Switch(config-if)#^Z  Ctrl + z 相当于 end
+Switch#
+
+Switch>enable
+Switch#exit
+
+Switch#conf t?
+terminal  
+Switch#conf terminal
+
+Switch(config)#interface FastEthernet 0/1
+Switch(config-if)#e?
+exit  
+Switch(config-if)#exit
+Switch(config)#e?
+enable  end  exit
+
+Switch(config)#hostname S1
+S1(config)#
+
+S2#show running-config
+
+S2#s?
+setup  show  ssh 
+S2#sh r?
+running-config  
+S2#sh r
+Building configuration...
+S2(config-if)#sh?
+shutdown 
+S2(config)#s?
+service  snmp-server  spanning-tree 
+S2#p?
+ping  
+
+S2(config)#p?
+port-channel  privilege  
+S2(config)#ena?
+enable  
+
+S2(config)#enable password 123
+S2(config)#exit
+
+S2>enable
+
+Password: 123  ## 
+S2#write
+Building configuration...
+[OK]
+
+S2#erase startu?
+startup-config  
+S2#erase startup-config
+Continue? [confirm]y[OK]
+
+S2#reload
+
+Proceed with reload? [confirm]
+
+
+Switch(config)#enable password Taren1
+Switch#reload
+Proceed with reload? [confirm]
+
+Switch#conf 回车2次
+Switch(config)#
+Switch#conf t
+Switch(config)#
+
+S2(config)# no ip domain-lookup 配置禁止使用DNS查询 
+S2(config)# no ip domain-?
+domain-lookup  domain-name 
+
+S2(config)#line console 0      #阻止命令被打断
+S2(config-line)#logging synchronous
+S2(config)#line console 0
+S2(config-line)#exec?
+exec-timeout  
+S2(config-line)#exec-timeout 0 0  控制台永不超时
+S2(config-line)#exit
+
+PC>ipconfig /all
+
+FastEthernet0 Connection:(default port)
+
+   Connection-specific DNS Suffix..: 
+   Physical Address................: 00D0.D3E3.BD19
+   Link-local IPv6 Address.........: FE80::2D0:D3FF:FEE3:BD19
+   IP Address......................: 192.168.0.2
+   Subnet Mask.....................: 255.255.255.0
+   Default Gateway.................: 0.0.0.0
+   DNS Servers.....................: 0.0.0.0
+   DHCP Servers....................: 0.0.0.0
+   DHCPv6 Client DUID..............: 00-01-00-01-04-A8-36-C2-00-D0-D3-E3-BD-19
+
+
+PC>
+PC>ping 192.168.0.1
+
+Pinging 192.168.0.1 with 32 bytes of data:
+
+Reply from 192.168.0.1: bytes=32 time=14ms TTL=128
+
+Switch#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.17de.eedd    DYNAMIC     Fa0/1  ##交换机接口模式 默认动态自动dynamic
+   1    00d0.d3e3.bd19    DYNAMIC     Fa0/2
+
+S1#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.1767.3b04    DYNAMIC     Fa0/4   ##交换机接口模式 默认动态自动dynamic
+   1    0060.2f25.0926    DYNAMIC     Fa0/1
+   1    0060.474c.d4e1    DYNAMIC     Fa0/2
+   1    0090.2127.5d34    DYNAMIC     Fa0/3
+
+S0#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.17de.eedd    DYNAMIC     Fa0/1
+   1    000a.f368.595b    DYNAMIC     Fa0/3
+   1    0060.5cb5.7404    DYNAMIC     Fa0/4
+   1    00d0.d3e3.bd19    DYNAMIC     Fa0/2
+S1#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    000d.bd80.9512    DYNAMIC     Fa0/1
+   1    0060.5cb5.7405    DYNAMIC     Fa0/3
+   1    00e0.a314.e11b    DYNAMIC     Fa0/2
+
+S1#show mac-address-table 
+          Mac Address Table
+-------------------------------------------
+
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+
+   1    0002.170b.3b71    DYNAMIC     Fa0/5   ##交换机接口模式 默认动态自动dynamic
+   1    0002.1767.3b04    DYNAMIC     Fa0/4
+   1    0002.17de.eedd    DYNAMIC     Fa0/4
+   1    000a.f368.595b    DYNAMIC     Fa0/4
+   1    000d.bd80.9512    DYNAMIC     Fa0/5
+   1    0060.2f25.0926    DYNAMIC     Fa0/1
+   1    0060.474c.d4e1    DYNAMIC     Fa0/2
+   1    0090.2127.5d34    DYNAMIC     Fa0/3
+   1    00d0.d3e3.bd19    DYNAMIC     Fa0/4
+
+
+Switch#configure terminal 
+Switch(config)#hostname S0
+S0(config)#interface fastEthernet 0/1
+S0(config-if)#interface range fa0/1-10
+
+S0(config-if-range)#switchport access vlan 10
+S0#show vlan id 10
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+10   VLAN0010                         active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
+                                                Fa0/5, Fa0/6, Fa0/7, Fa0/8
+                                                Fa0/9, Fa0/10
+
+VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+---- ----- ---------- ----- ------ ------ -------- ---- -------- ------ ------
+10   enet  100010     1500  -      -      -        -    -        0      0
+
+S0(config)#interface range  fa 0/1-10
+S0(config-if-range)#no switchport access vlan 10
+
+
+
+
+
+
+S0(config)#vlan 2
+S0(config-vlan)#interface range f0/2-3
+S0(config-if-range)#switchport access vlan 2
+
+S0(config-if-range)#vlan 3
+S0(config-vlan)#interface range f0/1,f0/4
+S0(config-if-range)#switchport access vlan 3
+S0(config-if-range)#end
+S0#show vlan brief
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/5, Fa0/6, Fa0/7, Fa0/8
+                                                Fa0/9, Fa0/10, Fa0/11, Fa0/12
+                                                Fa0/13, Fa0/14, Fa0/15, Fa0/16
+                                                Fa0/17, Fa0/18, Fa0/19, Fa0/20
+                                                Fa0/21, Fa0/22, Fa0/23, Fa0/24
+                                                Gig0/1, Gig0/2
+2    VLAN0002                         active    Fa0/2, Fa0/3
+3    VLAN0003                         active    Fa0/1, Fa0/4
+10   VLAN0010                         active    
+1002 fddi-default                     active   
+
+S0#show vlan  id 2
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/2, Fa0/3
+
+S0#show vlan id 3
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+3    VLAN0003                         active    Fa0/1, Fa0/4
+
+===========================================
+
+[root@hiys ~]# cat  -n /etc/ethertypes  |sed  -n  '13p;28p'
+    13	ARP		0806	ether-arp	#
+    28	802_1Q		8100	8021q 1q 802.1q	dot1q # 802.1Q Virtual LAN tagged frame
+
+电气和电子工程师协会
+( IEEE，全称是Institute of Electrical and Electronics Engineers)
+以太网 上 实现 中继可用的 2 种 封装类型
+ ISL （Cisco 私有协议）
+IEEE  802.1q  协议  【CRC 4字节】
+
+====   MAC 地址【也叫 物理地址，或者 硬件地址 】 由 12 位 16进制数 组成   ==============
+
+== [2] 数据链路层 (交换机)  frame  数据帧 【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】 ==
+
+Destination Address  Source Address                          循环冗余校验 【Cyclic Redundancy Check 】
+    DA                    SA               Type         Data               CRC
+  目的地址                      源地址               类型/长度         数据                桢校验序列
+6Byte[48bit]          6Byte【本机地址】  2Byte【16bit】 46~1500Byte       4Byte【32bit】
+
+Mac 地址第 8 位（bit）= 0时，
+即 第 2 位 16进制数 是 0，2，4，6，8，A，C，E 时，
+表示该Mac地址为 “ 单 播 ”地址【物理地址】；
+
+Mac 地址 第 8 位(bit) = 1 时
+即 第 2 位 16进制数 是  1，3，5，7，9，B，D，F 时，
+表示该Mac地址为 “ 组 播 ” 地址【逻辑地址】；
+
+Mac 地址 48 位都是 1 ，表示 广播地址；
+
+一块物理网卡的地址一定是 单播地址【物理地址】【即 第 8 bit = 0 】
+===================================
+
+S0(config)#interface fastEthernet 0/1
+S0(config-if)#no switchport access vlan 3
+
+S0(config-if)#interface fastEthernet 0/5
+S0(config-if)#switchport access vlan 3
+S0#show vlan id 3
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+3    VLAN0003                         active    Fa0/4, Fa0/5
+
+VLAN Type  SAID       MTU   Parent RingNo BridgeNo Stp  BrdgMode Trans1 Trans2
+
+S0#show vlan id 2
+
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/2, Fa0/3
+
+S0(config)#interface fastEthernet 0/1
+S0(config-if)#switchport mode trunk
+
+S0#show interface fastEthernet 0/1 switchport  ## 查看交换机接口模式
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1(config)#interface fastEthernet 0/1 
+S1(config-if)#switchport mode trunk
+
+S1#show interface fastEthernet 0/1 switchport
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1(config)#interface fastEthernet 0/2
+S1(config-if)#switchport mode trunk
+
+S1#show interface fastEthernet 0/2 switchport 
+Name: Fa0/2
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S2(config)#interface fastEthernet 0/1
+S2(config-if)#switchport mode trunk  ## 把接口模式改为 中继链路
+S2#show interface fastEthernet 0/1 switchport 
+Name: Fa0/1
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1(config)#vlan 3
+S1(config-vlan)#interface range fastEthernet 0/5-6
+S1(config-if-range)#switchport access vlan 3
+S1#show vlan id 3
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+3    VLAN0003                         active    Fa0/5, Fa0/6
+
+S2(config)#vlan 2
+S2(config-vlan)#interface fastEthernet 0/5 
+S2(config-if)#switchport access vlan 2
+S2#show vlan id 2
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/5
+
+S1(config)#interface fastEthernet 0/7
+S1(config-if)#vlan 2
+S1(config-if)#switchport access vlan 2
+
+S1#show vlan id 2
+VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+2    VLAN0002                         active    Fa0/7
+
+
+S0(config)#interface range fastEthernet 0/1,f0/6
+
+S0(config-if-range)#channel-group 1 mode on
+
+S0(config-if-range)#interface Port-channel 1
+
+S0(config-if)#switchport mode trunk
+
+S1(config)#interface range fastEthernet 0/1,fa 0/8
+S1(config-if-range)#channel-group 1 mode on
+
+S1(config-if-range)#interface Port-channel 1
+S1(config-if-range)#switchport mode trunk
+
+路由器原理及静态路由
+1、路由
+跨越从源主机到目标主机的一个互联网络来转发数据包的过程
+2、路由表
+路由器根据路由表做路径选择
+3、路由表的获得
+1）、直连路由：配置IP地址，端口UP状态，形成直连路由。
+2）、非直连网段：需要静态路由或动态路由，将网段添加到路由表中。
+4、静态路由
+1）、特点：
+由管理员手工配置的，是单向的，因此需要在两个网络之间的边缘路由器上需要双方对指，否则就会造成流量有去无回，缺乏灵活性，适用于小型网络。
+2)、配置
+全局模式：
+ip  route  目标网络ID  子网掩码  下一跳IP
+
+缺省路由（默认路由）
+缺省路由是一种特殊的静态路由
+简单地说,缺省路由就是在没有找到任何匹配的具体路由条目的情况下才使用的路由，适用于只有一个出口的末节网络（比如企业的网关出口）
+全局:ip  route  0.0.0.0  0.0.0.0  下一跳
+
+查看路由表
+特权：show  ip  route
+C直连路由
+S静态路由
+S*默认路由
+
+============================================
+一个交换机虚拟接口
+（Switch Virtual Interface，SVI）
+代表一个由交换端口构成的VLAN（其实就是通常所说的VLAN接口），
+以便于实现系统中路由和桥接的功能。
+一个交换机虚拟接口对应一个VLAN，
+当需要  路由 虚拟局域网之间的 流量 或 桥接 VLAN之间 不可路由的 协议，
+ 以及 提供IP主机 到 交换机 的连接 的时候，
+ 就需要为 相应的虚拟局域网 配置 相应的 交换机虚拟接口，
+ 其实 SVI 就是指通常所说的VLAN接口，
+ 只不过它是虚拟的，
+  用于连接整个VLAN，
+ 所以通常也把这种接口称为逻辑三层接口，也是三层接口。
+
+  SVI 接口 是 当在 interface vlan 全局配置命令 后面 键入 具体的VLAN ID时创建的。
+  可以用no interface vlan vlan_id全局配置命令来删除对应的SVI接口，
+ 只是不能删除VLAN 1的SVI接口（VLAN 1），
+因为VLAN 1接口是默认已创建的，用于远程交换机管理。
+
+三层交换技术
+1、作用
+使用三层交换技术实现VLAN间通信 
+三层交换=二层交换+三层转发
+2、虚拟接口（SVI）
+三层交换机上配置的VLAN接口为虚接口
+
+3、三层交换机的配置
+
+1）、在三层交换机启用路由功能 
+
+全局：ip  routing
+
+2）、配置虚拟接口的IP 地址
+全局：interface  vlan  1
+ip  address  192.168.2.254  255.255.255.0 
+no  shutdown 
+3）在三层交换机上配置Trunk并指定接口封装为802.1q
+接口模式：switchport  trunk  encapsulation  dot1q 
+switchport  mode  trunk
+4）、配置路由接口
+进入接口：no  switchport 
+
+======================================================
+动态路由 
+1、动态路由特点 
+根据网络拓扑或流量变化，由路由器通过路由协议自动设置, 减少了管理任务，但占用了网络带宽
+适合ISP服务商、广域网、园区网等大型网络
+===========================================
+OSPF协议
+•Open Shortest Path First ( 开放式最短路径优先）
+•OSPF区域
+•为了适应大型的网络，OSPF在AS内划分多个区域
+•每个OSPF路由器只维护所在区域的完整链路状态信息
+•区域ID
+•区域ID可以表示成一个十进制的数字
+•也可以表示成一个IP
+•骨干区域Area 0
+•负责区域间路由信息传播
+
+
+启动OSPF路由进程
+Router(config)# router ospf process-id
+指定OSPF协议运行的接口和所在的区域
+Router(config-router)# network address inverse-mask area area-id
+
+R3(config)#
+Router(config)#interface gigabitEthernet 0/0
+Router(config-if)#ip address 192.168.4.254 255.255.255.0
+Router(config-if)#no shutdown
+
+Router(config)#interface gigabitEthernet 0/1
+Router(config-if)#ip address 192.168.3.254 255.255.255.0
+Router(config-if)#no shutdown
+Router(config)#hostname R3
+
+R3#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+     D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+Gateway of last resort is not set
+     192.168.3.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.3.0/24 is directly connected, GigabitEthernet0/1
+L       192.168.3.254/32 is directly connected, GigabitEthernet0/1
+     192.168.4.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.4.0/24 is directly connected, GigabitEthernet0/0
+L       192.168.4.254/32 is directly connected, GigabitEthernet0/0
+
+
+R2(config)#interface gigabitEthernet 0/2
+R2(config-if)#ip address 192.168.2.254 255.255.255.0
+
+R2(config-if)#no ip address
+R2(config-if)#ip address 192.168.2.254 255.255.255.0
+R2(config-if)#no shutdown
+
+R2(config-if)#interface gigabitEthernet 0/1
+R2(config-if)#ip address 192.168.5.1 255.255.255.0
+R2(config-if)#no shutdown
+R2#show ip route
+     192.168.2.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.2.0/24 is directly connected, GigabitEthernet0/2
+L       192.168.2.254/32 is directly connected, GigabitEthernet0/2
+     192.168.5.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.5.0/24 is directly connected, GigabitEthernet0/1
+L       192.168.5.1/32 is directly connected, GigabitEthernet0/1
+
+
+R3(config)#interface gigabitEthernet 0/2
+R3(config-if)#ip address 192.168.2.2  255.255.255.0
+R3(config-if)#no shutdown
+R3(config-if)#interface gigabitEthernet 0/2
+R3(config-if)#no ip address
+R3(config-if)#ip address 192.168.5.2  255.255.255.0
+R3(config-if)#no shutdown
+
+R3#show ip route
+     192.168.3.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.3.0/24 is directly connected, GigabitEthernet0/1
+L       192.168.3.254/32 is directly connected, GigabitEthernet0/1
+     192.168.4.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.4.0/24 is directly connected, GigabitEthernet0/0
+L       192.168.4.254/32 is directly connected, GigabitEthernet0/0
+     192.168.5.0/24 is variably subnetted, 2 subnets, 2 masks
+C       192.168.5.0/24 is directly connected, GigabitEthernet0/2
+L       192.168.5.2/32 is directly connected, GigabitEthernet0/2
+
+静态路由
+1）、特点：
+由管理员手工配置的，是单向的，因此需要在两个网络之间的边缘路由器上需要双方对指，否则就会造成流量有去无回，缺乏灵活性，适用于小型网络。
+2)、配置
+全局模式：
+ip  route  目标网络ID  子网掩码  下一跳IP
+
+缺省路由（默认路由）
+缺省路由是一种特殊的静态路由
+简单地说,缺省路由就是在没有找到任何匹配的具体路由条目的情况下才使用的路由，适用于只有一个出口的末节网络（比如企业的网关出口）
+全局:ip  route  0.0.0.0  0.0.0.0  下一跳
+
+R2(config)#ip route 192.168.3.0 255.255.255.0 192.168.5.2
+
+         ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+
+R3(config)#ip route 192.168.2.0 255.255.255.0 192.168.5.1
+
+           ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+
+R2(config)#ip route 192.168.4.0 255.255.255.0 192.168.5.2
+R2(config)#interface gigabitEthernet 0/0
+R2(config-if)#ip address 192.168.6.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config)#ip route 192.168.1.0  255.255.255.0 192.168.6.1
+
+  #删除错误路由配置no ip route 192.168.1.0  255.255.255.0 192.168.6.1
+
+R1(config-if)#ip route 192.168.2.0  255.255.255.0  192.168.6.2
+R1(config)#ip route 192.168.5.0 255.255.255.0 192.168.6.2
+R1(config)#ip route 192.168.3.0  255.255.255.0  192.168.6.2
+R1(config)#ip route 192.168.4.0 255.255.255.0 192.168.6.2
+R1(config)#ip route 0.0.0.0 0.0.0.0 192.168.6.2
+
+           ip route 想要去的地方网段 目标子网掩码  和本路由器已经有关联的下一跳
+
+R3(config)#ip route 192.168.1.0 255.255.255.0 192.168.5.1
+R3(config)#ip route 192.168.6.0 255.255.255.0 192.168.5.1
+
+R1#show running-config
+ip classless
+ip route 192.168.2.0 255.255.255.0 192.168.6.2 
+ip route 192.168.5.0 255.255.255.0 192.168.6.2 
+ip route 192.168.3.0 255.255.255.0 192.168.6.2 
+ip route 192.168.4.0 255.255.255.0 192.168.6.2 
+ip route 0.0.0.0 0.0.0.0 192.168.6.2 
+
+R1(config)#no ip route 192.168.2.0 255.255.255.0 192.168.6.2
+R1(config)#no ip route 192.168.5.0 255.255.255.0 192.168.6.2
+R1(config)#no ip route 192.168.3.0 255.255.255.0 192.168.6.2
+R1(config)#no ip route 192.168.4.0 255.255.255.0 192.168.6.2
+
+Switch(config)#vlan 2
+Switch(config-vlan)#hostname v2
+v2(config)#inter f0/1
+v2(config-if)#switchport access vlan 2
+
+v2(config)#vlan 3
+v2(config-vlan)#hostname v3
+v3(config)#inter f0/2
+v3(config-if)#switchport access vlan 3
+
+v3(config)#vlan 4
+v3(config-vlan)#hostname v4
+v4(config)#inter f0/3
+v4(config-if)#switchport access vlan 4
+
+v4#show running-config 
+
+v4(config)#inter f0/1
+v4(config-if)#in vlan 2
+v4(config-if)#ip address 192.168.1.254 255.255.255.0
+v4(config-if)#no shutdown
+
+v4(config-if)#in vlan 3
+v4(config-if)#ip address 192.168.2.254 255.255.255.0
+v4(config-if)#no shutdown
+
+v4(config-if)#in vlan 4
+v4(config-if)#ip address 192.168.3.254 255.255.255.0
+v4(config-if)#no shutdown
+
+v4#show running-config
+
+interface FastEthernet0/1
+ switchport access vlan 2
+!
+interface FastEthernet0/2
+ switchport access vlan 3
+!
+interface FastEthernet0/3
+ switchport access vlan 4
+
+interface Vlan2
+ ip address 192.168.1.254 255.255.255.0
+!
+interface Vlan3
+ ip address 192.168.2.254 255.255.255.0
+!
+interface Vlan4
+ ip address 192.168.3.254 255.255.255.0
+
+
+v4#show vlan brief
+2    VLAN0002                         active    Fa0/1
+3    VLAN0003                         active    Fa0/2
+4    VLAN0004                         active    Fa0/3
+
+v4(config)#vlan 2
+v4(config-vlan)#name v2
+v4(config-vlan)#hostname S0
+S0(config)#vlan 3
+S0(config-vlan)#name v3
+S0(config-vlan)#vlan 4
+S0(config-vlan)#name v4
+
+Switch>e?
+enable  exit
+Switch#c?
+clear  clock  configure  connect  copy
+S2#w?
+write
+Switch#conf t
+Switch(config)#
+
+Switch(config)#in f0/1
+Switch(config-if)#
+
+Switch(config-if)#^Z  Ctrl + z 相当于 end
+Switch#
+
+Switch>enable
+Switch#exit
+
+Switch#conf t?
+terminal  
+Switch#conf terminal
+
+Switch>e?
+enable  exit
+Switch#conf terminal
+Switch(config)#interface FastEthernet 0/1
+
+S0#show vlan brief
+2    v2                               active    Fa0/1
+3    v3                               active    Fa0/2
+4    v4                               active    Fa0/3
+
+三层交换技术
+1、作用
+使用三层交换技术实现VLAN间通信 
+三层交换=二层交换+三层转发
+2、虚拟接口（SVI）
+三层交换机上配置的VLAN接口为虚接口
+
+3、三层交换机的配置
+
+1）、在三层交换机启用路由功能 
+
+全局：ip  routing
+
+2）、配置虚拟接口的IP 地址
+全局：interface  vlan  1
+ip  address  192.168.2.254  255.255.255.0 
+no  shutdown 
+3）在三层交换机上配置Trunk并指定接口封装为802.1q
+接口模式：switchport  trunk  encapsulation  dot1q 
+switchport  mode  trunk
+4）、配置路由接口
+进入接口：no  switchport 
+
+Switch>e?
+enable  exit
+Switch#conf terminal
+
+S0(config)#ip routing  ## 1）、在三层交换机启用路由功能 
+
+S0(config)#end
+S0#show ip route
+C    192.168.1.0/24 is directly connected, Vlan2
+C    192.168.2.0/24 is directly connected, Vlan3
+C    192.168.3.0/24 is directly connected, Vlan4
+SERVER>ping 192.168.3.254
+SERVER>ping 192.168.2.254
+SERVER>ping 192.168.3.1
+SERVER>ping 192.168.2.1
+SERVER>ping 192.168.1.1
+
+Switch(config)#interface range f0/1-10
+Switch(config-if-range)#switchport access vlan 2
+
+Switch(config-if-range)#interf range f0/11-15
+Switch(config-if-range)#switchport access vlan 3
+
+Switch(config-if-range)#interf range f0/16-22
+Switch(config-if-range)#switchport access vlan 4
+
+S0(config-if)#interface fastEthernet 0/24
+                                      ## 在三层交换机上配置Trunk并指定接口封装为802.1q
+S0(config-if)#switchpor trunk encapsulation dot1q 
+S0(config-if)#switchpor trunk encapsulation dot1q 
+S0(config-if)#switchport mode trunk
+
+S0(config)#interface range fastEthernet 0/23-24
+S0(config-if-range)#channel-group 1 mode on
+
+S0(config-if-range)#interface Port-channel 1
+S0(config-if)#switchport mode trunk
+
+
+Switch(config)#interface range fa 0/23-24
+Switch(config-if-range)#channel-group 1 mode on
+Switch(config-if-range)#interface Port-channel 1
+Switch(config-if)#switchport mode trunk
+ 
+Switch#show interfaces f0/23 switchport
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+Negotiation of Trunking: On
+Access Mode VLAN: 1 (default)
+
+Switch#show etherchannel summary  ## 查看 以太通道的配置
+
+Number of channel-groups in use: 1
+Number of aggregators:           1
+
+Group  Port-channel  Protocol    Ports
+------+-------------+-----------+----------------------------------------------
+
+1      Po1(SU)           -      Fa0/23(P) Fa0/24(P)
+
+
+S0(config)#interface fastEthernet 0/22
+S0(config-if)#no switchport    ######## 配置路由接口
+S0(config-if)#ip address 192.168.4.1 255.255.255.0
+S0(config-if)#no shutdown
+R4(config)#interface gigabitEthernet 0/1
+R4(config-if)#ip address 192.168.4.2 255.255.255.0
+R4(config-if)#no shutdown
+
+R4(config-if)#interface gigabitEthernet 0/2
+R4(config-if)#ip address 192.168.5.254 255.255.255.0
+R4(config-if)#no shutdown
+
+R4(config)#ip route 192.168.1.0 255.255.255.0 192.168.4.1
+R4(config)#ip route 192.168.2.0 255.255.255.0 192.168.4.1
+R4(config)#ip route 192.168.3.0 255.255.255.0 192.168.4.1
+
+S0(config)#ip route 0.0.0.0 0.0.0.0  192.168.4.2
+
+========================
+====================================
+===========================================================
+S0(config)#line console  0
+S0(config-line)#exec-timeout 0  0
+S0(config-line)#logging synchronous
+
+S0(config)#vlan 2
+S0(config-vlan)#interface range fastEthernet 0/1-10
+S0(config-if-range)#switchport access vlan 2
+S0(config-if-range)#exit
+
+S0(config)#vlan 3
+S0(config-vlan)#interface range fastEthernet 0/11-15
+S0(config-if-range)#switchport access vlan 3
+
+S0(config)#vlan 4
+S0(config-vlan)#interface range fastEthernet 0/16-22
+S0(config-if-range)#switchport access vlan 4
+
+S0(config)#interface range fastEthernet 0/23-24
+S0(config-if-range)#channel-group 1 mode on  ## 捆绑多个接口，配置为 以太网通道 Port-channel 1 组号是 “ 1 ”
+Creating a port-channel interface Port-channel 1
+
+S0(config-if-range)#interface Port-channel 1
+S0(config-if)#switchport mode trunk
+
+
+R0(config)#
+Router(config)#line console 0
+Router(config-line)#exec-timeout 0  0
+Router(config-line)#logging synchronous
+Router(config-line)#exit
+Router(config)#hostname R0
+R0(config)#interface gigabitEthernet 0/0
+R0(config-if)#ip address 192.168.4.2 255.255.255.0
+R0(config-if)#no shutdown
+R0(config-if)#interface gigabitEthernet 0/1
+R0(config-if)#ip address 192.168.5.254 255.255.255.0
+R0(config-if)#no shutdown
+
+R0(config)#ip route 192.168.1.0 255.255.255.0 192.168.4.1
+R0(config)#ip route 192.168.2.0 255.255.255.0 192.168.4.1
+R0(config)#ip route 192.168.3.0 255.255.255.0 192.168.4.1
+
+
+三层交换技术
+1、作用
+使用三层交换技术实现VLAN间通信 
+三层交换=二层交换+三层转发
+2、虚拟接口（SVI）
+三层交换机上配置的VLAN接口为虚接口
+3、三层交换机的配置
+1）、在三层交换机启用路由功能 
+全局：ip  routing
+2）、配置虚拟接口的IP 地址
+全局：interface  vlan  1
+ip  address  192.168.2.254  255.255.255.0 
+no  shutdown 
+3）在三层交换机上配置Trunk并指定接口封装为802.1q
+接口模式：switchport  trunk  encapsulation  dot1q 
+switchport  mode  trunk
+4）、配置路由接口
+进入接口：no  switchport 
+
+======================================================
+动态路由 
+1、动态路由特点 
+根据网络拓扑或流量变化，由路由器通过路由协议自动设置, 减少了管理任务，但占用了网络带宽
+适合ISP服务商、广域网、园区网等大型网络
+===========================================
+OSPF协议
+•Open Shortest Path First ( 开放式最短路径优先）
+•OSPF区域
+•为了适应大型的网络，OSPF在AS内划分多个区域
+•每个OSPF路由器只维护所在区域的完整链路状态信息
+•区域ID
+•区域ID可以表示成一个十进制的数字
+•也可以表示成一个IP
+•骨干区域Area 0
+•负责区域间路由信息传播
+
+
+启动OSPF路由进程
+Router(config)# router ospf process-id
+指定OSPF协议运行的接口和所在的区域
+Router(config-router)# network address inverse-mask area area-id
+
+
+####clear ip  ospf process
+    Reset all ospf processes? :yes
+
+SR0(config-if)#no switchport    ## 配置路由接口
+SR0(config-if)#interface fast 0/22
+SR0(config-if)#ip address 192.168.4.1 255.255.255.0
+SR0(config-if)#no shutdown
+SR0(config)#line console 0
+SR0(config-line)#exec-timeout  0  0
+SR0(config-line)#logging synchronous
+SR0(config)#ip route 0.0.0.0 0.0.0.0 192.168.4.2
+
+SR0#show ip route
+C    192.168.4.0/24 is directly connected, FastEthernet0/22
+S*   0.0.0.0/0 [1/0] via 192.168.4.2
+
+3、三层交换机的配置
+1）、在三层交换机启用路由功能 
+全局：ip  routing
+2）、配置虚拟接口的IP 地址
+全局：interface  vlan  1
+ip  address  192.168.2.254  255.255.255.0 
+no  shutdown 
+3）在三层交换机上配置Trunk并指定接口封装为802.1q
+接口模式：switchport  trunk  encapsulation  dot1q 
+switchport  mode  trunk
+4）、配置路由接口
+进入接口：no  switchport 
+
+SR0(config)#ip routing            ## 1）、在三层交换机启用路由功能 
+
+SR0(config)#interface range fastEthernet 0/23-24
+                                         #在三层交换机上配置Trunk并指定接口封装为802.1q
+SR0(config-if-range)#switchport trunk encapsulation  dot1q
+
+                                      ## 捆绑多个接口，配置为 以太网通道 Port-channel 1 组号是 “ 1 ”
+SR0(config-if-range)#channel-group 1 mode on 
+SR0(config-if-range)#
+Creating a port-channel interface Port-channel 1
+
+SR0(config-if-range)#switchport mode trunk
+
+SR0(config-if-range)#interface Port-channel 1
+
+##SR0(config-if)#switchport mode trunk
+
+SR0#show interface fastEthernet 0/23 switchport
+
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SR0#show interface fastEthernet 0/24 switchport
+
+Name: Fa0/24
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SR0(config-if)#vlan 2
+SR0(config-vlan)#vlan 3
+SR0(config-vlan)#vlan 4
+
+SR0(config)#interface vlan 2
+                                     ## 配置虚拟接口的IP 地址
+SR0(config-if)#ip address 192.168.1.254 255.255.255.0
+
+SR0(config-if)#interface vlan 3
+SR0(config-if)#ip address 192.168.2.254 255.255.255.0
+
+SR0(config-if)#interface vlan 4 
+SR0(config-if)#ip address 192.168.3.254 255.255.255.0
+SR0(config-if)#no shutdown
+
+SR0(config)#interface vlan 2
+SR0(config-if)#no shutdown
+SR0(config-if)#interface vlan 3
+SR0(config-if)#no shutdown
+
+SR0(config-if)#ip routing
+
+
+R1(config)#access-list 1 deny  192.168.2.1 0.0.0.0
+R1(config)#interface gigabitEthernet 0/1
+R1(config-if)#ip access-group 1 in
+
+R1(config)#access-list 1 permit any
+
+R1(config)#interface gigabitEthernet 0/1
+R1(config-if)#ip access-group 1 in
+R1(config-if)#access-list 1 deny host 192.168.2.1
+
+R1(config)#no access-list 1
+R1(config)#access-list 1 permit host 192.168.2.1
+
+R1(config)#do show access-list
+Standard IP access list 1
+    10 permit host 192.168.2.1 (6 match(es))
+
+R1#show access-lists 
+Standard IP access list 1
+    10 permit host 192.168.2.1 (6 match(es))
+
+R1(config-if)#ip access-group 1 in
+
+R3(config-if)#do show access-list
+Extended IP access list 100
+    10 deny tcp host 192.168.2.1 host 192.168.2.1 eq ftp
+    20 deny tcp host 192.168.2.1 host 192.168.2.1 eq www
+    30 permit ip any any
+
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.2.1 eq 21
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.2.1 eq 80
+R3(config)#access-list 100 permit ip any  any
+R3(config)#interface gigabitEthernet 0/1
+R3(config-if)#ip access-group 100 in  
+
+ 
+R3(config)#ip access-list extended 100
+
+R3(config-ext-nacl)#no 10
+R3(config-ext-nacl)#no 20
+
+R3(config-ext-nacl)#do show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+
+R3(config-ext-nacl)#exit
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 21
+R3(config)#do show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+    40 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 80
+R3(config)#exit
+
+R3#show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+    40 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+    50 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+
+R3(config-if)#ip access-group 100 in  
+
+R3(config)#no access-list 100
+R3(config)#do show access-list
+
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 80
+R3(config)#do show access-list
+Extended IP access list 100
+    10 deny tcp host 192.168.2.1 host 192.168.2.1 eq www
+    20 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+R3(config)#ip access-list extended 100
+R3(config-ext-nacl)#no 10
+
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.1.1 eq 21
+R3(config)#do show access-list
+Extended IP access list 100
+    20 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+    30 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+	
+R3(config)#access-list 100 permit ip any any
+R3#show access-list
+Extended IP access list 100
+    20 deny tcp host 192.168.2.1 host 192.168.1.1 eq www
+    30 deny tcp host 192.168.2.1 host 192.168.1.1 eq ftp
+    40 permit ip any any
+=========================================
+
+R4(config)#ip nat inside source static 192.168.1.1 100.0.0.2
+R4(config)#ip nat inside source static 192.168.1.2 100.0.0.3
+
+R4(config)#inte gigabitEthernet 0/1
+R4(config-if)#ip nat inside
+
+R4(config)#interface gigabitEthernet 0/0
+R4(config-if)#ip nat outside
+
+R4#show running-config 
+ip nat inside source static 192.168.1.1 100.0.0.2 
+ip nat inside source static 192.168.1.2 100.0.0.3 
+
+R4(config)#no ip nat inside source static 192.168.1.1 100.0.0.2 
+R4(config)#ip nat inside source static tcp 192.168.1.1 80 100.0.0.2 80
+
+SERVER>ftp  100.0.0.3
+Trying to connect...100.0.0.3
+Connected to 100.0.0.3
+220- Welcome to PT Ftp server
+Username:quit
+
+SERVER>ftp  100.0.0.2
+Trying to connect...100.0.0.2
+%Error opening ftp://100.0.0.2/ (Timed out)
+
+R4#debug ip nat
+IP NAT debugging is on
+
+SERVER>ping 100.0.0.10
+
+Pinging 100.0.0.10 with 32 bytes of data:
+
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [46]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [90]
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [47]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [91]
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [48]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [92]
+
+R4#
+NAT: s=192.168.1.2->100.0.0.3, d=100.0.0.10 [49]
+
+NAT*: s=100.0.0.10, d=100.0.0.3->192.168.1.2 [93]
+
+R4#undebug ip nat
+IP NAT debugging is off
+
+
+
+
+
+Switch(config)#spanning-tree vlan 1
+Switch(config)#spanning-tree vlan 1 priority 24576
+Switch(config)#hostname S1
+S1(config)#spanning-tree vlan 1 priority 23
+% Bridge Priority must be in increments of 4096.
+% Allowed values are:
+  0     4096  8192  12288 16384 20480 24576 28672
+  32768 36864 40960 45056 49152 53248 57344 61440
+
+
+Switch(config)#spanning-tree vlan 1 priority 28672
+S2(config)#
+
+S3(config)#spanning-tree vlan 1 priority 32768
+
+
+
+
+
+
+

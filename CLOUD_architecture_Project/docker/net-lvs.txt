@@ -18,7 +18,7 @@
                 ICMP【ping这个工具 使用的协议】  IGMP【Internet Group Manage Protocol ： Internet组管理协议，提供internet网际多点 传送的功能,即将一个ip包拷贝给多个host，是一个尚处于实验阶段的协议】    IP   ARP【地址解析协议 Address Resolution Protocol】   RARP【Reverse Address Resolution Protocol 反向地址转换协议，允许局域网的物理机 从网关服务器的 ARP 表 或者缓存上 请求转换 其 IP 地址】
                 IP头部   TCP头部     上层数据
 2  接口
-          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧 【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧 【数据链路层协议数据单元 以太网桢格式 】【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】
                 MAC头部  IP头部   TCP头部   上层数据
 1  接口   
           [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流  【建立、维护、断开物理连接】
@@ -42,7 +42,11 @@ Mac 地址 48 位都是 1 ，表示 广播地址；
 ====   MAC 地址【也叫 物理地址，或者 硬件地址 】 由 12 位 16进制数 组成   ==============
 
 == [2] 数据链路层 (交换机)  frame  数据帧 【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】 ==
+== [2] 数据链路层 (交换机)  frame  数据帧 【数据链路层协议数据单元 以太网桢格式 】【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】  MAC头部  IP头部   TCP头部   上层数据  ==================
 
+======== 以太网桢格式  =======================
+
+                MAC头部  IP头部   TCP头部   上层数据
 Destination Address  Source Address                          循环冗余校验 【Cyclic Redundancy Check 】
     DA                    SA               Type         Data               CRC
   目的地址                      源地址               类型/长度         数据                桢校验序列
@@ -149,6 +153,10 @@ ARP Address  Resolution  Protocol  地址转换协议，
 [root@hiys ~]# cat  -n /etc/ethertypes  |sed  -n  '13p;28p'
     13	ARP		0806	ether-arp	#
     28	802_1Q		8100	8021q 1q 802.1q	dot1q # 802.1Q Virtual LAN tagged frame
+电气和电子工程师协会
+( IEEE，全称是Institute of Electrical and Electronics Engineers)
+以太网 上 实现 中继可用的 2 种 封装类型 ISL （Cisco 私有协议）
+IEEE  802.1q  协议
 
 [root@hiys ~]# arp  -n
 Address                  HWtype  HWaddress           Flags Mask            Iface
