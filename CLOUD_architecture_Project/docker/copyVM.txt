@@ -1,0 +1,403 @@
+
+[root@hiys ~]# cat  local.repo.txt 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.0.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+
+
+[root@hiys ~]# cat  /etc/libvirt/qemu/VM.xml.txt 
+<domain type='kvm'>
+  <name>VM</name>
+  <memory unit='GB'>4</memory>
+  <currentMemory unit='GB'>2</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough'>
+  </cpu>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/VM.img'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/disk-VM.img'/>
+      <target dev='vdb' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='vbr1'/>
+      <model type='virtio'/>
+    </interface>
+    <interface type='bridge'>
+      <source bridge='private2'/>
+      <model type='virtio'/>
+    </interface>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+    </channel>
+    <serial type='pty'></serial>
+    <console type='pty'>
+      <target type='serial'/>
+    </console>
+    <memballoon model='virtio'></memballoon>
+  </devices>
+</domain>
+[root@hiys ~]# 
+
+=========================## 自动 克隆指定x 【虚拟机编号x】 的虚拟机 ========================
+
+[root@hiys ~]# vim   copyVM.sh
+
+[root@hiys ~]# cat  copyVM.sh  ## 自动 克隆指定x 【虚拟机编号x】 的虚拟机
+#!/bin/bash
+export LANG=en_US.UTF-8
+x=$1
+cd  /var/lib/libvirt/images/
+qemu-img   create   -f  qcow2  /var/lib/libvirt/images/disk-Va${x}.img  8G
+qemu-img  create  -b  /var/lib/libvirt/images/node.qcow2   -f  qcow2   /var/lib/libvirt/images/Va${x}.img  16G
+cd  /etc/libvirt/qemu/
+cp  VM.xml.txt   Va${x}.xml
+sed  -i  "s/VM/Va${x}/"   Va${x}.xml
+
+##sed  "s,VM,Va${x},"  VM.xml.txt  > /etc/libvirt/qemu/Va${x}.xml 
+## 等价于cp  VM.xml.txt   Va${x}.xml;sed  -i  "s/VM/Va${x}/"   Va${x}.xml
+
+cat  Va${x}.xml
+virsh  define   /etc/libvirt/qemu/Va${x}.xml
+virsh  start   Va${x}
+
+/***********
+[root@Va1 ~]# echo  "abbccc123" > cpsed.txt
+[root@Va1 ~]# ls
+cpsed.txt  eip
+[root@Va1 ~]# cat  cpsed.txt
+abbccc123
+[root@Va1 ~]# x=2;sed  "s,bb,sed${x}," cpsed.txt  > cpsed${x}.txt
+[root@Va1 ~]# ls
+cpsed2.txt  cpsed.txt  eip
+[root@Va1 ~]# cat  cpsed2.txt 
+ased2ccc123
+[root@Va1 ~]# cat  cpsed.txt 
+abbccc123
+************/
+----------------------------------------------------------------------------------------------------------
+/***
+[root@Va2 ~]# sed  -i  '2,$d;a export LANG=en_US.UTF-8'  /usr/local/bin/title
+[root@Va2 ~]# echo  $?
+0
+[root@Va2 ~]# cat  /usr/local/bin/title
+#!/bin/bash
+export LANG=en_US.UTF-8
+*****/
+
+===================# 自动配ip 地址eth0 1 2 ========================
+
+[root@hiys ~]# vim  Vaxip.sh  ## 自动配ip 地址eth0 1 2
+[root@hiys ~]# cat  Vaxip.sh   ##  ## 注意这里要加 位置变量 x=$1 ，否则 Va 没有数字【Va${x}】
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va{x} > /etc/hostname
+/usr/bin/growpart   /dev/vda  1     ## 给/dev/vda的第1个分区扩容
+/usr/sbin/xfs_growfs   /            # 文件系统扩容[ 第一次开机自动扩容 ]
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+source   /etc/rc.local
+
+sed  -i  '2,$d;a export LANG=en_US.UTF-8'  /usr/local/bin/title
+source  /usr/local/bin/title
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall  postfix
+
+systemctl   restart  network
+[root@hiys ~]# 
+
+
+[root@hiys ~]# scp  -o  StrictHostKeyChecking=no  Vaxip.sh  root@192.168.0.198:/root/
+root@192.168.0.198's password: 1
+Vaxip.sh                                      100% 1324   984.0KB/s   00:00    
+[root@hiys ~]# scp  -o  StrictHostKeyChecking=no  Vaxip.sh  root@192.168.0.118:/root/
+root@192.168.0.118's password:1
+
+
+[root@Va1 ~]# vim  Vaxip.sh
+[root@Va1 ~]# .  Vaxip.sh  1  11
+
+
+[root@Va2 ~]# ls
+eip  Vaxip.sh
+[root@Va2 ~]# . Vaxip.sh  2   12
+
+
+[root@Va3 ~]# .  Vaxip.sh  3   13
+
+## scp  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+
+ ~]#  yum  clean all >/dev/null && yum  repolist  |tail -5
+
+[root@hiys ~]# ssh  -X  192.168.0.11
+Warning: Permanently added '192.168.0.11' (ECDSA) to the list of known hosts.
+root@192.168.0.11's password: 1
+
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+[root@Va1 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.11 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.11 
+
+[root@Va1 ~]# cat  /etc/resolv.conf 
+; generated by /usr/sbin/dhclient-script
+search vbr
+nameserver 192.168.0.254
+
+[root@Va1 ~]# scp  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+root@192.168.0.254's password: 
+local.repo.txt                                                              100%  257   472.0KB/s   00:00    
+[root@Va1 ~]# ls  /etc/yum.repos.d/
+local.repo
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.0.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+[root@Va1 ~]#  yum  clean all >/dev/null && yum  repolist  |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+[root@Va1 ~]# 
+
+[root@hiys ~]# . copyVM.sh  ## 注意这里要加 位置变量 ，否则 Va 没有数字【Va${x}】
+
+[root@hiys qemu]# virsh  shutdown  Va
+Domain Va is being shutdown
+
+[root@hiys qemu]# virsh  undefine  Va
+
+[root@hiys ~]# .  copyVM.sh  4    ## 注意这里要加 数字【Va${x}】
+
+[root@hiys ~]# cat  copyVM.sh 
+#!/bin/bash
+export LANG=en_US.UTF-8
+x=$1
+cd  /var/lib/libvirt/images/
+qemu-img   create   -f  qcow2  /var/lib/libvirt/images/disk-Va${x}.img  8G
+qemu-img  create  -b  /var/lib/libvirt/images/node.qcow2   -f  qcow2   /var/lib/libvirt/images/Va${x}.img  16G
+cd  /etc/libvirt/qemu/
+cp  VM.xml.txt   Va${x}.xml
+sed  -i  "s/VM/Va${x}/"   Va${x}.xml
+cat  Va${x}.xml
+virsh  define   /etc/libvirt/qemu/Va${x}.xml
+virsh  start   Va${x}
+[root@hiys ~]# 
+
+[root@hiys ~]# virsh  console  Va4
+Connected to domain Va4
+Escape character is ^]
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+Password: a
+Last login: Wed May 30 20:18:45 on ttyS0
+[root@localhost ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.112  netmask 255.255.255.0  broadcast 192.168.0.255
+..............................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+........................
+
+##  scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+
+[root@localhost ~]# scp  -o  StrictHostKeyChecking=no   \
+> root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+root@192.168.0.254's password: 1
+
+[root@localhost ~]# yum  clean  all >/dev/null  && yum repolist  |tail  -5
+...................
+
+## yum  clean  all >/dev/null  && yum repolist
+ scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:/root/Vaxip.sh   /root/
+
+[root@localhost ~]# scp  -o  StrictHostKeyChecking=no   \
+> root@192.168.0.254:/root/Vaxip.sh   /root/
+root@192.168.0.254's password: 
+Vaxip.sh                                      100% 1324   161.4KB/s   00:00    
+[root@localhost ~]# ls
+eip  Vaxip.sh
+[root@localhost ~]# cat  Vaxip.sh 
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  "Va${x}"  > /etc/hostname
+/usr/bin/growpart   /dev/vda  1  
+/usr/sbin/xfs_growfs   / 
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+source   /etc/rc.local
+
+sed  -i  '2,$d;a export LANG=en_US.UTF-8'  /usr/local/bin/title
+source  /usr/local/bin/title
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall  postfix
+
+systemctl   restart  network
+
+[root@localhost ~]# . Vaxip.sh   4   14
+...............
+No Packages marked for removal
+[  725.844548] IPv6: ADDRCONF(NETDEV_UP): lo: link is not ready
+
+[root@localhost ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0   8G  0 disk 
+
+[root@localhost ~]# reboot
+
+[root@hiys ~]# ssh  -X  192.168.0.14
+..........................
+root@192.168.0.14's password: 1
+..........
+[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo 
+..................
+
+
+
+
+
+
+
