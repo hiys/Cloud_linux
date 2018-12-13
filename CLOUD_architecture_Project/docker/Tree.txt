@@ -1,0 +1,126 @@
+
+
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]  组播地址
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
+
+----------------------------------------------------------
+0.0.0.0
+　　严格说来，0.0.0.0已经不是一个真正意义上的IP地址了。
+它表示的是这样一个集合：所有不清楚的主机和目的网络。
+这里的“不清楚”是指在本机的路由表里没有特定条目指明如何到达。
+对本机来说，它就是一个“收容所”，所有不认识的“三无”人员，一律送进去。
+
+255.255.255.255
+　　限制广播地址。
+对本机来说，这个地址指本网段内(同一广播域)的所有主机。
+如果翻译成人类的语言，应该是这样：“这个房间里的所有人都注意了！”
+这个地址不能被路由器转发。
+
+224.0.0.1
+　　组播地址，注意它和广播的区别。
+从224.0.0.0到239.255.255.255都是这样的地址。
+224.0.0.1特指所有主机，
+224.0.0.2特指所有路由器。
+这样的地址多用于一些特定的程序以及多媒体程序。
+如果你的主机开启了IRDP(Internet路由发现协议，使用组播功能)功能，那么你的主机路由表中应该有这样一条路由
+====================================================================
+if [ $a -eq 1 -a $b -eq 1 ]----------# -a 并且      -o 或者  shell语言--------------]
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+----------------------------------------------------------------------------------------------------------------
+
+S1(config)#spanning-tree vlan 1 priority 24576
+S1(config)#spanning-tree vlan 1 root primary
+
+S2(config)#spanning-tree vlan 1 priority 28672
+S2(config)#spanning-tree vlan 1 root secondary
+=================================================
+
+====================================================
+R(config)#interface gigabitEthernet 0/0
+R(config-if)#ip address 192.168.2.1 255.255.255.0
+R(config-if)#no shutdown
+R(config)#interface gigabitEthernet 0/1
+R(config-if)#ip address 192.168.3.1 255.255.255.0
+R(config-if)#no shutdown
+R(config)#interface gigabitEthernet 0/2
+R(config-if)#ip address 192.168.4.1 255.255.255.0
+R(config-if)#no shutdown
+
+R(config)#router ospf 1
+R(config-router)#network 192.168.4.0 0.0.0.255 area 0
+R(config-router)#network 192.168.3.0 0.0.0.255 area 0
+R(config-router)#network 192.168.2.0 0.0.0.255 area 0
+
+
+
+
+
+MS1(config)#interface fastEthernet 0/1
+MS1(config-if)#no switchport
+MS1(config-if)#ip address 192.168.2.2 255.255.255.0
+MS1(config-if)#no shutdown
+
+MS1(config)#interface vlan 1
+MS1(config-if)#ip address 192.168.1.252 255.255.255.0
+MS1(config-if)#no shutdown
+----，在两台三层交换机中开启热备份功能，使用192.168.1.254作为
+   虚拟路由器的地址，并由MS1承担活跃路由器。
+
+MS1(config-if)#standby 1 ip 192.168.1.254
+MS1(config-if)#standby 1 priority 105
+
+MS1(config)#ip routing 
+
+MS1(config)#router ospf 1
+MS1(config-router)#network 192.168.1.0 0.0.0.255 area 0
+MS1(config-router)#network 192.168.2.0 0.0.0.255 area 0
+
+MS1(config)#interface vlan 1
+MS1(config-if)#standby 1 preempt
+
+MS2(config)#interface fastEthernet 0/1
+MS2(config-if)#no switchport
+MS2(config-if)#ip address 192.168.3.2 255.255.255.0
+MS2(config-if)#no shutdown
+
+MS2(config)#interface vlan 1
+MS2(config-if)#ip address 192.168.1.253 255.255.255.0
+MS2(config-if)#no shutdown
+
+MS2(config)#ip routing
+
+MS2(config)#router ospf 1
+
+MS2(config-router)#no network 192.168.1.0  255.255.255.0 area 0
+MS2(config-router)#network 192.168.1.0  0.0.0.255  area 0
+MS2(config-router)#network 192.168.3.0 0.0.0.255 area 0
+
+MS2(config)#interface vlan 1
+MS2(config-if)#standby 1 ip 192.168.1.254
+
+MS2(config-if)#standby 1 priority 95
+
+
+
+
+
+
+
+
+
+
+
+
+
+shutdown /s  关机
+         /r   重启
+
+占先权 preempt

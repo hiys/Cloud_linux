@@ -1,0 +1,338 @@
+Router(config)#line console 0
+Router(config-line)#exec-timeout 0  0
+Router(config-line)#logging synchronous
+Router(config-line)#exit
+Router(config)#hostname R1
+
+R1(config)#interface g 0/0
+R1(config-if)#ip address 192.168.1.254 255.255.255.0
+R1(config-if)#no shutdown
+
+R1(config-if)#interface g0/1
+R1(config-if)#ip addres 192.168.2.1 255.255.255.0
+R1(config-if)#no shutdown
+R1(config-if)#exit
+R1(config)#ip route 192.168.3.0 255.255.255.0 192.168.2.2
+R1(config)#ip route 0.0.0.0 0.0.0.0 192.168.2.2
+R1(config)#no ip route 192.168.3.0 255.255.255.0 192.168.2.2
+
+R2(config)#interface gigabitEthernet 0/1
+R2(config-if)#ip address 192.168.2.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#interface gigabitEthernet 0/0
+R2(config-if)#ip address 192.168.3.254 255.255.255.0 
+R2(config-if)#no shutdown
+R2(config-if)#ip route 192.168.1.0 255.255.255.0 192.168.2.1
+
+R2(config)#interface gigabitEthernet 0/2
+R2(config-if)#ip address 192.168.4.1 255.255.255.0
+R2(config-if)#no shutdown
+R2(config-if)#exit
+R2(config)#ip route 192.168.5.0 255.255.255.0 192.168.4.2
+
+
+R3(config)#interface gigabitEthernet 0/0
+R3(config-if)#ip address 192.168.5.254 255.255.255.0
+R3(config-if)#no shutdown
+
+R3(config-if)#interface g 0/1
+R3(config-if)#ip address 192.168.4.2 255.255.255.0
+R3(config-if)#no shutdown
+R3(config)#ip route 0.0.0.0 0.0.0.0 192.168.4.1
+==========================================================
+
+
+===================三层交换机================================
+R2(config)#interface gigabitEthernet 0/0
+R2(config-if)#ip address 192.168.4.2 255.255.255.0
+R2(config-if)#no shutdown
+R2(config)#interface gigabitEthernet 0/1
+R2(config-if)#ip address 192.168.5.254 255.255.255.0
+R2(config-if)#no shutdown
+R2(config)#ip route 192.168.1.0 255.255.255.0 192.168.4.1
+R2(config)#ip route 192.168.2.0 255.255.255.0 192.168.4.1
+R2(config)#ip route 192.168.3.0 255.255.255.0 192.168.4.1
+
+R2#show ip route
+
+S    192.168.1.0/24 [1/0] via 192.168.4.1
+S    192.168.2.0/24 [1/0] via 192.168.4.1
+S    192.168.3.0/24 [1/0] via 192.168.4.1
+
+S1(config)#interface range fastEthernet 0/11-15
+S1(config-if-range)#switchport access vlan 2
+% Access VLAN does not exist. Creating vlan 2
+
+S1(config)#interface range fastEthernet 0/16-22
+S1(config-if-range)#switchport access vlan 3
+% Access VLAN does not exist. Creating vlan 3
+
+S1(config)#interface range fastEthernet 0/23-24
+S1(config-if-range)#channel-group 1 mode on
+
+S1(config)#interface Port-channel 1
+
+S1(config-if)#switchport mode trunk
+
+S1#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Administrative Mode: trunk
+Operational Mode: trunk
+
+S1#show interfaces fastEthernet 0/24 switchport 
+Name: Fa0/24
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+
+三层交换技术
+1、作用
+使用三层交换技术实现VLAN间通信 
+三层交换=二层交换+三层转发
+2、虚拟接口（SVI）
+三层交换机上配置的VLAN接口为虚接口
+3、三层交换机的配置
+1）、在三层交换机启用路由功能 
+全局：ip  routing
+2）、配置虚拟接口的IP 地址
+全局：interface  vlan  1
+ip  address  192.168.2.254  255.255.255.0 
+no  shutdown 
+3）在三层交换机上配置Trunk并指定接口封装为802.1q
+接口模式：switchport  trunk  encapsulation  dot1q 
+switchport  mode  trunk
+4）、配置路由接口
+进入接口：no  switchport 
+
+======================================================
+动态路由 
+1、动态路由特点 
+根据网络拓扑或流量变化，由路由器通过路由协议自动设置, 减少了管理任务，但占用了网络带宽
+适合ISP服务商、广域网、园区网等大型网络
+===========================================
+OSPF协议
+•Open Shortest Path First ( 开放式最短路径优先）
+•OSPF区域
+•为了适应大型的网络，OSPF在AS内划分多个区域
+•每个OSPF路由器只维护所在区域的完整链路状态信息
+•区域ID
+•区域ID可以表示成一个十进制的数字
+•也可以表示成一个IP
+•骨干区域Area 0
+•负责区域间路由信息传播
+
+
+
+SR(config)#vlan 2
+SR(config-vlan)#name v2
+SR(config-vlan)#exit
+SR(config)#vlan 3
+SR(config-vlan)#name v3
+
+SR#show vlan brief
+
+VLAN Name                          Status    Ports
+---- ----------------------------- -------------------------------
+1    default                       active    Fa0/1, Fa0/2, Fa0/3, Fa0/4
+2    v2                               active    
+3    v3                               active  
+SR(config)#interface vlan 1
+SR(config-if)#ip address 192.168.1.254 255.255.255.0
+SR(config-if)#no shutdown
+
+SR(config)#interface vlan 2
+SR(config-if)#ip address 192.168.2.254 255.255.255.0
+SR(config-if)#no shutdown
+
+SR(config)#interface vlan 3
+SR(config-if)#ip address 192.168.3.254 255.255.255.0
+SR(config-if)#no shutdown
+
+SR(config)#ip routing  #开启路由功能
+
+SR#show ip route
+
+C    192.168.1.0/24 is directly connected, Vlan1
+C    192.168.2.0/24 is directly connected, Vlan2
+C    192.168.3.0/24 is directly connected, Vlan3
+
+SR(config)#interface range fastEthernet 0/23-24
+SR(config-if-range)#channel-group 1 mode on 
+
+Creating a port-channel interface Port-channel 1
+
+SR(config-if-range)#exit
+SR(config)#interface Port-channel 1   #三层交换机配置
+SR(config-if)#switchport trunk encapsulation dot1q 
+SR(config-if)#switchport mode trunk
+
+SR#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SR#show interfaces fastEthernet 0/24 switchport 
+Name: Fa0/24
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+SR(config)#interface fastEthernet 0/22
+
+SR(config-if)#no switchport 
+
+SR(config-if)#ip address 192.168.4.1 255.255.255.0
+SR(config-if)#no shutdown
+SR(config-if)#exit
+
+SR(config)#ip route 0.0.0.0 0.0.0.0 192.168.4.2
+
+SR#show ip route 
+C    192.168.1.0/24 is directly connected, Vlan1
+C    192.168.2.0/24 is directly connected, Vlan2
+C    192.168.3.0/24 is directly connected, Vlan3
+C    192.168.4.0/24 is directly connected, FastEthernet0/22
+S*   0.0.0.0/0 [1/0] via 192.168.4.2
+=======================================
+===========================================
+===================动态============================
+SS1(config)#interface range fastEthernet 0/11-15 
+SS1(config-if-range)#switchport access vlan 2
+% Access VLAN does not exist. Creating vlan 2
+
+SS1(config-if-range)#interface range fastEthernet 0/16-22
+SS1(config-if-range)#switchport access vlan 3
+% Access VLAN does not exist. Creating vlan 3
+
+SS1(config-if-range)#interface range fastEthernet 0/23-24
+SS1(config-if-range)#channel-group 1 mode on
+SS1(config-if-range)#
+Creating a port-channel interface Port-channel 1
+
+SS1(config)#interface Port-channel  1
+SS1(config-if)#switchport mode trunk
+
+SS1#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SS1#show interfaces fastEthernet 0/24 switchport 
+Administrative Mode: trunk
+Operational Mode: trunk
+Administrative Trunking Encapsulation: dot1q
+Operational Trunking Encapsulation: dot1q
+
+SRSR(config)#vlan 2
+SRSR(config-vlan)#name v2
+SRSR(config-vlan)#vlan 3
+SRSR(config-vlan)#name v3
+
+SRSR#show vlan brief
+1    default                          active    Fa0/1, Fa0/2,
+2    v2                               active    
+3    v3                               active  
+
+SRSR(config)#interface vlan 1
+SRSR(config-if)#ip address 192.168.1.254 255.255.255.0
+SRSR(config-if)#no shutdown
+
+SRSR(config-if)#exit
+SRSR(config)#interface vlan 2
+SRSR(config-if)#ip address 192.168.2.254 255.255.255.0
+SRSR(config-if)#no shutdown
+
+SRSR(config)#interface vlan 3
+SRSR(config-if)#ip address 192.168.3.254 255.255.255.0
+SRSR(config-if)#no shutdown
+SRSR(config-if)#exit
+SRSR(config)#ip routing
+
+SRSR#show ip route
+
+C    192.168.1.0/24 is directly connected, Vlan1
+C    192.168.2.0/24 is directly connected, Vlan2
+C    192.168.3.0/24 is directly connected, Vlan3
+
+
+SRSR(config)#interface range fastEthernet 0/23-24
+SRSR(config-if-range)#channel-group 1 mode on
+SRSR(config-if-range)#
+Creating a port-channel interface Port-channel 1
+
+SRSR(config)#interface Port-channel 1
+
+SRSR(config-if)#switchport trunk encapsulation dot1q
+SRSR(config-if)#switchport mode trunk
+
+SRSR#show interfaces fastEthernet 0/23 switchport 
+Name: Fa0/23
+Switchport: Enabled
+Administrative Mode: trunk
+Operational Mode: trunk
+
+SRSR(config)#interface fastEthernet 0/22
+SRSR(config-if)#no switchport 
+SRSR(config-if)#ip address 192.168.4.1 255.255.255.0
+SRSR(config-if)#no shutdown
+
+RR2(config)#interface gigabitEthernet 0/0
+RR2(config-if)#ip address 192.168.4.2 255.255.255.0
+RR2(config-if)#no shutdown
+
+RR2(config)#interface gigabitEthernet 0/1
+RR2(config-if)#ip address 192.168.5.254 255.255.255.0
+RR2(config-if)#no shutdown
+RR2(config)#router ospf 1
+RR2(config-router)#network 192.168.4.0 0.0.0.255 area 0
+RR2(config-router)#network 192.168.5.0 0.0.0.255 area 0
+
+SRSR(config)#router ospf 1
+SRSR(config-router)#network 192.168.1.0 0.0.0.255 area 0
+SRSR(config-router)#network 192.168.2.0 0.0.0.255 area 0
+SRSR(config-router)#network 192.168.3.0 0.0.0.255 area 0
+SRSR(config-router)#network 192.168.4.0 0.0.0.255 area 0
+
+
+
+
+===================================================================
+Switch(config)#no spanning-tree vlan 1
+S1#show spanning-tree vlan 2
+VLAN0002
+  Spanning tree enabled protocol ieee
+  Root ID    Priority    32770
+             Address     00D0.9721.B143
+             This bridge is the root
+             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
+
+  Bridge ID  Priority    32770  (priority 32768 sys-id-ext 2)
+             Address     00D0.9721.B143
+             Hello Time  2 sec  Max Age 20 sec  Forward Delay 15 sec
+             Aging Time  20
+
+Interface        Role Sts Cost      Prio.Nbr Type
+---------------- ---- --- --------- -------- --------------------------------
+Fa0/1            Desg FWD 19        128.1    P2p
+Fa0/2            Desg FWD 19        128.2    P2p
+
+
+
+
+MS2(config)#spanning-tree vlan 1  root secondary 
+MS2(config)#spanning-tree vlan 2 root primary 
+
+MS1(config)#spanning-tree vlan 2 root secondary 
+MS1(config)#spanning-tree vlan 1 root primary 
+
+VRRPG公共协议
+思科私有协议HSRP
+
+
