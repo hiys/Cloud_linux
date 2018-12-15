@@ -1,0 +1,1054 @@
+
+[root@hiys ~]# echo 5  |clone-auto7
+
+[root@hiys ~]# ls  /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz     repo  rhel7.repo
+
+[root@hiys ~]# cat  /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://127.0.0.1/rhel7
+enabled=1
+gpgcheck=0
+[root@hiys ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -3
+
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@hiys ~]# tail  -3  /etc/fstab 
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /                       ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults        1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+
+
+==================  创建  虚拟网络  vbr   vbr1  private2  [ 10 ] ===========================
+
+[root@room9pc25 ~]# virsh  net-dumpxml  private2
+<network>
+  <name>private2</name>
+  <uuid>dca824f3-cdfc-4fcd-9b98-f8a46656c27d</uuid>
+  <bridge name='private2' stp='on' delay='0'/>
+  <mac address='52:54:00:f8:f9:d7'/>
+  <domain name='private2'/>
+  <ip address='192.168.2.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@room9pc25 ~]# 
+
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# cd  /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr.xml
+
+<network>
+  <name>vbr</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# cp  /etc/libvirt/qemu/networks/vbr.xml  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr1.xml
+
+<network>
+  <name>vbr1</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr1.xml  vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr.xml 
+Network vbr defined from vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr1.xml 
+Network vbr1 defined from vbr1.xml
+
+[root@hiys networks]# virsh  net-autostart  vbr
+Network vbr marked as autostarted
+
+[root@hiys networks]# virsh  net-autostart  vbr1
+Network vbr1 marked as autostarted
+
+[root@hiys networks]# virsh  net-start  vbr
+Network vbr started
+
+[root@hiys networks]# virsh  net-start  vbr1
+Network vbr1 started
+
+[root@hiys networks]# ifconfig vbr ;ifconfig vbr1
+
+
+[root@hiys ~]# cat  local.repo.txt
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+ 
+
+[root@hiys ~]# vim   Vaxip.sh
+[root@hiys ~]# cat   Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+
+[root@hiys ~]# tty
+/dev/pts/0
+[root@hiys ~]# virsh console  Va1
+Connected to domain Va1
+Escape character is ^]
+
+Red Hat Enterprise Linux Server 7.4 (Maipo)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+密码： 123456
+Last login: Tue Jan 30 12:29:01 on :0
+
+[root@localhost ~]# ifconfig 
+
+[root@localhost ~]# vim  Vaxip.sh
+
+[root@localhost ~]# cat  Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+[root@localhost ~]# . Vaxip.sh  1  11  ## 主机名 Va1    ip  11
+.............
+Complete!
+[root@localhost ~]# cat  /etc/hostname 
+Va1
+[root@localhost ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            992         124         332           6         535         691
+Swap:             0           0           0
+[root@localhost ~]# shutdown  -h  now
+
+[root@hiys ~]# ssh  -X  192.168.0.11
+...............................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.0.11' (ECDSA) to the list of known hosts.
+root@192.168.0.11's password: 1
+Last login: Sat Dec 15 13:39:59 2018
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@Va1 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+        inet6 fe80::5054:ff:fee5:515e  prefixlen 64  scopeid 0x20<link>
+................................
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::5054:ff:fe30:4651  prefixlen 64  scopeid 0x20<link>
+......................
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.11  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet6 fe80::5054:ff:fe7a:7c0a  prefixlen 64  scopeid 0x20<link>
+.........................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+.............................
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+.....................
+
+[root@Va1 ~]# ip route  show
+
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.11 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.11 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va1 ~]# free  -m  
+              total        used        free      shared  buff/cache   available
+Mem:           2000          96        1768           8         135        1750
+Swap:          2047           0        2047
+
+
+[root@hiys ~]# virsh  console  Va2
+连接到域 Va2
+换码符为 ^]
+
+
+Red Hat Enterprise Linux Server 7.4 (Maipo)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+密码：123456
+Last login: Tue Jan 30 12:29:01 on :0
+[root@localhost ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           2000         114        1727           8         158        1716
+Swap:          2047           0        2047
+[root@localhost ~]# vim   Vaxip.sh
+
+[root@localhost ~]# cat  Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+[root@localhost ~]# ls  /etc/yum.repos.d/
+[root@localhost ~]# . Vaxip.sh   2   12    ## 主机名 Va2    ip  12
+
+Complete!
+[root@localhost ~]# scp  -o  StrictHostKeyChecking=no  \
+ root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+Warning: Permanently added '192.168.0.254' (ECDSA) to the list of known hosts.
+root@192.168.0.254's password: Taren1
+local.repo.txt                                100%   99    78.3KB/s   00:00    
+[root@localhost ~]# ls  /etc/yum.repos.d/
+local.repo	redhat.repo
+[root@localhost ~]# rm  -f  /etc/yum.repos.d/redhat.repo 
+[root@localhost ~]# ls  /etc/yum.repos.d/
+local.repo.txt
+[root@localhost ~]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@localhost ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -3
+repo id                  repo name                                        status
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                   4,986
+repolist: 4,986
+[root@localhost ~]# reboot
+
+[root@hiys ~]# ssh -o  StrictHostKeyChecking=no   -X  192.168.0.12
+............................
+root@192.168.0.12's password: 1
+...............
+[root@Va2 ~]# ip   -o   address
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+2: eth0    inet 192.168.0.12/24 brd 192.168.0.255 scope global eth0\       valid_lft forever preferred_lft forever
+2: eth0    inet6 fe80::5054:ff:fe82:ec5c/64 scope link \       valid_lft forever preferred_lft forever
+3: eth1    inet 192.168.1.12/24 brd 192.168.1.255 scope global eth1\       valid_lft forever preferred_lft forever
+3: eth1    inet6 fe80::5054:ff:fe13:7277/64 scope link \       valid_lft forever preferred_lft forever
+4: eth2    inet 192.168.2.12/24 brd 192.168.2.255 scope global eth2\       valid_lft forever preferred_lft forever
+4: eth2    inet6 fe80::5054:ff:fe58:afb2/64 scope link \       valid_lft forever preferred_lft forever
+5: virbr0    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0\       valid_lft forever preferred_lft forever
+
+[root@Va2 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.12 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.12 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.12 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+[root@Va2 ~]# 
+
+https://www.python.org/
+
+https://www.python.org/downloads/
+
+https://www.python.org/downloads/source/
+---------------------------------------------------
+Python 3.6.2 - 2017-07-17
+Download XZ compressed source tarball
+Download Gzipped source tarball
+
+Python 3.6.2rc2 - 2017-07-07
+Download XZ compressed source tarball
+Download Gzipped source tarball
+
+Python 3.6.2rc1 - 2017-06-17
+Download XZ compressed source tarball
+Download Gzipped source tarball
+
+Python 3.6.1 - 2017-03-21    ## 选择 此版本  Python 3.6.1 - 2017-03-21
+                                    ## 点击此项 下载   Download XZ compressed source tarball
+Download XZ compressed source tarball   ## 下载 16.9Mb
+Download Gzipped source tarball   ## 下载 22.5Mb
+
+Python 3.6.1rc1 - 2017-03-05
+Download XZ compressed source tarball
+Download Gzipped source tarball
+
+Python 3.4.6 - 2017-01-17
+-------------------------------------------------------
+https://www.python.org/downloads/release/python-361/
+
+百度 搜索  pycharm JetBrains
+
+https://www.jetbrains.com/
+
+https://www.jetbrains.com/zh/pycharm/specials/pycharm/pycharm.html?utm_source=baidu&utm_medium=cpc&utm_campaign=cn-bai-br-core-ph-pc&utm_content=core-image&utm_term=%0d%0apycharm%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7
+
+https://www.jetbrains.com/pycharm/download/#section=linux  ## 下载地址
+
+https://www.jetbrains.com/help/pycharm/install-and-set-up-pycharm.html  ## 安装说明网页
+
+[root@Va1 ~]# scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:'/var/hiys-git/Cloud-git/Cloud_linux/CLOUD_architecture_Project/python/Python-3.6.1.tgz'    /root/
+root@192.168.0.254's password: Taren1
+Python-3.6.1.tgz                                         100%   21MB  63.4MB/s   00:00    
+[root@Va1 ~]# ls
+anaconda-ks.cfg       Python-3.6.1.tgz  下载  图片  桌面  视频
+initial-setup-ks.cfg  Vaxip.sh          公共  文档  模板  音乐
+
+[root@Va1 ~]# ll Python-3.6.1.tgz 
+-rw-r--r-- 1 root root 22540566 Dec 15 15:24 Python-3.6.1.tgz
+[root@Va1 ~]# du  -sh  Python-3.6.1.tgz
+22M	Python-3.6.1.tgz
+
+[root@Va1 ~]# mkdir  /python
+[root@Va1 ~]# tar  -zxvf   Python-3.6.1.tgz  -C  /python/
+
+[root@Va1 ~]# yum  install  -y  gcc   gcc-c++   zlib-devel     openssl-devel     readline-devel     libffi-devel    sqlite-devel    tcl-devel   tk-devel
+................
+Complete!
+[root@Va1 ~]# rpm  -q   gcc   gcc-c++   zlib-devel    \
+ openssl-devel     readline-devel     libffi-devel   \
+ sqlite-devel    tcl-devel   tk-devel
+
+gcc-4.8.5-16.el7.x86_64
+gcc-c++-4.8.5-16.el7.x86_64
+zlib-devel-1.2.7-17.el7.x86_64
+
+openssl-devel-1.0.2k-8.el7.x86_64
+readline-devel-6.2-10.el7.x86_64
+libffi-devel-3.0.13-18.el7.x86_64
+
+sqlite-devel-3.7.17-8.el7.x86_64
+tcl-devel-8.5.13-8.el7.x86_64
+tk-devel-8.5.13-6.el7.x86_64
+
+[root@Va1 ~]# cd  /python/
+[root@Va1 python]# ls
+Python-3.6.1
+[root@Va1 python]# ls Python-3.6.1/    # 此时Python-3.6.1文件夹中没有makefile文件
+aclocal.m4    configure.ac  install-sh  Makefile.pre.in  Parser    pyconfig.h.in  Tools
+config.guess  Doc           Lib         Misc             PC        Python
+config.sub    Grammar       LICENSE     Modules          PCbuild   README.rst
+configure     Include       Mac         Objects          Programs  setup.py
+
+[root@Va1 python]# cd  Python-3.6.1/
+
+
+配置安装目录：
+configure是用来进行用户个性配置的工具，
+--prefix是说软件安装目录设置在哪里， 
+=/usr/local就是你给出的安装目录
+
+[root@Va1 Python-3.6.1]# ./configure     --prefix=/usr/local   ###  软件安装目录设置
+
+....................
+creating Modules/Setup
+creating Modules/Setup.local
+creating Makefile
+
+
+If you want a release build with all optimizations active (LTO, PGO, etc),
+please run ./configure --enable-optimizations
+
+
+[root@Va1 Python-3.6.1]# ls     # 此时Python-3.6.1文件夹中生成了 makefile 文件
+aclocal.m4     configure     install-sh  Makefile.pre     Parser      pyconfig.h.in
+config.guess   configure.ac  Lib         Makefile.pre.in  PC          Python
+config.log     Doc           LICENSE     Misc             PCbuild     README.rst
+config.status  Grammar       Mac         Modules          Programs    setup.py
+config.sub     Include       Makefile    Objects          pyconfig.h  Tools
+
+[root@Va1 Python-3.6.1]# make       编译源码
+
+[root@Va1 Python-3.6.1]# make  install   ## 执行安装
+........................
+Collecting setuptools
+Collecting pip
+Installing collected packages: setuptools, pip
+Successfully installed pip-9.0.1 setuptools-28.8.0
+
+[root@Va1 devops]# ls  /usr/local/
+bin  etc  games  include  lib  lib64  libexec  sbin  share  src
+[root@Va1 devops]# ls  /usr/local/bin/
+2to3              idle3    pip3.6    python3           python3.6m         pyvenv
+2to3-3.6          idle3.6  pydoc3    python3.6         python3.6m-config  pyvenv-3.6
+easy_install-3.6  pip3     pydoc3.6  python3.6-config  python3-config
+[root@Va1 devops]# ls  /usr/local/bin/python3.6-config 
+/usr/local/bin/python3.6-config
+[root@Va1 devops]# ll /usr/local/bin/python3.6-config
+lrwxrwxrwx 1 root root 17 12月 15 15:52 /usr/local/bin/python3.6-config -> python3.6m-config
+
+--------------------------------------------------------------------------------------------------------
+
+https://www.jetbrains.com/pycharm/download/#section=linux
+
+Community   <---- 下载并安装Pycharm社区版
+
+Lightweight IDE
+for Python & Scientific
+development
+DOWNLOAD   ## 点击下载
+Free, open-source
+
+https://www.jetbrains.com/pycharm/download/download-thanks.html?platform=linux&code=PCC
+
+[root@Va1 Python-3.6.1]# cd
+
+[root@Va1 ~]# scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:'/var/hiys-git/Cloud-git/Cloud_linux/CLOUD_architecture_Project/python/pycharm-community-2018.3.1.tar.gz'      /root/
+root@192.168.0.254's password: 
+pycharm-community-2018.3.1.tar.gz                               100%  296MB 139.8MB/s   00:02    
+[root@Va1 ~]# ls
+anaconda-ks.cfg       pycharm-community-2018.3.1.tar.gz  Vaxip.sh  公共  文档  模板  音乐
+initial-setup-ks.cfg  Python-3.6.1.tgz                   下载      图片  桌面  视频
+
+[root@Va1 ~]# tar  -xzf   pycharm-community-2018.3.1.tar.gz  ## 释放文件
+
+[root@Va1 ~]# ls
+anaconda-ks.cfg       pycharm-community-2018.3.1         Python-3.6.1.tgz  下载  图片  桌面  视频
+initial-setup-ks.cfg  pycharm-community-2018.3.1.tar.gz  Vaxip.sh          公共  文档  模板  音乐
+
+[root@Va1 ~]# cd  pycharm-community-2018.3.1/
+
+[root@Va1 pycharm-community-2018.3.1]# ls
+bin        help     index                  jre64  license  product-info.json
+build.txt  helpers  Install-Linux-tar.txt  lib    plugins
+
+[root@Va1 pycharm-community-2018.3.1]# cd  /root/pycharm-community-2018.3.1/bin/
+[root@Va1 bin]# ls
+format.sh     fsnotifier-arm   libdbm64.so  pycharm64.vmoptions  pycharm.svg
+fsnotifier    idea.properties  log.xml      pycharm.png          pycharm.vmoptions
+fsnotifier64  inspect.sh       printenv.py  pycharm.sh           restart.py
+
+[root@Va1 bin]# cat  pycharm.sh
+
+#!/bin/sh
+#
+# ---------------------------------------------------------------------
+# PyCharm startup script.
+# ---------------------------------------------------------------------
+#
+
+message()
+{
+  TITLE="Cannot start PyCharm"
+  if [ -n "`which zenity`" ]; then
+    zenity --error --title="$TITLE" --text="$1"
+  elif [ -n "`which kdialog`" ]; then
+    kdialog --error "$1" --title "$TITLE"
+  elif [ -n "`which xmessage`" ]; then
+    xmessage -center "ERROR: $TITLE: $1"
+  elif [ -n "`which notify-send`" ]; then
+    notify-send "ERROR: $TITLE: $1"
+  else
+    printf "ERROR: $TITLE\n$1\n"
+  fi
+}
+
+UNAME=`which uname`
+GREP=`which egrep`
+GREP_OPTIONS=""
+CUT=`which cut`
+READLINK=`which readlink`
+XARGS=`which xargs`
+DIRNAME=`which dirname`
+MKTEMP=`which mktemp`
+RM=`which rm`
+CAT=`which cat`
+SED=`which sed`
+
+if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$SED" ]; then
+  message "Required tools are missing - check beginning of \"$0\" file for details."
+  exit 1
+fi
+
+OS_TYPE=`"$UNAME" -s`
+
+# ---------------------------------------------------------------------
+# Ensure IDE_HOME points to the directory where the IDE is installed.
+# ---------------------------------------------------------------------
+SCRIPT_LOCATION=$0
+if [ -x "$READLINK" ]; then
+  while [ -L "$SCRIPT_LOCATION" ]; do
+    SCRIPT_LOCATION=`"$READLINK" -e "$SCRIPT_LOCATION"`
+  done
+fi
+
+cd "`dirname "$SCRIPT_LOCATION"`"
+IDE_BIN_HOME=`pwd`
+IDE_HOME=`dirname "$IDE_BIN_HOME"`
+cd "$OLDPWD"
+
+# ---------------------------------------------------------------------
+# Locate a JDK installation directory which will be used to run the IDE.
+# Try (in order): PYCHARM_JDK, pycharm.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
+# ---------------------------------------------------------------------
+if [ -n "$PYCHARM_JDK" -a -x "$PYCHARM_JDK/bin/java" ]; then
+  JDK="$PYCHARM_JDK"
+fi
+
+if [ -z "$JDK" -a -s "$HOME/.PyCharmCE2018.3/config/pycharm.jdk" ]; then
+  USER_JRE=`"$CAT" $HOME/.PyCharmCE2018.3/config/pycharm.jdk`
+  if [ ! -d "$USER_JRE" ]; then
+    USER_JRE="$IDE_HOME/$USER_JRE"
+  fi
+  if [ -x "$USER_JRE/bin/java" ]; then
+    JDK="$USER_JRE"
+  fi
+fi
+
+if [ -z "$JDK" -a "$OS_TYPE" = "Linux" ] ; then
+  BUNDLED_JRE="$IDE_HOME/jre64"
+  if [ ! -d "$BUNDLED_JRE" ]; then
+    BUNDLED_JRE="$IDE_HOME/jre"
+  fi
+  if [ -x "$BUNDLED_JRE/bin/java" ] && "$BUNDLED_JRE/bin/java" -version > /dev/null 2>&1 ; then
+    JDK="$BUNDLED_JRE"
+  fi
+fi
+
+if [ -z "$JDK" -a -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+  JDK="$JDK_HOME"
+fi
+
+if [ -z "$JDK" -a  -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
+  JDK="$JAVA_HOME"
+fi
+
+if [ -z "$JDK" ]; then
+  JDK_PATH=`which java`
+
+  if [ -n "$JDK_PATH" ]; then
+    if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
+      JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
+        JDK="$JAVA_LOCATION"
+      fi
+    elif [ "$OS_TYPE" = "SunOS" ]; then
+      JAVA_LOCATION="/usr/jdk/latest"
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
+        JDK="$JAVA_LOCATION"
+      fi
+    elif [ "$OS_TYPE" = "Darwin" ]; then
+      JAVA_LOCATION=`/usr/libexec/java_home`
+      if [ -x "$JAVA_LOCATION/bin/java" ]; then
+        JDK="$JAVA_LOCATION"
+      fi
+    fi
+  fi
+
+  if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
+    JAVA_LOCATION=`"$READLINK" -f "$JDK_PATH"`
+    case "$JAVA_LOCATION" in
+      */jre/bin/java)
+        JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+        if [ ! -d "$JAVA_LOCATION/bin" ]; then
+          JAVA_LOCATION="$JAVA_LOCATION/jre"
+        fi
+        ;;
+      *)
+        JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+        ;;
+    esac
+    if [ -x "$JAVA_LOCATION/bin/java" ]; then
+      JDK="$JAVA_LOCATION"
+    fi
+  fi
+fi
+
+JAVA_BIN="$JDK/bin/java"
+if [ -z "$JDK" -o ! -x "$JAVA_BIN" ]; then
+  message "No JDK found. Please validate either PYCHARM_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
+  exit 1
+fi
+
+VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
+JAVA_TOOL_OPTIONS= "$JAVA_BIN" -version 2> "$VERSION_LOG"
+"$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
+BITS=$?
+"$RM" -f "$VERSION_LOG"
+test ${BITS} -eq 0 && BITS="64" || BITS=""
+
+# ---------------------------------------------------------------------
+# Collect JVM options and IDE properties.
+# ---------------------------------------------------------------------
+if [ -n "$PYCHARM_PROPERTIES" ]; then
+  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$PYCHARM_PROPERTIES"
+fi
+
+VM_OPTIONS_FILE=""
+if [ -n "$PYCHARM_VM_OPTIONS" -a -r "$PYCHARM_VM_OPTIONS" ]; then
+  # explicit
+  VM_OPTIONS_FILE="$PYCHARM_VM_OPTIONS"
+elif [ -r "$IDE_HOME.vmoptions" ]; then
+  # Toolbox
+  VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
+elif [ -r "$HOME/.PyCharmCE2018.3/config/pycharm$BITS.vmoptions" ]; then
+  # user-overridden
+  VM_OPTIONS_FILE="$HOME/.PyCharmCE2018.3/config/pycharm$BITS.vmoptions"
+elif [ -r "$IDE_BIN_HOME/pycharm$BITS.vmoptions" ]; then
+  # default, standard installation
+  VM_OPTIONS_FILE="$IDE_BIN_HOME/pycharm$BITS.vmoptions"
+else
+  # default, universal package
+  test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
+  VM_OPTIONS_FILE="$IDE_BIN_HOME/$OS_SPECIFIC/pycharm$BITS.vmoptions"
+fi
+
+VM_OPTIONS=""
+if [ -r "$VM_OPTIONS_FILE" ]; then
+  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
+  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent" - ; } then
+    if [ "$OS_TYPE" = "Linux" ]; then
+      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|"`
+    else
+      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]*||"`
+    fi
+  fi
+else
+  message "Cannot find VM options file"
+fi
+
+CLASSPATH="$IDE_HOME/lib/bootstrap.jar"
+CLASSPATH="$CLASSPATH:$IDE_HOME/lib/extensions.jar"
+CLASSPATH="$CLASSPATH:$IDE_HOME/lib/util.jar"
+CLASSPATH="$CLASSPATH:$IDE_HOME/lib/jdom.jar"
+CLASSPATH="$CLASSPATH:$IDE_HOME/lib/log4j.jar"
+CLASSPATH="$CLASSPATH:$IDE_HOME/lib/trove4j.jar"
+CLASSPATH="$CLASSPATH:$IDE_HOME/lib/jna.jar"
+if [ -n "$PYCHARM_CLASSPATH" ]; then
+  CLASSPATH="$CLASSPATH:$PYCHARM_CLASSPATH"
+fi
+
+# ---------------------------------------------------------------------
+# Run the IDE.
+# ---------------------------------------------------------------------
+IFS="$(printf '\n\t')"
+"$JAVA_BIN" \
+  -classpath "$CLASSPATH" \
+  ${VM_OPTIONS} \
+  "-XX:ErrorFile=$HOME/java_error_in_PYCHARM_%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in_PYCHARM.hprof" \
+  -Didea.paths.selector=PyCharmCE2018.3 \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  ${IDE_PROPERTIES_PROPERTY} \
+  -Didea.platform.prefix=PyCharmCore \
+  com.intellij.idea.Main \
+  "$@"
+[root@Va1 bin]# . pycharm.sh  &   ## 注意后台运行 & 
+
+Pycharm打开后，如果你需要导入之前安装版本的设置的话，可以选择第一个选项，
+如果没有的话，
+选择(Do not import settings)默认不导入设置，
+点击/同意，
+就可以进入pycharm进行配置
+
+                Complete  Installation (于 Va1)
+ Import PyCharm  settings from:
+ O  Custom location. Config  folder  or installation  home  of the previous  version:
+    ________________________  ___
+ O. Do not import settings   <----点击此项
+                         点击  OK
+
+------------------------------------------------------------------------
+    JetBrains Privacy Policy (于 Va1)
+Please  read  and  accept  these  terms  and  conditions,Scroll down for  full...
+|--| I confirm  that  I have read and  accept  the terms  of this User  Agreement
+打勾 同意
+                      Continue  点击
+
+             Data  Sharing (于 Va1)
+          send  usage  statistics|    | Don't  send 点击
+                 发送使用统计
+---------------------------------------------------------------------------------------
+         Customize PyCharm (于 Va1)
+
+
+Skip Remaining  and Set Defaults <--单击左边选项        Next:Launcher Script
+跳过剩余设置默认值
+----------------------------------------------------------------------
+customize  定制，定做; 按规格改制;
+remaining	剩余的，剩下的; 保持; 剩余，剩下(remain的现在分词); 停留，逗留;
+
+remain 剩余物，残骸; 残余; 遗迹; 遗体;
+	 保持; 依然; 留下; 留待;
+	 搁置; 剩余，剩下; 逗留; 终属，归于
+
+====================
+[root@hiys ~]# ssh  -X  192.168.0.11
+root@192.168.0.11's password: 1
+Last login: Sat Dec 15 13:57:35 2018 from 192.168.0.254
+
+[root@Va1 ~]# ls
+anaconda-ks.cfg       pycharm-community-2018.3.1         Python-3.6.1.tgz  公共  视频  文档  音乐
+initial-setup-ks.cfg  pycharm-community-2018.3.1.tar.gz  Vaxip.sh          模板  图片  下载  桌面
+
+[root@Va1 ~]# ls /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va1 ~]# cat /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va1 ~]# yum  -y  install   git
+
+已安装:
+  git.x86_64 0:1.8.3.1-11.el7                                                                             
+
+作为依赖被安装:
+  perl-Error.noarch 1:0.17020-2.el7                      perl-Git.noarch 0:1.8.3.1-11.el7                 
+  perl-TermReadKey.x86_64 0:2.30-20.el7                 
+
+完毕！
+[root@Va1 ~]# git  --version
+git version 1.8.3.1
+[root@Va1 ~]# git   config   --global user.name   "Mr.hiys"
+
+[root@Va1 ~]# git   config    --global    user.email   hiys@qq.com
+
+[root@Va1 ~]# git   config     --global   core.editor   vim 
+[root@Va1 ~]# git  config  --list
+user.name=Mr.hiys
+user.email=hiys@qq.com
+core.editor=vim
+
+[root@Va1 ~]# cat  ~/.gitconfig 
+[user]
+	name = Mr.hiys
+	email = hiys@qq.com
+[core]
+	editor = vim
+
+/***************
+Git 使用 git init 命令来初始化一个 Git 仓库，
+Git 的很多命令都需要在 Git 的仓库中运行，
+所以git init是使用 Git 的第一个命令。
+添加文件第一步使用git add是将文件添加进暂存区，
+第二步 git commit 提交更改，
+实际上将暂存区的所有内容提交到仓库
+repertory
+仓库，贮藏所;（尤指知识等的）贮藏，搜集;贮藏物;全部剧目
+
+repository
+	仓库; 贮藏室; 博物馆; 亲信;
+************/
+
+[root@Va1 ~]# mkdir  devops
+[root@Va1 ~]# cd   devops/
+
+[root@Va1 devops]# git  init
+初始化空的 Git 版本库于 /root/devops/.git/
+
+[root@Va1 devops]# git init  newRepository
+初始化空的 Git 版本库于 /root/devops/newRepository/.git/
+
+[root@Va1 devops]# ls  -a
+.  ..  .git  newRepository
+
+[root@Va1 devops]# echo  'print("hello  world!")'  > hello.py
+
+[root@Va1 devops]# ls
+hello.py  newRepository
+
+[root@Va1 devops]# git  status
+# 位于分支 master
+#
+# 初始提交
+#
+# 未跟踪的文件:
+#   （使用 "git add <file>..." 以包含要提交的内容）
+#
+#	hello.py
+提交为空，但是存在尚未跟踪的文件（使用 "git add" 建立跟踪）
+
+[root@Va1 devops]# git  add  hello.py   ##   #将文件添加到暂存区
+[root@Va1 devops]# git  status     #查看状态
+# 位于分支 master
+#
+# 初始提交
+#
+# 要提交的变更：
+#   （使用 "git rm --cached <file>..." 撤出暂存区）
+#
+#	新文件：    hello.py
+#
+[root@Va1 devops]# git  commit  -m  "初始化仓库"     # 把暂存区所有内容提交到分支
+
+[master（根提交） fc36ec9] 初始化仓库
+ 1 file changed, 1 insertion(+)
+ create mode 100644 hello.py
+
+[root@Va1 devops]# git  status
+# 位于分支 master
+无文件要提交，干净的工作区
+[root@Va1 devops]# ls
+hello.py  newRepository
+
+[root@Va1 devops]# echo 'print("done.")' >> hello.py  ## 修改hello.py并将其更新到仓库
+[root@Va1 devops]# cat  hello.py
+print("hello  world!")
+print("done.")
+[root@Va1 devops]# git  commit  -am  "向hello.py添加新行"
+
+[master 38d09bd] 向hello.py添加新行
+ 1 file changed, 1 insertion(+)
+
+[root@Va1 devops]# git  ls-files   # 查看版本库中文件
+hello.py
+[root@Va1 devops]# echo  'print("hello  world haha !")'  > haha.py
+[root@Va1 devops]# git  add  haha.py           #将文件添加到暂存区
+[root@Va1 devops]# git  commit  -m  "haha"    # 把暂存区所有内容提交到分支
+[master d4626dc] haha
+ 1 file changed, 1 insertion(+)
+ create mode 100644 haha.py
+[root@Va1 devops]# git  status
+# 位于分支 master
+无文件要提交，干净的工作区
+
+[root@Va1 devops]# git  ls-files   # 查看版本库中文件
+haha.py
+hello.py
+[root@Va1 devops]# ls
+haha.py  hello.py  newRepository
+[root@Va1 devops]# cp  haha.py   xixi.py
+[root@Va1 devops]# git  add  .
+[root@Va1 devops]# git  status  -s
+A  xixi.py        ##  A 表示 增加  D  表示删除
+
+[root@Va1 devops]# git  commit  -m  'xxixixi'    ## 把暂存区所有内容 真正 提交 到 版本库中
+[master aa8a417] xxixixi
+ 1 file changed, 1 insertion(+)
+ create mode 100644 xixi.py
+[root@Va1 devops]# git  ls-files
+haha.py
+hello.py
+xixi.py
+
+
+==================================
+Welcom  to PyCharm  2018.3.1
+Get familiar  with  the main features  of  the IDE by  reading  these tips.
+通过阅读这些技巧来熟悉IDE 【IDE集成电路设备，智能磁盘设备; 圆腹雅罗鱼】的主要特性
+
+Try  out  the  features described  in  the tips  while  this  dialog  stays  open on the screen.
+尝试在提示中描述的特性    当对话框在屏幕上保持打开状态
+If  you  close  the dialog, you can always  get  back to it using  Help | Tip  of the  Day on the menu  bar.
+如果关闭对话框， 你总是可以 在菜单栏上使用 帮助 | “每日提示”返回它。 
+
+show tips on startup        next tip	
+启动启动技巧                      网络  下一提示;
+
+选择 Create   New  Project
+File  --> Settings ---> Editor -->Font --> Size  改成 18    点击  OK
+File  --> Settings ---> Project:untitled   --> Project Interpreter -->
+点击 齿轮图标 ---Add )Python Interpreter (于 Va1)
+点击 Virtualenv Environment 虚拟环境
+点击  Existing  environment
+                                            点击 图标 ... 
+  选择 /usr/local/bin/python3.6
+                                       点击  OK
+
+
+
+
+
+
+[root@Va1 devops]# ls  /usr/local/bin/
+2to3              idle3    pip3.6    python3           python3.6m         pyvenv
+2to3-3.6          idle3.6  pydoc3    python3.6         python3.6m-config  pyvenv-3.6
+easy_install-3.6  pip3     pydoc3.6  python3.6-config  python3-config
+
+[root@Va1 devops]# ll /usr/local/bin/python3.6
+-rwxr-xr-x 2 root root 12610240 12月 15 15:52 /usr/local/bin/python3.6
+
+
+[root@Va1 devops]# ls  /root/PycharmProjects/
+untitled
+[root@Va1 devops]# ls  /root/PycharmProjects/untitled/
+venv
+[root@Va1 devops]# ls  /root/PycharmProjects/untitled/venv/
+bin  include  lib  lib64  pip-selfcheck.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+
