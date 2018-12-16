@@ -1,0 +1,428 @@
+
+ NAT英文全称是“Network Address Translation”
+顾名思义，它是一种把内部私有网络地址（IP地址）翻译成合法网络IP地址的技术。
+因此我们可以认为，NAT在一定程度上，能够有效的解决公网地址不足的问题
+分类：
+NAT有三种类型：静态NAT(Static NAT)、动态地址NAT(Pooled NAT)、网络地址端口转换NAPT（Port-Level NAT）
+其中，网络地址端口转换NAPT（Network Address Port Translation）
+则是把内部地址映射到外部网络的一个IP地址的不同端口上。
+它可以将中小型的网络隐藏在一个合法的IP地址后面。
+NAPT与 动态地址NAT不同，
+它将内部连接映射到外部网络中的一个单独的IP地址上，
+同时在该地址上加上一个由NAT设备选定的端口号.NAPT是使用最普遍的一种转换方式
+,它又细分为snat和dnat.
+(1)源NAT（Source NAT，SNAT）：修改数据包的源地址。
+源NAT改变第一个数据包的来源地址，它永远会在数据包发送到网络之前完成，
+数据包伪装就是一具SNAT的例子。
+(2)目的NAT（Destination NAT，DNAT）：修改数据包的目的地址。
+Destination NAT刚好与SNAT相反，它是改变第一个数据懈的目的地地址，
+如平衡负载、端口转发和透明代理就是属于DNAT
+应用：
+NAT主要可以实现以下几个功能：数据包伪装、平衡负载、端口转发和透明代理。
+数据伪装: 可以将内网数据包中的地址信息更改成统一的对外地址信息，
+不让内网主机直接暴露在因特网上，保证内网主机的安全。
+同时，该功能也常用来实现共享上网。
+端口转发:
+ 当内网主机对外提供服务时，由于使用的是内部私有IP地址，外网无法直接访问。
+因此，需要在网关上进行端口转发，将特定服务的数据包转发给内网主机。
+负载平衡: 目的地址转换NAT可以重定向一些服务器的连接到其他随机选定的服务器。
+失效终结: 目的地址转换NAT可以用来提供高可靠性的服务。
+如果一个系统有一台通过路由器访问的关键服务器，
+一旦路由器检测到该服务器当机，
+它可以使用目的地址转换NAT透明的把连接转移到一个备份服务器上。
+透明代理: 
+NAT可以把连接到因特网的HTTP连接重定向到一个指定的HTTP代理服务器以缓存数据和过滤请求。
+一些因特网服务提供商就使用这种技术来减少带宽的使用而不用让他们的客户配置他们的浏览器支持代理连接
+原理
+地址转换
+NAT的基本工作原理是，当私有网主机和公共网主机通信的IP包经过NAT网关时，
+将IP包中的源IP或目的IP在私有IP和NAT的公共IP之间进行转换
+要做SNAT的信息包被添加到POSTROUTING链中。
+要做DNAT的信息包被添加到PREROUTING链中。
+直接从本地出站的信息包的规则被添加到OUTPUT 链中。
+DNAT：若包是被送往PREROUTING链的，并且匹配了规则，
+则执行DNAT或REDIRECT目标。
+为了使数据包得到正确路由，必须在路由之前进行DNAT。
+路由：
+内核检查信息包的头信息，尤其是信息包的目的地。
+处理本地进程产生的包：
+对nat表OUTPUT链中的规则实施规则检查，对匹配的包执行目标动作。
+SNAT：
+若包是被送往POSTROUTING链的，并且匹配了规则，
+则执行SNAT或MASQUERADE目标。
+系统在决定了数据包的路由之后才执行该链中的规则
+但是nat也不是万能的，它也是有缺陷的，
+解决办法就是nat穿透技术:
+其实NAT穿越技术依赖于UPnP协议的支持，
+也就是说NAT设备必须支持UPnP，支持NAT穿越技术；
+而网络应用程序一样也需要支持UPnP，支持NAT穿越技术，
+只不过，这通常都是通过调用相关的NAT Traversal API实现的，
+window XP默认已经安装了NAT Traversal API，
+当然网络应用程序要调用它仍然需要进行一些修改，
+现在的MSN Messenger就支持调用NAT Traversal API. 
+这里不再详细说明，感兴趣的可以查找资料.
+    下面看看实际代码部分：
+     Nat的初始化工作和之前分析的filter几乎一样。
+Nat的ipv4部分在Iptables_nat.c 、
+     Core部分在nf_nat_core.c，不同的就是表不一样.
+这里我们拿snat一个实际例子分析，应用环境如图：
+
+很明显，直接lan内pc无法与外网通信,因为保留的ip地址即使外网能收到，但是回复的时候路由也会丢弃.所以需要snat：
+#iptables -t nat -A POSTROUTING -s  192.168.1.0/24  -j SNAT --to-source  202.20.65.5
+或#iptables -t nat -A POSTROUTING -s  192.168.1.0/24 -j MASQUERADE  //  默认会获取wan口地址进行映射. 
+钩子点POSTROUTING 对应SNAT    PREROUTING 对应DNAt（因为会影响以后的路由）;
+还需要说明的是不论prerouting的dnat 
+or  postrouting snat都在基本ct的后边，
+helper和confirm的前面.(DNAT的优先级高于SNAT)
+
+============================== iptables ================================
+
+iptables 不是真正的防火墙,
+用户通过这个iptables代理,把安全设定执行到对应的"安全框架"中,
+这个"安全框架" netfilter  才是真正的 防火墙
+netfilter  才是 防火墙 真正的 "安全框架"(framework),
+netfilter 位于内核空间
+netfilter/iptables(简称 iptables)
+iptables  是 内核提供的功能,不是真正的服务
+Netfilter 是Linux操作系统核心层内部的一个数据包处理模块
+
+NAT英文全称是“Network Address Translation”
+一种把内部私有网络地址（IP地址）翻译成合法公有网络IP地址的技术
+内核中的关卡
+input关卡和output关卡
+在 iptables 中称为 "链"
+                         
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+prerouting     input      output     forward     postrouting
+     |                |               |               |                |
+   规则            规则            规则           规则            规则
+     |                |               |               |                |
+
+     |                |               |               |                |
+
+     |                |               |               |                |
+
+ iptables的5个链（区分大小写）：
+
+INPUT链（入站规则）
+OUTPUT链（出站规则）
+FORWARD链（转发规则）
+PREROUTING链（路由前规则）
+POSTROUTING链（路由后规则）
+所有链的初始默认规则是ACCEPT
+
+ iptables的4个表（区分大小写）：
+
+  iptables默认有4个表
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+ 【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+           关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+mangle表（包标记表）
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+
+
+
+[root@Va4 ~]# lsmod  |grep  filter
+iptable_filter         12810  1 
+ip_tables              27115  1 iptable_filter
+
+[root@Va4 ~]# lsmod  |grep iptable
+iptable_filter         12810  1 
+ip_tables              27115  1 iptable_filter
+
+[root@hiys ~]# lsmod  |grep iptable
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  3 iptable_filter,iptable_mangle,iptable_nat
+
+
+
+
+                   #  iptables [-t 表名]  选项  [链名]   [条件]     [-j 目标操作]
+[root@proxy source1]# iptables -t filter  -I  INPUT -p icmp  -j REJECT;
+
+                         #LOG匹配即停止的唯一例外，记录日志，然后传给下一条规则
+[root@proxy ~]# iptables -t filter -I INPUT -p icmp -j LOG ;
+
+-p为指定的链 设置默认规则
+//注意事项与规律：
+//可以不指定表，默认为filter表
+//可以不指定链，默认为对应表的所有链
+//如果没有找到匹配条件，则执行防火墙默认规则
+//选项/链名/目标操作用大写字母，其余都小写
+########################################################################
+//目标操作：
+// ACCEPT：允许通过/放行
+// DROP：直接丢弃，不给出任何回应
+// REJECT：拒绝通过，必要时会给出提示
+// LOG：记录日志，然后传给下一条规则
+
+[root@proxy ~]# iptables -F  #清空所有规则-F
+## -p 为指定的链 设置默认规则 tcp ,udp ,icmp
+## -A 追加规则至filter表中的INPUT链的末尾
+## -I 插入规则至filter表中的INPUT链的开头
+[root@proxy ~]# iptables -t filter -A INPUT -p tcp -j ACCEPT ;
+
+# 插入规则至filter表中的INPUT链的开头，允许任何人使用UDP协议访问本机
+[root@proxy ~]# iptables -t filter -I INPUT -p udp -j ACCEPT ;
+
+[root@proxy ~]# iptables -t filter -I INPUT 2  -p icmp  -j ACCEPT ;
+##-I INPUT 2 插入规则至filter表中的INPUT链的第2行
+[root@proxy ~]# iptables -L  #查看所有规则-L
+
+[root@proxy ~]# iptables -nL --line-numbers   #-n 以数字形式显示地址，端口信息
+
+[root@proxy ~]# iptables -L  --line-numbers  //查看规则，显示行号--line-numbers
+
+[root@proxy ~]# iptables -nL INPUT     //仅查看INPUT链的规则
+[root@proxy ~]# iptables -D INPUT 3    #//删除filter表中INPUT链的第3条规则
+[root@proxy ~]# iptables -nL INPUT  #-n 以数字形式显示地址，端口信息
+
+#1）iptables的4个表（区分大小写）：
+iptables默认有4个表，nat表（地址转换表）、filter表（数据过滤表）、
+ 【raw表（状态跟踪表） 一般禁用，耗CPU资源】、mangle表（包标记表）。
+2）iptables的5个链（区分大小写）：
+INPUT链（入站规则）
+OUTPUT链（出站规则）
+FORWARD链（转发规则）
+PREROUTING链（路由前规则）
+POSTROUTING链（路由后规则）
+所有链的初始默认规则是ACCEPT
+             #  iptables [-t 表名]   选项  [链名]   [条件]    [-j 目标操作]
+	      ]# iptables -t filter  -I INPUT  -p icmp  -j ACCEPT ;
+-p为指定的链 设置默认规则
+//注意事项与规律：
+//可以不指定表，默认为filter表
+//可以不指定链，默认为对应表的所有链
+//如果没有找到匹配条件，则执行防火墙默认规则
+//选项/链名/目标操作用大写字母，其余都小写
+########################################################################
+//目标操作：
+// ACCEPT：允许通过/放行
+// DROP：直接丢弃，不给出任何回应
+// REJECT：拒绝通过，必要时会给出提示
+// LOG：记录日志，然后传给下一条规则
+[root@proxy ~]# iptables -I INPUT -p tcp -j ACCEPT # -p为指定的链 设置默认规则tcp 
+
+[root@proxy ~]# iptables -I INPUT -p tcp --dport 80 -j ACCEPT 
+[root@proxy ~]# elinks -dump http://192.168.4.5
+
+[root@proxy ~]# iptables -I INPUT  -p icmp --icmp-type echo-request  -j REJECT
+
+       #nat表（地址转换表）、filter表（数据过滤表）
+         //可以不指定表，默认为filter表
+[root@proxy ~]# iptables -I INPUT -s 192.168.2.0/24 -j DROP
+
+[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p tcp --dport  80 -j SNAT  --to-source 192.168.2.5
+[root@proxy ~]# 
+[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p tcp --dport  80 -j SNAT  --to-source 192.168.2.5
+[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p udp  --dport  80 -j SNAT  --to-source 192.168.2.5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=================== Redundant Arrays of Independent Drives，RAID =========
+
+磁盘阵列（Redundant Arrays of Independent Drives，RAID），
+独立磁盘构成的具有冗余能力的阵列
+
+RAID 0是最早出现的RAID模式，
+即Data Stripping数据分条技术。
+RAID 0是组建磁盘阵列中最简单的一种形式，
+只需要2块以上的硬盘即可，成本低，
+可以提高整个磁盘的性能和吞吐量。
+RAID 0
+没有 提供 冗余 或 错误修复 能力，
+但实现成本是最低的。
+RAID 0 实现方式
+就是把N块同样的硬盘 
+用 硬件的形式 通过 智能磁盘控制器 
+或用 操作系统中的 磁盘驱动程序 以软件的方式 串联在一起
+创建一个大的卷集。
+其读写性能均得到较好的提升，
+如使用了三块100GB的硬盘组建成RAID 0模式，
+那么磁盘容量就会是300GB；
+而速度方面，各单独一块硬盘的速度完全相同。
+最大的缺点在于RAID 0没有容错能力，
+任何一块硬盘出现故障，整个系统将会受到破坏，
+可靠性仅为单独一块硬盘的1/N。
+
+        RAID  0
+  磁盘 A1       磁盘 A2
+  磁盘 A3       磁盘 A4
+  磁盘 A5       磁盘 A6
+--------------------- 
+
+RAID 1称为磁盘镜像，
+原理是把一个磁盘的数据镜像到另一个磁盘上，
+也就是说数据在写入一块磁盘的同时，会在另一块闲置的磁盘上生成镜像文件，
+在不影响性能情况下最大限度的保证系统的可靠性和可修复性上，
+只要系统中任何一对镜像盘中至少有一块磁盘可以使用，
+甚至可以在一半数量的硬盘出现问题时系统都可以正常运行,
+当一块硬盘失效时，
+系统会忽略该硬盘，
+转而使用剩余的镜像盘读写数据，
+具备很好的磁盘冗余能力； 
+虽然RAID 1 有很好的冗余能力，
+但是磁盘的使用率仅为50%，
+企业的成本需要增加，以 4 块 100GB 容量的硬盘为例，
+可利用的磁盘空间仅为200GB；
+并且，当硬盘出现故障后，
+需要及时的更换损坏的硬盘，
+否则剩余的镜像盘也很容易出现问题，
+导致整个系统崩溃，更换新硬盘后，
+原有数据需要较长的时间才能同步镜像，
+同步时，外界对数据的访问不会受到影响，
+但此时整个系统的性能会有所下降 
+RAID 1主要是通过二次读写实现磁盘镜像，
+所以磁盘控制器的负载也相当大，
+尤其是在需要频繁写入数据的环境中。
+
+        RAID  1
+  磁盘 A1       磁盘 A1
+  磁盘 A2       磁盘 A2
+  磁盘 A3       磁盘 A3
+  磁盘 A4       磁盘 A4
+
+
+        RAID  0
+  磁盘 A1       磁盘 A2
+  磁盘 A3       磁盘 A4
+  磁盘 A5       磁盘 A6
+--------------------- 
+
+Raid5:至少需要3块硬盘raid5
+优势：以上优势，raid5兼顾。任意N-1快硬盘都有完整的数据。
+缺点：只允许单盘故障，一盘出现故障得尽快处理。有盘坏情况下，raid5 IO/CPU性能狂跌，此时性能烂到无以复加。
+建议：盘不多，对数据安全性和性能提示都有要求，raid5是个不错选择，鉴于出问题的性能，盘多可考虑riad10
+
+
+        RAID  0  [RAID 0 是最早出现的RAID模式,实现成本最低, 没 有 提供冗余或错误修复能力]
+  磁盘 A1       磁盘 A2
+  磁盘 A3       磁盘 A4
+  磁盘 A5       磁盘 A6
+  磁盘 A7       磁盘 A8
+
+        RAID  1  [磁盘的使用率 50%，企业的成本增加,有很好的冗余能力]
+  磁盘 A1       磁盘 A1
+  磁盘 A2       磁盘 A2
+  磁盘 A3       磁盘 A3
+  磁盘 A4       磁盘 A4
+
+parity 
+奇偶性; 平价，价值对等; 同等，平等;奇偶校验码
+
+ RAID 5 [分布式奇偶校验的独立磁盘结构  读出效率很高，写入效率一般 ,需要至少 3 块 磁盘]
+ RAID 5 [可用容量：C=(N-1)×D   C=可用容量   N=磁盘数量   D=单个磁盘容量]
+ RAID 5 [每一次写操作，将产生四个实际的读/写操作，其中两次读旧的数据及奇偶信息，两次写新的数据及奇偶信息 ]
+  磁盘 A1       磁盘 A2      磁盘 A3       磁盘 parity(奇偶校验码)
+  磁盘 A4       磁盘 A5      磁盘 parity   磁盘 A6
+  磁盘 A7       磁盘 parity  磁盘 A8       磁盘 A9
+  磁盘 parity   磁盘 A10     磁盘 A11      磁盘 A12
+
+
+
+RAID6 [全称为Independent Data Disks with two Independent Distributed Darity Schemes]
+RAID6 [带有两个独立分布式校验方案的独立数据磁盘]
+RAID6 [至少需要4块硬盘,可允许损坏2块硬盘, 性能提升方面不明显
+RAID6 [可用容量：C=(N-2)×D  C=可用容量  N=磁盘数量  D=单个磁盘容量]
+比如4块1T硬盘做raid6可用容量是：(4-2)×1000GB=2000GB=2T
+缺点：性能提升方面不明显
+建议：对数据安全性要求高，性能要求不高的可选择。
+
+        RAID  0  [RAID 0 是最早出现的RAID模式,实现成本最低, 没 有 提供冗余或错误修复能力]
+  磁盘 A1       磁盘 A2
+  磁盘 A3       磁盘 A4
+  磁盘 A5       磁盘 A6
+  磁盘 A7       磁盘 A8
+
+        RAID  1  [磁盘的使用率 50%，企业的成本增加,有很好的冗余能力]
+  磁盘 A1       磁盘 A1
+  磁盘 A2       磁盘 A2
+  磁盘 A3       磁盘 A3
+  磁盘 A4       磁盘 A4
+
+ RAID 5 [分布式奇偶校验的独立磁盘结构  读出效率很高，写入效率一般 ,需要至少 3 块 磁盘]
+ RAID 5 [可用容量：C=(N-1)×D   C=可用容量   N=磁盘数量   D=单个磁盘容量 , 可允许损坏 一 块 硬盘]
+ RAID 5 [每一次写操作，将产生四个实际的读/写操作，其中两次读旧的数据及奇偶信息，两次写新的数据及奇偶信息 ]
+  磁盘 A1       磁盘 A2      磁盘 A3       磁盘 parity(奇偶校验码)
+  磁盘 A4       磁盘 A5      磁盘 parity   磁盘 A6
+  磁盘 A7       磁盘 parity  磁盘 A8       磁盘 A9
+  磁盘 parity   磁盘 A10     磁盘 A11      磁盘 A12
+
+ RAID6 [全称为Independent Data Disks with two Independent Distributed Darity Schemes ]
+ RAID6 [带有两个独立分布式校验方案的独立数据磁盘]
+ RAID6 [至少需要 4 块 硬盘, 可允许损坏2块硬盘 ]
+ RAID6 [可用容量：C=(N-2)×D   C=可用容量  N=磁盘数量  D=单个磁盘容量]
+ RAID6 [缺点：性能提升方面不明显,建议：对数据安全性要求高，性能要求不高的可选择]
+                          RAID 6 
+  磁盘 A1       磁盘 A2       磁盘 parity1(奇偶校验码1)  磁盘 parity2(奇偶校验码2)
+  磁盘 A3       磁盘 parity1  磁盘 parity2             磁盘 A4
+  磁盘 parity1  磁盘 parity2  磁盘 A5                  磁盘 A6
+  磁盘 A7       磁盘 A8       磁盘 parity1             磁盘 parity2
+
+
+Raid10:至少需要4块硬盘。raid10是2块硬盘组成raid1,2组raid1z组成raid0,所以必须需要4块硬盘。
+优势：兼顾安全性和速度。基础4盘的情况下，raid10允许对柜盘2块故障，随着硬盘数量的提示，容错量也会相对应提升。这是raid5无法做到的。
+缺点：对盘的数量要求稍高，磁盘使用率为一半。
+
+
+        RAID  0  [RAID 0 是最早出现的RAID模式,实现成本最低, 没 有 提供冗余或错误修复能力]
+  磁盘 A1       磁盘 A2
+  磁盘 A3       磁盘 A4
+  磁盘 A5       磁盘 A6
+  磁盘 A7       磁盘 A8
+                  
+        RAID  0  [RAID 0 是最早出现的RAID模式,实现成本最低, 没 有 提供冗余或错误修复能力]
+        RAID  1  [磁盘的使用率 50%，企业的成本增加,有很好的冗余能力]
+                       RAID 10
+ |<- - - - - - - - - - RAID  0- - - - - - - - - ->|
+ |---- RAID  1 -----|           |--- RAID  1 -----| 
+  磁盘 A1       磁盘 A1           磁盘 A2       磁盘 A2
+  磁盘 A3       磁盘 A3           磁盘 A4       磁盘 A4 
+  磁盘 A5       磁盘 A5           磁盘 A6       磁盘 A6
+  磁盘 A7       磁盘 A7           磁盘 A8       磁盘 A8
+
+                       RAID 01
+ |<- - - - - - - - - - RAID  1- - - - - - - - - ->|
+ |---- RAID  0 -----|           |--- RAID  0 -----| 
+  磁盘 A1       磁盘 A2           磁盘 A1       磁盘 A2
+  磁盘 A3       磁盘 A4           磁盘 A3       磁盘 A4 
+  磁盘 A5       磁盘 A6           磁盘 A5       磁盘 A6
+  磁盘 A7       磁盘 A8           磁盘 A7       磁盘 A8
+
+密码: XgateJobT
+与内核模块加载相关的配置文件；
+    1、模块的配置文件 modules.conf 或 modprobe.conf
+
+

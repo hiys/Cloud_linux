@@ -1,0 +1,1466 @@
+
+[root@hiys ~]# ll '/root/桌面/CentOS7-1708.iso' 
+-rwxrwxrwx 1 root root 8694792192 11月  9 12:59 /root/桌面/CentOS7-1708.iso
+[root@hiys ~]# lsattr '/root/桌面/CentOS7-1708.iso'
+-------------e-- /root/桌面/CentOS7-1708.iso
+[root@hiys ~]# 
+e是ext3，ext4文件系统自带的。
+
+lsattr -R可以查看，子目录下的所有文件的文件隐藏属性。
+
+lsattr -a类似与ls -a将隐藏文件也一起列出来。
+
+lsattr -d至查看目录本身
+命令 chattr
+
+语法 ：chattr [+-=][ASaci][文件或者目录名]
+
++、-、=分别是增加、减少和设定
+
+A：增加该属性后，文件或着目录的atime将不可修改。
+
+S: 增加该属性后，会将数据同步的写入磁盘中。
+
+a: 增加该属性后，只能够追加即>>，（vi也不能添加内容）不能删除，不能重命名，
+
+  只有root用户才可以设定该属性。
+
+c：自动压缩该文件，读取的时候能够自动解压。
+
+i：增加该属性后，该文件会被固定死，是文件不能被删除、重命名、设定链接、写入、新增加数据。
+
+
+[root@hiys ~]# ls /etc/bashrc 
+/etc/bashrc
+[root@hiys ~]# ls /etc/profile
+/etc/profile
+[root@hiys ~]# 
+[root@hiys ~]# ls /etc/bashrc 
+/etc/bashrc
+[root@hiys ~]# ls /etc/profile
+/etc/profile
+[root@hiys ~]# grep "Taren1" /etc/profile
+[root@hiys ~]# grep "Taren1" /etc/bashrc 
+echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# cat -b /etc/bashrc |grep "Taren1"
+    87	echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# vim /etc/bashrc 
+[root@hiys ~]# cat -n  /etc/bashrc |tail -2
+    93	/usr/sbin/ifconfig rhce:0 172.25.0.250
+    94	echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# cat -n /etc/bashrc |grep "Taren1"
+    94	echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# grep "^#" /etc/bashrc |wc -l
+9
+[root@hiys ~]#
+
+[root@H50 demo]# yum -y install  tree |tail -2
+................
+[root@H50 demo]# rpm -q tree
+tree-1.6.0-10.el7.x86_64
+[root@H50 demo]# tree /demo/
+/demo/
+├── s1
+│   ├── find
+│   └── game.sh
+└── s2
+    ├── find
+    └── game.sh
+
+
+[root@H50 ~]# mysqladmin  -uroot  password '123'  #**# mariadb 修改root密码方式一
+[root@H50 ~]# mysql -uroot -p123
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
++--------------------+
+4 rows in set (0.00 sec)
+
+MariaDB [(none)]> exit;
+Bye
+[root@H50 ~]# mysql  -h192.168.4.50 -uroot -p123 gamedb -e "show tables;"
++------------------+
+| Tables_in_gamedb |
++------------------+
+| t1               |
++------------------+
+[root@H50 ~]# mysqladmin  -h192.168.4.50 -uroot -p123 password '1234'  #**# mariadb 修改root密码方式[ 2 ]
+
+[root@H50 ~]# mysql  -h192.168.4.50 -uroot -p1234  gamedb -e "show tables;"
++------------------+
+| Tables_in_gamedb |
++------------------+
+| t1               |
++------------------+
+[root@H50 ~]# 
+
+[root@H50 ~]# history |tail -2
+ 1007  service iptables status |grep -i active
+ 1008  history |tail -2
+
+[root@H50 ~]# history  -w
+[root@H50 ~]# echo $?
+0
+[root@H50 ~]# history -c
+[root@H50 ~]# history |tail -2
+   12  history |tail -2
+
+[root@H50 ~]# ll /root/.mysql_history 
+-rw-------. 1 root root 2272 11月  9 09:33 /root/.mysql_history
+
+[root@H50 ~]# vim /root/.mysql_history
+
+[root@H50 ~]# tail -3 /root/.mysql_history
+grant all on gamedb.* to yaya@'%' identified by'123';
+show grant for yaya@'%';
+show grants for yaya@'%';
+
+[root@H50 ~]# > /root/.mysql_history  ###########/root/.mysql_history  ###
+
+[root@H50 ~]# ll /root/.mysql_history
+-rw-------. 1 root root 0 11月  9 09:41 /root/.mysql_history
+
+[root@H50 ~]# ll /root/.bash_history  ########### /root/.bash_history ###
+-rw-------. 1 root root 26502 11月  9 09:37 /root/.bash_history
+
+[root@H50 ~]# history -w
+
+[root@H50 ~]# vim /root/.bash_history
+
+[root@H50 ~]# tail -3 /root/.bash_history
+ll /root/.mysql_history
+ll /root/.bash_history 
+history -w
+[root@H50 ~]# > /root/.bash_history ########## /root/.bash_history ###
+
+[root@H50 ~]# ll /root/.bash_history
+-rw-------. 1 root root 0 11月  9 09:42 /root/.bash_history
+[root@H50 ~]# 
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234
+
+MariaDB [(none)]> create database gamedb;
+Query OK, 1 row affected (0.00 sec)
+
+MariaDB [(none)]> use gamedb;
+
+MariaDB [gamedb]> create table t1(id int(2));
+
+MariaDB [gamedb]> insert into gamedb.t1 values(10),(11),(12);
+
+MariaDB [(none)]> grant select on *.* to yaya@'%' identified by'123';
+
+MariaDB [(none)]> show grants for yaya@'%';
+| Grants for yaya@%  |
+| GRANT SELECT ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'     |
+
+MariaDB [(none)]> use mysql;
+
+MariaDB [mysql]> select database();
+| database() |
+| mysql      |
+                                                           #**# mariadb 修改root密码方式[ 3 ]
+MariaDB [mysql]> update user set password=password('123') where user='root';
+
+
+MariaDB [mysql]> show tables;
++---------------------------+
+| Tables_in_mysql           |
++---------------------------+
+| columns_priv              |
+| db                        |
+| event                     |
+| func                      |
+| general_log               |
+| help_category             |
+| help_keyword              |
+| help_relation             |
+| help_topic                |
+| host                      |
+| ndb_binlog_index          |
+| plugin                    |
+| proc                      |
+| procs_priv                |
+| proxies_priv              |
+| servers                   |
+| slow_log                  |
+| tables_priv               |
+| time_zone                 |
+| time_zone_leap_second     |
+| time_zone_name            |
+| time_zone_transition      |
+| time_zone_transition_type |
+| user                      |
++---------------------------+
+24 rows in set (0.00 sec)
+
+MariaDB [mysql]> desc user\G
+*************************** 1. row ***************************
+  Field: Host
+   Type: char(60)
+   Null: NO
+    Key: PRI
+Default: 
+  Extra: 
+*************************** 2. row ***************************
+  Field: User
+   Type: char(16)
+   Null: NO
+    Key: PRI
+Default: 
+  Extra: 
+*************************** 3. row ***************************
+  Field: Password
+   Type: char(41)
+   Null: NO
+    Key: 
+Default: 
+  Extra: 
+*************************** 4. row ***************************
+  Field: Select_priv
+..........................................
+*************************** 5. row ***************************
+  Field: Insert_priv
+.............................................
+*************************** 6. row ***************************
+  Field: Update_priv
+.........................................
+*************************** 7. row ***************************
+  Field: Delete_priv
+...........................
+*************************** 8. row ***************************
+  Field: Create_priv
+...............................
+*************************** 9. row ***************************
+  Field: Drop_priv
+..............................
+*************************** 10. row ***************************
+  Field: Reload_priv
+.................................
+*************************** 11. row ***************************
+  Field: Shutdown_priv
+.............................
+*************************** 12. row ***************************
+  Field: Process_priv
+.................................
+*************************** 13. row ***************************
+  Field: File_priv
+............................
+*************************** 14. row ***************************
+  Field: Grant_priv
+..........................
+*************************** 15. row ***************************
+  Field: References_priv
+...........................
+*************************** 16. row ***************************
+  Field: Index_priv
+...............................................
+*************************** 17. row ***************************
+  Field: Alter_priv
+.................................
+*************************** 18. row ***************************
+  Field: Show_db_priv
+...............................
+*************************** 19. row ***************************
+  Field: Super_priv
+..........................................
+*************************** 20. row ***************************
+  Field: Create_tmp_table_priv
+...............................................
+*************************** 21. row ***************************
+  Field: Lock_tables_priv
+.......................................
+*************************** 22. row ***************************
+  Field: Execute_priv
+..............................................
+*************************** 23. row ***************************
+  Field: Repl_slave_priv
+..............................
+*************************** 24. row ***************************
+  Field: Repl_client_priv
+.....................................
+*************************** 25. row ***************************
+  Field: Create_view_priv
+......................................................
+*************************** 26. row ***************************
+  Field: Show_view_priv
+.....................................
+*************************** 27. row ***************************
+  Field: Create_routine_priv
+.......................................
+*************************** 28. row ***************************
+  Field: Alter_routine_priv
+......................................
+*************************** 29. row ***************************
+  Field: Create_user_priv
+............................................
+*************************** 30. row ***************************
+  Field: Event_priv
+...................................
+*************************** 31. row ***************************
+  Field: Trigger_priv
+...................................
+*************************** 32. row ***************************
+  Field: Create_tablespace_priv
+...............................
+*************************** 33. row ***************************
+  Field: ssl_type
+........................................
+*************************** 34. row ***************************
+  Field: ssl_cipher
+.......................................
+*************************** 35. row ***************************
+  Field: x509_issuer
+.......................................
+*************************** 36. row ***************************
+  Field: x509_subject
+.................................
+*************************** 37. row ***************************
+  Field: max_questions
+..................................
+*************************** 38. row ***************************
+  Field: max_updates
+....................................
+*************************** 39. row ***************************
+  Field: max_connections
+................................
+*************************** 40. row ***************************
+  Field: max_user_connections
+...............................
+*************************** 41. row ***************************
+  Field: plugin
+..................................
+*************************** 42. row ***************************
+  Field: authentication_string
+   Type: text
+   Null: NO
+    Key: 
+Default: NULL
+  Extra: 
+42 rows in set (0.02 sec)
+
+MariaDB [mysql]> 
+/*****************
+# systemctl stop mariadb.service
+
+# mysqld_safe --user=mysql --skip-grant-tables --skip-networking &
+                                “&” 表示在后台运行，若不再后台运行，就再打开一个终端。
+mysql -u root mysql
+************************/
+[root@H50 ~]# systemctl restart mariadb.service
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p123
+
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> select Host,User,Password,authentication_string from mysql.user;
++-----------+------+-------------------------------------------+-----------------------+
+| Host      | User | Password                                  | authentication_string |
++-----------+------+-------------------------------------------+-----------------------+
+| localhost | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| h50       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| 127.0.0.1 | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| ::1       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| localhost |      |                                           |                       |
+| h50       |      |                                           |                       |
+| %         | yaya | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
++-----------+------+-------------------------------------------+-----------------------+
+7 rows in set (0.00 sec)                                  
+                                                    #**# mariadb 修改root密码方式[ 4 ]
+MariaDB [mysql]> grant all on *.* to root@'%' identified by'123';
+
+MariaDB [mysql]> select current_user();
++----------------+
+| current_user() |
++----------------+
+| root@localhost |
+
+MariaDB [mysql]> select Host,User,Password,authentication_string from mysql.user;
++-----------+------+-------------------------------------------+-----------------------+
+| Host      | User | Password                                  | authentication_string |
++-----------+------+-------------------------------------------+-----------------------+
+| localhost | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| h50       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| 127.0.0.1 | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| ::1       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| localhost |      |                                           |                       |
+| h50       |      |                                           |                       |
+| %         | yaya | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| %         | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+
+
+[root@H50 ~]# systemctl is-active NetworkManager
+active
+[root@H50 ~]# service iptables status |grep -i active
+
+Redirecting to /bin/systemctl status iptables.service
+   Active: active (exited) since 五 2018-11-09 08:13:19 CST; 22min ago
+
+chkconfig iptables off（设置自动启动为关闭）
+
+chkconfig iptables on（设置自动启动为启动）
+
+chkconfig --del iptables（移除开启自启动）
+
+chkconfig --add iptables（增加开启自启动）
+
+[root@H50 ~]# chkconfig  iptables off
+注意：正在将请求转发到“systemctl disable iptables.service”。
+Removed symlink /etc/systemd/system/basic.target.wants/iptables.service.
+[root@H50 ~]# echo $?
+0
+[root@H50 ~]# which iptables
+/usr/sbin/iptables
+
+[root@H50 ~]# chkconfig iptables on
+
+[root@H50 ~]# service iptables stop
+
+[root@H50 ~]# netstat -anptul |egrep ':80|3306|:9000|:11211'
+
+[root@H50 ~]# mysql -uroot -p123
+
+MariaDB [(none)]> grant all on gamedb.* to yaya@'%' identified by'123';
+
+MariaDB [(none)]> show grants for yaya@'%';
+| Grants for yaya@%    |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'   |
+
+MariaDB [mysql]> revoke all on gamedb.* from yaya@'%';
+
+MariaDB [mysql]> revoke select on *.* from yaya@'%';
+
+/***********ALL [PRIVILEGES]	所有操作权限(但不包含 GRANT)
+USAGE	一个特殊的“无权限”权限  ******************************/
+
+MariaDB [mysql]> show grants for yaya@'%'; 
+| Grants for yaya@%      |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+
+
+MariaDB [mysql]> show grants;
+| Grants for root@localhost  |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION     |
+
+
+MariaDB [mysql]> show grants for root@'%';
+| Grants for root@%    |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+
+MariaDB [mysql]> select user();
+| user()         |
+| root@localhost |
+
+MariaDB [mysql]> select  current_user();
+
+| current_user() |
+| root@localhost |
+
+MariaDB [mysql]> 
+[root@H50 ~]# systemctl is-active mariadb.service 
+active
+[root@H50 ~]# systemctl stop  mariadb.service
+
+[root@H50 ~]# which mysqld_safe
+/usr/bin/mysqld_safe
+                            ## 注意后台运行 skip-networking  & 后 , 加此命令 pkill -9 mysqld 可以防止重启失败
+[root@H50 ~]# mysqld_safe  --user=mysql  --skip-grant-tables  --skip-networking  &
+[1] 11968
+[root@H50 ~]# 181109 17:24:50 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+181109 17:24:50 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+mysql   ##手动输入命令mysql 回车进入数据库
+.........................
+MariaDB [(none)]> use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MariaDB [mysql]> update mysql.user set password=password('1234') where user.user='root';
+
+Query OK, 4 rows affected (0.00 sec)
+Rows matched: 5  Changed: 4  Warnings: 0
+
+MariaDB [mysql]> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [mysql]> exit
+Bye
+[root@H50 ~]# systemctl start mariadb.service 
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234  gamedb -e "show tables;"
++------------------+
+| Tables_in_gamedb |
++------------------+
+| t1               |
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234 -e "show grants;"
+| Grants for root@localhost   |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION  |
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234 -e "show grants for root@'%';"
+| Grants for root@%   |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' |
+
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234
+
+MariaDB [(none)]> grant all on *.* to root@'%' identified by'1234';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> exit
+Bye
+[root@H50 ~]# mysql -h 192.168.4.50  -uroot -p1234  -e "show grants;"
+ERROR 2003 (HY000): Can't connect to MySQL server on '192.168.4.50' (111)
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234
+
+MariaDB [(none)]> show grants for root@'%';
+
+| Grants for root@%    |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' |
+1 row in set (0.00 sec)
+
+MariaDB [(none)]> 
+========================删除数据库,重建数据库 =================
+
+[root@H50 ~]# ls  /var/lib/mysql/
+aria_log.00000001  gamedb   ib_logfile0  mysql       performance_schema
+aria_log_control   ibdata1  ib_logfile1  mysql.sock  test
+
+[root@H50 ~]# rm -rf /var/lib/mysql/*
+
+[root@H50 ~]# ls  /var/lib/mysql/
+
+[root@H50 ~]# ls  /etc/my.cnf*
+/etc/my.cnf
+
+/etc/my.cnf.d:
+client.cnf  mysql-clients.cnf  server.cnf
+
+[root@H50 ~]# rm -rf /etc/my.cnf*
+
+[root@H50 ~]# yum remove -y mariadb-server |tail -5
+
+删除:
+  mariadb-server.x86_64 1:5.5.56-2.el7                                          
+
+完毕！
+[root@H50 ~]# rpm -qa |grep -i mysql
+perl-DBD-MySQL-4.023-5.el7.x86_64
+[root@H50 ~]# yum list |grep mariadb
+mariadb.x86_64                          1:5.5.56-2.el7             @rhel7       
+mariadb-libs.x86_64                     1:5.5.56-2.el7             @rhel7       
+mariadb-bench.x86_64                    1:5.5.56-2.el7             rhel7        
+mariadb-devel.i686                      1:5.5.56-2.el7             rhel7        
+mariadb-devel.x86_64                    1:5.5.56-2.el7             rhel7        
+mariadb-libs.i686                       1:5.5.56-2.el7             rhel7        
+mariadb-server.x86_64                   1:5.5.56-2.el7             rhel7        
+mariadb-test.x86_64                     1:5.5.56-2.el7             rhel7        
+[root@H50 ~]# yum  -y install  mariadb-server |tail -4
+已安装:
+  mariadb-server.x86_64 1:5.5.56-2.el7                                          
+
+完毕！
+[root@H50 ~]# netstat -nputl  |grep :3306
+[root@H50 ~]# systemctl start mariadb
+[root@H50 ~]# netstat -nputl  |grep :3306
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      14162/mysqld        
+[root@H50 ~]# systemctl enable  mariadb
+Created symlink from /etc/systemd/system/multi-user.target.wants/mariadb.service to /usr/lib/systemd/system/mariadb.service.
+[root@H50 ~]# id mysql
+uid=27(mysql) gid=27(mysql) 组=27(mysql)
+[root@H50 ~]# ls /var/lib/mysql*
+aria_log.00000001  H50.err  ibdata1      ib_logfile1  mysql.sock          test
+aria_log_control   H50.pid  ib_logfile0  mysql        performance_schema
+[root@H50 ~]# mysqladmin  -uroot  password '123'
+[root@H50 ~]# mysql -uroot -p123 -e "show databases;"
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+
+[root@H50 ~]# rpm -qa |grep -i mysql
+perl-DBD-MySQL-4.023-5.el7.x86_64
+
+[root@H50 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+[root@H50 ~]# 
+[root@H50 ~]# mysql -hlocalhost  -uroot  -p123  -e "select current_user();"
++----------------+
+| current_user() |
++----------------+
+| root@localhost |
++----------------+
+[root@H50 ~]# mysql -h 192.168.4.50  -uroot  -p123  -e "select current_user();"
+ERROR 1045 (28000): Access denied for user 'root'@'H50' (using password: YES)
+[root@H50 ~]# systemctl is-active mariadb.service 
+active
+[root@H50 ~]# systemctl stop mariadb.service 
+[root@H50 ~]# systemctl is-active mariadb.service 
+inactive
+[root@H50 ~]# which mysqld_safe
+/usr/bin/mysqld_safe
+[root@H50 ~]# mysqld_safe --user=mysql --skip-grant-tables  --skip-networking &
+[2] 14341
+[root@H50 ~]# 181109 18:47:55 mysqld_safe Logging to '/var/lib/mysql/H50.err'.
+181109 18:47:55 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+mysql
+
+MariaDB [(none)]> use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+/******* 当使用-A参数时，就不预读数据库信息，速度就会快起来：
+
+mysql> mysql -hhostname -uusername -ppassword -Pport -A
+*******************************/
+
+Database changed
+MariaDB [mysql]> update mysql.user set password=password('1234') 
+    -> where user.user='root';
+Query OK, 4 rows affected (0.01 sec)
+Rows matched: 4  Changed: 4  Warnings: 0
+
+MariaDB [mysql]> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [mysql]> exit;
+Bye
+[root@H50 ~]# systemctl start mariadb
+[root@H50 ~]# systemctl is-active mariadb
+failed
+[root@H50 ~]# netstat -anpult |grep :3306
+[root@H50 ~]# systemctl restart mariadb.service 
+[root@H50 ~]# netstat -anpult |grep :3306
+[root@H50 ~]# systemctl is-active mariadb
+failed
+[root@H50 ~]# ps -C mariadb
+  PID TTY          TIME CMD
+[root@H50 ~]# ls /var/lib/mysql/
+aria_log.00000001  H50.err  ibdata1      ib_logfile1  mysql.sock          test
+aria_log_control   H50.pid  ib_logfile0  mysql        performance_schema
+[root@H50 ~]# ls /etc/my.cnf.d/
+server.cnf
+[root@H50 ~]# ls /etc/my.cnf
+ls: 无法访问/etc/my.cnf: 没有那个文件或目录
+[root@H50 ~]# 
+================================
+[root@H50 ~]# systemctl stop mariadb.service 
+[root@H50 ~]# systemctl is-active mariadb.service
+failed
+[root@H50 ~]# ls /etc/my.cnf*
+server.cnf
+[root@H50 ~]# rm -rf /etc/my.cnf*
+[root@H50 ~]# ls /etc/my.cnf*
+ls: 无法访问/etc/my.cnf*: 没有那个文件或目录
+[root@H50 ~]# ls /var/lib/mysql/
+aria_log.00000001  H50.err  ibdata1      ib_logfile1  mysql.sock          test
+aria_log_control   H50.pid  ib_logfile0  mysql        performance_schema
+[root@H50 ~]# rm -rf /var/lib/mysql/
+[root@H50 ~]# ls /var/lib/mysql/
+ls: 无法访问/var/lib/mysql/: 没有那个文件或目录
+[root@H50 ~]# ls -ld /var/lib/
+drwxr-xr-x. 60 root root 4096 11月  9 19:14 /var/lib/
+[root@H50 ~]# yum -y remove mariadb-server |tail -4
+删除:
+  mariadb-server.x86_64 1:5.5.56-2.el7                                          
+
+完毕！
+[root@H50 ~]# rpm -qa |grep -i mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+[root@H50 ~]# 
+[root@H50 ~]# yum -y  install  mariadb-server |tail -5
+
+已安装:
+  mariadb-server.x86_64 1:5.5.56-2.el7                                          
+
+完毕！
+[root@H50 ~]# systemctl start mariadb
+
+[root@H50 ~]# netstat -anputl |grep :3306
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      15370/mysqld  
+      
+[root@H50 ~]# systemctl enable mariadb.service 
+Created symlink from /etc/systemd/system/multi-user.target.wants/mariadb.service to /usr/lib/systemd/system/mariadb.service.
+
+[root@H50 ~]# id mysqld
+id: mysqld: no such user
+[root@H50 ~]# id mysql
+uid=27(mysql) gid=27(mysql) 组=27(mysql)
+[root@H50 ~]# ls /var/lib/mysql/
+aria_log.00000001  H50.err  ibdata1      ib_logfile1  mysql.sock          test
+aria_log_control   H50.pid  ib_logfile0  mysql        performance_schema
+[root@H50 ~]# ls /etc/my.cnf.d/
+server.cnf
+[root@H50 ~]# ls /etc/my.cnf
+ls: 无法访问/etc/my.cnf: 没有那个文件或目录
+
+[root@H50 ~]# systemctl is-active mariadb
+active
+[root@H50 ~]# mysqladmin -uroot  password '1234'
+
+[root@H50 ~]# mysql -hlocalhost -uroot -p1234
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
+
+MariaDB [(none)]> use mysql;
+
+MariaDB [mysql]> update mysql.user set password=password('1234');
+
+Query OK, 5 rows affected (0.01 sec)
+Rows matched: 6  Changed: 5  Warnings: 0
+
+MariaDB [mysql]> grant all on *.* to root@'%' identified by'1234';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [mysql]> show grants for root@'%';
+| Grants for root@%  |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' |
+
+MariaDB [mysql]> grant all on gamedb.* to yaya@'%' identified by '1234';
+
+MariaDB [mysql]> show grants for yaya@'%';
+| Grants for yaya@%    |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'    |
+
+MariaDB [mysql]> flush privileges;
+
+MariaDB [mysql]> exit
+Bye
+[root@H50 ~]# ls /etc/my.cnf.d/
+server.cnf
+[root@H50 ~]# ls /etc/my.cnf
+ls: 无法访问/etc/my.cnf: 没有那个文件或目录
+
+[root@H50 ~]# which mysql_secure_installation 
+/usr/bin/mysql_secure_installation
+
+Mariadb修改root密码
+默认情况下，新安装的 mariadb 的密码为空，在shell终端直接输入 mysql 就能登陆数据库。
+如果是刚安装第一次使用，请使用 mysql_secure_installation 命令初始化。
+
+[root@H50 ~]# mysql_secure_installation   ## 数据库安全相关初始化
+
+NOTE: RUNNING ALL PARTS OF THIS SCRIPT IS RECOMMENDED FOR ALL MariaDB
+      SERVERS IN PRODUCTION USE!  PLEASE READ EACH STEP CAREFULLY!
+
+In order to log into MariaDB to secure it, we'll need the current
+password for the root user.  If you've just installed MariaDB, and
+you haven't set the root password yet, the password will be blank,
+so you should just press enter here.
+
+Enter current password for root (enter for none): 
+OK, successfully used password, moving on...
+
+Setting the root password ensures that nobody can log into the MariaDB
+root user without the proper authorisation.
+
+You already have a root password set, so you can safely answer 'n'.
+
+Change the root password? [Y/n] y
+New password: 1234
+Re-enter new password: 1234
+Password updated successfully!
+Reloading privilege tables..
+ ... Success!
+
+
+By default, a MariaDB installation has an anonymous user, allowing anyone
+to log into MariaDB without having to have a user account created for
+them.  This is intended only for testing, and to make the installation
+go a bit smoother.  You should remove them before moving into a
+production environment.
+           删除匿名用户？
+Remove anonymous users? [Y/n]  y
+ ... Success!
+
+Normally, root should only be allowed to connect from 'localhost'.  This
+ensures that someone cannot guess at the root password from the network.
+      远程禁止root登录吗？
+Disallow root login remotely? [Y/n] n
+ ... skipping.
+
+By default, MariaDB comes with a database named 'test' that anyone can
+access.  This is also intended only for testing, and should be removed
+before moving into a production environment.
+
+    删除测试数据库 test 并访问它？
+Remove test database and access to it? [Y/n]  y
+ - Dropping test database...
+ ... Success!
+ - Removing privileges on test database...
+ ... Success!
+
+Reloading the privilege tables will ensure that all changes made so far
+will take effect immediately.
+
+         现在重新加载特权表吗？ 
+Reload privilege tables now? [Y/n] y
+ ... Success!
+
+Cleaning up...
+
+All done!  If you've completed all of the above steps, your MariaDB
+installation should now be secure.
+
+Thanks for using MariaDB!
+[root@H50 ~]# 
+[root@H50 ~]# mysql -hlocalhost -uroot -p1234 -e "show databases;"
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
++--------------------+
+[root@H50 ~]# 
+/******* 当使用-A参数时，就不预读数据库信息，速度就会快起来：
+
+mysql> mysql -hhostname -uusername -ppassword -Pport -A
+*******************************/
+[root@H50 ~]# mysql -hlocalhost -uroot -p1234  -P3306  -A
+
+                     /*第 n 个方式：修改密码，不用进入mysql*/
+
+MariaDB [(none)]> set password for 'root'@'%'=password('1234');
+
+MariaDB [(none)]> show grants for root@'%';
+| Grants for root@%    |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' |
+
+MariaDB [(none)]> show grants;
+| Grants for root@localhost  |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION   |
+
+MariaDB [(none)]> select current_user();
++----------------+
+| current_user() |
++----------------+
+| root@localhost |
++----------------+
+1 row in set (0.00 sec)
+
+MariaDB [(none)]> grant all on  gamedb.* to haha@'%' identified by'1234';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> show grants for haha@'%';
+| Grants for haha@%   |
+| GRANT USAGE ON *.* TO 'haha'@'%' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'haha'@'%'   |
++-----------------------------------------------------------------------------------------------------+
+2 rows in set (0.00 sec)
+
+MariaDB [(none)]> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> exit
+Bye
+[root@H50 ~]# 
+[root@H52 ~]# ls /etc/my.cnf
+/etc/my.cnf
+[root@H52 ~]# ls /etc/my.cnf.d/
+client.cnf  mysql-clients.cnf  server.cnf
+
+[root@H52 ~]# scp -r /etc/my.cnf* root@192.168.4.50:/etc/
+my.cnf                                                                       100%  570    91.0KB/s   00:00    
+mysql-clients.cnf                                                            100%  232   430.2KB/s   00:00    
+client.cnf                                                                   100%  295   641.9KB/s   00:00    
+server.cnf                                                                   100%  744     2.7MB/s   00:00    
+[root@H52 ~]# 
+[root@H50 ~]# mysql -h 192.168.4.50  -uroot -p1234  -P3306  -e "select current_user();"
++----------------+
+| current_user() |
++----------------+
+| root@h50       |
++----------------+
+[root@H50 ~]# ls /etc/my.cnf.d/
+server.cnf
+[root@H50 ~]# ls /etc/my.cnf
+ls: 无法访问/etc/my.cnf: 没有那个文件或目录
+[root@H50 ~]# ls /etc/my.cnf*
+/etc/my.cnf
+
+/etc/my.cnf.d:
+client.cnf  mysql-clients.cnf  server.cnf
+[root@H50 ~]# ls /etc/my.cnf* -l
+-rw-r--r--. 1 root root 570 11月  9 20:15 /etc/my.cnf
+
+/etc/my.cnf.d:
+总用量 12
+-rw-r--r--. 1 root root 295 11月  9 20:15 client.cnf
+-rw-r--r--. 1 root root 232 11月  9 20:15 mysql-clients.cnf
+-rw-r--r--. 1 root root 744 11月  9 20:15 server.cnf
+[root@H50 ~]# ls -ld /var/lib/mysql/
+drwxr-xr-x. 4 mysql mysql 195 11月  9 19:47 /var/lib/mysql/
+[root@H50 ~]# ps -C mysql
+  PID TTY          TIME CMD
+[root@H50 ~]# ps -C mariadb
+  PID TTY          TIME CMD
+[root@H50 ~]# systemctl is-active mariadb
+active
+[root@H50 ~]# netstat -nptul |grep :3306
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      15370/mysqld        
+[root@H50 ~]# ps -C mysqld
+  PID TTY          TIME CMD
+12141 pts/0    00:00:05 mysqld
+14452 pts/0    00:00:02 mysqld
+15370 ?        00:00:02 mysqld
+[root@H50 ~]# systemctl restart mariadb
+Job for mariadb.service failed because the control process exited with error code. See "systemctl status mariadb.service" and "journalctl -xe" for details.
+[root@H50 ~]# 
+[root@H50 ~]# ss -anput | grep :3306
+
+[root@H50 ~]# rpm -qa | grep mariadb
+mariadb-libs-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+[root@H50 ~]# ls /etc/my.cnf
+my.cnf    my.cnf.d/ 
+[root@H50 ~]# ls /etc/my.cnf
+/etc/my.cnf
+
+[root@H50 ~]# rm -rf /etc/my.cnf
+[root@H50 ~]# rm -rf /var/lib/mysql
+[root@H50 ~]# 
+
+
+
+[root@H50 ~]#  yum -y reinstall mariadb mariadb-libs mariadb-server
+
+已安装:
+  mariadb.x86_64 1:5.5.56-2.el7   mariadb-libs.x86_64 1:5.5.56-2.el7   mariadb-server.x86_64 1:5.5.56-2.el7  
+
+完毕！
+[root@H50 ~]# ls /etc/my.cnf
+/etc/my.cnf
+[root@H50 ~]# systemctl restart mariadb
+Job for mariadb.service failed because the control process exited with error code. See "systemctl status mariadb.service" and "journalctl -xe" for details.
+[root@H50 ~]# journalctl -xe
+11月 09 20:24:01 H50 mariadb-prepare-db-dir[16413]: Consider joining MariaDB's strong and vibrant community:
+11月 09 20:24:01 H50 mariadb-prepare-db-dir[16413]: https://mariadb.org/get-involved/
+11月 09 20:24:02 H50 mysqld_safe[16491]: 181109 20:24:02 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+11月 09 20:24:02 H50 mysqld_safe[16491]: 181109 20:24:02 mysqld_safe A mysqld process already exists
+11月 09 20:24:02 H50 systemd[1]: mariadb.service: main process exited, code=exited, status=1/FAILURE
+11月 09 20:24:02 H50 systemd[1]: mariadb.service: control process exited, code=exited status=1
+11月 09 20:24:02 H50 systemd[1]: Failed to start MariaDB database server.
+-- Subject: Unit mariadb.service has failed
+-- Defined-By: systemd
+-- Support: http://lists.freedesktop.org/mailman/listinfo/systemd-devel
+-- 
+-- Unit mariadb.service has failed.
+-- 
+-- The result is failed.
+11月 09 20:24:02 H50 systemd[1]: Unit mariadb.service entered failed state.
+11月 09 20:24:02 H50 systemd[1]: mariadb.service failed.
+11月 09 20:24:03 H50 polkitd[714]: Unregistered Authentication Agent for unix-process:16407:4390319 (system bus
+lines 3052-3068/3068 (END)
+11月 09 20:24:01 H50 mariadb-prepare-db-dir[16413]: Consider joining MariaDB's strong and vibrant community:
+11月 09 20:24:01 H50 mariadb-prepare-db-dir[16413]: https://mariadb.org/get-involved/
+11月 09 20:24:02 H50 mysqld_safe[16491]: 181109 20:24:02 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+11月 09 20:24:02 H50 mysqld_safe[16491]: 181109 20:24:02 mysqld_safe A mysqld process already exists
+11月 09 20:24:02 H50 systemd[1]: mariadb.service: main process exited, code=exited, status=1/FAILURE
+11月 09 20:24:02 H50 systemd[1]: mariadb.service: control process exited, code=exited status=1
+11月 09 20:24:02 H50 systemd[1]: Failed to start MariaDB database server.
+-- Subject: Unit mariadb.service has failed
+-- Defined-By: systemd
+-- Support: http://lists.freedesktop.org/mailman/listinfo/systemd-devel
+-- 
+-- Unit mariadb.service has failed.
+-- 
+-- The result is failed.
+11月 09 20:24:02 H50 systemd[1]: Unit mariadb.service entered failed state.
+11月 09 20:24:02 H50 systemd[1]: mariadb.service failed.
+11月 09 20:24:03 H50 polkitd[714]: Unregistered Authentication Agent for unix-process:16407:4390319 (system bus name :1.266, object path /org/free
+
+...skipping...
+11月 09 20:24:01 H50 mariadb-prepare-db-dir[16413]: Consider joining MariaDB's strong and vibrant community:
+11月 09 20:24:01 H50 mariadb-prepare-db-dir[16413]: https://mariadb.org/get-involved/
+11月 09 20:24:02 H50 mysqld_safe[16491]: 181109 20:24:02 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+11月 09 20:24:02 H50 mysqld_safe[16491]: 181109 20:24:02 mysqld_safe A mysqld process already exists
+11月 09 20:24:02 H50 systemd[1]: mariadb.service: main process exited, code=exited, status=1/FAILURE
+11月 09 20:24:02 H50 systemd[1]: mariadb.service: control process exited, code=exited status=1
+11月 09 20:24:02 H50 systemd[1]: Failed to start MariaDB database server.
+-- Subject: Unit mariadb.service has failed
+-- Defined-By: systemd
+-- Support: http://lists.freedesktop.org/mailman/listinfo/systemd-devel
+-- 
+-- Unit mariadb.service has failed.
+-- 
+-- The result is failed.
+11月 09 20:24:02 H50 systemd[1]: Unit mariadb.service entered failed state.
+11月 09 20:24:02 H50 systemd[1]: mariadb.service failed.
+11月 09 20:24:03 H50 polkitd[714]: Unregistered Authentication Agent for unix-process:16407:4390319 (system bus name :1.266, object path /org/free
+
+~
+[root@H50 ~]# 
+[root@H50 ~]# cat /var/log/mariadb/mariadb.log
+181109 20:19:40 mysqld_safe A mysqld process already exists
+181109 20:24:02 mysqld_safe A mysqld process already exists
+
+[root@H50 ~]# ss -anput | grep mysqld
+
+[root@H50 ~]# pkill -9 mysqld
+[1]-  已杀死               mysqld_safe --user=mysql --skip-grant-tables --skip-networking
+[2]+  已杀死               mysqld_safe --user=mysql --skip-grant-tables --skip-networking
+[root@H50 ~]# systemctl restart mariadb
+[root@H50 ~]# systemctl stop mariadb
+[root@H50 ~]# systemctl start mariadb
+[root@H50 ~]# echo $?
+0
+[root@H50 ~]# ls /etc/my.cnf
+/etc/my.cnf
+[root@H50 ~]# ls /etc/my.cnf.d/
+client.cnf  mysql-clients.cnf  server.cnf
+[root@H50 ~]# ls /etc/my.cnf.d/ -l
+总用量 12
+-rw-r--r--. 1 root root 295 4月  30 2017 client.cnf
+-rw-r--r--. 1 root root 232 4月  30 2017 mysql-clients.cnf
+-rw-r--r--. 1 root root 744 4月  30 2017 server.cnf
+[root@H50 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*****************
+可以删除 匿名用户 
+DROP USER ''@'localhost';
+
+# systemctl stop mariadb.service
+
+# mysqld_safe --user=mysql --skip-grant-tables --skip-networking &
+                    ## “&” 表示在后台运行，若不再后台运行，就再打开一个终端。
+mysql -u root mysql
+************************/
+[root@H51 ~]# systemctl stop mariadb.service 
+[root@H51 ~]# which mysqld_safe
+/usr/bin/mysqld_safe
+[root@H51 ~]# mysqld_safe -?
+181109 15:52:14 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+181109 15:52:14 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+
+[root@H51 ~]# mysqld_safe --help
+Usage: /usr/bin/mysqld_safe [OPTIONS]
+  --no-defaults              Don't read the system defaults file
+  --core-file-size=LIMIT     Limit core files to the specified size
+  --defaults-file=FILE       Use the specified defaults file
+  --defaults-extra-file=FILE Also use defaults from the specified file
+  --ledir=DIRECTORY          Look for mysqld in the specified directory
+  --open-files-limit=LIMIT   Limit the number of open files
+  --crash-script=FILE        Script to call when mysqld crashes
+  --timezone=TZ              Set the system timezone
+  --malloc-lib=LIB           Preload shared library LIB if available
+  --mysqld=FILE              Use the specified file as mysqld
+  --mysqld-version=VERSION   Use "mysqld-VERSION" as mysqld
+  --nice=NICE                Set the scheduling priority of mysqld
+  --no-auto-restart          Exit after starting mysqld
+  --nowatch                  Exit after starting mysqld
+  --plugin-dir=DIR           Plugins are under DIR or DIR/VERSION, if
+                             VERSION is given
+  --skip-kill-mysqld         Don't try to kill stray mysqld processes
+  --syslog                   Log messages to syslog with 'logger'
+  --skip-syslog              Log messages to error log (default)
+  --syslog-tag=TAG           Pass -t "mysqld-TAG" to 'logger'
+  --flush-caches             Flush and purge buffers/caches before
+                             starting the server
+  --numa-interleave          Run mysqld with its memory interleaved
+                             on all NUMA nodes
+
+All other options are passed to the mysqld program.
+
+[root@H51 ~]# vim /var/log/mariadb/mariadb.log 
+[root@H51 ~]# tail -1 /var/log/mariadb/mariadb.log
+181109 15:52:42 mysqld_safe mysqld from pid file /var/run/mariadb/mariadb.pid ended
+[root@H51 ~]# 
+[root@H51 ~]# mysqld_safe --user=mysql --skip-grant-tables --skip-networking  &
+[2] 8644
+[root@H51 ~]# 181109 17:13:01 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+181109 17:13:01 mysqld_safe A mysqld process already exists
+mysql
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 1
+Server version: 5.5.56-MariaDB MariaDB Server
+
+Copyright (c) 2000, 2017, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MariaDB [mysql]> update mysql.user set password=password('123') where user.user='root';
+
+Query OK, 3 rows affected (0.01 sec)
+Rows matched: 4  Changed: 3  Warnings: 0
+
+MariaDB [mysql]> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [mysql]> exit
+Bye
+[2]+  退出 1                mysqld_safe --user=mysql --skip-grant-tables --skip-networking
+[root@H51 ~]# systemctl is-active mariadb.service 
+inactive
+[root@H51 ~]# systemctl start mariadb.service 
+[root@H51 ~]# mysql -hlocalhost -p123 -uroot  -e "show databases;"
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| test               |
++--------------------+
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# systemctl is-active mariadb
+active
+[root@H51 ~]#  mysql -h 192.168.4.50  -uyaya -p123 gamedb -e "show grants;"
+| Grants for yaya@%  |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'    |
+
+[root@H51 ~]#  mysql -h 192.168.4.50  -uyaya -p123 gamedb -e "show tables;"
+| Tables_in_gamedb |
+| t1               |
+
+[root@H51 ~]#  mysql -h 192.168.4.50  -uroot -p123 gamedb -e "show tables;"
+| Tables_in_gamedb |
+| t1               |
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+[root@H56 ~]# systemctl is-active mysqld
+active
+[root@H56 ~]# 
+
+
+
+
+[root@H57 ~]# mysql -uroot -p1234
+
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.03 sec)
+
+mysql> use mysql;show tables;
+
+| Tables_in_mysql           |
++---------------------------+
+| columns_priv              |
+| db                        |
+| engine_cost               |
+| event                     |
+| func                      |
+| general_log               |
+| gtid_executed             |
+| help_category             |
+| help_keyword              |
+| help_relation             |
+| help_topic                |
+| innodb_index_stats        |
+| innodb_table_stats        |
+| ndb_binlog_index          |
+| plugin                    |
+| proc                      |
+| procs_priv                |
+| proxies_priv              |
+| server_cost               |
+| servers                   |
+| slave_master_info         |
+| slave_relay_log_info      |
+| slave_worker_info         |
+| slow_log                  |
+| tables_priv               |
+| time_zone                 |
+| time_zone_leap_second     |
+| time_zone_name            |
+| time_zone_transition      |
+| time_zone_transition_type |
+| user                      |
++---------------------------+
+31 rows in set (0.00 sec)
+
+mysql> desc user\G;
+*************************** 1. row ***************************
+  Field: Host
+   Type: char(60)
+   Null: NO
+    Key: PRI
+Default: 
+  Extra: 
+*************************** 2. row ***************************
+  Field: User
+   Type: char(32)
+   Null: NO
+    Key: PRI
+Default: 
+  Extra: 
+*************************** 3. row ***************************
+  Field: Select_priv
+   Type: enum('N','Y')
+   Null: NO
+    Key: 
+Default: N
+  Extra: 
+*************************** 4. row ***************************
+  Field: Insert_priv
+.........................................
+*************************** 5. row ***************************
+  Field: Update_priv
+....................................
+*************************** 6. row ***************************
+  Field: Delete_priv
+.....................................
+*************************** 7. row ***************************
+  Field: Create_priv
+....................................
+*************************** 8. row ***************************
+  Field: Drop_priv
+..................................
+*************************** 9. row ***************************
+  Field: Reload_priv
+.................................
+*************************** 10. row ***************************
+  Field: Shutdown_priv
+............................
+
+*************************** 41. row ***************************
+  Field: authentication_string
+  ..............................................
+*************************** 42. row ***************************
+  Field: password_expired
+ .........................................
+*************************** 43. row ***************************
+  Field: password_last_changed
+   .............................................
+*************************** 44. row ***************************
+  Field: password_lifetime
+ .........................................
+*************************** 45. row ***************************
+  Field: account_locked
+   Type: enum('N','Y')
+   Null: NO
+    Key: 
+Default: N
+  Extra: 
+45 rows in set (0.00 sec)
+
+mysql> desc user\G
+*************************** 1. row ***************************
+  Field: Host
+................................
+*************************** 2. row ***************************
+  Field: User
+...........................................
+*************************** 3. row ***************************
+  Field: Select_priv
+..........................................
+*************************** 4. row ***************************
+  Field: Insert_priv
+...........................................
+*************************** 5. row ***************************
+  Field: Update_priv
+......................................
+*************************** 6. row ***************************
+  Field: Delete_priv
+........................................
+*************************** 7. row ***************************
+  Field: Create_priv
+.......................................
+*************************** 8. row ***************************
+  Field: Drop_priv
+.......................................
+*************************** 9. row ***************************
+  Field: Reload_priv
+...................................
+*************************** 10. row ***************************
+  Field: Shutdown_priv
+.........................................
+*************************** 11. row ***************************
+  Field: Process_priv
+.........................................
+*************************** 12. row ***************************
+  Field: File_priv
+......................................
+*************************** 13. row ***************************
+  Field: Grant_priv
+...............................................
+*************************** 14. row ***************************
+  Field: References_priv
+.............................................
+*************************** 15. row ***************************
+  Field: Index_priv
+.......................................
+*************************** 16. row ***************************
+  Field: Alter_priv
+...........................................
+*************************** 17. row ***************************
+  Field: Show_db_priv
+.......................................
+
+*************************** 41. row ***************************
+  Field: authentication_string
+   Type: text
+   Null: YES
+    Key: 
+Default: NULL
+  Extra: 
+*************************** 42. row ***************************
+  Field: password_expired
+..............................................
+*************************** 43. row ***************************
+  Field: password_last_changed
+...........................................
+*************************** 44. row ***************************
+  Field: password_lifetime
+.....................................
+*************************** 45. row ***************************
+  Field: account_locked
+   Type: enum('N','Y')
+   Null: NO
+    Key: 
+Default: N
+  Extra: 
+45 rows in set (0.00 sec)
+
+
+mysql> select user();
+| user()         |
+| root@localhost |
+
+mysql> select current_user();
+| current_user() |
+| root@localhost |
+
+mysql> select database();
+| database() |
+| mysql      |
+
+mysql> select Host,User,authentication_string from mysql.user;
+
+| Host      | User      | authentication_string     |
+| localhost | root      | *A4B6157319038724E3560894F7F932C8886EBFCF |
+| localhost | mysql.sys | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+
+mysql> grant all on *.* to root@'%' identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

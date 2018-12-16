@@ -1,0 +1,534 @@
+
+[root@proxy demo]# free |column -t    //查看内存信息
+total  used     free    shared   buff/cache  available
+Mem:   1016252  362060  238208   7556        415984     456592
+Swap:  2097148  0       2097148
+[root@proxy demo]# free |awk '/Mem/{print $4}' //查看剩余内存容量
+239464
+[root@proxy demo]# free |awk '/Mem/{print $4}'
+238208
+[root@proxy demo]# uptime       //查看CPU负载（ 1 ， 5 ， 15 分钟）
+ 10:00:26 up  1:45,  1 user,  load average: 0.00, 0.01, 0.05
+[root@proxy demo]# uptime |awk '{print $NF}'  //仅查看CPU的15分钟平均负载
+0.05
+
+[root@proxy demo]# iostat
+Linux 3.10.0-693.el7.x86_64 (proxy) 	2018年09月04日 	_x86_64_	(1 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           0.18    0.01    0.18    0.44    0.00   99.18
+
+Device:            tps    kB_read/s    kB_wrtn/s    kB_read    kB_wrtn
+vda               2.36        70.82         4.39     383744      23796
+vdb               0.02         0.40         0.00       2176          0
+dm-0              2.13        68.89         4.01     373259      21748
+dm-1              0.02         0.41         0.00       2228          0
+
+[root@proxy demo]# swapon -s      //查看交换分区信息
+文件名			类型		大小	   已用	权限
+/dev/dm-1          partition	2097148	0	-1
+
+//-n以数字显示端口号
+//-t显示tcp连接
+//-u显示udp连接
+//-p显示监听端口对应的程序名称
+//-a查看所有连接状态信息
+//查看本机监听的所有端口 -nptul
+[root@proxy demo]# ss -anptul |column -t   //查看所有的网络连接信息
+Netid  State   Recv-Q  Send-Q  Local             Address:Port  Peer                                                                                                                                                                 Address:Port
+udp    UNCONN  0       0       *:11211           *:*           users:(("memcached",pid=1081,fd=28))
+udp    UNCONN  0       0       192.168.122.1:53  *:*           users:(("dnsmasq",pid=1645,fd=5))
+
+[root@proxy demo]# df |awk '/\/$/{print $5}'   //查看根分区的利用率
+23%
+[root@proxy demo]# df |head -3
+文件系统                 1K-块    已用     可用 已用% 挂载点
+/dev/mapper/rhel-root 17811456 4011512 13799944   23% /
+devtmpfs                492196       0   492196    0% /dev
+
+[root@proxy demo]# ifconfig eth0 |awk '/inet /{print $2}'; \
+> ifconfig eth0 |awk '/RX p/{print $5}';\
+> ifconfig eth0 |awk '/TX p/{print $5}';
+192.168.4.5
+407029
+178903
+[root@proxy demo]# ifconfig eth0 |tail -7
+        inet6 fe80::9c83:8f76:17a5:a313  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:eb:7d:e7  txqueuelen 1000  (Ethernet)
+        RX packets 6263  bytes 413765 (404.0 KiB)
+        RX errors 0  dropped 14  overruns 0  frame 0
+        TX packets 1398  bytes 182425 (178.1 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+===========================================================
+[root@ZabServer ~]# route -n |awk 'NR<5{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+[root@ZabServer ~]# ifconfig |grep 'inet ' |head -2
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@ZabServer ~]# nmcli connection show
+名称    UUID                                  类型            设备   
+eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
+eth1    fa2caa67-bbe7-4be8-9f43-5e6877667e59  802-3-ethernet  eth1   
+virbr0  2320e766-0bd9-4c96-8583-e402dd0890c8  bridge          virbr0
+[root@ZabServer ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@ZabServer ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+[rhel7-2]
+name=rhel7.4
+gpgcheck=0
+baseurl=ftp://192.168.2.254/rhel7
+enabled=1
+[root@ZabServer ~]# yum clean all > /dev/null ;yum repolist |tail -4
+源标识                               源名称                                状态
+rhel7                                rhel7.4                               4,986
+rhel7-2                              rhel7.4                               4,986
+repolist: 9,972
+[root@ZabServer ~]# ls
+anaconda-ks.cfg       lnmp_soft.tar.gz     公共  视频  文档  音乐
+initial-setup-ks.cfg  nginx-1.12.2.tar.gz  模板  图片  下载  桌面
+ [root@ZabServer ~]# cd /
+[root@ZabServer /]# tar -xzPf /root/lnmp_soft.tar.gz 
+[root@ZabServer /]# tar -xzPf /root/nginx-1.12.2.tar.gz 
+[root@ZabServer /]# ls
+bin   etc   lib64      mnt           proc  sbin  tmp
+boot  home  lnmp_soft  nginx-1.12.2  root  srv   usr
+dev   lib   media      opt           run   sys   var
+[root@ZabServer /]# ls /lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@ZabServer /]# ls /lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+[root@ZabServer /]# yum -y install elinks telnet httpd-tools gcc pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache php php-mysql \
+> /lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail -12 ;
+
+[root@ZabServer /]# rpm -q  elinks telnet httpd-tools gcc pcre-devel \
+> openssl-devel mariadb-devel mariadb  mariadb-server \
+> memcached php-pecl-memcache php php-mysql php-fpm ;
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+httpd-tools-2.4.6-67.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+openssl-devel-1.0.2k-8.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+[root@ZabServer /]# cd /lnmp_soft/
+[root@ZabServer lnmp_soft]# ls |grep net-snmp-devel
+[root@ZabServer lnmp_soft]# ls |grep curl-devel
+[root@ZabServer lnmp_soft]# ls |grep  libevent-devel
+libevent-devel-2.0.21-4.el7.x86_64.rpm
+[root@ZabServer lnmp_soft]# yum -y install net-snmp-devel curl-devel \
+> libevent-devel-2.0.21-4.el7.x86_64.rpm 
+[root@ZabServer lnmp_soft]# yum -y install net-snmp-devel libcurl-devel \
+> libevent-devel-2.0.21-4.el7.x86_64.rpm 
+已安装:
+  libcurl-devel.x86_64 0:7.29.0-42.el7                                 
+  libevent-devel.x86_64 0:2.0.21-4.el7                                 
+  net-snmp-devel.x86_64 1:5.7.2-28.el7 
+[root@ZabServer lnmp_soft]# rpm -q net-snmp-devel libcurl-devel libevent-devel
+net-snmp-devel-5.7.2-28.el7.x86_64
+libcurl-devel-7.29.0-42.el7.x86_64
+libevent-devel-2.0.21-4.el7.x86_64
+[root@ZabServer lnmp_soft]# cd /nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+[root@ZabServer nginx-1.12.2]# useradd -s /sbin/nologin nginx;\
+> grep nginx /etc/passwd ;
+nginx:x:1001:1001::/home/nginx:/sbin/nologin
+[root@ZabServer nginx-1.12.2]# rm -rf /usr/local/nginx;
+--------安装部署Nginx、MariaDB、PHP环境---------安装部署Nginx、MariaDB、PHP、PHP-FPM；
+============编译安装必须要使用--with-stream参数开启4层代理模块。=======
+注意必须要为PHP安装memcache扩展（php-pecl-memcache），否则PHP无法解析连接memcached的指令
+------------# --with-http_ssl_module        //开启SSL加密功能
+-----------# --with-stream         //开启TCP/UDP代理模块,4层反向代理功能 
+----------# --with-http_stub_status_module  //开启status状态页面
+    ##without-http_ssi_module 不使用ngx_http_ssi_module模块，
+     ##此模块处理服务器端包含文件(ssi)的处理 
+语法: ssi [ on | off ]
+默认值: ssi off
+__配置示例__
+location / {
+: ssi  on;
+}
+作用域: http, server, location 在location作用域中将启用SSI文件处理.
+    #源码安装Nginx时必须使用--with-http_ssl_module参数，启用加密模块，
+    #对于需要进行SSL加密处理的站点添加ssl相关指令（设置网站需要的私钥和证书）
+[root@ZabServer nginx-1.12.2]# ./configure --prefix=/usr/local/nginx  --user=nginx --group=nginx  --with-stream \
+> --with-http_ssl_module --with-http_stub_status_module \
+> --without-http_autoindex_module \       #禁用自动索引文件目录模块
+> --without-http_ssi_module |tail -8 ;  #不使用ngx_http_ssi_module模块
+
+[root@ZabServer nginx-1.12.2]# make |tail -3 && make install |tail -3 ;
+
+[root@ZabServer nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx  /sbin/
+[root@ZabServer nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 18     include       mime.types;
+ 19     default_type  application/octet-stream;
+ 20     fastcgi_buffers     8    16k;   //缓存php生成的页面内容，8个16k
+ 21     fastcgi_buffer_size      32k;   //缓存php生产的头部信息
+ 22     fastcgi_connect_timeout  300;  //连接PHP的超时时间
+ 23     fastcgi_send_timeout     300;  //发送请求的超时时间
+ 24     fastcgi_read_timeout     300;  //读取请求的超时时间
+
+ 40     server {
+ 41         listen       80;
+ 42         server_name  localhost;
+
+ 70         location ~ \.php$ {
+ 71             root           html;
+ 72             fastcgi_pass   127.0.0.1:9000;
+ 73             fastcgi_index  index.php;
+ 74         #  fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_scrip    t_name;
+ 75             include        fastcgi.conf;
+ 76         }
+--------------------------------------------------
+## conf]# \cp nginx.conf.default nginx.conf=====
+[root@ZabServer nginx-1.12.2]# nginx
+[root@ZabServer nginx-1.12.2]# ss -anptul |grep nginx
+tcp    LISTEN    0    128     *:80    *:*    users:(("nginx",pid=8175,fd=6),("nginx",pid=8174,fd=6))
+[root@ZabServer nginx-1.12.2]# systemctl start mariadb && systemctl enable mariadb ;
+systemctl restart php-fpm.service && systemctl enable php-fpm ;
+[root@ZabServer nginx-1.12.2]# cd /usr/local/nginx/html/;
+[root@ZabServer html]# vim test.php
+[root@ZabServer html]# cat test.php
+<?php
+$i=33333;
+echo $i;echo "\n";
+?>
+[root@ZabServer html]# ls
+50x.html  index.html  test.php
+[root@ZabServer html]# curl http://192.168.2.5/test.php
+33333
+[root@ZabServer html]# cd /lnmp_soft/
+[root@ZabServer lnmp_soft]# tar -xzPf /lnmp_soft/zabbix-3.4.4.tar.gz
+[root@ZabServer lnmp_soft]# ls zabbix-3.4.4*
+zabbix-3.4.4.tar.gz
+
+zabbix-3.4.4:
+aclocal.m4  conf          database    m4           NEWS
+AUTHORS     config.guess  depcomp     Makefile.am  README
+bin         config.sub    frontends   Makefile.in  sass
+build       configure     include     man          src
+ChangeLog   configure.ac  INSTALL     misc         upgrades
+compile     COPYING       install-sh  missing
+[root@ZabServer lnmp_soft]# cd zabbix-3.4.4/
+
+[root@ZabServer zabbix-3.4.4]# ./configure --enable-server \
+> --enable-proxy  --enable-agent --with-net-snmp  \
+> --with-mysql=/usr/bin/mysql_config  --with-libcurl ;
+
+***********************************************************
+*            Now run 'make install'                *
+*                                                                 *
+*            Thank you for using Zabbix!           *
+*              <http://www.zabbix.com>             *
+***********************************************************
+// --enable-server安装部署zabbix服务器端软件
+// --enable-agent安装部署zabbix被监控端软件
+// --enable-proxy安装部署zabbix代理相关软件
+// --with-mysql配置mysql_config路径
+// --with-net-snmp允许zabbix通过snmp协议监控其他设备
+// --with-libcurl安装相关curl库文件，这样zabbix就可以通过curl连接http等服务，测试被监控主机服务的状态
+
+[root@ZabServer zabbix-3.4.4]# make  && make install
+Making all in src
+make[1]: 进入目录“/lnmp_soft/zabbix-3.4.4/src”
+.......
+---------------------------------------------------------------------------------------------------------------
+  451  rm -rf zabbix-3.4.4
+  452  tar -xf zabbix-3.4.4.tar.gz 
+# cd zabbix-3.4.4
+zabbix-3.4.4]# md5sum 
+aclocal.m4     config.guess   database/      Makefile       README
+AUTHORS        config.log     depcomp        Makefile.am    sass/
+bin/           config.status  frontends/     Makefile.in    src/
+build/         config.sub     include/       man/           upgrades/
+ChangeLog      configure      INSTALL        misc/          
+compile        configure.ac   install-sh     missing        
+conf/          COPYING        m4/            NEWS           
+# md5sum configure
+f1846062cef1850f53bacd8c98d768f6  configure
+----------------------------------------------------------------------------------------
+
+[root@ZabServer zabbix-3.4.4]# cd 
+[root@ZabServer ~]# mysql
+
+MariaDB [(none)]> create database zabbix character set utf8;
+
+MariaDB [(none)]> grant all on zabbix.* to zabbix@'localhost' identified by 'zabbix';
+
+MariaDB [(none)]> quit
+Bye 
+[root@ZabServer ~]# cd /lnmp_soft/zabbix-3.4.4/database/mysql/
+    //使用mysql导入这些数据即可（注意导入顺序）
+[root@ZabServer mysql]# mysql -uzabbix -pzabbix zabbix < schema.sql
+[root@ZabServer mysql]# mysql -uzabbix -pzabbix zabbix < images.sql
+[root@ZabServer mysql]# mysql -uzabbix -pzabbix zabbix < data.sql 
+[root@ZabServer mysql]# cd /lnmp_soft/zabbix-3.4.4/frontends/php/;ls
+.......
+image.php                      usergrps.php
+images                         users.php
+img                            zabbix.php
+[root@ZabServer php]# cp -r * /usr/local/nginx/html/
+[root@ZabServer php]# chmod -R 777 /usr/local/nginx/html/*
+[root@ZabServer php]# ll /usr/local/nginx/html/zabbix.php
+-rwxrwxrwx. 1 root root 841 9月   4 14:15 /usr/local/nginx/html/zabbix.php
+[root@ZabServer php]# ls /usr/local/nginx/html/ | wc -l 
+101
+[root@ZabServer php]# pwd
+/lnmp_soft/zabbix-3.4.4/frontends/php
+[root@ZabServer php]# cd ;vim /usr/local/etc/zabbix_server.conf
+ 38 LogFile=/tmp/zabbix_server.log //设置日志，仅查看以下即可
+ 85 DBHost=localhost  //数据库主机，默认该行被注释
+ 95 DBName=zabbix //设置数据库名称
+111 DBUser=zabbix
+119 DBPassword=zabbix
+[root@ZabServer ~]# useradd -s /sbin/nologin zabbix
+
+[root@ZabServer ~]# zabbix_server      //启动服务
+[root@ZabServer ~]# ss -anptul |awk '/zabbix_server/{print $1,$3,$5}'
+tcp 0 *:10051
+
+[root@ZabServer ~]# ss -anputl |grep  zabbix_server
+tcp  LISTEN   0   128   *:10051    *:*     users:(("zabbix_server",pid=18461,fd=4),
+............
+如果是因为配置文件不对，导致服务无法启动时，不要重复执行zabbix_server，
+一定要先使用killall zabbix_server关闭服务后，再重新启动一次。
+
+[root@ZabServer ~]# vim /usr/local/etc/zabbix_agentd.conf
+
+ 29 LogFile=/tmp/zabbix_server.log   //设置日志文件
+ 30 #LogFile=/tmp/zabbix_agentd.log
+
+ 93 Server=127.0.0.1,192.168.2.5    //允许哪些主机监控本机
+
+134 ServerActive=127.0.0.1,192.168.2.5   //允许哪些主机通过主动模式监控本机
+
+145 Hostname=Zabbix_server  //设置本机主机名
+
+280 UnsafeUserParameters=1     //是否允许自定义key
+
+[root@ZabServer ~]# zabbix_agentd   //启动监控agent
+
+[root@ZabServer ~]# ss -anptul |grep zabbix_server
+tcp    LISTEN     0      128       *:10051                 *:* 
+............................
+[root@ZabServer ~]# ss -ntlup | grep zabbix_agentd
+tcp    LISTEN     0      128       *:10050                 *:* 
+.............
+[root@ZabServer ~]# firefox http://192.168.2.5/index.php
+Welcome to  Zabbix 3.4
+[root@ZabServer ~]# yum -y install php-gd  php-xml \
+> /lnmp_soft/php-bcmath-5.4.16-42.el7.x86_64.rpm \
+> /lnmp_soft/php-mbstring-5.4.16-42.el7.x86_64.rpm |tail -9 ;
+
+[root@ZabServer ~]# rpm -q php-gd php-xml php-bcmath php-mbstring
+php-gd-5.4.16-42.el7.x86_64
+php-xml-5.4.16-42.el7.x86_64
+php-bcmath-5.4.16-42.el7.x86_64
+php-mbstring-5.4.16-42.el7.x86_64
+--------------------------------------------------------------------------------------------------------------------
+[root@ZabServer nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 22     fastcgi_connect_timeout  300;  //连接PHP的超时时间
+ 23     fastcgi_send_timeout     300;  //发送请求的超时时间
+ 24     fastcgi_read_timeout     300;  //读取请求的超时时间
+--------------------------------------------------------------------------------------------------------------
+[root@ZabServer ~]# vim /etc/php.ini 
+
+ 384 max_execution_time = 300   //最大执行时间，秒
+ 394 max_input_time = 300     //服务器接收数据的时间限制
+ 405 memory_limit = 128M     //内存容量限制
+ 672 post_max_size = 24M    //POST数据最大容量
+ 878 date.timezone = Asia/Shanghai  //设置时区
+[root@ZabServer ~]# systemctl restart php-fpm.service 
+[root@ZabServer ~]# firefox http://192.168.2.5/index.php
+    Welcome
+    Check of pre-requisites
+    Configure DB connection
+    Zabbix server details
+    Pre-installation summary
+    Install
+<!--#在登陆页面，使用用户(admin)和密码(zabbix)登陆，
+登陆后设置语言环境为中文-->
+
+[root@ZabServer ~]# awk 'END{print NR}' /etc/passwd
+45
+[root@ZabServer ~]# cat /etc/passwd |wc -l
+45
+[root@ZabServer ~]# sed -n '$=' /etc/passwd
+45
+--------------------------
+###psch -h host.txt  zabbix.sh
+###pssh -h host.txt  /root/zabbix.sh
+###cmd bat
+-------------------------
+
+
+
+
+
+
+
+[root@web1 ~]# ifconfig eth1 |grep 'inet '
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@web1 ~]# route -n |awk 'NR<5{print $2}'
+IP
+Gateway
+192.168.2.5
+0.0.0.0
+[root@web1 ~]# useradd -s /sbin/nologin zabbix
+##1）源码安装Zabbix agent软件
+    ~]# yum -y install gcc pcre-devel
+
+[root@web1 ~]# tar zxPf /root/lnmp_soft/zabbix-3.4.4.tar.gz 
+[root@web1 ~]# ls /root/zabbix-3.4.4/;cd zabbix-3.4.4/
+aclocal.m4  conf          database    m4           NEWS
+AUTHORS     config.guess  depcomp     Makefile.am  README
+bin         config.sub    frontends   Makefile.in  sass
+build       configure     include     man          src
+ChangeLog   configure.ac  INSTALL     misc         upgrades
+compile     COPYING       install-sh  missing
+// --enable-server安装部署zabbix服务器端软件
+// --enable-agent安装部署zabbix被监控端软件
+// --enable-proxy安装部署zabbix代理相关软件
+// --with-mysql配置mysql_config路径
+// --with-net-snmp允许zabbix通过snmp协议监控其他设备
+// --with-libcurl安装相关curl库文件，这样zabbix就可以通过curl连接http等服务，
+测试被监控主机服务的状态
+[root@web1 zabbix-3.4.4]# ./configure --enable-agent
+
+***********************************************************
+*            Now run 'make install'                *
+*                                                                 *
+*            Thank you for using Zabbix!           *
+*              <http://www.zabbix.com>             *
+***********************************************************
+
+[root@web1 zabbix-3.4.4]# make |tail -3 && make install |tail -3 ;
+
+[root@web1 zabbix-3.4.4]# cd ;vim /usr/local/etc/zabbix_agentd.conf
+
+ 69 EnableRemoteCommands=1  //监控异常后，是否允许服务器远程过来执行命令，如重启某个服务
+
+ 93 Server=127.0.0.1,192.168.2.5  //谁可以监控本机（被动监控模式）
+134 ServerActive=127.0.0.1,192.168.2.5   //谁可以监控本机（主动监控模式）
+
+144 Hostname=Zabbixclient_web1    //被监控端自己的主机名
+145 #Hostname=Zabbix server
+
+280 UnsafeUserParameters=1   //允许=1自定义key监控=1
+[root@web1 ~]# zabbix_agentd   //启动agent服务
+
+<!--/**3）拷贝启动脚本（非必须操作，可选做），有启动脚本可以方便管理服务，
+启动与关闭服务。启动脚本位于zabbix源码目录下。
+[root@zabbixclient_web1 zabbix-3.4.4]# cd misc/init.d/fedora/core
+[root@zabbixclient_web1 zabbix-3.4.4]# cp zabbix_agentd /etc/init.d/
+[root@zabbixclient_web1 zabbix-3.4.4]# /etc/init.d/zabbix_agentd start
+[root@zabbixclient_web1 zabbix-3.4.4]# /etc/init.d/zabbix_agentd stop
+[root@zabbixclient_web1 zabbix-3.4.4]# /etc/init.d/zabbix_agentd status
+[root@zabbixclient_web1 zabbix-3.4.4]# /etc/init.d/zabbix_agentd restart
+**/-->
+[root@web1 ~]# vim /usr/local/etc/zabbix_agentd.conf
+
+264 Include=/usr/local/etc/zabbix_agentd.conf.d/
+265 # Include=/usr/local/etc/zabbix_agentd.conf.d/*.conf
+/*#自定义的key文件一般存在/usr/local/etc/zabbix_agentd.conf.d/目录**/
+
+[root@web1 ~]# cd /usr/local/etc/zabbix_agentd.conf.d/;ls
+[root@web1 zabbix_agentd.conf.d]# pwd
+/usr/local/etc/zabbix_agentd.conf.d
+[root@web1 zabbix_agentd.conf.d]# vim count.line.passwd
+
+[root@web1 zabbix_agentd.conf.d]# cat count.line.passwd
+#自定义key语法格式为：UserParameter=自定义key名称,命令。
+
+UserParameter=count.line.passwd,sed -n '$=' /etc/passwd
+
+[root@web1 zabbix_agentd.conf.d]# killall zabbix_agentd
+[root@web1 zabbix_agentd.conf.d]# zabbix_agentd
+
+[root@web1 zabbix_agentd.conf.d]# useradd zhsan ;useradd sange ;useradd mimi;
+
+[root@web1 zabbix_agentd.conf.d]# ls /home
+lisi  mimi  nginx  nginx2  sange  tom  tomcat  zabbix  zhsan
+[root@web1 zabbix_agentd.conf.d]# userdel -r zhsan ;userdel -r mimi;userdel -r sange
+
+[root@web1 zabbix_agentd.conf.d]# ls /home
+lisi  nginx  nginx2  tom  tomcat  zabbix
+#查看监控数据图形变化
+
+
+
+
+[root@web2 ~]# ifconfig eth1 |grep 'inet '
+        inet 192.168.2.200  netmask 255.255.255.0  broadcast 192.168.2.255
+[root@web2 ~]# 
+[root@web2 ~]# route -n |awk 'NR<5{print $2}'
+IP
+Gateway
+192.168.2.5
+0.0.0.0
+[root@web2 ~]# nginx 
+[root@web2 ~]# ss -anptul |grep :80
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=3290,fd=6),("nginx",pid=3289,fd=6))
+[root@web2 ~]#  rpm -q elinks  telnet httpd-tools gcc pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache php php-mysql php-fpm ;
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+httpd-tools-2.4.6-67.el7.centos.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+
+openssl-devel-1.0.2k-8.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+[root@web2 ~]# useradd -s /sbin/nologin zabbix
+[root@web2 ~]# yum -y install gcc pcre-devel |tail -2 ;
+软件包 pcre-devel-8.32-17.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@web2 ~]# tar  -zxPf /root/lnmp_soft/zabbix-3.4.4.tar.gz 
+[root@web2 ~]# cd /root/zabbix-3.4.4/;ls
+aclocal.m4  conf          database    m4           NEWS
+AUTHORS     config.guess  depcomp     Makefile.am  README
+bin         config.sub    frontends   Makefile.in  sass
+build       configure     include     man          src
+ChangeLog   configure.ac  INSTALL     misc         upgrades
+compile     COPYING       install-sh  missing
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

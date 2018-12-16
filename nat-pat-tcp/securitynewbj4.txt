@@ -1,0 +1,2042 @@
+
+[root@hiys ~]# ls /etc/bashrc 
+/etc/bashrc
+[root@hiys ~]# ls /etc/profile
+/etc/profile
+[root@hiys ~]# 
+[root@hiys ~]# ls /etc/bashrc 
+/etc/bashrc
+[root@hiys ~]# ls /etc/profile
+/etc/profile
+[root@hiys ~]# grep "Taren1" /etc/profile
+[root@hiys ~]# grep "Taren1" /etc/bashrc 
+echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# cat -b /etc/bashrc |grep "Taren1"
+    87	echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# vim /etc/bashrc 
+[root@hiys ~]# cat -n  /etc/bashrc |tail -2
+    93	/usr/sbin/ifconfig rhce:0 172.25.0.250
+    94	echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# cat -n /etc/bashrc |grep "Taren1"
+    94	echo Taren1 | passwd --stdin root &> /dev/null
+[root@hiys ~]# grep "^#" /etc/bashrc |wc -l
+9
+[root@hiys ~]#
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.50
+192.168.2.50
+201.1.1.50
+201.1.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H50 ~]# systemctl is-active NetworkManager
+active
+[root@H50 ~]# iptables  -nL  --line-numbers
+Chain INPUT (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:53
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:53
+3    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:67
+4    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:67
+5    ACCEPT     tcp  --  192.168.4.254        0.0.0.0/0            tcp dpt:22
+6    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+7    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0            icmptype 0
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  0.0.0.0/0            192.168.122.0/24     ctstate RELATED,ESTABLISHED
+2    ACCEPT     all  --  192.168.122.0/24     0.0.0.0/0           
+3    ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+4    REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+5    REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:68
+[root@H50 ~]# 
+[root@H50 ~]# sed -n 17,20p  /etc/ssh/sshd_config 
+Port 22
+#Port  2222
+#AddressFamily any
+#ListenAddress  192.168.4.50
+
+[root@H50 ~]# rpm -qa |grep iptables
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+iptables-devel-1.4.21-18.el7.x86_64
+[root@H50 ~]# systemctl is-enabled firewalld.service 
+disabled
+[root@H50 ~]# systemctl stop NetworkManager
+
+[root@H50 ~]# systemctl is-active NetworkManager
+inactive
+[root@H50 ~]# service iptables start
+
+Redirecting to /bin/systemctl start iptables.service
+
+[root@H50 ~]# chkconfig  iptables on
+
+注意：正在将请求转发到“systemctl enable iptables.service”。
+[root@H50 ~]# 
+[root@H50 ~]# service iptables stop
+Redirecting to /bin/systemctl stop iptables.service
+[root@H50 ~]# 
+[root@H50 ~]# systemctl start NetworkManager
+
+[root@H50 ~]# systemctl  is-active NetworkManager
+active
+[root@H50 ~]#
+[root@H50 ~]# ls lnmp/
+nginx-1.12.2.tar.gz  php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@H50 ~]# service iptables stop
+
+Redirecting to /bin/systemctl stop iptables.service
+
+[root@H50 ~]# systemctl stop  httpd
+
+[root@H50 ~]# systemctl disable httpd
+
+Removed symlink /etc/systemd/system/multi-user.target.wants/httpd.service.
+
+[root@H50 ~]# tar -xzf  lnmp/nginx-1.12.2.tar.gz 
+
+[root@H50 ~]# ls nginx-1.12.2/
+auto  CHANGES  CHANGES.ru  conf  configure  contrib  html  LICENSE  man  README  src
+
+[root@H50 ~]# yum -y install elinks   httpd-tools gcc  pcre-devel openssl-devel  lnmp/php-fpm-5.4.16-42.el7.x86_64.rpm  |tail -9
+
+作为依赖被安装:
+  keyutils-libs-devel.x86_64 0:1.5.8-3.el7   krb5-devel.x86_64 0:1.15.1-8.el7   
+  libcom_err-devel.x86_64 0:1.42.9-10.el7    libkadm5.x86_64 0:1.15.1-8.el7     
+  libselinux-devel.x86_64 0:2.5-11.el7       libsepol-devel.x86_64 0:2.5-6.el7  
+  libverto-devel.x86_64 0:0.2.5-4.el7        libzip.x86_64 0:0.10.1-8.el7       
+  php-common.x86_64 0:5.4.16-42.el7          zlib-devel.x86_64 0:1.2.7-17.el7   
+
+完毕！
+[root@H50 ~]# useradd  -s /sbin/nologin  nginx
+[root@H50 ~]# cd nginx-1.12.2/
+[root@H50 nginx-1.12.2]# ls
+auto  CHANGES  CHANGES.ru  conf  configure  contrib  html  LICENSE  man  README  src
+
+[root@H50 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx \
+> --user=nginx --group=nginx  --with-http_ssl_module  \
+> --without-http_autoindex_module  --without-http_ssi_module  \
+> --with-stream  --with-http_stub_status_module |
+> tail -10
+
+  nginx configuration file: "/usr/local/nginx/conf/nginx.conf"
+  nginx pid file: "/usr/local/nginx/logs/nginx.pid"
+  nginx error log file: "/usr/local/nginx/logs/error.log"
+  nginx http access log file: "/usr/local/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
+[root@H50 nginx-1.12.2]# make |tail -3 && make install |tail -3
+.....................................
+
+[root@H50 nginx-1.12.2]# ll /usr/local/nginx/sbin/nginx 
+-rwxr-xr-x. 1 root root 6360176 11月  8 15:37 /usr/local/nginx/sbin/nginx
+
+[root@H50 nginx-1.12.2]# echo "export PATH=/usr/local/nginx/sbin/:$PATH" >> /etc/profile
+
+[root@H50 nginx-1.12.2]# tail -2 /etc/profile
+export  PATH=/usr/local/mongodb/bin/:$PATH
+export PATH=/usr/local/nginx/sbin/:/usr/local/mongodb/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@H50 nginx-1.12.2]# vim  /etc/profile
+
+[root@H50 nginx-1.12.2]# tail -2 /etc/profile
+export  PATH=/usr/local/mongodb/bin/:$PATH
+export PATH=/usr/local/nginx/sbin/:$PATH
+[root@H50 nginx-1.12.2]# source /etc/profile
+
+[root@H50 nginx-1.12.2]# pwd
+/root/nginx-1.12.2
+[root@H50 nginx-1.12.2]# cd
+
+[root@H50 ~]# which nginx
+/usr/local/nginx/sbin/nginx
+
+[root@H50 ~]# netstat  -anpult |grep :80
+
+[root@H50 ~]# nginx
+
+[root@H50 ~]# netstat  -anpult |grep :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      8971/nginx: master  
+
+[root@H50 ~]# nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --without-http_autoindex_module --without-http_ssi_module --with-stream --with-http_stub_status_module
+
+[root@H50 ~]# ls  /usr/local/nginx/html/
+50x.html  index.html
+[root@H50 ~]# echo "test H50" > /usr/local/nginx/html/test.html
+
+[root@H50 ~]# firefox http://192.168.4.50
+
+[root@H50 ~]# ls  /usr/local/nginx/conf/
+fastcgi.conf          fastcgi_params.default  mime.types          nginx.conf.default   uwsgi_params
+fastcgi.conf.default  koi-utf                 mime.types.default  scgi_params          uwsgi_params.default
+fastcgi_params        koi-win                 nginx.conf          scgi_params.default  win-utf
+
+[root@H50 ~]# vim  /usr/local/nginx/conf/nginx.conf
+
+[root@H50 ~]# sed -n 35,38p /usr/local/nginx/conf/nginx.conf
+    server {
+        listen       80;
+        server_name  localhost;
+        autoindex  on;
+[root@H50 ~]# nginx -?
+nginx version: nginx/1.12.2
+Usage: nginx [-?hvVtTq] [-s signal] [-c filename] [-p prefix] [-g directives]
+
+Options:
+  -?,-h         : this help
+  -v            : show version and exit
+  -V            : show version and configure options then exit
+  -t            : test configuration and exit
+  -T            : test configuration, dump it and exit
+  -q            : suppress non-error messages during configuration testing
+  -s signal     : send signal to a master process: stop, quit, reopen, reload
+  -p prefix     : set prefix path (default: /usr/local/nginx/)
+  -c filename   : set configuration file (default: conf/nginx.conf)
+  -g directives : set global directives out of configuration file
+
+[root@H50 ~]# nginx -s reload
+nginx: [emerg] unknown directive "autoindex" in /usr/local/nginx/conf/nginx.conf:38
+
+[root@H50 ~]# vim  /usr/local/nginx/conf/nginx.conf
+
+[root@H50 ~]# sed -n 35,38p /usr/local/nginx/conf/nginx.conf
+    server {
+        listen       80;
+        server_name  localhost;
+        #autoindex  on;
+
+[root@H50 ~]# nginx -s reload
+[root@H50 ~]# 
+
+[root@H50 ~]# vim  /usr/local/nginx/conf/nginx.conf
+[root@H50 ~]# sed -n 17,21p /usr/local/nginx/conf/nginx.conf
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    server_tokens off;  ## 隐藏版本号功能
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+
+[root@H50 ~]# nginx -s reload
+
+[root@H50 ~]# nginx -V
+nginx version: nginx/1.12.2
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --without-http_autoindex_module --without-http_ssi_module --with-stream --with-http_stub_status_module
+
+[root@H50 ~]# nginx -v
+nginx version: nginx/1.12.2
+[root@H50 ~]# firefox http://192.168.4.50
+
+[root@H50 ~]# 
+
+[root@H50 ~]# curl -I http://192.168.4.50
+HTTP/1.1 200 OK
+Server: nginx
+Date: Thu, 08 Nov 2018 08:17:40 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Thu, 08 Nov 2018 07:37:29 GMT
+Connection: keep-alive
+ETag: "5be3e7b9-264"
+Accept-Ranges: bytes
+
+[root@H50 ~]# cd nginx-1.12.2/;ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+
+[root@H50 nginx-1.12.2]# ls src/
+core  event  http  mail  misc  os  stream
+
+[root@H50 nginx-1.12.2]# ls src/http/
+modules                        ngx_http_header_filter_module.c    ngx_http_upstream.c
+ngx_http.c                     ngx_http_parse.c                   ngx_http_upstream.h
+ngx_http_cache.h               ngx_http_postpone_filter_module.c  ngx_http_upstream_round_robin.c
+ngx_http_config.h              ngx_http_request_body.c            ngx_http_upstream_round_robin.h
+ngx_http_copy_filter_module.c  ngx_http_request.c                 ngx_http_variables.c
+ngx_http_core_module.c         ngx_http_request.h                 ngx_http_variables.h
+ngx_http_core_module.h         ngx_http_script.c                  ngx_http_write_filter_module.c
+ngx_http_file_cache.c          ngx_http_script.h                  v2
+ngx_http.h                     ngx_http_special_response.c
+[root@H50 nginx-1.12.2]# 
+
+[root@H50 nginx-1.12.2]# ls src/http/ngx_http_header_filter_module.c 
+src/http/ngx_http_header_filter_module.c
+
+[root@H50 nginx-1.12.2]# cd src/http/
+[root@H50 http]# pwd
+/root/nginx-1.12.2/src/http
+[root@H50 http]# vim /root/nginx-1.12.2/src/http/ngx_http_header_filter_module.c 
+
+
+static u_char ngx_http_server_string[] = "Server: nginx" CRLF;
+static u_char ngx_http_server_full_string[] = "Server: " NGINX_VER CRLF;
+static u_char ngx_http_server_build_string[] = "Server: " NGINX_VER_BUILD CRLF;
+
+
+ 49 static u_char ngx_http_server_string[] = "Server: IIS" CRLF;
+ 50 static u_char ngx_http_server_full_string[] = "Server: IIS" NGINX_VER CRLF;
+ 51 static u_char ngx_http_server_build_string[] = "Server: IIS" NGINX_VER_BUILD CRLF;
+
+
+[root@H50 http]# sed -n 49,51p /root/nginx-1.12.2/src/http/ngx_http_header_filter_module.c
+
+static u_char ngx_http_server_string[] = "Server: IIS" CRLF;
+static u_char ngx_http_server_full_string[] = "Server: IIS" NGINX_VER CRLF;
+static u_char ngx_http_server_build_string[] = "Server: IIS" NGINX_VER_BUILD CRLF;
+[root@H50 http]# 
+
+[root@H50 http]# cd /root/nginx-1.12.2/
+[root@H50 nginx-1.12.2]# ls
+auto     CHANGES.ru  configure  html     Makefile  objs    src
+CHANGES  conf        contrib    LICENSE  man       README
+[root@H50 nginx-1.12.2]# nginx -s stop
+[root@H50 nginx-1.12.2]# netstat -anputl |grep :80
+[root@H50 nginx-1.12.2]# ./configure  --prefix=/usr/local/nginx --user=nginx --group=nginx --with-http_ssl_module --without-http_autoindex_module --without-http_ssi_module --with-stream --with-http_stub_status_module |tail -8
+  nginx error log file: "/usr/local/nginx/logs/error.log"
+  nginx http access log file: "/usr/local/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
+[root@H50 nginx-1.12.2]# make >/dev/null && make install |tail -3
+test -d '/usr/local/nginx/logs' \
+	|| mkdir -p '/usr/local/nginx/logs'
+make[1]: 离开目录“/root/nginx-1.12.2”
+[root@H50 nginx-1.12.2]# netstat -anputl |grep :80
+[root@H50 nginx-1.12.2]# nginx 
+
+[root@H50 nginx-1.12.2]# netstat -anputl |grep :80
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      12535/nginx: master 
+
+[root@H50 nginx-1.12.2]# curl -I http://192.168.4.50
+HTTP/1.1 200 OK
+Server: IIS
+Date: Thu, 08 Nov 2018 08:27:27 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Thu, 08 Nov 2018 07:37:29 GMT
+Connection: keep-alive
+ETag: "5be3e7b9-264"
+Accept-Ranges: bytes
+
+[root@H50 nginx-1.12.2]# cd
+
+[root@H50 ~]# sed -n 17,21p  /usr/local/nginx/conf/nginx.conf
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    server_tokens off;
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+
+[root@H50 ~]# 
+/***********************************
+echo 123 |passwd  --stdin root
+echo H58 >/etc/hostname
+nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.58/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+nmcli connection up eth0 
+nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.58/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+nmcli connection up eth1 
+*****************************************************/
+
+[root@H50 ~]# ll lnmp_soft.tar.gz 
+-rw-r--r--. 1 root root 78844881 11月  6 08:44 lnmp_soft.tar.gz
+[root@H50 ~]# scp -o StrictHostKeyChecking=no lnmp_soft.tar.gz  root@192.168.4.58:/root/
+Warning: Permanently added '192.168.4.58' (ECDSA) to the list of known hosts.
+root@192.168.4.58's password: 
+lnmp_soft.tar.gz                                                 100%   75MB  36.0MB/s   00:02    
+[root@H50 ~]# 
+[root@H50 ~]# curl -i -X GET HTTP://192.168.4.50
+HTTP/1.1 200 OK
+Server: IIS
+Date: Thu, 08 Nov 2018 09:04:52 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Thu, 08 Nov 2018 07:37:29 GMT
+Connection: keep-alive
+ETag: "5be3e7b9-264"
+Accept-Ranges: bytes
+
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+[root@H50 ~]# vim  /usr/local/nginx/conf/nginx.conf
+..............................
+ 35     server {
+ 36         listen       80;
+ 37         server_name  localhost;
+ 38         #autoindex  on;
+ 39         #charset koi8-r;
+ 40         if ($request_method !~ ^(GET|POST)$ ) {
+ 41           return 444;
+ 42         }
+[root@H50 ~]# sed -n 35,42p /usr/local/nginx/conf/nginx.conf
+    server {
+        listen       80;
+        server_name  localhost;
+        #autoindex  on;
+        #charset koi8-r;
+        if ($request_method !~ ^(GET|POST)$ ) {
+          return 444;  ## 注意444 不能这样写,写500正确
+        }
+[root@H50 ~]# 
+[root@H50 ~]# nginx -s reload
+[root@H50 ~]# nginx -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+[root@H50 ~]# curl -i -X HEAD  HTTP://192.168.4.50
+curl: (52) Empty reply from server
+[root@H50 ~]# echo $?
+52
+[root@H50 ~]# vim  /usr/local/nginx/conf/nginx.conf
+[root@H50 ~]# sed -n 40,41p /usr/local/nginx/conf/nginx.conf
+        if ($request_method !~ ^(GET|POST)$ ) {
+          return 500;
+[root@H50 ~]# nginx -s reload
+[root@H50 ~]# nginx -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+[root@H50 ~]# curl -i -X HEAD  HTTP://192.168.4.50
+HTTP/1.1 500 Internal Server Error
+Server: IIS
+Date: Thu, 08 Nov 2018 09:17:09 GMT
+Content-Type: text/html
+Content-Length: 186
+Connection: close
+
+curl: (18) transfer closed with 186 bytes remaining to read
+[root@H50 ~]# echo $?
+18
+[root@H50 ~]# 
+[root@H50 ~]# which ab
+/usr/bin/ab
+[root@H50 ~]# rpm -q httpd-tools
+httpd-tools-2.4.6-67.el7.x86_64
+[root@H50 ~]# ab -c 100  -n 1000 http://192.168.4.50
+ab: invalid URL
+Usage: ab [options] [http[s]://]hostname[:port]/path
+Options are:
+    -n requests     Number of requests to perform
+    -c concurrency  Number of multiple requests to make at a time
+    -t timelimit    Seconds to max. to spend on benchmarking
+                    This implies -n 50000
+    -s timeout      Seconds to max. wait for each response
+                    Default is 30 seconds
+    -b windowsize   Size of TCP send/receive buffer, in bytes
+    -B address      Address to bind to when making outgoing connections
+    -p postfile     File containing data to POST. Remember also to set -T
+    -u putfile      File containing data to PUT. Remember also to set -T
+    -T content-type Content-type header to use for POST/PUT data, eg.
+                    'application/x-www-form-urlencoded'
+                    Default is 'text/plain'
+    -v verbosity    How much troubleshooting info to print
+    -w              Print out results in HTML tables
+    -i              Use HEAD instead of GET
+    -x attributes   String to insert as table attributes
+    -y attributes   String to insert as tr attributes
+    -z attributes   String to insert as td or th attributes
+    -C attribute    Add cookie, eg. 'Apache=1234'. (repeatable)
+    -H attribute    Add Arbitrary header line, eg. 'Accept-Encoding: gzip'
+                    Inserted after all normal header lines. (repeatable)
+    -A attribute    Add Basic WWW Authentication, the attributes
+                    are a colon separated username and password.
+    -P attribute    Add Basic Proxy Authentication, the attributes
+                    are a colon separated username and password.
+    -X proxy:port   Proxyserver and port number to use
+    -V              Print version number and exit
+    -k              Use HTTP KeepAlive feature
+    -d              Do not show percentiles served table.
+    -S              Do not show confidence estimators and warnings.
+    -q              Do not show progress when doing more than 150 requests
+    -g filename     Output collected data to gnuplot format file.
+    -e filename     Output CSV file with percentages served
+    -r              Don't exit on socket receive errors.
+    -h              Display usage information (this message)
+    -Z ciphersuite  Specify SSL/TLS cipher suite (See openssl ciphers)
+    -f protocol     Specify SSL/TLS protocol
+                    (SSL2, SSL3, TLS1, TLS1.1, TLS1.2 or ALL)
+[root@H50 ~]# ab -c 100  -n 200 http://192.168.4.50/
+.............................
+
+Server Software:        IIS
+Server Hostname:        192.168.4.50
+Server Port:            80
+
+Document Path:          /
+Document Length:        612 bytes
+
+Concurrency Level:      100
+Time taken for tests:   0.011 seconds
+Complete requests:      200
+Failed requests:        0
+Write errors:           0
+Total transferred:      167200 bytes
+HTML transferred:       122400 bytes
+Requests per second:    18873.27 [#/sec] (mean)
+Time per request:       5.299 [ms] (mean)
+Time per request:       0.053 [ms] (mean, across all concurrent requests)
+Transfer rate:          15408.25 [Kbytes/sec] received
+.........................
+  99%      6
+ 100%      6 (longest request)
+[root@H50 ~]# 
+
+[root@H50 ~]# ls /usr/local/nginx/html/
+50x.html  index.html  test.html
+[root@H50 ~]# ab -c 100  -n 1000 http://192.168.4.50/test.html
+This is ApacheBench, Version 2.3 <$Revision: 1430300 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 192.168.4.50 (be patient)
+Completed 100 requests
+Completed 200 requests
+............
+Concurrency Level:      100
+Time taken for tests:   0.053 seconds
+Complete requests:      1000
+Failed requests:        0
+Write errors:           0
+.............................
+  99%      6
+ 100%      6 (longest request)
+[root@H50 ~]# vim  /usr/local/nginx/conf/nginx.conf
+
+ 17 http {                               ##  zone=自定义名字one   #rate=1美秒存储一个请求包?
+ 18   limit_req_zone $binary_remote_addr  zone=one:10m  rate=1r/s;
+ 19     include       mime.types;
+
+ 36     server {
+ 37       limit_req  zone=one  burst=5; ## burst 表示存储 5个请求包?
+
+[root@H50 ~]# nginx -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+[root@H50 ~]# sed -n '17,19p;36,38p' /usr/local/nginx/conf/nginx.conf
+http {
+  limit_req_zone $binary_remote_addr  zone=one:10m  rate=1r/s;
+    include       mime.types;
+    server {   ## zone=自定义名字one 
+      limit_req  zone=one  burst=5;
+        listen       80;
+[root@H50 ~]# nginx -s reload
+[root@H50 ~]# ab -c 100  -n 1000 http://192.168.4.50/test.html
+..................................
+Concurrency Level:      100
+Time taken for tests:   5.003 seconds
+Complete requests:      1000
+Failed requests:        994
+   (Connect: 0, Receive: 0, Length: 994, Exceptions: 0)
+Write errors:           0
+Non-2xx responses:      994
+..............................
+  99%      6
+ 100%   5002 (longest request)
+[root@H50 ~]# 
+
+
+[root@H50 ~]# ab -c 5  -n 50  http://192.168.4.50/test.html
+....................................
+Server Software:        IIS
+Server Hostname:        192.168.4.50
+Server Port:            80
+
+Document Path:          /test.html
+Document Length:        9 bytes
+
+Concurrency Level:      5
+Time taken for tests:   49.001 seconds
+Complete requests:      50
+Failed requests:        0
+Write errors:           0
+Total transferred:      11450 bytes
+HTML transferred:       450 bytes
+Requests per second:    1.02 [#/sec] (mean)
+Time per request:       4900.123 [ms] (mean)
+Time per request:       980.025 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.23 [Kbytes/sec] received
+....................................
+ 100%   5001 (longest request)
+[root@H50 ~]# 
+
+[root@H50 ~]# ab -c 6  -n 7  http://192.168.4.50/test.html
+..................................
+Document Path:          /test.html
+Document Length:        9 bytes
+
+Concurrency Level:      6
+Time taken for tests:   5.001 seconds
+Complete requests:      7
+Failed requests:        1
+   (Connect: 0, Receive: 0, Length: 1, Exceptions: 0)
+Write errors:           0
+Non-2xx responses:      1
+Total transferred:      2096 bytes
+HTML transferred:       591 bytes
+Requests per second:    1.40 [#/sec] (mean)
+Time per request:       4286.950 [ms] (mean)
+Time per request:       714.492 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.41 [Kbytes/sec] received
+..............................
+ 100%   5001 (longest request)
+[root@H50 ~]# ab -c 6  -n 6  http://192.168.4.50/test.html
+......................
+
+Server Software:        IIS
+Server Hostname:        192.168.4.50
+Server Port:            80
+
+Document Path:          /test.html
+Document Length:        9 bytes
+
+Concurrency Level:      6
+Time taken for tests:   5.002 seconds
+Complete requests:      6
+Failed requests:        0
+Write errors:           0
+Total transferred:      1374 bytes
+HTML transferred:       54 bytes
+Requests per second:    1.20 [#/sec] (mean)
+Time per request:       5001.966 [ms] (mean)
+Time per request:       833.661 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.27 [Kbytes/sec] received
+...............................
+ 100%   5002 (longest request)
+[root@H50 ~]# 
+[root@H50 ~]# ab -c 8  -n 8  http://192.168.4.50/test.html
+..................................
+Server Software:        IIS
+Server Hostname:        192.168.4.50
+Server Port:            80
+
+Document Path:          /test.html
+Document Length:        9 bytes
+
+Concurrency Level:      8
+Time taken for tests:   5.002 seconds
+Complete requests:      8
+Failed requests:        2
+   (Connect: 0, Receive: 0, Length: 2, Exceptions: 0)
+Write errors:           0
+Non-2xx responses:      2
+Total transferred:      2818 bytes
+HTML transferred:       1128 bytes
+Requests per second:    1.60 [#/sec] (mean)
+Time per request:       5001.964 [ms] (mean)
+Time per request:       625.245 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.55 [Kbytes/sec] received
+................................
+ 100%   5002 (longest request)
+[root@H50 ~]# 
+[root@H50 ~]# ab -c 5  -n 100  http://192.168.4.50/test.html
+.............................
+Benchmarking 192.168.4.50 (be patient).....done
+
+Server Software:        IIS
+Server Hostname:        192.168.4.50
+Server Port:            80
+
+Document Path:          /test.html
+Document Length:        9 bytes
+
+Concurrency Level:      5
+Time taken for tests:   99.002 seconds
+Complete requests:      100
+Failed requests:        0
+Write errors:           0
+Total transferred:      22900 bytes
+HTML transferred:       900 bytes
+Requests per second:    1.01 [#/sec] (mean)
+Time per request:       4950.087 [ms] (mean)
+Time per request:       990.017 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.23 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       0
+Processing:     0 4850 729.8   5000    5002
+Waiting:        0 4850 729.8   5000    5002
+Total:          0 4850 729.8   5000    5002
+
+Percentage of the requests served within a certain time (ms)
+  50%   5000
+  66%   5000
+  75%   5000
+  80%   5000
+  90%   5001
+  95%   5001
+  98%   5001
+  99%   5002
+ 100%   5002 (longest request)
+[root@H50 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@hiys ~]# ssh -X 192.168.2.51
+root@192.168.2.51's password: 
+Last login: Thu Nov  8 08:38:03 2018 from 192.168.4.254
+[root@H51 ~]# ifdown  eth0
+成功断开设备 'eth0'。
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.2.254
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H51 ~]# route add default gateway 192.168.2.52
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.2.52
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H51 ~]# route del default gateway 192.168.2.254
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.2.52
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H51 ~]# systemctl is-active NetworkManager
+active
+[root@H51 ~]# systemctl stop NetworkManager
+[root@H51 ~]# 
+[root@H51 ~]#  netstat -unptl |grep -E ':3306|:6351|:80|:21|:22'
+tcp        0      0 192.168.4.51:6351       0.0.0.0:*               LISTEN      1241/redis-server 1 
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1165/sshd           
+tcp6       0      0 :::21                   :::*                    LISTEN      1216/vsftpd         
+tcp6       0      0 :::22                   :::*                    LISTEN      1165/sshd           
+tcp6       0      0 :::3306                 :::*                    LISTEN      1452/mysqld         
+[root@H51 ~]# sed -n 17,20p  /etc/ssh/sshd_config 
+Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+[root@H51 ~]# rpm -qa |grep iptables
+iptables-services-1.4.21-18.el7.x86_64
+iptables-1.4.21-18.el7.x86_64
+iptables-devel-1.4.21-18.el7.x86_64
+[root@H51 ~]# systemctl is-enabled firewalld
+disabled
+[root@H51 ~]# sysctl  -p
+[root@H51 ~]# vim /etc/sysctl.conf 
+[root@H51 ~]# tail -1 /etc/sysctl.conf
+net.ipv4.ip_forward = 1
+[root@H51 ~]# sysctl  -p
+net.ipv4.ip_forward = 1
+[root@H51 ~]# 
+[root@H51 ~]# systemctl is-active NetworkManager
+inactive
+[root@H51 ~]# service iptables start 
+Redirecting to /bin/systemctl start iptables.service
+[root@H51 ~]# chkconfig iptables on
+注意：正在将请求转发到“systemctl enable iptables.service”。
+[root@H51 ~]# 
+
+[root@hiys ~]# ssh -X 192.168.2.51
+root@192.168.2.51's password: 
+Last login: Thu Nov  8 08:38:58 2018 from 192.168.2.254
+[root@H51 ~]# 
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H51 ~]# route add default gateway 192.168.2.52
+[root@H51 ~]# route del default gateway 192.168.2.254
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.2.52
+192.168.4.254
+201.1.1.254
+201.1.2.254
+[root@H51 ~]# service iptables start 
+Redirecting to /bin/systemctl start iptables.service
+[root@H51 ~]# service iptables start 
+Redirecting to /bin/systemctl start iptables.service
+[root@H51 ~]# chkconfig iptables on
+注意：正在将请求转发到“systemctl enable iptables.service”。
+[root@H51 ~]# 
+
+[root@H51 ~]# sysctl -p
+net.ipv4.ip_forward = 1
+[root@H51 ~]# 
+[root@H51 ~]# ifdown eth0
+成功断开设备 'eth0'。
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.2.52
+201.1.1.254
+201.1.2.254
+0.0.0.0
+[root@H51 ~]# 
+[root@H51 ~]# curl 192.168.2.52/a.html
+H52 a.html
+[root@H51 ~]# curl 192.168.4.53/test.html
+curl: (7) Failed connect to 192.168.4.53:80; 没有到主机的路由
+[root@H51 ~]# 
+[root@H51 ~]# route del default gw 192.168.2.52
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+201.1.1.254
+201.1.2.254
+0.0.0.0
+0.0.0.0
+[root@H51 ~]# 
+[root@H51 ~]# systemctl start httpd && systemctl enable  httpd.service 
+
+[root@H51 ~]# systemctl stop NetworkManager
+[root@H51 ~]# route del default gateway 192.168.4.254
+[root@H51 ~]# route del default gateway 192.168.2.254
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+201.1.1.254
+201.1.2.254
+0.0.0.0
+0.0.0.0
+[root@H51 ~]# 
+
+[root@H51 ~]# route add  default gw 192.168.4.254
+[root@H51 ~]# route add  default gw 192.168.2.254
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}' 
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.2.254
+192.168.4.254
+201.1.1.254
+201.1.2.254
+[root@H51 ~]# systemctl start NetworkManager
+[root@H51 ~]# 
+
+[root@H51 ~]# rpm -q audit
+audit-2.7.6-3.el7.x86_64
+[root@H51 ~]# systemctl is-active auditd.service 
+active
+[root@H51 ~]# 
+
+[root@H51 ~]# ls /etc/audit/
+auditd.conf  audit.rules  audit-stop.rules  rules.d
+[root@H51 ~]# cat /etc/audit/auditd.conf 
+#
+# This file controls the configuration of the audit daemon
+#
+local_events = yes
+write_logs = yes
+
+log_file = /var/log/audit/audit.log
+
+log_group = root
+log_format = RAW
+flush = INCREMENTAL_ASYNC
+freq = 50
+max_log_file = 8
+num_logs = 5
+priority_boost = 4
+disp_qos = lossy
+dispatcher = /sbin/audispd
+name_format = NONE
+##name = mydomain
+max_log_file_action = ROTATE
+space_left = 75
+space_left_action = SYSLOG
+action_mail_acct = root
+admin_space_left = 50
+admin_space_left_action = SUSPEND
+disk_full_action = SUSPEND
+disk_error_action = SUSPEND
+use_libwrap = yes
+##tcp_listen_port = 
+tcp_listen_queue = 5
+tcp_max_per_addr = 1
+##tcp_client_ports = 1024-65535
+tcp_client_max_idle = 0
+enable_krb5 = no
+krb5_principal = auditd
+##krb5_key_file = /etc/audit/audit.key
+distribute_network = no
+[root@H51 ~]# 
+[root@H51 ~]# cat -n  /etc/audit/auditd.conf  |grep log_file
+     7	log_file = /var/log/audit/audit.log
+    12	max_log_file = 8
+    19	max_log_file_action = ROTATE
+[root@H51 ~]# 
+[root@H51 ~]# vim  /var/log/audit/audit.log 
+[root@H51 ~]# tail -1 /var/log/audit/audit.log
+type=USER_END msg=audit(1541656861.457:286): pid=3607 uid=0 auid=0 ses=24 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg='op=PAM:session_close grantors=pam_loginuid,pam_keyinit,pam_limits,pam_systemd acct="root" exe="/usr/sbin/crond" hostname=? addr=? terminal=cron res=success'
+[root@H51 ~]# auditctl  -l
+No rules
+[root@H51 ~]# auditctl  -?
+usage: auditctl [options]
+    -a <l,a>            Append rule to end of <l>ist with <a>ction
+    -A <l,a>            Add rule at beginning of <l>ist with <a>ction
+    -b <backlog>        Set max number of outstanding audit buffers
+                        allowed Default=64
+    -c                  Continue through errors in rules
+    -C f=f              Compare collected fields if available:
+                        Field name, operator(=,!=), field name
+    -d <l,a>            Delete rule from <l>ist with <a>ction
+                        l=task,exit,user,exclude
+                        a=never,always
+    -D                  Delete all rules and watches
+    -e [0..2]           Set enabled flag
+    -f [0..2]           Set failure flag
+                        0=silent 1=printk 2=panic
+    -F f=v              Build rule: field name, operator(=,!=,<,>,<=,
+                        >=,&,&=) value
+    -h                  Help
+    -i                  Ignore errors when reading rules from file
+    -k <key>            Set filter key on audit rule
+    -l                  List rules
+    -m text             Send a user-space message
+    -p [r|w|x|a]        Set permissions filter on watch
+                        r=read, w=write, x=execute, a=attribute
+    -q <mount,subtree>  make subtree part of mount point's dir watches
+    -r <rate>           Set limit in messages/sec (0=none)
+    -R <file>           read rules from file
+    -s                  Report status
+    -S syscall          Build rule: syscall name or number
+    -t                  Trim directory watches
+    -v                  Version
+    -w <path>           Insert watch at <path>
+    -W <path>           Remove watch at <path>
+    --loginuid-immutable  Make loginuids unchangeable once set
+    --reset-lost         Reset the lost record counter
+[root@H51 ~]# auditctl  -s
+enabled 1
+failure 1
+pid 648
+rate_limit 0
+backlog_limit 8192
+lost 0
+backlog 0
+loginuid_immutable 0 unlocked
+[root@H51 ~]# 
+
+[root@H51 ~]# auditctl  -w  /etc/passwd  -p  rwa -k  mon_passwd
+[root@H51 ~]# auditctl -l
+-w /etc/passwd -p rwa -k mon_passwd
+[root@H51 ~]# auditctl -s
+enabled 1
+failure 1
+pid 648
+rate_limit 0
+backlog_limit 8192
+lost 0
+backlog 0
+loginuid_immutable 0 unlocked
+[root@H51 ~]# 
+
+[root@H51 ~]# ls /home
+lisi  usera  userb  userc
+[root@H51 ~]# tail -1 /var/log/audit/audit.log 
+type=CONFIG_CHANGE msg=audit(1541657618.060:294): auid=0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 op=add_rule key="mon_passwd" list=4 res=1
+[root@H51 ~]# userdel -r userc
+[root@H51 ~]# ls /home
+lisi  usera  userb
+[root@H51 ~]# tail -1 /var/log/audit/audit.log 
+type=PROCTITLE msg=audit(1541657733.398:304): proctitle=7573657264656C002D72007573657263
+
+[root@H51 ~]# tail -1 /etc/passwd
+apache:x:48:48:Apache:/usr/share/httpd:/sbin/nologin
+
+[root@H51 ~]# tail -2 /var/log/audit/audit.log 
+
+type=PATH msg=audit(1541657792.050:305): item=0 name="/etc/passwd" inode=17695586 dev=fd:00 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:passwd_file_t:s0 objtype=NORMAL
+type=PROCTITLE msg=audit(1541657792.050:305): proctitle=7461696C002D31002F6574632F706173737764
+
+[root@H51 ~]# vim /etc/passwd
+
+[root@H51 ~]# tail -2 /var/log/audit/audit.log 
+type=PATH msg=audit(1541657822.922:309): item=0 name="/etc/passwd" inode=17695586 dev=fd:00 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:passwd_file_t:s0 objtype=NORMAL
+type=PROCTITLE msg=audit(1541657822.922:309): proctitle=76696D002F6574632F706173737764
+[root@H51 ~]# vim /var/log/audit/audit.log
+
+[root@H51 ~]# cat -n /var/log/audit/audit.log |grep mon_passwd
+
+ 12591	type=CONFIG_CHANGE msg=audit(1541657618.060:294): auid=0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 op=add_rule key="mon_passwd" list=4 res=1
+...............................
+ subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="mon_passwd"
+ 12638	type=SYSCALL msg=audit(1541657909.442:310): arch=c000003e syscall=2 success=yes exit=3 a0=7fb36ffed432 a1=80000 a2=1b6 a3=24 items=1 ppid=1524 pid=3897 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=1 comm="vim" exe="/usr/bin/vim" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="mon_passwd"
+[root@H51 ~]# 
+
+[root@H51 ~]# auditctl  -w  /etc/   -p  rwa -k  mon_etc
+[root@H51 ~]# auditctl -l
+-w /etc/passwd -p rwa -k mon_passwd
+-w /etc -p rwa -k mon_etc
+[root@H51 ~]# ls /etc/ |wc -l
+279
+[root@H51 ~]# cat -n /var/log/audit/audit.log |grep mon_etc
+
+ 12697	type=CONFIG_CHANGE msg=audit(1541658099.064:330): auid=0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 op=add_rule key="mon_etc" list=4 res=1
+.....................................
+[root@H51 ~]# which rm
+alias rm='rm -i'
+	/usr/bin/rm
+[root@H51 ~]# auditctl  -w  /usr/bin/rm  -p  x  -k mon_rm
+[root@H51 ~]# auditctl -l
+-w /etc/passwd -p rwa -k mon_passwd
+-w /etc -p rwa -k mon_etc
+-w /usr/bin/rm -p x -k mon_rm
+[root@H51 ~]# 
+
+[root@H51 ~]# rm -f *.txt
+
+[root@H51 ~]# cat -n /var/log/audit/audit.log  |grep mon_rm
+ 12802	type=CONFIG_CHANGE msg=audit(1541658324.244:357): auid=0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 op=add_rule key="mon_rm" list=4 res=1
+ 12827	type=SYSCALL msg=audit(1541658419.985:364): arch=c000003e syscall=59 success=yes exit=0 a0=13f7260 a1=13e4450 a2=13d2110 a3=7ffd37b11260 items=2 ppid=1524 pid=3989 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=1 comm="rm" exe="/usr/bin/rm" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="mon_rm"
+[root@H51 ~]# 
+[root@H51 ~]# ls  /etc/audit/rules.d/
+audit.rules
+[root@H51 ~]# vim /etc/audit/rules.d/audit.rules 
+[root@H51 ~]# cat /etc/audit/rules.d/audit.rules
+## First rule - delete all
+-D
+## Increase the buffers to survive stress events.
+## Make this bigger for busy systems
+-b 8192
+
+## Set failure mode to syslog
+-f 1
+-w /etc/passwd -p rwa -k mon_passwd
+-w /etc -p rwa -k mon_etc
+-w /usr/bin/rm -p x -k mon_rm
+[root@H51 ~]# 
+
+[root@H51 ~]# ls  /usr/include/as
+asm/         asm-generic/ assert.h     
+[root@H51 ~]# ls  /usr/include/asm/
+a.out.h          hyperv.h    msgbuf.h           prctl.h  
+.................
+hw_breakpoint.h  mman.h      posix_types_x32.h  siginfo.h          ucontext.h
+[root@H51 ~]# ll /usr/include/asm/a.out.h 
+-rw-r--r--. 1 root root 693 7月   7 2017 /usr/include/asm/a.out.h
+
+[root@H51 ~]# vim /usr/include/asm/a.out.h
+
+[root@H51 ~]# sed -n 3,7p /usr/include/asm/a.out.h
+
+struct exec
+{
+	unsigned int a_info;	/* Use macros N_MAGIC, etc for access */
+	unsigned a_text;	/* length of text, in bytes */
+
+[root@H51 ~]# ls  /usr/share/doc/
+abattis-cantarell-fonts-0.0.25         libsrtp-1.4.4
+.............................
+libspectre-0.2.8                       zlib-1.2.7
+
+[root@H51 ~]# ls  /usr/share/doc/audit-2.7.6/
+auditd.cron  ChangeLog  COPYING  README  rules
+[root@H51 ~]# ls  /usr/share/doc/audit-2.7.6/rules/
+10-base-config.rules   21-no32bit.rules        32-power-abuse.rules  71-networking.rules
+10-no-audit.rules      22-ignore-chrony.rules  40-local.rules        99-finalize.rules
+11-loginuid.rules      30-nispom.rules         41-containers.rules   README-rules
+12-cont-fail.rules     30-pci-dss-v31.rules    42-injection.rules
+12-ignore-error.rules  30-stig.rules           43-module-load.rules
+20-dont-audit.rules    31-privileged.rules     70-einval.rules
+[root@H51 ~]# ll  /usr/share/doc/audit-2.7.6/rules/71-networking.rules 
+-rw-r--r--. 1 root root 151 4月  19 2017 /usr/share/doc/audit-2.7.6/rules/71-networking.rules
+[root@H51 ~]# vim /usr/share/doc/audit-2.7.6/rules/71-networking.rules
+[root@H51 ~]# tail -2 /usr/share/doc/audit-2.7.6/rules/71-networking.rules
+## externally
+-a always,exit -F arch=b64 -S accept,connect -F key=external-access
+[root@H51 ~]# 
+[root@H51 ~]# cat -b /usr/share/doc/audit-2.7.6/rules/11-loginuid.rules 
+     1	## Make the loginuid immutable. This prevents tampering with the auid.
+     2	--loginuid-immutable
+
+[root@H51 ~]# cat -n /usr/share/doc/audit-2.7.6/rules/43-module-load.rules 
+     1	## These rules watch for kernel module insertion
+     2	-w /sbin/insmod -p x -k modules
+     3	-w /sbin/rmmod -p x -k modules
+     4	-w /sbin/modprobe -p x -k modules
+     5	-a always,exit -F arch=b32 -S init_module,finit_module -F key=module-load
+     6	-a always,exit -F arch=b64 -S init_module,finit_module -F key=module-load
+     7	-a always,exit -F arch=b32 -S delete_module -F key=module-unload
+     8	-a always,exit -F arch=b64 -S delete_module -F key=module-unload
+[root@H51 ~]# 
+
+[root@H51 ~]# cat -n  /var/log/audit/audit.log  |sed -n  "/mon_etc/{$p}"
+
+[root@H51 ~]# grep "mon_etc"  /var/log/audit/audit.log  |cat -b |tail -1
+   457	type=SYSCALL msg=audit(1541660540.102:888): arch=c000003e syscall=2 success=yes exit=3 a0=7fd81696cc67 a1=80000 a2=1 a3=7fd816b734f8 items=1 ppid=1524 pid=4405 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=1 comm="grep" exe="/usr/bin/grep" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="mon_etc"
+[root@H51 ~]# 
+       ## ausearch  -k  监视管理项目名称  -i 以人类可读方式显示
+[root@H51 ~]# ausearch  -k mon_etc  -i |tail -1
+
+type=SYSCALL msg=audit(2018年11月08日 15:07:43.990:930) : arch=x86_64 syscall=open success=yes exit=4 
+a0=0x7f61ef7d5427 a1=O_RDONLY|O_CLOEXEC a2=0x1b6 a3=0x24 items=1 ppid=1524 pid=4469 
+auid=root uid=root gid=root euid=root 
+suid=root fsuid=root egid=root sgid=root fsgid=root
+ tty=pts0 ses=1 comm=ausearch     exe=/usr/sbin/ausearch   
+subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key=mon_etc 
+[root@H51 ~]# 
+   *****auid=root uid=root gid=root euid=root  注意 各uid 的区 别
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.52
+192.168.2.52
+201.1.1.52
+201.1.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H52 ~]# systemctl is-active NetworkManager
+active
+
+[root@H52 ~]# sed -i '17s/^#//' /etc/ssh/sshd_config
+[root@H52 ~]# sed -n 17,20p  /etc/ssh/sshd_config 
+Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+
+[root@H52 ~]# rpm -qa |grep iptables
+iptables-services-1.4.21-18.el7.x86_64
+iptables-1.4.21-18.el7.x86_64
+iptables-devel-1.4.21-18.el7.x86_64
+
+[root@H52 ~]# systemctl is-enabled firewalld
+disabled
+[root@H52 ~]# systemctl is-active NetworkManager
+active
+
+[root@H52 ~]# tail -1 /etc/sysctl.conf 
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+[root@H52 ~]# vim /etc/sysctl.conf
+[root@H52 ~]# tail -1 /etc/sysctl.conf 
+net.ipv4.ip_forward = 1
+[root@H52 ~]# systemctl -p
+systemctl：选项需要一个参数 -- p
+[root@H52 ~]# sysctl  -p
+net.ipv4.ip_forward = 1
+[root@H52 ~]# systemctl stop  NetworkManager
+[root@H52 ~]# 
+
+[root@H52 ~]# iptables -t filter  -P FORWARD ACCEPT
+[root@H52 ~]# iptables  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:53
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:53
+3    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:67
+4    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:67
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     all  --  0.0.0.0/0            192.168.122.0/24     ctstate RELATED,ESTABLISHED
+2    ACCEPT     all  --  192.168.122.0/24     0.0.0.0/0           
+3    ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0           
+4    REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+5    REJECT     all  --  0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:68
+[root@H52 ~]# service iptables start 
+Redirecting to /bin/systemctl start iptables.service
+[root@H52 ~]# chkconfig  iptables on
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+[root@H52 ~]# 
+
+[root@H52 ~]# iptables -t filter -F
+[root@H52 ~]# iptables -t nat  -F
+[root@H52 ~]# iptables -t  raw  -F
+[root@H52 ~]# iptables -t  mangle  -F
+[root@H52 ~]# service  iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  确定  ]
+[root@H52 ~]# service  iptables restart
+Redirecting to /bin/systemctl restart iptables.service
+[root@H52 ~]# iptables -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# 
+
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# 
+
+[root@H52 ~]# iptables  -t  filter  -P  FORWARD  DROP
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# 
+
+[root@H52 ~]# iptables  -t  filter  -A  FORWARD -p tcp  --dport 80  -j ACCEPT
+[root@H52 ~]# iptables  -t  filter  -A  FORWARD -p tcp  --dport 80  -j ACCEPT
+[root@H52 ~]# iptables  -t  filter  -A  FORWARD -p tcp  --sport 80  -j ACCEPT
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:80
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# iptables -t filter -D FORWARD 2
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:80
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# iptables  -t  filter  -A  FORWARD  -p  icmp   -j ACCEPT
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:80
+3    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# iptables  -t  filter  -A  FORWARD  -p tcp  --dport 3306   -j ACCEPT
+[root@H52 ~]# 
+[root@H52 ~]# iptables  -t  filter  -A  FORWARD  -p tcp  --sport 3306   -j ACCEPT
+[root@H52 ~]# 
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:80
+3    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+4    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:3306
+5    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:3306
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# 
+
+[root@H52 ~]# sysctl -a |grep -i ip_forward
+........................
+net.ipv4.ip_forward = 1
+net.ipv4.ip_forward_use_pmtu = 0
+
+[root@H52 ~]# ls  /proc/sys/net/ipv4/ip_forward
+/proc/sys/net/ipv4/ip_forward
+
+[root@H52 ~]# cat /proc/sys/net/ipv4/ip_forward
+1
+[root@H52 ~]# 
+[root@H52 ~]# sysctl -a |grep net.ipv4.ip_forward
+.......................
+net.ipv4.ip_forward = 1
+net.ipv4.ip_forward_use_pmtu = 0
+sysctl: reading key "net.ipv6.conf.virbr0.stable_secret"
+sysctl: reading key "net.ipv6.conf.virbr0-nic.stable_secret"
+[root@H52 ~]# 
+
+
+
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:80
+3    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+4    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:3306
+5    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:3306
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# cat /proc/sys/net/ipv4/ip_forward
+1
+[root@H52 ~]# ls /var/www/html/
+a.html  index.html
+[root@H52 ~]# systemctl start httpd
+[root@H52 ~]# curl 192.168.4.53/test.html
+curl: (7) Failed connect to 192.168.4.53:80; 没有到主机的路由
+
+[root@H52 ~]# ping -c2 -i0.2 -w1 192.168.4.53
+PING 192.168.4.53 (192.168.4.53) 56(84) bytes of data.
+64 bytes from 192.168.4.53: icmp_seq=1 ttl=64 time=0.235 ms
+64 bytes from 192.168.4.53: icmp_seq=2 ttl=64 time=0.558 ms
+
+--- 192.168.4.53 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.235/0.396/0.558/0.162 ms
+
+[root@H52 ~]# ping -c2 -i0.2 -w1 192.168.2.51
+PING 192.168.2.51 (192.168.2.51) 56(84) bytes of data.
+64 bytes from 192.168.2.51: icmp_seq=1 ttl=64 time=0.483 ms
+64 bytes from 192.168.2.51: icmp_seq=2 ttl=64 time=0.619 ms
+
+--- 192.168.2.51 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.483/0.551/0.619/0.068 ms
+[root@H52 ~]# 
+
+[root@H52 ~]# iptables  -t  filter  -nL  --line-numbers
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:80
+3    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+4    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:3306
+5    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp spt:3306
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@H52 ~]# iptables  -t  filter  -F
+[root@H52 ~]# iptables  -t  filter  -P  FORWARD ACCEPT
+[root@H52 ~]# service iptables save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  确定  ]
+[root@H52 ~]# 
+
+/**********************iptables  -t nat -A POSTROUTING ===================
+   源地址转换SNAT (SNAT源地址转换）  目标地址转换DNAT
+	路由后 POSTROUTING 
+
+[root@H52 ~]# iptables  -t nat -A POSTROUTING \
+> -s  192.168.4.0/24 -p tcp --dport 80 \
+> -j SNAT --to-source 192.168.2.52
+
+[root@H52 ~]# iptables  -t nat  -nL  --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    SNAT       tcp  --  192.168.4.0/24       0.0.0.0/0            tcp dpt:80 to:192.168.2.52
+[root@H52 ~]# 
+
+[root@H52 ~]# service  iptables  save
+iptables: Saving firewall rules to /etc/sysconfig/iptables:[  确定  ]
+
+[root@H52 ~]# iptables  -t nat  -nL POSTROUTING  --line-numbers
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    SNAT       tcp  --  192.168.4.0/24       0.0.0.0/0            tcp dpt:80 to:192.168.2.52
+[root@H52 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]# sed -n 17,20p  /etc/ssh/sshd_config 
+#Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+[root@H53 ~]# sed  -i '17s/^#//' /etc/ssh/sshd_config
+[root@H53 ~]# sed -n 17,20p  /etc/ssh/sshd_config 
+Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+[root@H53 ~]# rpm -qa |grep iptables
+iptables-1.4.21-18.el7.x86_64
+[root@H53 ~]# yum -y install iptables-services |tail -3
+  iptables-services.x86_64 0:1.4.21-18.el7                                      
+
+完毕！
+[root@H53 ~]# rpm -qa |grep iptables
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+[root@H53 ~]# yum -y install iptables |tail -3
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+软件包 iptables-1.4.21-18.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@H53 ~]# rpm -qa |grep iptables
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+[root@H53 ~]# yum -y install iptables* |tail -3
+  iptables-devel.x86_64 0:1.4.21-18.el7                                         
+
+完毕！
+[root@H53 ~]# rpm -qa |grep iptables
+iptables-devel-1.4.21-18.el7.x86_64
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+[root@H53 ~]# systemctl is-enabled firewalld
+disabled
+[root@H53 ~]# ifdown eth1
+成功断开设备 'eth1'。
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# route add default gateway 192.168.4.52
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.52
+192.168.4.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# route del default gateway 192.168.4.254
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.52
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# systemctl is-active NetworkManager
+active
+[root@H53 ~]# systemctl stop NetworkManager
+[root@H53 ~]# echo "net.ipv4.ip_forward = 1" >>/etc/sysctl.conf 
+[root@H53 ~]# tail -2 /etc/sysctl.conf
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+net.ipv4.ip_forward = 1
+[root@H53 ~]# sysctl -p
+net.ipv4.ip_forward = 1
+[root@H53 ~]# mysql -uroot -p1234
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.17 MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> grant all on *.* to yaya@'%'  identified by'1234';
+Query OK, 0 rows affected, 1 warning (0.01 sec)
+
+mysql> exit
+Bye
+[root@H53 ~]# ls /var/www/html/
+[root@H53 ~]# echo "H53 test"> /var/www/html/test.html
+[root@H53 ~]# systemctl start httpd.service 
+[root@H53 ~]# curl 192.168.4.53/test.html
+H53 test
+[root@H53 ~]# 
+[root@H53 ~]# service iptables start
+Redirecting to /bin/systemctl start iptables.service
+[root@H53 ~]# chkconfig  iptables on
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+[root@H53 ~]# 
+[root@H53 ~]# curl 192.168.4.53/test.html
+H53 test
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.52
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# 
+[root@H53 ~]# curl 192.168.4.53/test.html
+H53 test
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}' 192.168.4.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.52
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# curl 192.168.4.53/test.html
+H53 test
+[root@H53 ~]# curl 192.168.4.51/test.html
+H51
+[root@H53 ~]# curl 192.168.2.51/test.html
+H51
+[root@H53 ~]# 
+[root@H53 ~]# cat /proc/sys/net/ipv4/ip_forward
+1
+[root@H53 ~]# 
+
+[root@H53 ~]# cat txt.txt
+show dbs
+db
+exit
+xxx1
+yyyy1
+enforcing
+xxxxxxx2
+yyyyy2
+enforcing
+xxxxxxxxxxx3
+yyyyyyyyyyy3
+[root@H53 ~]# sed -n  '/yyy/h;${x;p}' txt.txt
+yyyyyyyyyyy3  
+
+ /***********## 总结模式空间与保持空间关系
+保持空间是模式空间一个"临时追加数据 , 存放数据" 的 "缓冲区 "，协助模式空间进行数据处理
+
+
+          ##x命令是将当前保持空间和模式空间内容互换
+             ## h命令是将当前模式空间中内容覆盖至保持空间
+               ##意思是：/yyy/h 把匹配上 yyy 的行 放到 交换空间（覆盖交换空间里原来的内容）。
+            ${x;p}，到最后一行的时候，把交换空间里的东西换出来，再打印
+[root@H53 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]# sed -i '17s/^#//'  /etc/ssh/sshd_config 
+[root@H54 ~]# sed -n 17,20p  /etc/ssh/sshd_config 
+Port 22
+#AddressFamily any
+#ListenAddress 0.0.0.0
+#ListenAddress ::
+[root@H54 ~]# rpm -qa |grep iptables
+iptables-1.4.21-18.el7.x86_64
+[root@H54 ~]# yum -y install iptables-services |tail -3
+  iptables-services.x86_64 0:1.4.21-18.el7                                      
+
+完毕！
+[root@H54 ~]# rpm -qa |grep iptables
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+[root@H54 ~]# yum -y install iptables* |tail -3
+  iptables-devel.x86_64 0:1.4.21-18.el7                                         
+
+完毕！
+[root@H54 ~]# rpm -qa |grep iptables
+iptables-devel-1.4.21-18.el7.x86_64
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+[root@H54 ~]# systemctl is-enabled firewalld
+disabled
+[root@H54 ~]# 
+
+
+
+
+
+[root@localhost ~]# nmcli connection up eth1 
+连接已成功激活（D-Bus 活动路径：/org/freedesktop/NetworkManager/ActiveConnection/6）
+[root@localhost ~]# exit
+登出
+
+Red Hat Enterprise Linux Server 7.4 (Maipo)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: 
+[root@hiys ~]# ssh -X 192.168.4.58
+The authenticity of host '192.168.4.58 (192.168.4.58)' can't be established.
+ECDSA key fingerprint is SHA256:59Byua15gv4TAVEm7YutMtmgXfxGTYbzSfO84kICu0E.
+ECDSA key fingerprint is MD5:7e:6e:95:ed:84:fe:5b:8e:26:94:73:9b:c3:4b:90:cb.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.4.58' (ECDSA) to the list of known hosts.
+root@192.168.4.58's password: 
+Last login: Thu Nov  8 16:37:26 2018
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@localhost ~]# hostname
+localhost.localdomain
+[root@localhost ~]# 
+[root@localhost ~]# echo 123 |passwd  --stdin root
+更改用户 root 的密码 。
+passwd：所有的身份验证令牌已经成功更新。
+[root@localhost ~]# echo H58 >/etc/hostname
+[root@localhost ~]# nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.58/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes 
+[root@localhost ~]# nmcli connection up eth0 
+连接已成功激活（D-Bus 活动路径：/org/freedesktop/NetworkManager/ActiveConnection/7）
+[root@localhost ~]# nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes
+连接“eth1”(361eb0ae-11a2-443b-aa38-b25ecaba3270) 已成功添加。
+[root@localhost ~]# nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.58/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes 
+[root@localhost ~]# nmcli connection up eth1 
+连接已成功激活（D-Bus 活动路径：/org/freedesktop/NetworkManager/ActiveConnection/8）
+[root@localhost ~]# systemctl isolate graphical.target 
+[root@localhost ~]# exit
+登出
+Connection to 192.168.4.58 closed.
+[root@hiys ~]# ssh -X 192.168.4.58
+root@192.168.4.58's password: 
+Last login: Thu Nov  8 16:43:33 2018 from 192.168.4.254
+[root@H58 ~]# 
+[root@H58 ~]# vim /etc/yum.repos.d/rhel7.repo
+[root@H58 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+enabled=1
+gpgcheck=0
+baseurl=ftp://192.168.4.254/rhel7
+
+[rhel7-2]
+name=rhel7.4-2
+baseurl=ftp://192.168.2.254/rhel7
+gpgcheck=0
+enabled=1 
+
+[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[root@H58 ~]# yum clean all >/dev/null && yum repolist |tail -9
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H58 ~]# 
+
+[root@H58 ~]# vim lnmp.sh
+[root@H58 ~]# cat lnmp.sh
+#!/bin/bash
+ss -anputl |grep nginx
+if [ $? -ne 0 ];then
+ nginx
+ if [ $? -eq 0 ];then
+  echo "nginx has already been installed";
+ else
+  echo "nginx will be installed";
+  tar -xzf /root/lnmp_soft.tar.gz;
+  if [ $? -eq 0 ];then
+    echo "tar lnmp_soft.tar.gz  has completed";
+  else
+    echo "tar lnmp_soft.tar.gz  Error!";
+    exit;
+  fi
+  yum -y install  httpd elinks telnet httpd-tools  gcc pcre-devel openssl-devel mariadb-devel mariadb-server  mariadb memcached php-pecl-memcache php php-mysql zlib-devel /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm ;
+  if [ $? -eq 0 ];then
+    echo "yum install has completed";
+  else
+    echo "yum install Error!";
+    exit;
+  fi
+  sleep 5 && date;
+  rpm -q  elinks telnet httpd-tools gcc  pcre-devel openssl-devel mariadb-devel mariadb mariadb-server memcached php-pecl-memcache  php php-mysql php-fpm zlib-devel ;
+  nginx -s stop;
+                                                                       
+  rm  -rf /usr/local/nginx;
+  useradd -s /sbin/nologin nginx;
+  if [ $? -eq 0 ];then
+    echo "user nginx is added";
+  else
+    echo "user nginx  already exist !";
+  fi
+  tar -xzf /root/lnmp_soft/nginx-1.12.2.tar.gz;
+  if [ $? -eq 0 ];then
+    echo "tar nginx-1.12.2.tar.gz  has completed";
+  else
+    echo "tar nginx-1.12.2.tar.gz Error!";
+    exit;
+  fi
+  cd nginx-1.12.2/;ls
+  ./configure  --prefix=/usr/local/nginx  --user=nginx  --group=nginx --with-http_ssl_module  --with-stream  --with-http_stub_status_module  --without-http_autoindex_module  --without-http_ssi_module ;
+  sleep 5 && date
+  make && make install
+ 
+  ln -s /usr/local/nginx/sbin/nginx /sbin/
+  ls -l  /sbin/nginx
+  nginx
+  if [ $? -eq 0 ];then
+    echo "nginx startup successfully!";
+  else
+    echo "nginx startup failed !";
+    exit;
+  fi
+  systemctl start mariadb && systemctl enable mariadb
+  systemctl start php-fpm && systemctl enable php-fpm
+  systemctl start memcached && systemctl enable memcached
+  if [ $? -eq 0 ];then
+    echo "memcached is active and enabled ";
+  else
+    echo "Service memcached startup failed!";
+    exit;
+  fi
+  nginx -V
+  ss -anptul |egrep ':80|3306|:9000|:11211'
+  echo "nginx is setting up";
+ fi
+else
+  echo "`ifconfig |awk '/inet /{print $2}' |sed -n 1p` nginx is active"
+fi
+[root@H58 ~]# 
+
+# ll lnmp_soft.tar.gz 
+-rw-r--r--. 1 root root 78844881 11月  6 08:44 lnmp_soft.tar.gz
+
+[root@H53 ~]# cat txt.txt
+show dbs
+db
+exit
+xxx1
+yyyy1
+enforcing
+xxxxxxx2
+yyyyy2
+enforcing
+xxxxxxxxxxx3
+yyyyyyyyyyy3
+[root@H53 ~]# sed -n  '/yyy/h;${x;p}' txt.txt
+yyyyyyyyyyy3  
+
+ /***********## 总结模式空间与保持空间关系
+保持空间是模式空间一个"临时追加数据 , 存放数据" 的 "缓冲区 "，协助模式空间进行数据处理
+
+
+          ##x命令是将当前保持空间和模式空间内容互换
+             ## h命令是将当前模式空间中内容覆盖至保持空间
+               ##意思是：/yyy/h 把匹配上 yyy 的行 放到 交换空间（覆盖交换空间里原来的内容）。
+            ${x;p}，到最后一行的时候，把交换空间里的东西换出来，再打印
+
+pattern space（模式空间） and hold space （保持空间）
+（H、h、G、g、x）
+模式空间：sed处理文本内容行的一个临时缓冲区，模式空间中的内容会主动打印到标准输出，并自动清空模式空间
+
+保持空间：sed处理文本内容行的另一个临时缓冲区，不同的是保持空间内容不会主动清空，也不会主动打印到标准输出，而是需要sed命令来进行处理
+
+模式空间与保持空间的关系
+模式空间：相当于流水线，文本行再模式空间中进行处理；
+保持空间：相当于仓库，在模式空间对数据进行处理时，可以把数据临时存储到保持空间；作为模式空间的一个辅助临时缓冲区，但又是相互独立，可以进行交互，命令可以寻址模式空间但是不能寻址保持空间。可以使用高级命令h,H,g,G与模式空间进行交互。
+
+   d      Delete pattern space.  Start next cycle.
+          删除pattern space的内容，开始下一个循环
+
+   h H    Copy/append pattern space to hold space.
+          复制/追加pattern space的内容到hold space.（复制会覆盖原内容）
+
+   g G    Copy/append hold space to pattern space.
+          复制/追加hold space的内容到pattern space.复制会覆盖原内容）
+
+   x      Exchange the contents of the  hold  and  pattern
+          spaces.
+          交换hold space和pattern space的内容.
+下面使用一个实例来验证模式空间和保持空间的关系，以及理解高级命令h,H,g,G的作用
+
+
+[root@H58 ~]# cat >> num.txt <<EOF
+> one1
+> two2
+> three3
+> four4
+> five5
+> six6
+> end7
+> EOF
+[root@H58 ~]# ll num.txt 
+-rw-r--r--. 1 root root 39 11月  8 20:04 num.txt
+[root@H58 ~]# cat num.txt
+one1
+two2
+three3
+four4
+five5
+six6
+end7
+[root@H58 ~]# cat >>test.txt << EOF
+> AA1
+> BB1
+> CC1
+> AAAA2
+> BBBB2
+> CCC2
+> AAAAAAA3
+> BBBBBBBB3
+> CCCCCCC3
+> EOF
+[root@H58 ~]# cat test.txt 
+AA1
+BB1
+CC1
+AAAA2
+BBBB2
+CCC2
+AAAAAAA3
+BBBBBBBB3
+CCCCCCC3
+[root@H58 ~]# 使用sed来将num.txt文本的内容按照倒序输出
+
+[root@H58 ~]# sed  '1!G;h;$!d' num.txt 
+end7
+six6
+five5
+four4
+three3
+two2
+one1
+[root@H58 ~]# ##注释：1!G：第一行不执行G命令
+$!d：最后一行不执行d命令，即不删除模式空间一行
+
+## 总结模式空间与保持空间关系
+保持空间是模式空间一个"临时追加数据 , 存放数据" 的 "缓冲区 "，协助模式空间进行数据处理
+http://blog.51cto.com/13691477/2113141
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,561 @@
+
+
+[root@ZabServer ~]# ifconfig |grep 'inet ' |head -3
+        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+[root@ZabServer ~]# zabbix_server      //启动服务
+[root@ZabServer ~]# ss -anptul |awk '/zabbix_server/{print $1,$3,$5}'
+tcp 0 *:10051
+
+[root@ZabServer ~]# ss -anputl |grep  zabbix_server
+tcp  LISTEN   0   128   *:10051    *:*     users:(("zabbix_server",pid=18461,fd=4),
+
+[root@ZabServer ~]# zabbix_agentd
+
+[root@ZabServer ~]# ss -anptul |awk '/zabbix_agentd/{print $1,$5}'
+tcp *:10050
+[root@ZabServer ~]# nginx
+[root@ZabServer ~]# ss -nuplt |grep nginx
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("nginx",pid=2969,fd=6),("nginx",pid=2968,fd=6))
+
+[root@ZabServer ~]# ll /tmp/zabbix_server.log 
+-rw-rw-r--. 1 zabbix zabbix 59624 9月   5 14:56 /tmp/zabbix_server.log
+
+[root@ZabServer ~]# > /tmp/zabbix_server.log 
+[root@ZabServer ~]# ll /tmp/zabbix_server.log
+-rw-rw-r--. 1 zabbix zabbix 0 9月   5 14:59 /tmp/zabbix_server.log
+[root@ZabServer ~]# zabbix_get  -s 192.168.2.100 -k 'nginx.status[req]'
+11
+[root@ZabServer ~]# zabbix_get  -s 192.168.2.100 -k 'nginx.status[wait]'
+0
+[root@ZabServer ~]# zabbix_get  -s 192.168.2.100 -k 'nginx.status[active]'
+1
+[root@ZabServer ~]# zabbix_get  -s 192.168.2.100 -k 'nginx.status[sss]'
+bin boot dev etc exec home lib lib64 media mnt opt proc root run sbin srv sys time tmp usr var
+
+[root@ZabServer ~]# ab -c800 -n1000 http://192.168.2.100/
+
+[root@ZabServer ~]# ss -antp |grep :80 |column -t
+LISTEN    0  128  *:80               *:*                  users:(("nginx",pid=2969,fd=6),("nginx",pid=2968,fd=6))
+ESTAB     0  0    192.168.2.5:80     192.168.2.254:58984  users:(("nginx",pid=2969,fd=11))
+ESTAB     0  0    192.168.2.5:80     192.168.2.254:58964  users:(("nginx",pid=2969,fd=10))
+SYN-SENT  0  1    192.168.2.5:58496  192.168.2.224:80     users:(("zabbix_server",pid=2127,fd=6))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@web1 ~]# ifconfig |grep 'inet ' |head -3
+        inet 192.168.4.2  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+[root@web1 ~]# zabbix_agentd
+[root@web1 ~]# ss -anptul |awk '/zabbix_agentd/{print $1,$5}'
+tcp *:10050
+[root@web1 ~]# nginx
+[root@web1 ~]# vim /usr/local/nginx2/conf/nginx.conf
+ 35     server {
+ 36         listen       80;
+ 47         location /status {
+ 48              stub_status on;
+ 49         }
+[root@web1 ~]# nginx -s reload
+[root@web1 ~]# curl http://192.168.2.100/status
+Active connections: 1 
+server accepts handled requests
+ 36 36 1 
+Reading: 0 Writing: 1 Waiting: 0 
+[root@web1 ~]# curl http://192.168.2.100/status |awk '/Active/{print $3}'
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:100    99  100    99    0     0   174k      0 --:--:-- --:--:-- --:--:-- 99000
+1
+[root@web1 ~]# curl -s  http://192.168.2.100/status |awk '/Active/{print $3}'
+1
+[root@web1 ~]# curl -s  http://192.168.2.100/status |awk 'NR==3{print $NF}'
+4
+[root@web1 ~]# vim /usr/local/bin/nginx_status.sh
+[root@web1 ~]# cat /usr/local/bin/nginx_status.sh
+#!/bin/bash
+url=http://192.168.2.100/status
+curl -s $url |awk '/Active/{print $3}';
+curl -s $url |awk 'NR==3{print $NF}';
+curl -s $url |awk '/Wait/{print $NF}';
+[root@web1 ~]# ll /usr/local/bin/nginx_status.sh
+-rw-r--r--. 1 root root 161 9月   5 15:24 /usr/local/bin/nginx_status.sh
+[root@web1 ~]# chmod +x /usr/local/bin/nginx_status.sh
+[root@web1 ~]# nginx_status.sh 
+1
+6
+0
+[root@web1 ~]# cd /usr/local/etc/zabbix_agentd.conf.d/;ls
+count.line.passwd
+[root@web1 zabbix_agentd.conf.d]# cat count.line.passwd 
+UserParameter=count.line.passwd,sed -n '$=' /etc/passwd
+
+[root@web1 zabbix_agentd.conf.d]# vim nginx.status
+[root@web1 zabbix_agentd.conf.d]# cat nginx.status
+UserParameter=nginx.status[*],/usr/local/bin/nginx_status.sh $1
+
+[root@web1 zabbix_agentd.conf.d]# vim /usr/local/bin/nginx_status.sh
+[root@web1 zabbix_agentd.conf.d]# cat /usr/local/bin/nginx_status.sh
+#!/bin/bash
+url=http://192.168.2.100/status
+case $1 in
+active)
+  curl -s $url |awk '/Active/{print $3}';;
+req)
+  curl -s $url |awk 'NR==3{print $NF}';;
+wait)
+  curl -s $url |awk '/Wait/{print $NF}';;
+*)
+  echo * ;
+esac
+[root@web1 zabbix_agentd.conf.d]# nginx_status.sh active
+1
+[root@web1 zabbix_agentd.conf.d]# nginx_status.sh req
+9
+[root@web1 zabbix_agentd.conf.d]# nginx_status.sh wait
+0
+[root@web1 zabbix_agentd.conf.d]# nginx_status.sh sss
+count.line.passwd nginx.status
+[root@web1 zabbix_agentd.conf.d]# killall zabbix_agentd
+[root@web1 zabbix_agentd.conf.d]# zabbix_agentd
+
+[root@web1 zabbix_agentd.conf.d]# curl -s http://192.168.2.100/status 
+Active connections: 1 
+server accepts handled requests
+ 1107 1107 1058 
+Reading: 0 Writing: 1 Waiting: 0 
+
+[root@web1 zabbix_agentd.conf.d]# ss -antp |grep :80 |column -t
+LISTEN     0  128  *:80                   *:*               users:(("nginx",pid=16929,fd=6),("nginx",pid=3076,fd=6))
+TIME-WAIT  0  0    192.168.2.100:57976    192.168.2.100:80
+TIME-WAIT  0  0    192.168.2.100:57972    192.168.2.100:80
+TIME-WAIT  0  0    192.168.2.100:57970    192.168.2.100:80
+TIME-WAIT  0  0    192.168.2.100:57974    192.168.2.100:80
+LISTEN     0  100  :::8080                :::*              users:(("java",pid=1389,fd=46))
+LISTEN     0  1    ::ffff:127.0.0.1:8005  :::*              users:(("java",pid=1389,fd=74))
+LISTEN     0  100  :::8009                :::*              users:(("java",pid=1389,fd=55))
+
+[root@web1 zabbix_agentd.conf.d]# curl http://192.168.2.100/status
+Active connections: 1 
+server accepts handled requests
+ 1263 1263 1209 
+Reading: 0 Writing: 1 Waiting: 0
+[root@web1 zabbix_agentd.conf.d]# zabbix_get -s 127.0.0.1  -k 'nginx.status[req]'
+1238
+[root@web1 zabbix_agentd.conf.d]# pwd
+/usr/local/etc/zabbix_agentd.conf.d
+
+[root@web1 zabbix_agentd.conf.d]# chmod +x /usr/local/bin/net_status.sh 
+
+[root@web1 zabbix_agentd.conf.d]# ls
+count.line.passwd  net.status  nginx.status
+
+[root@web1 ~]# ss -antp |awk '/^TIME-WAIT/{x++}END{print x}'
+67
+[root@web1 ~]#  ss -antp |awk '/^CLOSE-WAIT/{x++}END{print x}'
+
+[root@web1 ~]# ss -antp |awk '/^ESTAB/{x++}END{print x}'
+1
+[root@web1 ~]# cat /usr/local/etc/zabbix_agentd.conf.d/nginx.status 
+UserParameter=nginx.status[*],/usr/local/bin/nginx_status.sh $1
+
+[root@web1 ~]# cat /usr/local/etc/zabbix_agentd.conf.d/net.status 
+UserParameter=net.status[*],/usr/local/bin/net_status.sh $1
+
+[root@web1 ~]# cat /usr/local/bin/nginx_status.sh
+#!/bin/bash
+url=http://192.168.2.100/status
+case $1 in
+active)
+  curl -s $url |awk '/Active/{print $3}';;
+req)
+  curl -s $url |awk 'NR==3{print $NF}';;
+wait)
+  curl -s $url |awk '/Wait/{print $NF}';;
+*)
+  echo *  ;
+esac
+[root@web1 ~]# cat /usr/local/bin/net_status.sh 
+#!/bin/bash
+case $1 in
+estab)
+  ss -antp |awk '/^ESTAB/{x++}END{print x}';;
+close_wait)
+  ss -antp |awk '/^CLOSE-WAIT/{x++}END{print x}';;
+time_wait)
+  ss -antp |awk '/^TIME-WAIT/{x++}END{print x}';;
+*)
+  echo end or over;
+esac
+[root@web1 zabbix_agentd.conf.d]# /usr/local/bin/net_status.sh estab
+1
+[root@web1 ~]# ss -antp |awk '/^ESTAB/{x++}END{print x}'
+1
+[root@web1 ~]# zabbix_get -s 127.0.0.1  -k 'nginx.status[req]'
+1666
+[root@web1 ~]# zabbix_get -s 127.0.0.1  -k 'net.status[estab]'
+ZBX_NOTSUPPORTED: Unsupported item key.
+
+使用Zabbix自定义Item。遇到自定义的Item动不动就Not Supported了。原因很简单。
+Zabbix Agent默认 的超时时间是3秒。
+[root@web1 zabbix_agentd.conf.d]# vim /usr/local/etc/zabbix_agentd.conf
+232 # Range: 1-30
+233 # Default:
+234 # Timeout=3
+235 Timeout=8   超时时间是8秒。
+236 ### Option: AllowRoot
+   修改完毕后重启zabbix-agent
+[root@web1 zabbix_agentd.conf.d]# which zabbix_agentd
+/usr/local/sbin/zabbix_agentd
+[root@web1 ~]# killall zabbix_agentd
+[root@web1 ~]# zabbix_agentd
+[root@web1 ~]# zabbix_get -s 127.0.0.1  -k 'net.status[estab]'
+3
+[root@web1 ~]# ss -antp |awk '/^ESTAB/{x++}END{print x}'
+1
+[root@web1 ~]# zabbix_get -s 127.0.0.1  -k 'net.status[time_wait]'
+69
+[root@web1 ~]# ss -antp |awk '/^TIME-WAIT/{x++}END{print x}'
+69
+
+
+
+
+
+
+
+
+
+
+
+[root@web2 ~]# ifconfig |grep 'inet ' |head -3
+        inet 192.168.4.200  netmask 255.255.255.0  broadcast 192.168.4.255
+        inet 192.168.2.200  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet 127.0.0.1  netmask 255.0.0.0
+[root@Web2 ~]# route -n |awk 'NR<=4{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+[root@Web2 ~]# yum repolist |tail -4
+源标识                    源名称             状态
+rhel7              rhel7.4          4,986
+rhel7-2            rhel7.4          4,986
+repolist: 9,972
+[root@Web2 ~]# tar -xzPf /root/lnmp_soft.tar.gz 
+[root@Web2 ~]# tar -xzPf /root/nginx-1.12.2.tar.gz
+[root@Web2 ~]# ls /root/lnmp_soft/php_scripts/
+mem.php  mysql.php  php-memcached-demo.tar.gz  test.php
+[root@Web2 ~]# ls /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm 
+/root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm
+
+[root@Web2 ~]# yum -y install elinks telnet httpd-tools gcc \
+> pcre-devel openssl-devel mariadb-devel mariadb \
+> mariadb-server memcached php-pecl-memcache php \
+> php-mysql /root/lnmp_soft/php-fpm-5.4.16-42.el7.x86_64.rpm |tail  -7;
+
+[root@Web2 ~]# rpm -q elinks telnet httpd-tools gcc pcre-devel \
+> openssl-devel mariadb-devel mariadb mariadb-server \
+> memcached php-pecl-memcache php php-mysql php-fpm 
+elinks-0.12-0.36.pre6.el7.x86_64
+telnet-0.17-64.el7.x86_64
+httpd-tools-2.4.6-67.el7.x86_64
+gcc-4.8.5-16.el7.x86_64
+pcre-devel-8.32-17.el7.x86_64
+
+openssl-devel-1.0.2k-8.el7.x86_64
+mariadb-devel-5.5.56-2.el7.x86_64
+mariadb-5.5.56-2.el7.x86_64
+mariadb-server-5.5.56-2.el7.x86_64
+memcached-1.4.15-10.el7_3.1.x86_64
+php-pecl-memcache-3.0.8-4.el7.x86_64
+php-5.4.16-42.el7.x86_64
+php-mysql-5.4.16-42.el7.x86_64
+php-fpm-5.4.16-42.el7.x86_64
+
+[root@Web2 ~]# yum -y install net-snmp-devel libcurl-devel \
+> /root/lnmp_soft/libevent-devel-2.0.21-4.el7.x86_64.rpm |tail -3;
+
+[root@Web2 ~]# rpm -q net-snmp-devel libcurl-devel libevent-devel
+net-snmp-devel-5.7.2-28.el7.x86_64
+libcurl-devel-7.29.0-42.el7.x86_64
+libevent-devel-2.0.21-4.el7.x86_64
+[root@Web2 ~]# cd /root/nginx-1.12.2/ ;ls
+auto     CHANGES.ru  configure  html     man     src
+CHANGES  conf        contrib    LICENSE  README
+
+[root@Web2 nginx-1.12.2]# useradd -s /sbin/nologin nginx;
+[root@Web2 nginx-1.12.2]# rm -rf /usr/local/nginx
+
+[root@Web2 nginx-1.12.2]# ./configure --prefix=/usr/local/nginx --user=nginx \
+> --group=nginx  --with-stream  --with-http_ssl_module  \
+> --with-http_stub_status_module \
+> --without-http_autoindex_module  --without-http_ssi_module |tail -7 ;
+
+[root@Web2 nginx-1.12.2]# make && make install
+
+[root@Web2 nginx-1.12.2]# ln -s /usr/local/nginx/sbin/nginx /sbin/
+[root@Web2 nginx-1.12.2]# vim /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 18     include       mime.types;
+ 19     default_type  application/octet-stream;
+ 20     fastcgi_buffers     8    16k;   //缓存php生成的页面内容，8个16k
+ 21     fastcgi_buffer_size      32k;   //缓存php生产的头部信息
+ 22     fastcgi_connect_timeout  300;  //连接PHP的超时时间
+ 23     fastcgi_send_timeout     300;  //发送请求的超时时间
+ 24     fastcgi_read_timeout     300;  //读取请求的超时时间
+
+ 40     server {
+ 41         listen       80;
+ 42         server_name  localhost;
+
+ 70         location ~ \.php$ {
+ 71             root           html;
+ 72             fastcgi_pass   127.0.0.1:9000;
+ 73             fastcgi_index  index.php;
+ 74         #  fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_scrip    t_name;
+ 75             include        fastcgi.conf;
+ 76         }
+[root@Web2 nginx-1.12.2]# nginx ;cd
+[root@Web2 ~]# ss -anptul |grep nginx |column -t
+tcp  LISTEN  0  128  *:80  *:*  users:(("nginx",pid=12739,fd=6),("nginx",pid=12738,fd=6))
+[root@Web2 ~]# systemctl start mariadb && systemctl enable mariadb;\
+> systemctl start php-fpm  && systemctl enable php-fpm ;
+[root@Web2 ~]# vim /usr/local/nginx/html/test.php
+[root@Web2 ~]# cat /usr/local/nginx/html/test.php
+<?php
+$i=333;echo "$i\n";
+?>
+[root@Web2 ~]# curl http://192.168.2.200/test.php
+333
+[root@Web2 ~]# ls /usr/local/nginx/html/
+50x.html  index.html  test.php
+[root@Web2 ~]# tar -xzPf /root/lnmp_soft/zabbix-3.4.4.tar.gz 
+[root@Web2 ~]# cd /root/zabbix-3.4.4/;ls
+aclocal.m4  conf          database    m4           NEWS
+AUTHORS     config.guess  depcomp     Makefile.am  README
+bin         config.sub    frontends   Makefile.in  sass
+build       configure     include     man          src
+ChangeLog   configure.ac  INSTALL     misc         upgrades
+compile     COPYING       install-sh  missing
+
+// --enable-server安装部署zabbix服务器端软件
+// --enable-agent安装部署zabbix被监控端软件
+// --enable-proxy安装部署zabbix代理相关软件
+// --with-mysql配置mysql_config路径
+// --with-net-snmp允许zabbix通过snmp协议监控其他设备
+// --with-libcurl安装相关curl库文件，这样zabbix就可以通过curl连接http等服务，测试被监控主机服务的状态
+
+[root@Web2 zabbix-3.4.4]# ./configure --enable-server \
+> --enable-proxy  --enable-agent  --with-net-snmp \
+>  --with-mysql=/usr/bin/mysql_config --with-libcurl ;
+
+*            Thank you for using Zabbix!           *
+*              <http://www.zabbix.com>             *
+***********************************************************
+
+[root@Web2 zabbix-3.4.4]# make && make install ;
+
+[root@Web2 ~]# md5sum /root/zabbix-3.4.4/configure
+f1846062cef1850f53bacd8c98d768f6  /root/zabbix-3.4.4/configure
+
+[root@Web2 ~]# mysql
+MariaDB [(none)]> create database zabbix character set utf8;
+
+MariaDB [(none)]> grant all on zabbix.* to zabbix@'localhost' identified by 'zabbix';
+
+MariaDB [(none)]> quit
+Bye 
+[root@Web2 ~]# cd /root/zabbix-3.4.4/database/mysql/;ls |wc -l
+3
+[root@Web2 mysql]# ls
+data.sql  images.sql  schema.sql
+
+[root@Web2 mysql]# mysql -uzabbix -pzabbix zabbix < schema.sql
+[root@Web2 mysql]# mysql -uzabbix -pzabbix zabbix < images.sql
+[root@Web2 mysql]# mysql -uzabbix -pzabbix zabbix < data.sql 
+[root@Web2 mysql]# cd /root/zabbix-3.4.4/frontends/php/;ls |wc -l
+98
+[root@Web2 php]# ls /usr/local/nginx/html/ 
+50x.html  index.html  test.php
+[root@Web2 php]# cp -r * /usr/local/nginx/html/ ;\
+> ls /usr/local/nginx/html/ |wc -l ;
+101
+[root@Web2 php]# chmod -R 777 /usr/local/nginx/html/*
+
+[root@Web2 php]# cd ;vim /usr/local/etc/zabbix_server.conf
+
+ 38 LogFile=/tmp/zabbix_server.log //设置日志，仅查看以下即可
+ 85 DBHost=localhost  //数据库主机，默认该行被注释
+ 95 DBName=zabbix //设置数据库名称
+111 DBUser=zabbix
+119 DBPassword=zabbix
+[root@Web2 ~]# useradd -s /sbin/nologin zabbix
+
+[root@Web2 ~]# zabbix_server
+[root@Web2 ~]# ss -anptul |awk '/zabbix_server/{print $1,$3,$5}'
+tcp 0 *:10051
+如果是因为配置文件不对，导致服务无法启动时，不要重复执行zabbix_server，
+一定要先使用killall zabbix_server关闭服务后，再重新启动一次。
+
+[root@Web2 ~]# vim /usr/local/etc/zabbix_agentd.conf
+
+ 29 LogFile=/tmp/zabbix_server.log   //设置日志文件
+ 30 #LogFile=/tmp/zabbix_agentd.log
+
+ 93 Server=127.0.0.1,192.168.2.200    //允许哪些主机监控本机
+
+134 ServerActive=127.0.0.1,192.168.2.200  //允许哪些主机通过主动模式监控本机
+
+145 Hostname=Zabbix_server_Web2  //设置本机主机名
+
+280 UnsafeUserParameters=1     //是否允许自定义key
+
+[root@Web2 ~]# zabbix_agentd 
+[root@Web2 ~]# ss -anptul |awk '/zabbix_/{print $1,$3,$5}'
+tcp 0 *:10050
+tcp 0 *:10051
+
+[root@Web2 ~]# ss -anptul |awk '/zabbix_/{print $1,$3,$4,$5,$6}'
+tcp 0 128 *:10050 *:*
+tcp 0 128 *:10051 *:*
+[root@Web2 ~]# ss -anptul |awk '/zabbix_/{print $1,$3,$4,$5,$7}'
+tcp 0 128 *:10050 users:(("zabbix_agentd",pid=23203,fd=4),
+
+[root@Web2 ~]# yum -y install php-gd php-xml \
+> /root/lnmp_soft/php-bcmath-5.4.16-42.el7.x86_64.rpm  \
+> /root/lnmp_soft/php-mbstring-5.4.16-42.el7.x86_64.rpm 
+
+[root@Web2 ~]# rpm -q php-gd php-xml php-bcmath php-mbstring
+php-gd-5.4.16-42.el7.x86_64
+php-xml-5.4.16-42.el7.x86_64
+php-bcmath-5.4.16-42.el7.x86_64
+php-mbstring-5.4.16-42.el7.x86_64
+
+[root@Web2 ~]# vim /etc/php.ini 
+
+ 384 max_execution_time = 300   //最大执行时间，秒
+ 394 max_input_time = 300     //服务器接收数据的时间限制
+ 405 memory_limit = 128M     //内存容量限制
+ 672 post_max_size = 24M    //POST数据最大容量
+ 878 date.timezone = Asia/Shanghai  //设置时区
+[root@Web2 ~]# systemctl restart php-fpm.service 
+[root@Web2 ~]# firefox http://192.168.2.200/index.php
+Error: GDK_BACKEND does not match available displays
+[root@Web2 ~]# tail -3 /tmp/zabbix_server.log
+ 23203:20180905:212648.967 no active checks on server [192.168.2.200:10051]: host [Zabbix_server_Web2] not found
+ 23200:20180905:212651.343 failed to accept an incoming connection: connection from "192.168.2.5" rejected, allowed hosts: "127.0.0.1,192.168.2.200"
+ 23200:20180905:212751.369 failed to accept an incoming connection: connection from "192.168.2.5" rejected, allowed hosts: "127.0.0.1,192.168.2.200"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@web2 etc]# zabbix_server
+[root@web2 etc]# ss -anptul |awk '/zabbix_server/{print $1,$3,$5}'
+tcp 0 *:10051
+[root@web2 etc]# vim /usr/local/etc/zabbix_server.conf
+
+[root@web2 etc]# vim /usr/local/etc/zabbix_agentd.conf
+
+ 30 LogFile=/tmp/zabbix_agentd.log
+ 93 Server=127.0.0.1,192.168.2.5,192.168.2.200
+134 ServerActive=127.0.0.1,192.168.2.5,192.168.2.200
+145 Hostname=Zabbix_server  //设置本机主机名
+
+280 UnsafeUserParameters=1     //是否允许自定义key
+[root@web2 etc]# zabbix_agentd
+
+[root@web2 etc]# ss -anptul |awk '/zabbix_agentd/{print $1,$2,$3,$4,$5}'
+tcp LISTEN 0 128 *:10050
+[root@web2 etc]# nginx
+[root@web2 etc]# cat /usr/local/nginx/conf/nginx.conf
+ 17 http {
+ 18     include       mime.types;
+ 19     default_type  application/octet-stream;
+ 20     fastcgi_buffers      8     16k;
+ 21     fastcgi_buffer_size        32k;
+ 22     fastcgi_connect_timeout  240;  //连接PHP的超时时间
+ 23     fastcgi_send_timeout     240;  //发送请求的超时时间
+ 24     fastcgi_read_timeout     240;  //读取请求的超时时间
+
+[root@web2 etc]#  vim /etc/php.ini
+ 384 max_execution_time = 240   //最大执行时间，秒
+ 394 max_input_time = 240     //服务器接收数据的时间限制
+ 405 memory_limit = 128M     //内存容量限制
+ 672 post_max_size = 24M    //POST数据最大容量
+ 878 date.timezone = Asia/Shanghai  //设置时区
+[root@web2 etc]# systemctl restart php-fpm.service 
+[root@web2 etc]# nginx -s reload
+[root@web2 etc]# firefox http://192.168.2.200/index.php
+[root@web2 conf]# pwd
+/usr/local/nginx/html/conf
+[root@web2 conf]# cp zabbix.conf.php.example zabbix.conf.php
+[root@web2 conf]# ls
+maintenance.inc.php  zabbix.conf.php  zabbix.conf.php.example
+[root@web2 conf]# vim zabbix.conf.php
+  5 $DB['TYPE']     = 'MYSQL';
+  6 $DB['SERVER']   = 'localhost';
+  7 $DB['PORT']     = '3306';
+  8 $DB['DATABASE'] = 'zabbix';
+  9 $DB['USER']     = 'zabbix';
+ 10 $DB['PASSWORD'] = 'zabbix';
+ 11 
+ 12 // Schema name. Used for IBM DB2 and PostgreSQL.
+ 13 $DB['SCHEMA'] = '';
+ 14 
+ 15 $ZBX_SERVER      = 'localhost';
+ 16 $ZBX_SERVER_PORT = '10051';
+
+
+
+[root@web2 ~]# vim /usr/local/etc/zabbix_agentd.conf
+ 93 #Server=127.0.0.1,192.168.2.5,192.168.2.200 //注释该行，允许谁监控本机
+118 StartAgents=0  //被动监控时启动多个进程
+//StartAgents=0设置为0，则禁止被动监控，不启动zabbix_agentd服务
+134 ServerActive=192.168.2.5 //允许哪些主机监控本机（主动模式），一定要取消127.0.0.1
+145 Hostname=zabbixclient_web2//告诉监控服务器，是谁发的数据信息
+//一定要和zabbix服务器配置的监控主机名称一致（后面设置）
+183 RefreshActiveChecks=60  //默认120秒检测一次,最少60秒检测一次
+264 Include=/usr/local/etc/zabbix_agentd.conf.d/
+
+280 UnsafeUserParameters=1  //允许自定义key
+[root@web2 ~]# killall zabbix_agentd   //关闭服务
+[root@web2 ~]# zabbix_agentd   //启动服务
+
+
+
+
+
+
+
+
+
+
+
+

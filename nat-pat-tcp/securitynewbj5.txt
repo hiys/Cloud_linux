@@ -1,0 +1,1284 @@
+
+
+[root@H50 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.50
+192.168.2.50
+201.1.1.50
+201.1.2.50
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H50 ~]# systemctl is-active NetworkManager
+active
+
+[root@H50 ~]# service iptables status |grep -i active
+
+Redirecting to /bin/systemctl status iptables.service
+   Active: active (exited) since 五 2018-11-09 08:13:19 CST; 22min ago
+
+chkconfig iptables off（设置自动启动为关闭）
+
+chkconfig iptables on（设置自动启动为启动）
+
+chkconfig --del iptables（移除开启自启动）
+
+chkconfig --add iptables（增加开启自启动）
+
+[root@H50 ~]# chkconfig  iptables off
+注意：正在将请求转发到“systemctl disable iptables.service”。
+Removed symlink /etc/systemd/system/basic.target.wants/iptables.service.
+[root@H50 ~]# echo $?
+0
+[root@H50 ~]# which iptables
+/usr/sbin/iptables
+
+[root@H50 ~]# chkconfig iptables on
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+
+[root@H50 ~]# which nginx
+/usr/local/nginx/sbin/nginx
+[root@H50 ~]# nginx
+[root@H50 ~]# netstat -anptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      2502/nginx: master  
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1431/mysqld         
+[root@H50 ~]# service iptables stop
+
+Redirecting to /bin/systemctl stop iptables.service
+
+[root@H50 ~]# systemctl is-active firewalld
+unknown
+[root@H50 ~]# service iptables status |grep -i active
+
+Redirecting to /bin/systemctl status iptables.service
+   Active: inactive (dead) since 五 2018-11-09 09:27:19 CST; 6min ago
+
+[root@H50 conf]# sed -n '17,+6p' /usr/local/nginx/conf/nginx.conf
+
+http {
+  limit_req_zone $binary_remote_addr  zone=one:10m  rate=1r/s;
+  client_body_buffer_size  1K;
+  client_header_buffer_size 1k;
+  client_max_body_size 1k;
+  large_client_header_buffers 2 1k;  
+    include       mime.types;
+
+[root@H50 conf]# nginx -t
+
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+
+[root@H50 conf]# pwd
+/usr/local/nginx/conf
+[root@H50 conf]# cd
+
+[root@H50 ~]# mysql -uroot -p123
+
+MariaDB [(none)]> grant all on gamedb.* to yaya@'%' identified by'123';
+
+MariaDB [(none)]> show grants for yaya@'%';
+| Grants for yaya@%    |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'   |
++-----------------------------------------------------------------------------------------------------+
+2 rows in set (0.00 sec)
+
+MariaDB [(none)]> exit
+
+[root@H50 ~]# mysqladmin -h192.168.4.50 -uroot -p123 password '1234';
+
+mysqladmin: connect to server at '192.168.4.50' failed
+error: 'Access denied for user 'root'@'H50' (using password: YES)'
+
+[root@H50 ~]# mysqladmin -hlocalhost -uroot -p123 password '1234';
+
+[root@H50 ~]# mysql -uroot -p1234
+
+MariaDB [(none)]> select user,host,password from mysql.user;
++------+-----------+-------------------------------------------+
+| user | host      | password                                  |
++------+-----------+-------------------------------------------+
+| root | localhost | *A4B6157319038724E3560894F7F932C8886EBFCF |
+| root | h50       |                                           |
+| root | 127.0.0.1 |                                           |
+| root | ::1       |                                           |
+|      | localhost |                                           |
+|      | h50       |                                           |
+| yaya | %         | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |
++------+-----------+-------------------------------------------+
+7 rows in set (0.00 sec)
+
+MariaDB [(none)]>
+[root@H50 ~]# history |tail -2
+ 1007  service iptables status |grep -i active
+ 1008  history |tail -2
+[root@H50 ~]# vim /root/.bashrc ^C
+[root@H50 ~]# history  -w
+[root@H50 ~]# echo $?
+0
+[root@H50 ~]# history -c
+[root@H50 ~]# history |tail -2
+   12  history |tail -2
+[root@H50 ~]# ll /root/.mysql_history 
+-rw-------. 1 root root 2272 11月  9 09:33 /root/.mysql_history
+
+[root@H50 ~]# vim /root/.mysql_history
+
+[root@H50 ~]# tail -3 /root/.mysql_history
+grant all on gamedb.* to yaya@'%' identified by'123';
+show grant for yaya@'%';
+show grants for yaya@'%';
+
+[root@H50 ~]# > /root/.mysql_history  ###########/root/.mysql_history  ###
+
+[root@H50 ~]# ll /root/.mysql_history
+-rw-------. 1 root root 0 11月  9 09:41 /root/.mysql_history
+
+[root@H50 ~]# ll /root/.bash_history  ########### /root/.bash_history ###
+-rw-------. 1 root root 26502 11月  9 09:37 /root/.bash_history
+
+[root@H50 ~]# history -w
+
+[root@H50 ~]# vim /root/.bash_history
+
+[root@H50 ~]# tail -3 /root/.bash_history
+ll /root/.mysql_history
+ll /root/.bash_history 
+history -w
+[root@H50 ~]# > /root/.bash_history ########## /root/.bash_history ###
+
+[root@H50 ~]# ll /root/.bash_history
+-rw-------. 1 root root 0 11月  9 09:42 /root/.bash_history
+[root@H50 ~]# 
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234
+
+MariaDB [(none)]> create database gamedb;
+Query OK, 1 row affected (0.00 sec)
+
+MariaDB [(none)]> use gamedb;
+
+MariaDB [gamedb]> create table t1(id int(2));
+
+MariaDB [gamedb]> insert into gamedb.t1 values(10),(11),(12);
+
+MariaDB [gamedb]> select * from  gamedb.t1;
+| id   |
++------+
+|   10 |
+|   11 |
+|   12 |
++------+
+3 rows in set (0.00 sec)
+
+MariaDB [gamedb]> exit
+Bye
+[root@H50 ~]# mysql -hlocalhost  -uyaya -p123
+ERROR 1045 (28000): Access denied for user 'yaya'@'localhost' (using password: YES)
+[root@H50 ~]# 
+[root@H50 ~]# tcpdump -i eth0  -A port 3306
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+^C
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+[root@H50 ~]# 
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234 -e "show grants for yaya@'%';"
+
+| Grants for yaya@%       |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'           |
++-----------------------------------------------------------------------------------------------------+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234 -e "show grants;"
+
+| Grants for root@localhost   |
+| GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*A4B6157319038724E3560894F7F932C8886EBFCF' WITH GRANT OPTION |
+| GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION       |
+
+[root@H50 ~]# 
+
+[root@H50 ~]#  mysql -hlocalhost  -uroot -p1234
+
+MariaDB [(none)]> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| gamedb             |
+| mysql              |
+| performance_schema |
+| test               |
++--------------------+
+5 rows in set (0.00 sec)
+
+MariaDB [(none)]> grant select on *.* to yaya@'%' identified by'123';
+Query OK, 0 rows affected (0.00 sec)
+
+MariaDB [(none)]> show grants for yaya@'%';
+| Grants for yaya@%  |
+| GRANT SELECT ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'     |
+2 rows in set (0.00 sec)
+
+MariaDB [(none)]> use mysql;
+
+MariaDB [mysql]> select database();
+| database() |
+| mysql      |
++------------+
+1 row in set (0.00 sec)
+
+MariaDB [mysql]> update user set password=password('123') where user='root';
+
+MariaDB [mysql]> show tables;
++---------------------------+
+| Tables_in_mysql           |
++---------------------------+
+| columns_priv              |
+| db                        |
+| event                     |
+| func                      |
+| general_log               |
+| help_category             |
+| help_keyword              |
+| help_relation             |
+| help_topic                |
+| host                      |
+| ndb_binlog_index          |
+| plugin                    |
+| proc                      |
+| procs_priv                |
+| proxies_priv              |
+| servers                   |
+| slow_log                  |
+| tables_priv               |
+| time_zone                 |
+| time_zone_leap_second     |
+| time_zone_name            |
+| time_zone_transition      |
+| time_zone_transition_type |
+| user                      |
++---------------------------+
+24 rows in set (0.00 sec)
+
+MariaDB [mysql]> desc user\G
+*************************** 1. row ***************************
+  Field: Host
+   Type: char(60)
+   Null: NO
+    Key: PRI
+Default: 
+  Extra: 
+*************************** 2. row ***************************
+  Field: User
+   Type: char(16)
+   Null: NO
+    Key: PRI
+Default: 
+  Extra: 
+*************************** 3. row ***************************
+  Field: Password
+   Type: char(41)
+   Null: NO
+    Key: 
+Default: 
+  Extra: 
+*************************** 4. row ***************************
+  Field: Select_priv
+..........................................
+*************************** 5. row ***************************
+  Field: Insert_priv
+.............................................
+*************************** 6. row ***************************
+  Field: Update_priv
+.........................................
+*************************** 7. row ***************************
+  Field: Delete_priv
+...........................
+*************************** 8. row ***************************
+  Field: Create_priv
+...............................
+*************************** 9. row ***************************
+  Field: Drop_priv
+..............................
+*************************** 10. row ***************************
+  Field: Reload_priv
+.................................
+*************************** 11. row ***************************
+  Field: Shutdown_priv
+.............................
+*************************** 12. row ***************************
+  Field: Process_priv
+.................................
+*************************** 13. row ***************************
+  Field: File_priv
+............................
+*************************** 14. row ***************************
+  Field: Grant_priv
+..........................
+*************************** 15. row ***************************
+  Field: References_priv
+...........................
+*************************** 16. row ***************************
+  Field: Index_priv
+...............................................
+*************************** 17. row ***************************
+  Field: Alter_priv
+.................................
+*************************** 18. row ***************************
+  Field: Show_db_priv
+...............................
+*************************** 19. row ***************************
+  Field: Super_priv
+..........................................
+*************************** 20. row ***************************
+  Field: Create_tmp_table_priv
+...............................................
+*************************** 21. row ***************************
+  Field: Lock_tables_priv
+.......................................
+*************************** 22. row ***************************
+  Field: Execute_priv
+..............................................
+*************************** 23. row ***************************
+  Field: Repl_slave_priv
+..............................
+*************************** 24. row ***************************
+  Field: Repl_client_priv
+.....................................
+*************************** 25. row ***************************
+  Field: Create_view_priv
+......................................................
+*************************** 26. row ***************************
+  Field: Show_view_priv
+.....................................
+*************************** 27. row ***************************
+  Field: Create_routine_priv
+.......................................
+*************************** 28. row ***************************
+  Field: Alter_routine_priv
+......................................
+*************************** 29. row ***************************
+  Field: Create_user_priv
+............................................
+*************************** 30. row ***************************
+  Field: Event_priv
+...................................
+*************************** 31. row ***************************
+  Field: Trigger_priv
+...................................
+*************************** 32. row ***************************
+  Field: Create_tablespace_priv
+...............................
+*************************** 33. row ***************************
+  Field: ssl_type
+........................................
+*************************** 34. row ***************************
+  Field: ssl_cipher
+.......................................
+*************************** 35. row ***************************
+  Field: x509_issuer
+.......................................
+*************************** 36. row ***************************
+  Field: x509_subject
+.................................
+*************************** 37. row ***************************
+  Field: max_questions
+..................................
+*************************** 38. row ***************************
+  Field: max_updates
+....................................
+*************************** 39. row ***************************
+  Field: max_connections
+................................
+*************************** 40. row ***************************
+  Field: max_user_connections
+...............................
+*************************** 41. row ***************************
+  Field: plugin
+..................................
+*************************** 42. row ***************************
+  Field: authentication_string
+   Type: text
+   Null: NO
+    Key: 
+Default: NULL
+  Extra: 
+42 rows in set (0.02 sec)
+
+MariaDB [mysql]> 
+/*****************
+# systemctl stop mariadb.service
+
+# mysqld_safe --user=mysql --skip-grant-tables --skip-networking &
+
+mysql -u root mysql
+************************/
+[root@H50 ~]# systemctl restart mariadb.service
+
+[root@H50 ~]# mysql -hlocalhost  -uroot -p123
+
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> select Host,User,Password,authentication_string from mysql.user;
++-----------+------+-------------------------------------------+-----------------------+
+| Host      | User | Password                                  | authentication_string |
++-----------+------+-------------------------------------------+-----------------------+
+| localhost | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| h50       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| 127.0.0.1 | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| ::1       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| localhost |      |                                           |                       |
+| h50       |      |                                           |                       |
+| %         | yaya | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
++-----------+------+-------------------------------------------+-----------------------+
+7 rows in set (0.00 sec)
+MariaDB [mysql]> grant all on *.* to root@'%' identified by'123';
+
+MariaDB [mysql]> select current_user();
++----------------+
+| current_user() |
++----------------+
+| root@localhost |
+
+MariaDB [mysql]> select Host,User,Password,authentication_string from mysql.user;
++-----------+------+-------------------------------------------+-----------------------+
+| Host      | User | Password                                  | authentication_string |
++-----------+------+-------------------------------------------+-----------------------+
+| localhost | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| h50       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| 127.0.0.1 | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| ::1       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| localhost |      |                                           |                       |
+| h50       |      |                                           |                       |
+| %         | yaya | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| %         | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
++-----------+------+-------------------------------------------+-----------------------+
+8 rows in set (0.00 sec)
+
+MariaDB [mysql]> show grants for yaya@'%';
+| Grants for yaya@%    |
+| GRANT SELECT ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
+| GRANT ALL PRIVILEGES ON `gamedb`.* TO 'yaya'@'%'       |
+2 rows in set (0.00 sec)
+
+MariaDB [mysql]> revoke all on gamedb.* from yaya@'%';
+
+MariaDB [mysql]> revoke select on *.* from yaya@'%';
+
+/***********ALL [PRIVILEGES]	所有操作权限(但不包含 GRANT)
+USAGE	一个特殊的“无权限”权限  ******************************/
+
+MariaDB [mysql]> show grants for yaya@'%'; 
+| Grants for yaya@%      |
+| GRANT USAGE ON *.* TO 'yaya'@'%' IDENTIFIED BY PASSWORD '*23AE809DDACAF96AF0FD78ED04B6A265E05AA257' |
++-----------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+
+MariaDB [mysql]> 
+ 
+MariaDB 对账户授权
+对账户授权需要使用GRANT语句，下面是 GRANT 语句的语法：
+GRANT privileges (columns) ON what To account [IDENTIFIED BY ‘password’][REQUIRE encryption requirements] [WITH grant or resource management options];
+GRANT 语句里，如果用户存在，GRANT 语句则将改变它的权限；如果不存在 GRANT 语句则创建它，再将给定的权限分配给它。
+
+下面是 GRANT 语句最为常用的几个语法元素。
+
+privileges，授权账户的权限。
+columns，权限将作用的数据列。如若需要列举多个数据列，则用逗号分隔。
+what，权限的级别。
+account，被授权的账户。account 的格式为 ‘user_name’@’host_name’。
+password，账户的口令。类似于 CREATE USER 中的 IDENTIED BY。
+确定账户的权限
+
+可以授予用户的权限由很多种。下面3张表即为权限的汇总。
+
+数据库管理权限
+
+权限名	权限所允许的操作
+CREATE USER	使用高级账户管理语句
+FILE	读、写 MariaDB 服务器主机上的文件
+GRANT OPTION	把账户权限授予其他账户
+PROCESS	查看在运行的线程的信息
+RELOAD	重新加载权限数据或更新日志及缓存
+REPLICATION CLIENT	查询主/从服务器的运行地点
+REPLICATION SLAVE	以复制的从服务器运行
+SHOW DATBASES	用 SHOW DATABASES 语句查看全部数据库名称
+SHUTDOWN	关闭服务器
+SUPER	用 KILL 命令终止线程以及进行其他超级用户操作
+ 
+数据库对象操作权限
+
+ALTER	更改数据表或索引的定义
+ALTER ROUTINE	更改或删除存储函数或存储过程
+CREATE	创建数据库或数据表
+CRATE ROUTINE	创建存储函数或存储过程
+CREATE TEMPORARY TABLE	用 TEMPORARY 关键字创建临时表
+CREATE VIEW	创建视图
+DELETE	删除数据库中现有的数据行
+DROP	删除数据库、数据表或其他对象
+EVENT	为时间调度程序创建、删除或修改各种事件
+EXECUTE	执行存储函数或存储过程
+INDEX	创建或删除索引
+INSERT	往数据表中插入新数据行
+LOCK TABLE	用 LOCK TABLE 语句明确地锁定数据表
+REFERENCE	未使用（保留字）
+SELECT	检索数据表里的数据行
+SHOW VIEW	查看视图的定义
+TRGGER	创建或删除触发器
+UPDATE	修改数据行
+ 
+其他权限
+
+ALL [PRIVILEGES]	所有操作权限(但不包含 GRANT)
+USAGE	一个特殊的“无权限”权限
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H50 ~]# tar -xf lnmp_soft.tar.gz 
+[root@H50 ~]# cd lnmp_soft/
+[root@H50 lnmp_soft]# ls
+
+[root@H50 lnmp_soft]# yum -y install java-1.8.0-openjdk  java-1.8.0-openjdk-headless |tail -5
+..................................
+软件包 1:java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64 已安装并且是最新版本
+软件包 1:java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@H50 lnmp_soft]# cd
+[root@H50 ~]# tar -xzf  lnmp_soft/apache-tomcat-8.0.30.tar.gz  -C /usr/local/
+[root@H50 ~]# cd /usr/local/;ls
+apache-tomcat-8.0.30  bin  etc  games  include  lib  lib64  libexec  mongodb  nginx  sbin  share  src
+
+[root@H50 local]# mv apache-tomcat-8.0.30/ tomcat
+
+[root@H50 local]# ls /usr/local/tomcat/bin/startup.sh 
+/usr/local/tomcat/bin/startup.sh
+
+[root@H50 local]# /usr/local/tomcat/bin/startup.sh
+
+[root@H50 local]# netstat -npult  |grep java
+tcp6       0      0 :::8080                 :::*                    LISTEN      6943/java           
+tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      6943/java           
+tcp6       0      0 :::8009                 :::*                    LISTEN      6943/java           
+[root@H50 local]# ls /usr/local/tomcat/webapps/
+docs  examples  host-manager  manager  ROOT
+
+[root@H50 local]# ls /usr/local/tomcat/webapps/ROOT/
+asf-logo.png       bg-middle.png    bg-upper.png  index.jsp          tomcat.gif        tomcat.svg
+asf-logo-wide.gif  bg-nav-item.png  build.xml     RELEASE-NOTES.txt  tomcat.png        WEB-INF
+bg-button.png      bg-nav.png       favicon.ico   tomcat.css         tomcat-power.gif
+
+
+
+
+
+[root@H50 local]# yum -y install  java-1.8.0-openjdk-devel |tail -3
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                        
+
+完毕！
+
+[root@H50 local]# rpm -q java-1.8.0-openjdk-devel 
+java-1.8.0-openjdk-devel-1.8.0.131-11.b12.el7.x86_64
+
+[root@H50 local]# ls /usr/local/tomcat/lib/
+annotations-api.jar       ecj-4.4.2.jar    tomcat-api.jar      tomcat-jdbc.jar
+catalina-ant.jar          el-api.jar       tomcat-coyote.jar   tomcat-jni.jar
+catalina-ha.jar           jasper-el.jar    tomcat-dbcp.jar     tomcat-util.jar
+catalina.jar              jasper.jar       tomcat-i18n-es.jar  tomcat-util-scan.jar
+catalina-storeconfig.jar  jsp-api.jar      tomcat-i18n-fr.jar  tomcat-websocket.jar
+catalina-tribes.jar       servlet-api.jar  tomcat-i18n-ja.jar  websocket-api.jar
+
+[root@H50 local]# cd /usr/local/tomcat/lib/
+[root@H50 lib]# 
+[root@H50 lib]# jar -xf catalina.jar 
+[root@H50 lib]# pwd
+/usr/local/tomcat/lib
+
+[root@H50 lib]# cd  /usr/local/tomcat/lib/org/;ls
+apache
+
+[root@H50 org]# ls  /usr/local/tomcat/lib/org/apache/catalina/util/
+CharsetMapper.class              Introspection$2.class     ResourceSet.class
+CharsetMapperDefault.properties  Introspection.class       ServerInfo.class
+ConcurrentDateFormat.class       IOTools.class             ServerInfo.properties
+ContextName.class                LifecycleBase.class       SessionConfig.class
+Conversions.class                LifecycleMBeanBase.class  SessionIdGeneratorBase.class
+CustomObjectInputStream.class    LifecycleSupport.class    StandardSessionIdGenerator.class
+DOMWriter.class                  LocalStrings.properties   Strftime.class
+Extension.class                  ManifestResource.class    StringParser.class
+ExtensionValidator.class         MIME2Java.class           TomcatCSS.class
+InstanceSupport.class            ParameterMap.class        URLEncoder.class
+Introspection$1.class            RequestUtil.class         XMLWriter.class
+
+[root@H50 org]# ls  /usr/local/tomcat/lib/org/apache/catalina/util/ServerInfo.properties 
+/usr/local/tomcat/lib/org/apache/catalina/util/ServerInfo.properties
+
+[root@H50 org]# vim /usr/local/tomcat/lib/org/apache/catalina/util/ServerInfo.properties
+ 16 server.info=Apache Tomcat/8.0.30
+ 17 server.number=8.0.30.0
+ 18 server.built=Dec 1 2015 22:30:46 UTC
+
+[root@H50 org]# sed -n '16,$p' /usr/local/tomcat/lib/org/apache/catalina/util/ServerInfo.properties
+server.info=Apache Tomcat xxxxxxxxxxxx/8.0.30
+server.number=9.9.90.90
+server.built=Dec 1 2015 22:30:46 UTC
+
+[root@H50 org]# vim /usr/local/tomcat/conf/server.xml 
+
+ 22 <Server port="8005" shutdown="SHUTDOWN">
+
+ 53   <Service name="Catalina">
+
+ 69     <Connector port="8080" protocol="HTTP/1.1"
+ 70                connectionTimeout="20000"
+ 71                redirectPort="8443" server="xxxWWWhiys"/>
+
+[root@H50 org]# sed -n '69,71p' /usr/local/tomcat/conf/server.xml
+    <Connector port="8080" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" server="xxxWWWhiys"/>
+[root@H50 org]# 
+[root@H50 org]# pwd
+/usr/local/tomcat/lib/org
+[root@H50 org]# cd
+[root@H50 ~]# /usr/local/tomcat/bin/shutdown.sh 
+
+[root@H50 ~]# /usr/local/tomcat/bin/startup.sh 
+
+[root@H50 ~]# curl -I http://192.168.4.50:8080/test.html
+HTTP/1.1 404 Not Found
+Content-Type: text/html;charset=utf-8
+Content-Language: en
+Content-Length: 1038
+Date: Fri, 09 Nov 2018 02:42:18 GMT
+Server: xxxWWWhiys
+
+[root@H50 ~]# ls /usr/local/tomcat/webapps/ROOT/
+asf-logo.png       bg-middle.png    bg-upper.png  index.jsp          tomcat.gif        tomcat.svg
+asf-logo-wide.gif  bg-nav-item.png  build.xml     RELEASE-NOTES.txt  tomcat.png        WEB-INF
+bg-button.png      bg-nav.png       favicon.ico   tomcat.css         tomcat-power.gif
+[root@H50 ~]# echo "H50 test" > /usr/local/tomcat/webapps/ROOT/test.html
+[root@H50 ~]# curl -I http://192.168.4.50:8080/test.html
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+ETag: W/"9-1541731454000"
+Last-Modified: Fri, 09 Nov 2018 02:44:14 GMT
+Content-Type: text/html
+Content-Length: 9
+Date: Fri, 09 Nov 2018 02:44:19 GMT
+Server: xxxWWWhiys
+
+[root@H50 ~]# 
+[root@H50 ~]# useradd  -s /sbin/nologin  tomcat
+
+[root@H50 ~]# chown -R tomcat:tomcat  /usr/local/tomcat/
+
+[root@H50 ~]# su -c /usr/local/tomcat/bin/shutdown.sh 
+
+Using CATALINA_BASE:   /usr/local/tomcat
+Using CATALINA_HOME:   /usr/local/tomcat
+Using CATALINA_TMPDIR: /usr/local/tomcat/temp
+Using JRE_HOME:        /usr
+Using CLASSPATH:       /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar
+[root@H50 ~]# su -c /usr/local/tomcat/bin/startup.sh 
+Using CATALINA_BASE:   /usr/local/tomcat
+Using CATALINA_HOME:   /usr/local/tomcat
+Using CATALINA_TMPDIR: /usr/local/tomcat/temp
+Using JRE_HOME:        /usr
+Using CLASSPATH:       /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar
+Tomcat started.
+[root@H50 ~]# ps aux |grep tomcat
+
+root      7532 15.7  7.4 2297008 76176 pts/0   Sl   10:48   0:02 /usr/bin/java -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djava.endorsed.dirs=/usr/local/tomcat/endorsed -classpath /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/usr/local/tomcat -Dcatalina.home=/usr/local/tomcat -Djava.io.tmpdir=/usr/local/tomcat/temp org.apache.catalina.startup.Bootstrap start
+root      7562  0.0  0.0 112676   980 pts/0    S+   10:48   0:00 grep --color=auto tomcat
+[root@H50 ~]# 
+[root@H50 ~]# ls -ld  /usr/local/tomcat/
+drwxr-xr-x. 9 tomcat tomcat 160 11月  9 10:17 /usr/local/tomcat/
+[root@H50 ~]# 
+
+[root@H50 ~]# ps aux |grep java
+root      7532  1.5  7.5 2297008 76452 pts/0   Sl   10:48   0:02 /usr/bin/java -Djava.util.logging.config.file=/usr/local/tomcat/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djava.endorsed.dirs=/usr/local/tomcat/endorsed -classpath /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar -Dcatalina.base=/usr/local/tomcat -Dcatalina.home=/usr/local/tomcat -Djava.io.tmpdir=/usr/local/tomcat/temp org.apache.catalina.startup.Bootstrap start
+root      7589  0.0  0.0 112676   980 pts/0    S+   10:51   0:00 grep --color=auto java
+[root@H50 ~]# 
+
+[root@H50 ~]# ll /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 1月  30 2018 /etc/rc.local -> rc.d/rc.local
+[root@H50 ~]# ll  /etc/rc.d/rc.local 
+-rw-r--r--. 1 root root 473 6月  27 2017 /etc/rc.d/rc.local
+[root@H50 ~]# chmod +x /etc/rc.d/rc.local
+[root@H50 ~]# ll  /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 473 6月  27 2017 /etc/rc.d/rc.local
+[root@H50 ~]# vim /etc/rc.local 
+
+[root@H50 ~]# tail -2 /etc/rc.local
+touch /var/lock/subsys/local
+su -c /usr/local/tomcat/bin/startup.sh
+[root@H50 ~]# 
+
+
+[root@H50 ~]# mkdir /demo ;cd /demo/
+[root@H50 demo]# vim test.sh
+[root@H50 demo]# cat test.sh
+#!/bin/bash
+echo "hello boy"
+
+[root@H50 demo]# . test.sh
+hello boy
+[root@H50 demo]# cp test.sh test1.sh
+[root@H50 demo]# vim test1.sh
+[root@H50 demo]# cat test1.sh
+#!/bin/bash
+echo "hello boy"
+echo "LOVE never stop"
+[root@H50 demo]# 
+[root@H50 demo]# . test1.sh
+hello boy
+LOVE never stop
+[root@H50 demo]# ls
+test1.sh  test.sh
+[root@H50 demo]# diff test.sh  test1.sh 
+2a3
+> echo "LOVE never stop"
+[root@H50 demo]# diff -u test.sh test1.sh
+--- test.sh	2018-11-09 11:16:28.951194817 +0800
++++ test1.sh	2018-11-09 11:18:29.183194817 +0800
+@@ -1,2 +1,3 @@
+ #!/bin/bash
+ echo "hello boy"
++echo "LOVE never stop"
+[root@H50 demo]# diff -u test.sh test1.sh > game.patch
+[root@H50 demo]# ls
+game.patch  test1.sh  test.sh
+[root@H50 demo]# cat game.patch 
+--- test.sh	2018-11-09 11:16:28.951194817 +0800
++++ test1.sh	2018-11-09 11:18:29.183194817 +0800
+@@ -1,2 +1,3 @@
+ #!/bin/bash
+ echo "hello boy"
++echo "LOVE never stop"
+[root@H50 demo]# 
+[root@H50 demo]# yum list |grep patch
+kpatch.noarch                           0.4.0-1.el7                @anaconda/7.4
+speech-dispatcher.x86_64                0.7.1-15.el7               @anaconda/7.4
+speech-dispatcher-python.x86_64         0.7.1-15.el7               @anaconda/7.4
+patch.x86_64                            2.7.1-8.el7                rhel7        
+patchutils.x86_64                       0.3.3-4.el7                rhel7        
+python-jsonpatch.noarch                 1.2-4.el7                  rhel7        
+speech-dispatcher.i686                  0.7.1-15.el7               rhel7        
+texlive-memoir.noarch                   2:svn21638.3.6j_patch_6.0g-38.el7
+[root@H50 demo]# yum -y install  patch |tail -4
+已安装:
+  patch.x86_64 0:2.7.1-8.el7                                                    
+
+完毕！
+[root@H50 demo]# rpm -q patch
+patch-2.7.1-8.el7.x86_64
+[root@H50 demo]# which patch
+/usr/bin/patch
+[root@H50 demo]# yum provides  /usr/bin/patch 
+....................
+patch-2.7.1-8.el7.x86_64 : Utility for modifying/upgrading files
+源    ：rhel7
+匹配来源：
+文件名    ：/usr/bin/patch
+patch-2.7.1-8.el7.x86_64 : Utility for modifying/upgrading files
+源    ：rhel7-2
+匹配来源：
+文件名    ：/usr/bin/patch
+patch-2.7.1-8.el7.x86_64 : Utility for modifying/upgrading files
+源    ：@rhel7
+匹配来源：
+文件名    ：/usr/bin/patch
+ 
+[root@H50 demo]# ls
+game.patch  test1.sh  test.sh
+
+[root@H50 demo]# patch  -p0 < game.patch
+patching file test.sh
+
+[root@H50 demo]# cat test.sh
+#!/bin/bash
+echo "hello boy"
+echo "LOVE never stop"
+[root@H50 demo]# 
+[root@H50 demo]# patch  -RE -p0  < game.patch 
+patching file test.sh
+
+[root@H50 demo]# cat test.sh
+#!/bin/bash
+echo "hello boy"
+[root@H50 demo]# 
+[root@H50 demo]# rm -f  *
+[root@H50 demo]# ls
+[root@H50 demo]# mkdir  s{1,2}
+[root@H50 demo]# ls
+s1  s2
+[root@H50 demo]# vim s1/game.sh
+[root@H50 demo]# cat s1/game.sh
+#!/bin/bash
+echo -e "hello s1\/game1.sh"
+[root@H50 demo]# vim s2/game.sh
+[root@H50 demo]# cat s2/game.sh
+#!/bin/bash
+echo -e "hello s2\/game2.sh"
+[root@H50 demo]# which find
+/usr/bin/find
+[root@H50 demo]# cp /usr/bin/find  /demo/s{1,2}
+cp: 略过目录"/demo/s1"
+[root@H50 demo]# cp /usr/bin/find  /demo/s1/
+[root@H50 demo]# ls /demo/s1/
+find  game.sh
+[root@H50 demo]# ls /demo/s2/
+find  game.sh
+[root@H50 demo]# echo "1A" >> /demo/s1/find 
+[root@H50 demo]# echo "2Bfind" >> /demo/s2/find 
+[root@H50 demo]# 
+
+[root@H50 demo]# yum -y install  tree |tail -2
+................
+[root@H50 demo]# rpm -q tree
+tree-1.6.0-10.el7.x86_64
+[root@H50 demo]# tree /demo/
+/demo/
+├── s1
+│   ├── find
+│   └── game.sh
+└── s2
+    ├── find
+    └── game.sh
+
+2 directories, 4 files
+[root@H50 demo]# 
+diff制作补丁文件的原理：告诉我们怎么修改第一个文件后能得到第二个文件。
+这样如果第一个版本的脚本有漏洞，我们不需要将整个脚本都替换，仅需要修改有问题的一小部分代码即可，diff刚好可以满足这个需求！
+像Linux内核这样的大块头，一旦发现有一个小漏洞，我们不可能把整个内核都重新下载，全部替换一遍，而仅需要更新有问题的那一小部分代码即可！
+diff命令常用选项：
+-u	输出统一内容的头部信息（打补丁使用），计算机知道是哪个文件需要修改
+-r	递归对比目录中的所有资源（可以对比目录）
+-a	所有文件视为文本（包括二进制程序）
+-N	无文件视为空文件（空文件怎么变成第二个文件）
+-N选项备注说明：
+A目录下没有txt文件，B目录下有txt文件
+diff比较两个目录时，默认会提示txt仅在B目录有（无法对比差异，修复文件）
+diff比较时使用N选项，则diff会拿B下的txt与A下的空文件对比，补丁信息会明确说明如何从空文件修改后变成txt文件，打补丁即可成功！
+步骤二：使用patch命令对单文件代码打补丁
+
+[root@H50 demo]# ll s1/find 
+-rwxr-xr-x. 1 root root 199179 11月  9 11:41 s1/find
+[root@H50 demo]# ll s1/game.sh 
+-rw-r--r--. 1 root root 41 11月  9 11:38 s1/game.sh
+[root@H50 demo]# diff -rau  s1  s2
+diff -rau s1/find s2/find
+--- s1/find	2018-11-09 11:41:13.719194817 +0800
++++ s2/find	2018-11-09 11:41:43.095194817 +0800
+@@ -661,4 +661,4 @@
+ ��	�㟼�j�:o�:
+1A�
+2Bfindb�
+diff -rau s1/game.sh s2/game.sh
+--- s1/game.sh	2018-11-09 11:38:13.528194817 +0800
++++ s2/game.sh	2018-11-09 11:38:57.688194817 +0800
+@@ -1,2 +1,2 @@
+ #!/bin/bash
+-echo -e "hello s1\/game1.sh"
++echo -e "hello s2\/game2.sh"
+[root@H50 demo]# ls
+s1  s2
+[root@H50 demo]# diff -rau  s1  s2 > bd.patch
+[root@H50 demo]# ls
+bd.patch  s1  s2
+[root@H50 demo]# cd s1/
+[root@H50 s1]# ls
+find  game.sh
+[root@H50 s1]# 
+[root@H50 s1]# patch  -p1 < ../bd.patch 
+patching file find
+patching file game.sh
+[root@H50 s1]# ls
+find  game.sh
+[root@H50 s1]# cat game.sh 
+#!/bin/bash
+echo -e "hello s2\/game2.sh"
+[root@H50 s1]# patch  -RE -p1 < ../bd.patch
+patching file find
+patching file game.sh
+[root@H50 s1]# cat game.sh 
+#!/bin/bash
+echo -e "hello s1\/game1.sh"
+[root@H50 s1]# . game.sh
+hello s1\/game1.sh
+[root@H50 s1]# 
+[root@H50 s1]# echo -e "hello s1/game.sh"
+hello s1/game.sh
+[root@H50 s1]# echo  "hello s1/game.sh"
+hello s1/game.sh
+[root@H50 s1]# 
+
+[root@H50 ~]# mysqladmin  -uroot  password '123'  #**# mariadb 修改root密码方式一
+[root@H50 ~]# mysqladmin  -h192.168.4.50 -uroot -p123 password '1234'  #**# mariadb 修改root密码方式[ 2 ]
+[root@H50 ~]# mysql -hlocalhost  -uroot -p1234
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> select database();
+| database() |
+| mysql      |                                             #**# mariadb 修改root密码方式[ 3 ]
+MariaDB [mysql]> update user set password=password('123') where user='root';
+
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> select Host,User,Password,authentication_string from mysql.user;
++-----------+------+-------------------------------------------+-----------------------+
+| Host      | User | Password                                  | authentication_string |
++-----------+------+-------------------------------------------+-----------------------+
+| localhost | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| h50       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| 127.0.0.1 | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| ::1       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| localhost |      |                                           |                       |
+| h50       |      |                                           |                       |
+| %         | yaya | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+
+                                                 #**# mariadb 修改root密码方式[ 4 ]
+MariaDB [mysql]> grant all on *.* to root@'%' identified by'123';
+
+MariaDB [mysql]> select Host,User,Password,authentication_string from mysql.user;
++-----------+------+-------------------------------------------+-----------------------+
+| Host      | User | Password                                  | authentication_string |
++-----------+------+-------------------------------------------+-----------------------+
+| localhost | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| h50       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| 127.0.0.1 | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| ::1       | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| localhost |      |                                           |                       |
+| h50       |      |                                           |                       |
+| %         | yaya | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+| %         | root | *23AE809DDACAF96AF0FD78ED04B6A265E05AA257 |                       |
+
+[root@H50 ~]# systemctl stop  mariadb.service
+[root@H50 ~]# which mysqld_safe                    #**# mariadb 修改root密码方式[ 5 ]
+/usr/bin/mysqld_safe
+                            ## 注意后台运行 skip-networking  & 后 , 加此命令 pkill -9 mysqld 可以防止重启失败
+[root@H50 ~]# mysqld_safe  --user=mysql  --skip-grant-tables  --skip-networking  &
+mysql   ##手动输入命令mysql 回车进入数据库
+MariaDB [(none)]> use mysql;
+MariaDB [mysql]> update mysql.user set password=password('1234') where user.user='root';
+
+MariaDB [mysql]> exit
+Bye
+[root@H50 ~]#  pkill -9 mysqld   ## 加此命令可以防止重启失败
+
+[root@H50 ~]# systemctl start mariadb.service 
+
+[root@H50 ~]# head -4 /etc/my.cnf      ## #**# mariadb 修改root密码方式[ 6 ]
+[mysqld]
+skip-networking   ## 加此跳过网络监听,修改密码完成后要记得注释或删除此语句
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+                                          ## #**# mariadb 修改root密码方式[ 7 ]
+[root@H50 ~]# mysql_secure_installation   ## 数据库安全相关初始化
+................
+Change the root password? [Y/n] y
+New password: 1234
+Re-enter new password: 1234
+Password updated successfully!
+Reloading privilege tables..
+ ... Success!
+................................
+
+[root@H50 ~]# mysql -hlocalhost -uroot -p1234  -P3306  -A
+
+                     /*第 8 个方式：修改密码，不用进入mysql*/
+
+MariaDB [(none)]> set password for 'root'@'%'=password('1234');
+
+
+
+
+
+
+
+
+
+
+[root@H51 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.51
+192.168.2.51
+201.1.1.51
+201.1.2.51
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H51 ~]# systemctl is-active NetworkManager
+active
+[root@H51 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+   Active: active (exited) since 五 2018-11-09 08:13:18 CST; 25min ago
+[root@H51 ~]# 
+[root@H51 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1414/mysqld         
+tcp6       0      0 :::80                   :::*                    LISTEN      1194/httpd          
+[root@H51 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H52 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.52
+192.168.2.52
+201.1.1.52
+201.1.2.52
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H52 ~]# systemctl is-active NetworkManager
+active
+[root@H52 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+   Active: active (exited) since 五 2018-11-09 08:13:16 CST; 26min ago
+[root@H52 ~]# 
+[root@H52 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1376/mysqld         
+[root@H52 ~]# 
+
+
+
+
+
+
+
+
+
+
+[root@H53 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.53
+192.168.2.53
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H53 ~]# systemctl is-active NetworkManager
+active
+[root@H53 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+   Active: active (exited) since 五 2018-11-09 08:13:20 CST; 26min ago
+[root@H53 ~]# 
+[root@H53 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1307/mysqld         
+[root@H53 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H54 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.54
+192.168.2.54
+201.1.1.54
+201.1.2.54
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H54 ~]# systemctl is-active NetworkManager
+active
+[root@H54 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+   Active: inactive (dead)
+[root@H54 ~]# 
+[root@H54 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1378/mysqld         
+[root@H54 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H55 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.55
+192.168.2.55
+201.1.1.55
+201.1.2.55
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H55 ~]# systemctl is-active NetworkManager
+active
+[root@H55 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+   Active: inactive (dead)
+[root@H55 ~]# 
+[root@H55 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp6       0      0 :::3306                 :::*                    LISTEN      1439/mysqld         
+[root@H55 ~]#
+
+
+
+
+
+
+
+
+
+
+
+[root@H56 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.56
+192.168.2.56
+201.1.1.56
+201.1.2.56
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H56 ~]# systemctl is-active NetworkManager
+active
+[root@H56 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+   Active: inactive (dead)
+[root@H56 ~]# 
+[root@H56 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp6       0      0 :::80                   :::*                    LISTEN      1143/httpd          
+tcp6       0      0 :::3306                 :::*                    LISTEN      1452/mysqld         
+[root@H56 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H57 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.57
+192.168.2.57
+201.1.1.57
+201.1.2.57
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+[root@H57 ~]# systemctl is-active NetworkManager
+active
+[root@H57 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+Unit iptables.service could not be found.
+[root@H57 ~]# 
+[root@H57 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      1124/php-fpm: maste 
+tcp6       0      0 :::3306                 :::*                    LISTEN      1445/mysqld         
+[root@H57 ~]# 
+
+
+
+
+
+
+
+
+[root@H58 ~]# ifconfig |awk '/inet /{print $2}';route -n |awk 'NR>1&&NR<7{print $2}'
+192.168.4.58
+192.168.2.58
+127.0.0.1
+192.168.122.1
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+[root@H58 ~]# systemctl is-active NetworkManager
+active
+[root@H58 ~]# service iptables status |grep -i active
+Redirecting to /bin/systemctl status iptables.service
+Unit iptables.service could not be found.
+[root@H58 ~]# 
+[root@H58 ~]# netstat -nptul |egrep ':80|3306|:9000|:11211'
+tcp        0      0 0.0.0.0:11211           0.0.0.0:*               LISTEN      1052/memcached      
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      1045/php-fpm: maste 
+tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      1298/mysqld         
+tcp6       0      0 :::11211                :::*                    LISTEN      1052/memcached      
+udp        0      0 0.0.0.0:11211           0.0.0.0:*                           1052/memcached      
+udp6       0      0 :::11211                :::*                                1052/memcached      
+[root@H58 ~]# 
+
+
+
+
