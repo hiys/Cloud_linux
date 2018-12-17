@@ -1081,8 +1081,6 @@ E..4..@.@..............P......Fb...........
 [root@Va1 ~]# 
 
 
-
-
 ==========================  Va 2   ==============================
 
 [root@Va2 ~]# ls  /etc/yum.repos.d/
@@ -1229,21 +1227,155 @@ httpd-2.4.6-67.el7.x86_64
    Va6 192.168.2.16
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ====================  tcpdump  =======================================================
 ===================================================================
+
+
+
+
+
+NAT英文全称是“Network Address Translation”
+顾名思义，它是一种把内部私有网络地址（IP地址）翻译成合法网络IP地址的技术。
+因此我们可以认为，NAT在一定程度上，能够有效的解决公网地址不足的问题
+分类：
+NAT有三种类型：静态NAT(Static NAT)、动态地址NAT(Pooled NAT)、网络地址端口转换NAPT（Port-Level NAT）
+其中，网络地址端口转换NAPT（Network Address Port Translation）
+则是把内部地址映射到外部网络的一个IP地址的不同端口上。
+它可以将中小型的网络隐藏在一个合法的IP地址后面。
+NAPT与 动态地址NAT不同，
+它将内部连接映射到外部网络中的一个单独的IP地址上，
+同时在该地址上加上一个由NAT设备选定的端口号.NAPT是使用最普遍的一种转换方式
+,它又细分为snat和dnat.
+(1)源NAT（Source NAT，SNAT）：修改数据包的源地址。
+源NAT改变第一个数据包的来源地址，它永远会在数据包发送到网络之前完成，
+数据包伪装就是一具SNAT的例子。
+(2)目的NAT（Destination NAT，DNAT）：修改数据包的目的地址。
+Destination NAT刚好与SNAT相反，它是改变第一个数据懈的目的地地址，
+如平衡负载、端口转发和透明代理就是属于DNAT
+应用：
+NAT主要可以实现以下几个功能：数据包伪装、平衡负载、端口转发和透明代理。
+数据伪装: 可以将内网数据包中的地址信息更改成统一的对外地址信息，
+不让内网主机直接暴露在因特网上，保证内网主机的安全。
+同时，该功能也常用来实现共享上网。
+端口转发:
+ 当内网主机对外提供服务时，由于使用的是内部私有IP地址，外网无法直接访问。
+因此，需要在网关上进行端口转发，将特定服务的数据包转发给内网主机。
+负载平衡: 目的地址转换NAT可以重定向一些服务器的连接到其他随机选定的服务器。
+失效终结: 目的地址转换NAT可以用来提供高可靠性的服务。
+如果一个系统有一台通过路由器访问的关键服务器，
+一旦路由器检测到该服务器当机，
+它可以使用目的地址转换NAT透明的把连接转移到一个备份服务器上。
+透明代理: 
+NAT可以把连接到因特网的HTTP连接重定向到一个指定的HTTP代理服务器以缓存数据和过滤请求。
+一些因特网服务提供商就使用这种技术来减少带宽的使用而不用让他们的客户配置他们的浏览器支持代理连接
+原理
+地址转换
+NAT的基本工作原理是，当私有网主机和公共网主机通信的IP包经过NAT网关时，
+将IP包中的源IP或目的IP在私有IP和NAT的公共IP之间进行转换
+要做SNAT的信息包被添加到POSTROUTING链中。
+要做DNAT的信息包被添加到PREROUTING链中。
+直接从本地出站的信息包的规则被添加到OUTPUT 链中。
+DNAT：若包是被送往PREROUTING链的，并且匹配了规则，
+则执行DNAT或REDIRECT目标。
+为了使数据包得到正确路由，必须在路由之前进行DNAT。
+路由：
+内核检查信息包的头信息，尤其是信息包的目的地。
+处理本地进程产生的包：
+对nat表OUTPUT链中的规则实施规则检查，对匹配的包执行目标动作。
+SNAT：
+若包是被送往POSTROUTING链的，并且匹配了规则，
+则执行SNAT或MASQUERADE目标。
+系统在决定了数据包的路由之后才执行该链中的规则
+但是nat也不是万能的，它也是有缺陷的，
+解决办法就是nat穿透技术:
+其实NAT穿越技术依赖于UPnP协议的支持，
+也就是说NAT设备必须支持UPnP，支持NAT穿越技术；
+而网络应用程序一样也需要支持UPnP，支持NAT穿越技术，
+只不过，这通常都是通过调用相关的NAT Traversal API实现的，
+window XP默认已经安装了NAT Traversal API，
+当然网络应用程序要调用它仍然需要进行一些修改，
+现在的MSN Messenger就支持调用NAT Traversal API. 
+这里不再详细说明，感兴趣的可以查找资料.
+    下面看看实际代码部分：
+     Nat的初始化工作和之前分析的filter几乎一样。
+Nat的ipv4部分在Iptables_nat.c 、
+     Core部分在nf_nat_core.c，不同的就是表不一样.
+这里我们拿snat一个实际例子分析，应用环境如图：
+
+很明显，直接lan内pc无法与外网通信,因为保留的ip地址即使外网能收到，但是回复的时候路由也会丢弃.所以需要snat：
+#iptables -t nat -A POSTROUTING -s  192.168.1.0/24  -j SNAT --to-source  202.20.65.5
+或#iptables -t nat -A POSTROUTING -s  192.168.1.0/24 -j MASQUERADE  //  默认会获取wan口地址进行映射. 
+钩子点POSTROUTING 对应SNAT    PREROUTING 对应DNAt（因为会影响以后的路由）;
+还需要说明的是不论prerouting的dnat 
+or  postrouting snat都在基本ct的后边，
+helper和confirm的前面.(DNAT的优先级高于SNAT)
+
+============================== iptables ================================
+
+iptables 不是真正的防火墙,
+用户通过这个iptables代理,把安全设定执行到对应的"安全框架"中,
+这个"安全框架" netfilter  才是真正的 防火墙
+netfilter  才是 防火墙 真正的 "安全框架"(framework),
+netfilter 位于内核空间
+netfilter/iptables(简称 iptables)
+iptables  是 内核提供的功能,不是真正的服务
+Netfilter 是Linux操作系统核心层内部的一个数据包处理模块
+
+NAT英文全称是“Network Address Translation”
+一种把内部私有网络地址（IP地址）翻译成合法公有网络IP地址的技术
+内核中的关卡
+input关卡和output关卡
+在 iptables 中称为 "链"
+                         
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+prerouting     input      output     forward     postrouting
+     |                |               |               |                |
+   规则            规则            规则           规则            规则
+     |                |               |               |                |
+
+     |                |               |               |                |
+
+     |                |               |               |                |
+
+ iptables的5个链（区分大小写）：
+
+INPUT链（入站规则）
+OUTPUT链（出站规则）
+FORWARD链（转发规则）
+PREROUTING链（路由前规则）
+POSTROUTING链（路由后规则）
+所有链的初始默认规则是ACCEPT
+
+ iptables的4个表（区分大小写）：
+
+  iptables默认有4个表
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+ 【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+           关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+mangle表（包标记表）
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+
+========================  iptables    nat     pat   ============================================
+
+
+
 
 Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
 Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
@@ -1264,6 +1396,7 @@ Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
 
+-------------------------------------------- Va1 ------------------------------------
 
 [root@Va1 ~]# ip  -o  address
 1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
@@ -1282,10 +1415,13 @@ default via 192.168.0.254 dev eth0
 tree-1.6.0-10.el7.x86_64
 
 [root@Va1 ~]# lsblk
-NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
-vda    253:0    0  16G  0 disk 
-└─vda1 253:1    0  16G  0 part /
-vdb    253:16   0   8G  0 disk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
 
 [root@Va1 ~]# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
 [root@Va1 ~]# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
@@ -1337,11 +1473,26 @@ PING 192.168.2.16 (192.168.2.16) 56(84) bytes of data.
 --- 192.168.2.16 ping statistics ---
 5 packets transmitted, 0 received, 100% packet loss, time 830ms
 
-[root@Va1 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-Loading mirror speeds from cached hostfile
-软件包 elinks-0.12-0.36.pre6.el7.x86_64 已安装并且是最新版本
-无须任何处理
+[root@Va1 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va1 ~]# echo "<h1> Va1   192.168.0.11 </h1>" > /var/www/html/index.html
+
+[root@Va1 ~]# systemctl  start httpd && systemctl  enable  httpd
+..................
+[root@Va1 ~]# elinks  -dump  192.168.0.11
+                                Va1 192.168.0.11
+[root@Va1 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
  
 
 
@@ -1369,6 +1520,8 @@ Va2  ----|
 Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
+
+-------------------------------------------- Va2 ------------------------------------
 
 [root@Va2 ~]# route -n
 Kernel IP routing table
@@ -1401,11 +1554,26 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
 
-[root@Va2 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+[root@Va2 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va2 ~]# echo "<h1> Va2   192.168.0.12 </h1>" > /var/www/html/index.html
+
+[root@Va2 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink ..................
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+                                Va2 192.168.0.12
+[root@Va2 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va2 ~]# 
 
 
 
@@ -1438,6 +1606,8 @@ Va2  ----|
 Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
+
+-------------------------------------------- Va3 ------------------------------------
 
 # ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
 # ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
@@ -1460,11 +1630,28 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
 
-[root@Va3 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+[root@Va3 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va3 ~]# echo "<h1> Va3   192.168.0.13 </h1>" > /var/www/html/index.html
+
+[root@Va3 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va3 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+
+[root@Va3 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
 
 
 
@@ -1498,18 +1685,26 @@ Va2  ----|
 Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
-[root@Va4 ~]# ifconfig  |awk  '/inet /{print  $2}'
+
+-------------------------------------------- Va4 ------------------------------------
+
+[root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
 192.168.0.14
 192.168.1.14
 192.168.2.14
 127.0.0.1
-[root@Va4 ~]# route  -n
+192.168.122.1
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1003   0        0 eth1
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
 192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
 192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
 
 [root@Va4 ~]# which  sysctl
 /usr/sbin/sysctl
@@ -1588,40 +1783,43 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
 192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
 
-[root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -4
-源标识                      源名称                                         状态
-CentOS7-1708                CentOS7-1708                                   9,591
-rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
-repolist: 14,577
-[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo
-[CentOS7-1708]
-name=CentOS7-1708
-gpgcheck=0
-baseurl=ftp://192.168.0.254/CentOS7-1708/
-enabled=1
+[root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo 
 [rhel7]
 name=rhel-server-7.4-x86_64-dvd.iso
 baseurl=ftp://192.168.0.254/rhel7
 enabled=1
 gpgcheck=0
 
-[root@Va4 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+
+[root@Va4 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
 
-[root@Va4 ~]# elinks  -dump  192.168.1.15
-                                  NAT-PAT-Va5
-[root@Va4 ~]# elinks  -dump  192.168.2.16
-                                NAT-PAT-Va6-2.16
+[root@Va4 ~]# echo "<h1> NAT-PAT-Va4  192.168.0.14 </h1>" > /var/www/html/index.html
+
+[root@Va4 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va4 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+
 
 [root@Va4 ~]# systemctl is-active  firewalld
 unknown
+[root@Va4 ~]# systemctl is-active  NetworkManager
+inactive
 
 [root@Va4 ~]# rpm  -qa |grep  iptables
 iptables-1.4.21-18.0.1.el7.centos.x86_64
-[root@Va4 ~]# yum  -y install  iptables-services
+
+[root@Va4 ~]# yum  -y install  iptables-services  ## 能够永久保存规则的包
 已安装:
   iptables-services.x86_64 0:1.4.21-18.0.1.el7.centos                                
 
@@ -1631,17 +1829,26 @@ iptables-1.4.21-18.0.1.el7.centos.x86_64
 iptables-services-1.4.21-18.0.1.el7.centos.x86_64
 iptables-1.4.21-18.0.1.el7.centos.x86_64
 
-[root@Va4 ~]# service  start  iptables   ## 命令 格式 顺序不对 报错提示
-The service command supports only basic LSB actions (start, stop, restart, try-restart, reload, force-reload, status). For other actions, please try to use systemctl.
+[root@Va4 ~]# lsmod |grep  iptable
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  3 iptable_filter,iptable_mangle,iptable_nat
 
-[root@Va4 ~]# service    iptables  start
+[root@Va4 ~]# service  iptables   start  &&  chkconfig   iptables  on
 Redirecting to /bin/systemctl start iptables.service
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+
 
 [root@Va4 ~]# service    iptables  status  |grep  -io  Active
 Redirecting to /bin/systemctl status iptables.service
 Active
 active
 
+[root@Va4 ~]# ps  -aux  |grep  iptable
+root      2270  0.0  0.0 112676   984 pts/0    S+   11:20   0:00 grep --color=auto iptable
 
 
 
@@ -1678,6 +1885,8 @@ Va2  ----|
 Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
+
+-------------------------------------------- Va5 ------------------------------------
 
 # ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
 # ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
@@ -1720,19 +1929,46 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth1
 192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
 
+[root@Va5 ~]# ip  route  show
+
+default via 192.168.1.254 dev eth1 
+
+169.254.0.0/16 dev eth1 scope link metric 1003 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.15 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va5 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va5 ~]# cat  /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.1.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va5 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va5 ~]# yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
 [root@Va5 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
-  httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
-httpd-2.4.6-67.el7.centos.x86_64
+httpd-2.4.6-67.el7.x86_64
 
-[root@Va5 ~]# echo "<h1> NAT-PAT-Va5 </h1>" > /var/www/html/index.html
+[root@Va5 ~]# echo "<h1> NAT-PAT-Va5  192.168.1.15 </h1>" > /var/www/html/index.html
 
 [root@Va5 ~]# systemctl  start httpd && systemctl  enable  httpd
 Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
 [root@Va5 ~]# elinks  -dump  192.168.1.15
-                                  NAT-PAT-Va5
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va5 ~]# 
 
 
 
@@ -1762,16 +1998,17 @@ Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
 
+-------------------------------------------- Va6 ------------------------------------
+
 # ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
 # ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
 # route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
 # route  add  default  gw  192.168.2.254   ## 临时性添加新网关{添加多个网关也是此命令}
 
 [root@hiys ~]# ssh  -X  192.168.2.16
-Warning: Permanently added '192.168.2.16' (ECDSA) to the list of known hosts.
-root@192.168.2.16's password: 
-X11 forwarding request failed on channel 0
-Last login: Fri Dec 14 09:17:57 2018 from 192.168.0.254
+Warning:..............
+root@192.168.2.16's password: 1
+......................
 [root@Va6 ~]# ifconfig  |awk '/inet /{print  $2}'
 192.168.0.16
 192.168.1.16
@@ -1802,6 +2039,22 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.2.254   0.0.0.0         UG    0      0        0 eth2
 192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
 
+[root@Va6 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va6 ~]# cat   /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.2.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va6 ~]# ls   /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va6 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
 [root@Va6 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
   httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
 
@@ -1809,11 +2062,13 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 elinks-0.12-0.36.pre6.el7.x86_64
 httpd-2.4.6-67.el7.centos.x86_64
 
-[root@Va6 ~]# echo "<h1> NAT-PAT-Va6-2.16 </h1>" > /var/www/html/index.html
+[root@Va6 ~]# echo "<h1> NAT-PAT-Va6  192.168.2.16 </h1>" > /var/www/html/index.html
+
 [root@Va6 ~]# systemctl start  httpd  &&  systemctl  enable  httpd
 Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
 [root@Va6 ~]# elinks  -dump  192.168.2.16
-                                NAT-PAT-Va6-2.16
+                            NAT-PAT-Va6 192.168.2.16
 
 
 
@@ -1824,626 +2079,10 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service t
 
 
 
-=============================
-[root@proxy source1]# systemctl is-active firewalld.service 
-unknown
-[root@proxy source1]# yum -y install iptables-services |tail -3 ;
-  iptables-services.x86_64 0:1.4.21-18.el7                                      
-
-完毕！
-[root@proxy source1]# systemctl start iptables && systemctl enable  iptables.service  ;
-#1）iptables的4个表（区分大小写）：
-iptables默认有4个表，nat表（地址转换表）、filter表（数据过滤表）、
- 【raw表（状态跟踪表） 一般禁用，耗CPU资源】、mangle表（包标记表）。
-2）iptables的5个链（区分大小写）：
-INPUT链（入站规则）
-OUTPUT链（出站规则）
-FORWARD链（转发规则）
-PREROUTING链（路由前规则）
-POSTROUTING链（路由后规则）
-所有链的初始默认规则是ACCEPT
-                   #  iptables [-t 表名]  选项  [链名]   [条件]     [-j 目标操作]
-[root@proxy source1]# iptables -t filter  -I  INPUT -p icmp  -j REJECT;
-[root@proxy source1]# ping -c2 -i0.2 -w1 192.168.4.5
-PING 192.168.4.5 (192.168.4.5) 56(84) bytes of data.
-
---- 192.168.4.5 ping statistics ---
-5 packets transmitted, 0 received, 100% packet loss, time 829ms
-
-[root@proxy source1]# cd ;ifconfig eth0 |grep 'inet ';
-   inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
-
-             #  iptables [-t 表名]   选项  [链名]   [条件]    [-j 目标操作]
-[root@proxy ~]# iptables -t filter  -I INPUT  -p icmp  -j ACCEPT ;
--p为指定的链 设置默认规则
-//注意事项与规律：
-//可以不指定表，默认为filter表
-//可以不指定链，默认为对应表的所有链
-//如果没有找到匹配条件，则执行防火墙默认规则
-//选项/链名/目标操作用大写字母，其余都小写
-########################################################################
-//目标操作：
-// ACCEPT：允许通过/放行
-// DROP：直接丢弃，不给出任何回应
-// REJECT：拒绝通过，必要时会给出提示
-// LOG：记录日志，然后传给下一条规则
-[root@proxy ~]# ping -c2 -i0.2 -w1 192.168.4.5
-
-64 bytes from 192.168.4.5: icmp_seq=2 ttl=64 time=0.050 ms
---- 192.168.4.5 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 200ms
-                         #LOG匹配即停止的唯一例外，记录日志，然后传给下一条规则
-[root@proxy ~]# iptables -t filter -I INPUT -p icmp -j LOG ;
-[root@proxy ~]# > /var/log/messages
-[root@proxy ~]# ping -c2 -i0.2 -w1 192.168.4.5
-[root@proxy ~]# ping -c2 -i0.2 -w1 192.168.2.5
-[root@proxy ~]# cat /var/log/messages
-  1 Sep  3 10:54:19 proxy kernel: IN=lo OUT= MAC=00:00:00:00:00:00:00:    00:00:00:00:00:08:00 SRC=192.168.4.5 DST=192.168.4.5 LEN=84 TOS=0x    00 PREC=0x00 TTL=64 ID=25977 DF PROTO=ICMP TYPE=8 CODE=0 ID=3767 S    EQ=1
-
-  8 Sep  3 10:54:28 proxy kernel: IN=lo OUT= MAC=00:00:00:00:00:00:00:    00:00:00:00:00:08:00 SRC=192.168.2.5 DST=192.168.2.5 LEN=84 TOS=0x    00 PREC=0x00 TTL=64 ID=56769 PROTO=ICMP TYPE=0 CODE=0 ID=3776 SEQ=    2
  
-[root@proxy ~]# iptables -F  #清空所有规则-F
-## -p 为指定的链 设置默认规则 tcp ,udp ,icmp
-## -A 追加规则至filter表中的INPUT链的末尾
-## -I 插入规则至filter表中的INPUT链的开头
-[root@proxy ~]# iptables -t filter -A INPUT -p tcp -j ACCEPT ;
+ 
 
-# 插入规则至filter表中的INPUT链的开头，允许任何人使用UDP协议访问本机
-[root@proxy ~]# iptables -t filter -I INPUT -p udp -j ACCEPT ;
 
-[root@proxy ~]# iptables -t filter -I INPUT 2  -p icmp  -j ACCEPT ;
-##-I INPUT 2 插入规则至filter表中的INPUT链的第2行
-[root@proxy ~]# iptables -L  #查看所有规则-L
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     udp  --  anywhere             anywhere            
-ACCEPT     icmp --  anywhere             anywhere            
-ACCEPT     tcp  --  anywhere             anywhere            
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-[root@proxy ~]# 
-[root@proxy ~]# iptables -nL --line-numbers   #-n 以数字形式显示地址，端口信息
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
-3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0 
-[root@proxy ~]# iptables -L  --line-numbers  //查看规则，显示行号--line-numbers
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     udp  --  anywhere             anywhere            
-2    ACCEPT     icmp --  anywhere             anywhere            
-3    ACCEPT     tcp  --  anywhere             anywhere 
-[root@proxy ~]# iptables -nL INPUT     //仅查看INPUT链的规则
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-[root@proxy ~]# iptables -nL INPUT --line-numbers
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
-3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-[root@proxy ~]# iptables -L INPUT --line-numbers     //查看规则，显示行号
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     udp  --  anywhere             anywhere            
-2    ACCEPT     icmp --  anywhere             anywhere            
-3    ACCEPT     tcp  --  anywhere             anywhere            
-[root@proxy ~]# 
-[root@proxy ~]# iptables -D INPUT 3    #//删除filter表中INPUT链的第3条规则
-[root@proxy ~]# iptables -nL INPUT  #-n 以数字形式显示地址，端口信息
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -nL 
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination   
-
-#1）iptables的4个表（区分大小写）：
-iptables默认有4个表，nat表（地址转换表）、filter表（数据过滤表）、
- 【raw表（状态跟踪表） 一般禁用，耗CPU资源】、mangle表（包标记表）。
-2）iptables的5个链（区分大小写）：
-INPUT链（入站规则）
-OUTPUT链（出站规则）
-FORWARD链（转发规则）
-PREROUTING链（路由前规则）
-POSTROUTING链（路由后规则）
-所有链的初始默认规则是ACCEPT
-             #  iptables [-t 表名]   选项  [链名]   [条件]    [-j 目标操作]
-	      ]# iptables -t filter  -I INPUT  -p icmp  -j ACCEPT ;
--p为指定的链 设置默认规则
-//注意事项与规律：
-//可以不指定表，默认为filter表
-//可以不指定链，默认为对应表的所有链
-//如果没有找到匹配条件，则执行防火墙默认规则
-//选项/链名/目标操作用大写字母，其余都小写
-########################################################################
-//目标操作：
-// ACCEPT：允许通过/放行
-// DROP：直接丢弃，不给出任何回应
-// REJECT：拒绝通过，必要时会给出提示
-// LOG：记录日志，然后传给下一条规则
-[root@proxy ~]# iptables -I INPUT -p tcp -j ACCEPT # -p为指定的链 设置默认规则tcp 
-[root@proxy ~]# iptables -nL
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-[root@proxy ~]# iptables -P INPUT  REJECT
-iptables: Bad policy name. Run `dmesg' for more information.
-[root@proxy ~]# iptables -P INPUT  DROP   #-P INPUT重置入站默认规则drop
-[root@proxy ~]# iptables -nL
-Chain INPUT (policy DROP)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-[root@proxy ~]# iptables -P INPUT ACCEPT
-[root@proxy ~]# iptables -nL
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-[root@proxy ~]# 
-
-client  ------> server    --dport 22
-client <------  server   --sport 22 
-
-[root@proxy ~]# iptables -F    #清空规则-F
-[root@proxy ~]# elinks -dump http://192.168.4.5
-ELinks: 拒绝连接
-[root@proxy ~]# nginx
-[root@proxy ~]# elinks -dump http://192.168.4.5
-                               Welcome to nginx!
-   2. http://nginx.com/
-[root@proxy ~]# iptables -I INPUT -p tcp --dport 80 -j REJECT 
-[root@proxy ~]# elinks -dump http://192.168.4.5
-ELinks: 拒绝连接
-[root@proxy ~]# iptables -I INPUT -p tcp --dport 80 -j ACCEPT 
-[root@proxy ~]# elinks -dump http://192.168.4.5
-                               Welcome to nginx!
--------------------------------------------------------------------------------
-client  ---INPUT---> server    --dport 22 
-client <---OUTPUT---  server   --sport 22 
------------------------------------------------------------------------
-[root@proxy ~]# iptables -F    #清空规则-F
-[root@proxy ~]# iptables -I INPUT -s 192.168.2.100 -j REJECT
-
-[root@web1 ~]# ssh -X 192.168.2.5
-ssh: connect to host 192.168.2.5 port 22: Connection refused
-[root@web1 ~]# ifconfig eth1 |grep 'inet '
-        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
-
-[root@web2 ~]# ssh -X 192.168.2.5
-root@192.168.2.5's password: 
-Last login: Mon Sep  3 14:20:15 2018 from 192.168.2.200
-[root@proxy ~]# exit
-登出
-Connection to 192.168.2.5 closed.
-
-[root@proxy ~]# iptables -I INPUT -d 192.168.2.5 -p tcp --dport 80 -j REJECT 
-[root@web2 ~]# elinks -dump http://192.168.2.5
-ELinks: 拒绝连接
-[root@web2 ~]# ssh -X 192.168.2.5
-root@192.168.2.5's password: 
-Last login: Mon Sep  3 14:20:26 2018 from 192.168.2.200
-[root@proxy ~]# exit
-登出
-Connection to 192.168.2.5 closed.
-
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I INPUT -i eth0 -p tcp --dport 80 -j REJECT
-[root@web2 ~]# elinks -dump http://192.168.4.5
-ELinks: 拒绝连接
-[root@web2 ~]# elinks -dump http://192.168.2.5
-                               Welcome to nginx!
-       #nat表（地址转换表）、filter表（数据过滤表）
-         //可以不指定表，默认为filter表
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I INPUT -s 192.168.2.0/24 -j DROP
-
-[root@web1 ~]# ssh -X 192.168.2.5
-^C
-[root@web1 ~]# ssh -X 192.168.4.5
-root@192.168.4.5's password: 
-[root@proxy ~]# exit
-登出
-[root@web1 ~]# curl 192.168.4.5
-<!DOCTYPE html>
-[root@web1 ~]# curl 192.168.2.5
-^C
-
-[root@proxy ~]# vim /etc/sysctl.conf 
-[root@proxy ~]# tail -1 /etc/sysctl.conf
-net.ipv4.ip_forward=1       //永久开启路由转发
-[root@proxy ~]# vim /proc/sys/net/ipv4/ip_forward
-[root@proxy ~]# cat /proc/sys/net/ipv4/ip_forward
-1                         //临时开启路由转发
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I INPUT  -p icmp --icmp-type echo-request  -j REJECT
-[root@proxy ~]# ping 192.168.4.100
-PING 192.168.4.100 (192.168.4.100) 56(84) bytes of data.
-64 bytes from 192.168.4.100: icmp_seq=1 ttl=64 time=0.528 ms
-64 bytes from 192.168.4.100: icmp_seq=2 ttl=64 time=0.616 ms
-^C
-[root@proxy ~]# iptables -I INPUT -p icmp --icmp-type echo-request -j REJECT 
-
-[root@proxy ~]# iptables -I INPUT -p icmp --icmp-type echo-reply -j ACCEPT 
-
-[root@proxy ~]# iptables -I OUTPUT -p icmp --icmp-type echo-request -j ACCEPT 
-[root@proxy ~]# iptables -I OUTPUT -p icmp --icmp-type echo-reply -j DROP
-[root@proxy ~]# iptables -F
-
-[root@proxy ~]# iptables -I INPUT -s 192.168.4.100 -p tcp --dport 22 -j REJECT 
-[root@client ~]# ssh -X 192.168.4.5
-ssh: connect to host 192.168.4.5 port 22: Connection refused
-|||=================================
-[root@proxy ~]# nmap -sP 192.168.4.100 |grep MAC
-mass_dns: warning: Unable to determine any DNS servers. Reverse DNS is disabled. Try using --system-dns or specify valid servers with --dns-servers
-MAC Address: 52:54:00:31:EA:4A (QEMU Virtual NIC)
-=========================================|||
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I INPUT -s 192.168.4.100 -p tcp --dport 22 -m mac --mac 52:54:00:31:EA:4A  -j REJECT 
-====================================|||
-[root@client ~]# ssh -X 192.168.4.5
-ssh: connect to host 192.168.4.5 port 22: Connection refused
-
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I INPUT -p tcp --dport 22 -m multiport --dports 1:100,110,8080,500:600  -j ACCEPT 
-
-[root@proxy ~]# iptables -nL
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0            tcp dpt:22 multiport dports 1:100,110,8080,500:600
-
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I INPUT -m iprange  --src-range 192.168.2.99-192.168.2.201 -j REJECT
-
-[root@proxy ~]# nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.5/24 connection.autoconnect yes;nmcli connection up eth1;
-
-[root@proxy ~]# ifconfig |grep 'inet '
-        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
-        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
-        inet 201.1.2.5  netmask 255.255.255.0  broadcast 201.1.2.255
-        inet 127.0.0.1  netmask 255.0.0.0
-        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
-[root@proxy ~]# nmcli connection show
-名称    UUID                                  类型            设备   
-eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
-eth1    46b69388-7aba-45cd-9c0f-0da69c69a190  802-3-ethernet  eth1   
-eth3    d1ac5d19-3a5e-4ace-8054-fd7580d70b24  802-3-ethernet  eth3   
-virbr0  57b76342-a0be-45d0-85a8-07dcd7c79d9e  bridge          virbr0 
-
-
-
-
-
-
-
-
-
-
-
-
-[root@client ~]# nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.100/24 ipv4.gateway 192.168.4.5  connection.autoconnect yes ;nmcli connection up eth0;
-[root@client ~]# ping 192.168.2.100
---- 192.168.2.100 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 999ms
-
-[root@client ~]# ss -anptul |grep :80
-[root@client ~]# curl http://192.168.2.100  #没有防火墙的情况下client访问web服务
-<h1><font color=gray><marquee>192.168.2.100-web1</marquee></font></h1>
-[root@client ~]# route -n |awk 'NR>1&&NR<6{print $2}'
-Gateway
-192.168.2.254
-201.1.2.254
-192.168.4.5
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -I FORWARD -p tcp --dport 80 -j REJECT 
-[root@client ~]#  nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.1/24 ipv4.gateway 192.168.2.5  connection.autoconnect yes ;nmcli connection up eth1;
-[root@client ~]# route -n |awk 'NR>1&&NR<6{print $2}'
-Gateway
-192.168.4.5
-201.1.2.254
-192.168.2.5
-[root@proxy ~]# iptables -I FORWARD -s 192.168.4.100 -p tcp --dport 80 -j REJECT 
-
-[root@client ~]# iptables -p icmp -?
-iptables v1.4.21: unknown option "-?"
-Try `iptables -h' or 'iptables --help' for more information.
-[root@client ~]# iptables -p icmp -h
-iptables v1.4.21
-[root@client ~]# nmcli connection show
-名称    UUID                                  类型            设备   
-eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
-virbr0  f9b110a1-3444-4961-8f01-88cb454bee5e  bridge          virbr0 
-eth1    ce14adc6-9ca7-4955-9e80-38578f491d36  802-3-ethernet  --     
-eth3    99dfbc2d-e1da-4b3f-82ca-7984adef839a  802-3-ethernet  --     
-[root@client ~]# ifconfig eth0 |grep 'inet '
-        inet 192.168.4.100  netmask 255.255.255.0  broadcast 192.168.4.255
-
-
-
-
-
-
-
-[root@web1 ~]# nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.100/24 ipv4.gateway 192.168.2.5  connection.autoconnect yes ;nmcli connection up eth1;
-
-[root@web1 ~]# ping -c2 -i0.2 -w1 192.168.4.100
---- 192.168.4.100 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 200ms
-
-[root@web1 ~]# ss -anptul |grep :80 |column -t
-tcp  LISTEN  0  100  :::8080                :::*  users:(("java",pid=1181,fd=46))
-tcp  LISTEN  0  1    ::ffff:127.0.0.1:8005  :::*  users:(("java",pid=1181,fd=74))
-tcp  LISTEN  0  100  :::8009                :::*  users:(("java",pid=1181,fd=55))
-[root@web1 ~]# cat /var/www/html/index.html
-<h1><font color=gray><marquee>192.168.2.100-web1</marquee></font></h1>
-[root@web1 ~]# systemctl restart httpd
-[root@web1 ~]# firefox http://192.168.2.100
-[root@web1 ~]# elinks -dump http://192.168.2.100
-                               192.168.2.100-web1
-[root@web1 ~]# route -n |awk 'NR>1&&NR<6{print $2}'
-Gateway
-192.168.2.5
-0.0.0.0
-0.0.0.0
-
-[root@web1 ~]# sysctl -a | grep forward
-sysctl: reading key "net.ipv6.conf.all.stable_secret"
-sysctl: reading key "net.ipv6.conf.default.stable_secret"
-sysctl: reading key "net.ipv6.conf.eth0.stable_secret"
-net.ipv4.conf.all.forwarding = 1
-net.ipv4.conf.all.mc_forwarding = 0
-net.ipv4.conf.default.forwarding = 1
-[root@web1 ~]# ifconfig eth1 |grep 'inet '
-        inet 192.168.2.100  netmask 255.255.255.0  broadcast 192.168.2.255
-[root@web1 ~]# nmcli connection show
-名称    UUID                                  类型            设备   
-eth1    b0e1de23-9870-4e44-8ce3-efcbdd6f9e68  802-3-ethernet  eth1   
-virbr0  391e566c-ebd1-4c40-a185-27f946a6a83f  bridge          virbr0 
-eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  --   
-=====================================================
-
-
-
-[root@proxy ~]# nmcli connection show
-名称    UUID                                  类型            设备   
-eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
-eth1    46b69388-7aba-45cd-9c0f-0da69c69a190  802-3-ethernet  eth1   
-eth3    d1ac5d19-3a5e-4ace-8054-fd7580d70b24  802-3-ethernet  eth3   
-virbr0  57b76342-a0be-45d0-85a8-07dcd7c79d9e  bridge          virbr0 
-[root@proxy ~]# ifconfig |grep 'inet '
-        inet 192.168.4.5  netmask 255.255.255.0  broadcast 192.168.4.255
-        inet 192.168.2.5  netmask 255.255.255.0  broadcast 192.168.2.255
-        inet 201.1.2.5  netmask 255.255.255.0  broadcast 201.1.2.255
-        inet 127.0.0.1  netmask 255.0.0.0
-        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
-[root@proxy ~]# 
-[root@proxy ~]# route -n |awk 'NR>1&&NR<7{print $2}'
-Gateway
-192.168.4.254
-201.1.2.254
-192.168.2.254
-0.0.0.0
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -t nat -nL
-Chain PREROUTING (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain POSTROUTING (policy ACCEPT)
-target     prot opt source               destination         
-RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
-RETURN     all  --  192.168.122.0/24     255.255.255.255     
-MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24    
-[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p tcp --dport  80 -j SNAT  --to-source 192.168.2.5
-[root@proxy ~]# 
-[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p tcp --dport  80 -j SNAT  --to-source 192.168.2.5
-[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p udp  --dport  80 -j SNAT  --to-source 192.168.2.5
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=================
-clinet ~ #ipv4.gateway 192.168.4.254
-        ## iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p tcp --dport  80 -j SNAT  --to-source 192.168.2.5
-      # iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p udp  --dport  80 -j SNAT  --to-source 192.168.2.5
-      #ipv4.dns 8.8.8.8
-
-  # iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -p icmp -j SNAT  --to-source 192.168.2.5
-
-=======================================
-[root@web2 ~]# > /usr/local/nginx/logs/access.log
-[root@web1 ~]# > /var/log/httpd/access_log
-[root@proxy ~]# tail -1 /etc/sysctl.conf
-net.ipv4.ip_forward=1       //永久开启路由转发
-[root@proxy ~]# vim /proc/sys/net/ipv4/ip_forward
-[root@proxy ~]# cat /proc/sys/net/ipv4/ip_forward
-1                         //临时开启路由转发
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -L
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-
-[root@client ~]# nmcli connection show |grep eth0
-eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
-[root@client ~]# ifconfig eth0 |awk '/inet /{print $2}'
-192.168.4.100
-[root@client ~]# route -n | awk '{if(NR==3){print $2}}'
-192.168.4.5
-[root@proxy ~]# nmcli connection show |egrep 'eth(0|1)'
-eth0    4f5f8b5d-4b51-4e1c-98c7-40f0eb90f241  802-3-ethernet  eth0   
-eth1    46b69388-7aba-45cd-9c0f-0da69c69a190  802-3-ethernet  eth1 
-[root@proxy ~]# ifconfig eth0 |awk '/inet /{print $2}';\
-> ifconfig eth1 |awk '/inet /{print $2}';
-192.168.4.5
-192.168.2.5
-[root@proxy ~]# route -n |awk '{if(NR==3||NR==5){print $2}}'
-192.168.4.254
-192.168.2.254
-[root@web1 ~]# nmcli connection show |grep eth1
-eth1    b0e1de23-9870-4e44-8ce3-efcbdd6f9e68  802-3-ethernet  eth1   
-[root@web1 ~]# ifconfig eth1 |awk '/inet /{print $2}'
-192.168.2.100
-[root@web1 ~]# route -n | awk '{if(NR==3){print $2}}'
-192.168.2.5
-[root@web2 ~]# nmcli connection show |grep eth1
-eth1    5829c48d-af68-45b4-b5f9-e36c16815879  802-3-ethernet  eth1   
-[root@web2 ~]# ifconfig eth1 |awk '/inet /{print $2}'
-192.168.2.200
-[root@web2 ~]# nmcli connection modify eth1 ipv4.gateway 192.168.2.5 connection.autoconnect yes ;nmcli connection up eth1;
-[root@web2 ~]# route -n |awk 'NR==3{print $2}'
-192.168.2.5
-[root@web2 ~]# > /usr/local/nginx/logs/access.log
-     ================设置防火墙规则，实现SNAT地址转换
-[root@proxy ~]# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 \
-> -p tcp --dport 80 -j SNAT --to-source 192.168.2.5 ;\
-> iptables -t nat -I POSTROUTING  -s 192.168.4.0/24 \
-> -p udp --dport 80 -j SNAT --to-source 192.168.2.5 ; \
-> iptables  -t nat -I POSTROUTING -s 192.168.4.0/24  \
-> -p icmp  -j SNAT --to-source 192.168.2.5 ;
--------------------------------------------------
-# iptables -t nat -I POSTROUTING -s 192.168.4.0/24 -j SNAT --to-source 192.168.2.5
---------------------------------------------------
-[root@client ~]# elinks -dump http://192.168.2.100
-                               192.168.2.100-web1
-[root@web1 ~]# elinks -dump http://192.168.2.100
-                               192.168.2.100-web1
-
-[root@web1 ~]# cat /var/log/httpd/access_log   登陆web主机查看日志
-192.168.2.5 - - [03/Sep/2018:19:36:16 +0800] "GET / HTTP/1.1" 200 71 "-" 
-"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
-                       ####客户端是先伪装为了192.168.2.5之后再访问的web服务器
-192.168.2.5 - - [03/Sep/2018:19:36:17 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" 
-"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
-
-192.168.2.5 - - [03/Sep/2018:19:36:17 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" 
-"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
-
-192.168.2.5 - - [03/Sep/2018:19:36:36 +0800] "GET / HTTP/1.1" 200 71 "-" 
-"ELinks/0.12pre6 (textmode; Linux; -)"
-
-192.168.2.100 - - [03/Sep/2018:19:38:09 +0800] "GET / HTTP/1.1" 200 71 "-" 
-"ELinks/0.12pre6 (textmode; Linux; -)"
-##所有iptables规则都是临时规则，如果需要永久保留规则需要执行如下命令:
-[root@proxy demo]# iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -j \
-> SNAT  --to-source 192.168.4.254;
-
-[root@proxy ~]# service  iptables save    
-[root@proxy demo]# cat /etc/sysconfig/iptables
-  2 *nat
-  3 :PREROUTING ACCEPT [0:0]
-  4 :INPUT ACCEPT [0:0]
-  5 :OUTPUT ACCEPT [0:0]
-  6 :POSTROUTING ACCEPT [0:0]
-  7 -A POSTROUTING -s 192.168.4.0/24 -j SNAT --to-source 192.168.4.254
-  8 COMMIT
-[root@proxy demo]# systemctl restart iptables.service
-----------------------------------------------------------------------------
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -nL
-Chain INPUT (policy ACCEPT)
-.........
-[root@proxy ~]# iptables -t nat -A POSTROUTING -s 192.168.4.0/24 \
-> -j SNAT --to-source 192.168.2.5;
-
-[root@client ~]# firefox http://192.168.2.200 输入验证tom|tom2/123
-http://192.168.2.200/home.php
-Welcome web2 : tom2
-Logged In : true
-Session ID: ucqc7skds1e5uhvt69vmf25bs2 
-*************************
-
-[root@web2 ~]# cat /usr/local/nginx/logs/access.log |column -t
-192.168.2.5  -  -  [03/Sep/2018:21:04:25  +0800]  "GET   /             HTTP/1.1"  200  588   "-"                      "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
-192.168.2.5  -  -  [03/Sep/2018:21:04:25  +0800]  "GET   /style.css    HTTP/1.1"  200  1172  "http://192.168.2.200/"  "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
-192.168.2.5  -  -  [03/Sep/2018:21:04:25  +0800]  "GET   /favicon.ico  HTTP/1.1"  404  169   "-"                      "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
-192.168.2.5  -  -  [03/Sep/2018:21:04:44  +0800]  "POST  /login.php    HTTP/1.1"  302  5     "http://192.168.2.200/"  "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
-192.168.2.5  -  -  [03/Sep/2018:21:04:44  +0800]  "GET   /home.php     HTTP/1.1"  200  185   "http://192.168.2.200/"  "Mozilla/5.0  (X11;  Linux  x86_64;  rv:52.0)  Gecko/20100101  Firefox/52.0"
-
---------------------------------------------------------------------------------------------------
-[root@proxy ~]# route -n |awk '{if(NR==3){print $2}}'
-192.168.4.254
-[root@proxy ~]# echo "nameserver 8.8.8.8" > /etc/resolv.conf
-[root@proxy ~]# iptables -F
-[root@proxy ~]# iptables -t nat -A POSTROUTING -s 192.168.4.0/24 -j SNAT --to-source 192.168.4.254;
-
-
-
-
-
-
-[root@proxy ~]# ls -Z /var/ftp/
--rw-r--r--. root root unconfined_u:object_r:public_content_t:s0 log1.tar
--rw-r--r--. 1 root root unconfined_u:object_r:admin_home_t:s0   log2.tar
-[root@proxy ~]# chcon -t public_content_t /var/ftp/d2.tar.gz
-[root@proxy ~]# ls -Z /var/ftp/log2.tar
--rw-r--r--. root root unconfined_u:object_r:public_content_t:s0 log2.tar
-[root@proxy ~]# wget ftp://192.168.4.5/log2.tar            //再次下载，成功
-注意：上例中的chcon操作可替换为（效果相同）：
-# restorecon /var/ftp/log2.tar.gz
-或者
-# chcon --reference=/var/ftp/log1.tar.gz /var/ftp/log2.tar.gz
-=====================================
-for i in mangle security raw nat filter;do
-     iptables -t ${i} -F
-     iptables -t ${i} -X
-     rmmod iptable_${i}
-done
-sysctl -w net.ipv4.ip_forward=1
-ETH=$(ip route show|awk '{if($1=="default" && $2=="via")print $5}')
-iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o ${ETH} -j MASQUERADE
-======================================================
 
 
 ==========================  TCP/IP三次握手四次断开  =================
@@ -2491,8 +2130,6 @@ established   已建立的; 已设立的; 已制定的; 确定的
 receive 收到; 接待; 接到; 接纳;
           接收; 受理; 欢迎; 承受;
 TCP(Transmission Control Protocol)　传输控制协议
-
-
 
 
 

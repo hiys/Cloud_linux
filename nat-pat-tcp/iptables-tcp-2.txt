@@ -1229,19 +1229,6 @@ httpd-2.4.6-67.el7.x86_64
    Va6 192.168.2.16
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ====================  tcpdump  =======================================================
 ===================================================================
 
@@ -1282,10 +1269,13 @@ default via 192.168.0.254 dev eth0
 tree-1.6.0-10.el7.x86_64
 
 [root@Va1 ~]# lsblk
-NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
-vda    253:0    0  16G  0 disk 
-└─vda1 253:1    0  16G  0 part /
-vdb    253:16   0   8G  0 disk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
 
 [root@Va1 ~]# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
 [root@Va1 ~]# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
@@ -1337,11 +1327,26 @@ PING 192.168.2.16 (192.168.2.16) 56(84) bytes of data.
 --- 192.168.2.16 ping statistics ---
 5 packets transmitted, 0 received, 100% packet loss, time 830ms
 
-[root@Va1 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-Loading mirror speeds from cached hostfile
-软件包 elinks-0.12-0.36.pre6.el7.x86_64 已安装并且是最新版本
-无须任何处理
+[root@Va1 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va1 ~]# echo "<h1> Va1   192.168.0.11 </h1>" > /var/www/html/index.html
+
+[root@Va1 ~]# systemctl  start httpd && systemctl  enable  httpd
+..................
+[root@Va1 ~]# elinks  -dump  192.168.0.11
+                                Va1 192.168.0.11
+[root@Va1 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
  
 
 
@@ -1401,11 +1406,26 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
 
-[root@Va2 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+[root@Va2 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va2 ~]# echo "<h1> Va2   192.168.0.12 </h1>" > /var/www/html/index.html
+
+[root@Va2 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink ..................
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+                                Va2 192.168.0.12
+[root@Va2 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va2 ~]# 
 
 
 
@@ -1460,11 +1480,28 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
 
-[root@Va3 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+[root@Va3 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va3 ~]# echo "<h1> Va3   192.168.0.13 </h1>" > /var/www/html/index.html
+
+[root@Va3 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va3 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+
+[root@Va3 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
 
 
 
@@ -1498,18 +1535,24 @@ Va2  ----|
 Va2  ----|
          |-----Va4  ----- Va6
 Va3  ----|
-[root@Va4 ~]# ifconfig  |awk  '/inet /{print  $2}'
+
+[root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
 192.168.0.14
 192.168.1.14
 192.168.2.14
 127.0.0.1
-[root@Va4 ~]# route  -n
+192.168.122.1
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1003   0        0 eth1
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
 192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
 192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
 
 [root@Va4 ~]# which  sysctl
 /usr/sbin/sysctl
@@ -1588,36 +1631,38 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
 192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
 
-[root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -4
-源标识                      源名称                                         状态
-CentOS7-1708                CentOS7-1708                                   9,591
-rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
-repolist: 14,577
-[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo
-[CentOS7-1708]
-name=CentOS7-1708
-gpgcheck=0
-baseurl=ftp://192.168.0.254/CentOS7-1708/
-enabled=1
+[root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo 
 [rhel7]
 name=rhel-server-7.4-x86_64-dvd.iso
 baseurl=ftp://192.168.0.254/rhel7
 enabled=1
 gpgcheck=0
 
-[root@Va4 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
-  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+
+[root@Va4 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
 
-[root@Va4 ~]# elinks  -dump  192.168.1.15
-                                  NAT-PAT-Va5
-[root@Va4 ~]# elinks  -dump  192.168.2.16
-                                NAT-PAT-Va6-2.16
+[root@Va4 ~]# echo "<h1> NAT-PAT-Va4  192.168.0.14 </h1>" > /var/www/html/index.html
+
+[root@Va4 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va4 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+
 
 [root@Va4 ~]# systemctl is-active  firewalld
 unknown
+[root@Va4 ~]# systemctl is-active  NetworkManager
+inactive
 
 [root@Va4 ~]# rpm  -qa |grep  iptables
 iptables-1.4.21-18.0.1.el7.centos.x86_64
@@ -1631,17 +1676,26 @@ iptables-1.4.21-18.0.1.el7.centos.x86_64
 iptables-services-1.4.21-18.0.1.el7.centos.x86_64
 iptables-1.4.21-18.0.1.el7.centos.x86_64
 
-[root@Va4 ~]# service  start  iptables   ## 命令 格式 顺序不对 报错提示
-The service command supports only basic LSB actions (start, stop, restart, try-restart, reload, force-reload, status). For other actions, please try to use systemctl.
+[root@Va4 ~]# lsmod |grep  iptable
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  3 iptable_filter,iptable_mangle,iptable_nat
 
-[root@Va4 ~]# service    iptables  start
+[root@Va4 ~]# service  iptables   start  &&  chkconfig   iptables  on
 Redirecting to /bin/systemctl start iptables.service
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+
 
 [root@Va4 ~]# service    iptables  status  |grep  -io  Active
 Redirecting to /bin/systemctl status iptables.service
 Active
 active
 
+[root@Va4 ~]# ps  -aux  |grep  iptable
+root      2270  0.0  0.0 112676   984 pts/0    S+   11:20   0:00 grep --color=auto iptable
 
 
 
@@ -1720,19 +1774,38 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth1
 192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
 
+[root@Va5 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va5 ~]# cat  /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.1.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va5 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va5 ~]# yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
 [root@Va5 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
-  httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
 
 完毕！
 elinks-0.12-0.36.pre6.el7.x86_64
-httpd-2.4.6-67.el7.centos.x86_64
+httpd-2.4.6-67.el7.x86_64
 
-[root@Va5 ~]# echo "<h1> NAT-PAT-Va5 </h1>" > /var/www/html/index.html
+[root@Va5 ~]# echo "<h1> NAT-PAT-Va5  192.168.1.15 </h1>" > /var/www/html/index.html
 
 [root@Va5 ~]# systemctl  start httpd && systemctl  enable  httpd
 Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
 [root@Va5 ~]# elinks  -dump  192.168.1.15
-                                  NAT-PAT-Va5
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va5 ~]# 
 
 
 
@@ -1768,10 +1841,9 @@ Va3  ----|
 # route  add  default  gw  192.168.2.254   ## 临时性添加新网关{添加多个网关也是此命令}
 
 [root@hiys ~]# ssh  -X  192.168.2.16
-Warning: Permanently added '192.168.2.16' (ECDSA) to the list of known hosts.
-root@192.168.2.16's password: 
-X11 forwarding request failed on channel 0
-Last login: Fri Dec 14 09:17:57 2018 from 192.168.0.254
+Warning:..............
+root@192.168.2.16's password: 1
+......................
 [root@Va6 ~]# ifconfig  |awk '/inet /{print  $2}'
 192.168.0.16
 192.168.1.16
@@ -1802,6 +1874,22 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.2.254   0.0.0.0         UG    0      0        0 eth2
 192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
 
+[root@Va6 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va6 ~]# cat   /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.2.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va6 ~]# ls   /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va6 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
 [root@Va6 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
   httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
 
@@ -1809,11 +1897,14 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 elinks-0.12-0.36.pre6.el7.x86_64
 httpd-2.4.6-67.el7.centos.x86_64
 
-[root@Va6 ~]# echo "<h1> NAT-PAT-Va6-2.16 </h1>" > /var/www/html/index.html
+[root@Va6 ~]# echo "<h1> NAT-PAT-Va6  192.168.2.16 </h1>" > /var/www/html/index.html
+
 [root@Va6 ~]# systemctl start  httpd  &&  systemctl  enable  httpd
 Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
 [root@Va6 ~]# elinks  -dump  192.168.2.16
-                                NAT-PAT-Va6-2.16
+                            NAT-PAT-Va6 192.168.2.16
+
 
 
 
