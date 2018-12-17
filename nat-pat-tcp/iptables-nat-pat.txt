@@ -7,6 +7,87 @@
 查看图片提示
     https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/下载git文件2.png
 ============================================================
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
 
 [root@hiys ~]# echo 6  |clone-auto7
 
@@ -1326,7 +1407,155 @@ NAT英文全称是“Network Address Translation”
 内核中的关卡
 input关卡和output关卡
 在 iptables 中称为 "链"
-                         
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+    filter 这个规则表是预设规则表，
+    拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+     mangle 此规则表拥有 Prerouting、FORWARD 和 postrouting 三个规则链。
+       使用率不高.
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING     
+
+4个表的优先级由高到低的顺序为:raw-->mangle-->nat-->filter 
+ 在PRROUTING链上,
+即有mangle表,也有nat表,
+那么先由mangle处理,
+然后由nat表处理 
+RAW表只使用在PREROUTING链和OUTPUT链上,因为优先级最高，
+从而可以对收到的数据包在连接跟踪前进行处理。
+一但用户使用了RAW表,
+在某个链上,RAW表处理完后,
+将跳过NAT表和 ip_conntrack处理,
+即不再做地址转换和数据包的链接跟踪处理了. 
+RAW表可以应用在那些不需要做nat的情况下，以提高性能。
+如大量访问的web服务器，
+可以让80端口不再让iptables做数据包的链接跟踪处理，以提高用户的访问速度。 
+
+ ----------------------  iptables的数据包的流程 ---------------------------
+
+基本步骤如下：  
+1. 数据包到达网络接口，比如 eth0。  
+
+2. 进入 raw 表的 PREROUTING 链，
+   这个链的作用是赶在连接跟踪之前处理数据包。  
+3. 如果进行了连接跟踪，在此处理。  
+
+4. 进入 mangle 表的 PREROUTING 链，
+    在此可以修改数据包，比如 TOS 等。  
+5. 进入 nat 表的 PREROUTING 链，
+    可以在此做DNAT，但不要做过滤。  
+6. 决定路由，看是交给本地主机还是转发给其它主机。  
+到了这里我们就得分两种不同的情况进行讨论了，一种情况就是数据包要转发给其它主机，这时候它会依次经过： 
+ 
+7. 进入 mangle 表的 FORWARD 链，这里也比较特殊，
+  这是在第一次路由决定之后，在进行最后的路由决定之前，我们仍然可以对数据包进行某些修改。  
+8. 进入 filter 表的 FORWARD 链，在这里我们可以对所有转发的数据包进行过滤。需要注意的是：经过这里的数据包是转发的，方向是双向的。  
+9. 进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改。  
+10. 进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤。  
+11. 进入出去的网络接口。完毕。  
+
+另一种情况是，数据包就是发给本地主机的，那么它会依次穿过：  
+7. 进入 mangle 表的 INPUT 链，这里是在路由之后，交由本地主机之前，我们也可以进行一些相应的修改。  
+8. 进入 filter 表的 INPUT 链，在这里我们可以对流入的所有数据包进行过滤，无论它来自哪个网络接口。  
+9. 交给本地主机的应用程序进行处理。  
+10. 处理完毕后进行路由决定，看该往那里发出。  
+
+11. 进入 raw 表的 OUTPUT 链，这里是在连接跟踪处理本地的数据包之前。  
+12. 连接跟踪对本地的数据包进行处理。  
+13. 进入 mangle 表的 OUTPUT 链，在这里我们可以修改数据包，但不要做过滤。  
+14. 进入 nat 表的 OUTPUT 链，可以对防火墙自己发出的数据做 NAT 。  
+15. 进入 filter 表的 OUTPUT 链，可以对本地出去的数据包进行过滤。
+ 16.再次进行路由决定。  
+17. 进入 mangle 表的 POSTROUTING 链，同上一种情况的第9步。注意，这里不光对经过防火墙的数据包进行处理，还对防火墙自己产生的数据包进行处理。 
+18. 进入 nat 表的 POSTROUTING 链，同上一种情况的第10步。  
+19. 进入出去的网络接口。完毕。 
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING  
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+   
+ ============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
 ------------------------------------------------------------------------------------------------------------------------||
                 本机    HTTP   Web   服务     [ 终点/起点]
                         |                                    |
@@ -1341,23 +1570,108 @@ input关卡和output关卡
 ----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
        |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
 
-prerouting     input      output     forward     postrouting
-     |                |               |               |                |
-   规则            规则            规则           规则            规则
-     |                |               |               |                |
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
 
-     |                |               |               |                |
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
 
-     |                |               |               |                |
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+
+# iptables -t nat -A POSTROUTING -p tcp -o eth0 -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+
+查看已有规则：
+iptables -L
+
+清空所有规则：
+iptables -F
+
+拒绝INPUT
+iptables -P INPUT DROP
+
+允许所有ping：
+iptables -I INPUT -p icmp -j ACCEPT
+
+在末尾加入允许未被其他规则匹配的数据包：
+iptables -t filter -A INPUT -j -ACCEPT
+
+删除INPUT第二条规则：
+iptables -D INPUT 2
+
+-t 参数
+用来指定规则表，
+内建的规则表有三个，分别是：nat、mangle 和 filter，
+当未指定规则表时，则一律视为是 filter。
+
+1、常用命令列表： 
+ 常用命令(-A追加规则、-D删除规则、-R修改规则、-I插入规则、-L查看规则)
+2、常用封包比对参数：
+(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+
+常用的处理动作：
+ (-j  指定对满足条件包的处理，常用动作有ACCEPT接受报、DROP丢弃报、REJECT丢弃报并通知对方、REDIRECT重定向包等)
+  -j   参数用来指定要进行的处理动作，
+常用的处理动作包括：ACCEPT、REJECT、DROP、REDIRECT、MASQUERADE、LOG、DNAT、SNAT、MIRROR、QUEUE、RETURN、MARK，
+
+分别说明如下：
+ACCEPT将封包放行，进行完此处理动作后，将不再比对其它规则，直接跳往下一个规则链（natostrouting）。
+
+REJECT拦阻该封包，并传送封包通知对方，
+可以传送的封包有几个选择：ICMP port-unreachable、ICMP echo-reply 
+或是 tcp-reset（这个封包会要求对方关闭联机），
+进行完此处理动作后，将不再比对其它规则，直接中断过滤程序。
+
+例如：iptables -A FORWARD -p TCP --dport 22 -j REJECT--reject-with tcp-reset
+
+
+DROP丢弃封包不予处理，进行完此处理动作后，
+将不再比对其它规则，直接中断过滤程序。
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+
+例如：
+iptables -t nat-A PREROUTING -p tcp --dport 80 -j REDIRECT--to-ports 8080
 
  iptables的5个链（区分大小写）：
 
-INPUT链（入站规则）
-OUTPUT链（出站规则）
-FORWARD链（转发规则）
-PREROUTING链（路由前规则）
-POSTROUTING链（路由后规则）
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
 所有链的初始默认规则是ACCEPT
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
 
  iptables的4个表（区分大小写）：
 
@@ -1365,16 +1679,604 @@ POSTROUTING链（路由后规则）
 
 nat表{地址转换表}
       负责 网络地址转换功能; 内核模块: iptable_nat
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
 filter表（数据过滤表）
       负责过滤功能,防火墙; 内核模块: iptable_filter
- 【raw表（状态跟踪表） 一般禁用，耗CPU资源】
-           关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
-mangle表（包标记表）
+filter 这个规则表是预设规则表，
+拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
        拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+使用率不高.
+
+
+
+[root@Va4 ~]# sysctl   -p
+net.ipv4.ip_forward = 1
+[root@Va4 ~]# cat   /proc/sys/net/ipv4/ip_forward
+1
+[root@Va4 ~]# lsmod |grep  iptable
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  3 iptable_filter,iptable_mangle,iptable_nat
+
+iptables工具__过滤包—命令(-A、-I、-D、-R、-L等)、
+参数(-p、-s、-d、--sport、--dport、-i、-o等)、
+动作-j (ACCEPT、DROP、REJECT、REDIRECT等)
+
+             #  iptables [-t 表名]   选项  [链名]   [条件]    [-j 目标操作]
+[root@proxy ~]# iptables -t filter  -I INPUT  -p icmp  -j ACCEPT ;
+-p为指定的链 设置默认规则
+//注意事项与规律：
+//可以不指定表，默认为filter表
+//可以不指定链，默认为对应表的所有链
+//如果没有找到匹配条件，则执行防火墙默认规则
+//选项/链名/目标操作用大写字母，其余都小写
+
+//目标操作：
+// ACCEPT：允许通过/放行
+// DROP：直接丢弃，不给出任何回应
+// REJECT：拒绝通过，必要时会给出提示
+// LOG：记录日志，然后传给下一条规则
+#LOG匹配即停止的唯一例外，记录日志，然后传给下一条规则
+[root@proxy ~]# iptables -t filter -I INPUT -p icmp -j LOG ;
+[root@proxy ~]# > /var/log/messages
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+基本使用方法：
+
+查看已有规则：
+iptables -L
+
+清空所有规则：
+iptables -F
+
+拒绝INPUT
+iptables -P INPUT DROP
+
+允许所有ping：
+iptables -I INPUT -p icmp -j ACCEPT
+
+在末尾加入允许未被其他规则匹配的数据包：
+iptables -t filter -A INPUT -j -ACCEPT
+
+删除INPUT第二条规则：
+iptables -D INPUT 2
+
+仅允许来自172.27.8.0/22的用户连接ssh服务
+iptables -I INPUT -s 172.27.8.0/22 -p tcp --dport 22 -j ACCEPT 
+iptables -A INPUT -p tcp --dport 22 -j REJECT
+
+不允许任何用户访问本机3306端口
+iptables -I INPUT -p tcp --dport 3306 -j REJECT 
+iptables -I INPUT -p udp --dport 3306 -j REJECT
+
+拒绝其他用户通过网卡eth1访问本机http服务
+iptables -I INPUT -i eth1 -p tcp --dport 80 -j REJECT
+
+禁止用户访问www.baidu.com
+iptables -I FORWARD -d www.baidu.com -j DROP
+
+禁止172.27.8.22的用户上网
+iptables -I FORWARD -s 172.27.8.22 -j DROP
+
+流量均衡：
+将访问流量分流至内网三台不同主机：
+iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT -to-destination 172.27.8.10
+iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT -to-destination 172.27.8.20
+iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT -to-destination 172.27.8.30
+
+使用上述操作，规则仅当前有效，
+如需重启依然有效，
+执行service iptables save 
+将规则写入/etc/sysconfig/iptables中 
+
+iptables工具__过滤包—命令(-A、-I、-D、-R、-L等)、
+参数(-p、-s、-d、--sport、--dport、-i、-o等)、
+动作-j (ACCEPT、DROP、REJECT、REDIRECT等)
+
+iptables 指令
+语法：iptables [-t table] command [match] [-j target/jump]
+
+-t 参数用来指定规则表，
+内建的规则表有三个，分别是：nat、mangle 和 filter，
+当未指定规则表时，则一律视为是 filter。
+
+各个规则表的功能如下：
+nat 此规则表拥有 Prerouting 和 postrouting 两个规则链，
+主要功能为进行一对一、一对多、多对多等网址转译工作（SNATDNAT），
+由于转译工作的特性，
+需进行目的地网址转译的封包，
+就不需要进行来源网址转译，
+
+反之亦然，因此为了提升改写封包的率，
+在防火墙运作时，每个封包只会经过这个规则表一次。
+如果我们把封包过滤的规则定义在这个数据表里，
+将会造成无法对同一包进行多次比对，
+因此这个规则表除了作网址转译外，请不要做其它用途。
+
+mangle 此规则表拥有 Prerouting、FORWARD 和 postrouting 三个规则链。
+除了进行网址转译工作会改写封包外，
+在某些特殊应用可能也必须去改写封包（TTL、TOS）
+或者是设定 MARK（将封包作记号，以进行后续的过滤），
+这时就必须将这些工作定义在 mangle 规则表中，
+使用率不高.
+
+
+filter 这个规则表是预设规则表，
+拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+这个规则表顾名思义是用来进行封包过滤的理动作
+（例如：DROP、 LOG、 ACCEPT 或 REJECT），
+我们会将基本规则都建立在此规则表中。
+主要包含：：
+命令表用来增加(-A、-I)
+删除(-D)
+修改(-R)
+查看(-L)规则等；
+常用参数用来指定
+协议(-p)、源地址(-s)、源端口(--sport)、目的地址(-d)、目的端口(--dport)、进入网卡(-i)、出去网卡(-o)等设定包信息（即什么样的包）；
+用来描述要处理包的信息。
+常用处理动作用   -j   来指定对包的处理(ACCEPT、DROP、REJECT、REDIRECT等)。
+
+1、常用命令列表： 
+ 常用命令(-A追加规则、-D删除规则、-R修改规则、-I插入规则、-L查看规则)
+2、常用封包比对参数：
+(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+范例 iptables -A INPUT ...
+说明新增规则(追加方式)到某个规则链(这里是INPUT规则链)中，该规则将会成为规则链中的最后一条规则。
+
+命令-D,--delete
+范例 iptables -D INPUT --dport 80 -j DROPiptables -D INPUT 1
+说明 从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除。
+
+命令-R, --replace
+范例 iptables -R INPUT1-s 192.168.0.1 -j DROP
+说明取代现行规则，规则被取代后并不会改变顺序。(1是位置)
+
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+范例 iptables -I INPUT1--dport 80 -j ACCEPT
+说明插入一条规则，原本该位置(这里是位置1)上的规则将会往后移动一个顺位。
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list
+范例 iptables -L INPUT
+说明 列出某规则链中的所有规则。
+[root@Va4 ~]# iptables  --list
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush
+范例 iptables -F INPUT
+说明 删除某规则链(这里是INPUT规则链)中的所有规则。
+
+命令-Z,--zero
+范例 iptables -Z INPUT
+说明 将封包计数器归零。
+封包计数器是用来计算同一封包出现次数，是过滤阻断式攻击不可或缺的工具。
+
+命令-N, --new-chain范例 iptables -N allowed
+说明 定义新的规则链。
+
+命令-X, --delete-chain
+范例 iptables -X allowed
+说明 删除某个规则链。
+
+命令-P, --policy
+范例 iptables -P INPUT DROP
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+说明 定义过滤政策。 
+也就是未符合过滤条件之封包，预设的处理方式。
+
+命令-E,--rename-chain
+范例 iptables -E allowed disallowed
+说明 修改某自订规则链的名称。
+
+2、常用封包比对参数：(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+
+参数-p, --protocol(指定协议)
+范例 iptables -A INPUT -p tcp(指定协议)      -p all   所有协议，  -p !tcp 去除tcp外的所有协议。
+说明 比对通讯协议类型是否相符，
+可以使用 ! 运算子进行反向比对，
+例如：-p ! tcp ，意思是指除 tcp 以外的其它类型，
+包含udp、icmp ...等。
+如果要比对所有类型，则可以使用 all 关键词，
+例如：-p all。
+
+参数-s, --src, --source(指定源地址，指定源端口--sport)
+例如： iptables -A INPUT -s 192.168.1.1
+说明 用来比对封包的来源 IP，可以比对单机或网络，
+比对网络时请用数字来表示屏蔽，
+例如：-s 192.168.0.0/24，
+比对 IP 时可以使用 ! 运算子进行反向比对，
+例如：-s ! 192.168.0.0/24。
+
+参数-d, --dst, --destination(指定目的地址，指定目的端口--dport)
+例如： iptables -A INPUT -d 192.168.1.1
+说明 用来比对封包的目的地 IP，设定方式同上。
+
+参数-i, --in-interface(指定入口网卡)      -i  eth+   所有网卡
+例如： iptables -A INPUT -i eth0
+说明 用来比对封包是从哪片网卡进入，可以使用通配字符 + 来做大范围比对，
+例如：-i eth+ 表示所有的 ethernet 网卡，也以使用 ! 运算子进行反向比对，
+例如：-i ! eth0。
+
+参数-o, --out-interface(指定出口网卡)
+例如： iptables -A FORWARD -o eth0
+说明 用来比对封包要从哪片网卡送出，设定方式同上。
+
+参数--sport, --source-port(源端口)
+例如： iptables -A INPUT -p tcp --sport 22
+说明 用来比对封包的来源端口号，可以比对单一埠，或是一个范围，
+例如：--sport 22:80，表示从 22 到 80 端口之间都算是符合件，
+如果要比对不连续的多个埠，则必须使用--multiport 参数，详见后文。
+比对埠号时，可以使用 ! 运算子进行反向比对。
+
+参数--dport, --destination-port(目的端口)
+例如： iptables -A INPUT -p tcp --dport 22
+说明 用来比对封包的目的端口号，设定方式同上。
+
+参数--tcp-flags(只过滤TCP中的一些包，比如SYN包，ACK包，FIN包，RST包等等)
+例如： iptables -p tcp --tcp-flags SYN,FIN,ACK SYN
+说明  比对 TCP 封包的状态旗号，参数分为两个部分，
+第一个部分列举出想比对的旗号，
+第二部分则列举前述旗号中哪些有被设，
+未被列举的旗号必须是空的。
+TCP 状态旗号包括：SYN（同步）、ACK（应答）、FIN（结束）、RST（重设）、URG（紧急）PSH（强迫推送） 
+等均可使用于参数中，除此之外还可以使用关键词 ALL 和NONE 进行比对。
+比对旗号时，可以使用 ! 运算子行反向比对。
+
+参数--syn例如： iptables -p tcp --syn
+说明 用来比对是否为要求联机之 TCP 封包，
+与 iptables -p tcp --tcp-flags SYN,FIN,ACK SYN 的作用完全相同，
+如果使用 !运算子，可用来比对非要求联机封包。
+
+参数-m multiport --source-port
+例如： iptables -A INPUT -p tcp -m multiport --source-port 22,53,80,110
+说明 用来比对不连续的多个来源埠号，
+一次最多可以比对 15 个埠，可以使用 !运算子进行反向比对。
+
+参数-m multiport --destination-port
+例如： iptables -A INPUT -p tcp -m multiport --destination-port 22,53,80,110
+说明 用来比对不连续的多个目的地埠号，设定方式同上。
+
+参数-m multiport --port
+例如： iptables -A INPUT -p tcp -m multiport --port 22,53,80,110
+说明 这个参数比较特殊，用来比对来源埠号和目的埠号相同的封包，设定方式同上。
+注意：在本范例中，如果来源端口号为 80目的地埠号为 110，
+这种封包并不算符合条件。
+
+参数--icmp-type
+例如： iptables -A INPUT -p icmp --icmp-type 8
+说明 用来比对 ICMP 的类型编号，可以使用代码或数字编号来进行比对。
+
+请打 iptables -p icmp --help 来查看有哪些代码可用。
+
+参数-m limit --limit
+例如： iptables -A INPUT -m limit --limit 3/hour
+
+说明 用来比对某段时间内封包的平均流量，
+上面的例子是用来比对：每小时平均流量是否超过一次 3 个封包。 
+除了每小时平均次外，也可以每秒钟、每分钟或每天平均一次，默认值为每小时平均一次，
+参数如后： /second、 /minute、/day。 
+除了进行封数量的比对外，
+设定这个参数也会在条件达成时，暂停封包的比对动作，
+以避免因骇客使用洪水攻击法，
+导致服务被阻断。
+
+参数--limit-burst
+范例 iptables -A INPUT -m limit --limit-burst 5
+说明 用来比对瞬间大量封包的数量，
+上面的例子是用来比对一次同时涌入的封包是否超过 5 个（这是默认值），
+超过此上限的封将被直接丢弃。
+使用效果同上。
+
+
+参数-m owner --uid-owner
+范例 iptables -A OUTPUT -m owner --uid-owner 500
+说明 用来比对来自本机的封包，是否为某特定使用者所产生的，这样可以避免服务器使用
+root 或其它身分将敏感数据传送出，可以降低系统被骇的损失。
+可惜这个功能无法比对出来自其它主机的封包。
+
+参数-m owner --gid-owner
+范例 iptables -A OUTPUT -m owner --gid-owner 0
+说明 用来比对来自本机的封包，是否为某特定使用者群组所产生的，使用时机同上。
+参数-m owner --pid-owner
+范例 iptables -A OUTPUT -m owner --pid-owner 78
+说明 用来比对来自本机的封包，是否为某特定行程所产生的，使用时机同上。
+
+参数-m owner --sid-owner
+范例 iptables -A OUTPUT -m owner --sid-owner 100
+说明 用来比对来自本机的封包，是否为某特定联机（Session ID）的响应封包，
+使用时机同上。
+
+参数-m state --state
+范例 iptables -A INPUT -m state --state RELATED,ESTABLISHED
+说明 用来比对联机状态，
+
+联机状态共有四种：INVALID、ESTABLISHED、NEW 和 RELATED。
+
+INVALID 表示该封包的联机编号（Session ID）无法辨识或编号不正确。
+
+ESTABLISHED 表示该封包属于某个已经建立的联机。
+
+NEW 表示该封包想要起始一个联机（重设联机或将联机重导向）。
+
+relate 
+（把…） 联系起来; 讲，叙述（故事等）;  讲述，叙述; 使…有联系; 建立或展示联系; 涉及; 有联系; 符合; 发生共鸣;
+RELATED 【relate 】表示该封包是属于某个已经建立的联机，所建立的新联机。
+例如：FTP-DATA 联机必定是源自某个 FTP 联机。
+
+ nat表 [mangle表]    filter表    filter表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链     input链     output链        forward链         postrouting链
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+             #  iptables   [-t 表名]    选项  [链名]   [条件]    [-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]   
+ 命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 等)
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+3、常用的处理动作：
+ (-j  指定对满足条件包的处理，常用动作有ACCEPT接受报、DROP丢弃报、REJECT丢弃报并通知对方、REDIRECT重定向包等)
+  -j   参数用来指定要进行的处理动作，
+常用的处理动作包括：ACCEPT、REJECT、DROP、REDIRECT、MASQUERADE、LOG、DNAT、SNAT、MIRROR、QUEUE、RETURN、MARK，
+
+分别说明如下：
+ACCEPT将封包放行，进行完此处理动作后，将不再比对其它规则，直接跳往下一个规则链（natostrouting）。
+
+REJECT拦阻该封包，并传送封包通知对方，
+可以传送的封包有几个选择：ICMP port-unreachable、ICMP echo-reply 
+或是 tcp-reset（这个封包会要求对方关闭联机），
+进行完此处理动作后，将不再比对其它规则，直接中断过滤程序。
+
+例如：iptables -A FORWARD -p TCP --dport 22 -j REJECT--reject-with tcp-reset
+
+
+DROP丢弃封包不予处理，进行完此处理动作后，
+将不再比对其它规则，直接中断过滤程序。
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+
+例如：
+iptables -t nat-A PREROUTING -p tcp --dport 80 -j REDIRECT--to-ports 8080
+
+
+masquerade 
+n.	伪装; 化装舞会; 掩饰;
+vi.	伪装; 假扮; 乔装; 冒充;
+
+MASQUERADE 【masquerade 】改写封包来源 IP 为防火墙 NIC IP，
+可以指定 port 对应的范围，进行完此处理动作后，
+直接跳往下一个规则（mangleostrouting）。
+
+这个功能与 SNAT 略有不同，
+当进行 IP 伪装时，不需指定要伪装成哪个 IP，
+IP 会从网卡直接读，
+当使用拨接连线时，
+IP 通常是由 ISP 公司的 DHCP 服务器指派的，
+这个时候 MASQUERADE 特别有用。
+例如：iptables -t nat-A POSTROUTING -p TCP -j MASQUERADE --to-ports 1024-31000
+
+
+LOG将封包相关讯息纪录在 /var/log 中，
+详细位置请查阅 /etc/syslog.conf 组态档，
+进行完此处理动作后，将会继续比对其规则。
+例如：
+iptables -A INPUT -p tcp -j LOG --log-prefix "INPUT packets"
+
+SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将直接跳往下一个规则（mangleostrouting）。
+
+例如：
+iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规炼（filter:input 或 filter:forward）。
+
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+四.拓展模块
+1.按来源MAC地址匹配
+# iptables -t filter -A FORWARD-m --mac-source 00:02:b2:03:a5:f6 -j DROP
+拒绝转发来自该MAC地址的数据包
+
+2.按多端口或连续端口匹配
+20:表示20以后的所有端口
+20:100表示20到100的端口
+:20表示20之前的所有端口
+-m multiport [--prots, --sports,--dports]
+
+例子：
+# iptables -A INPUT -p tcp -m multiport --dports 21,20,25,53,80 -j ACCEPT 【多端口匹配】
+# iptables -A INPUT -p tcp --dport 20: -j ACCEPT
+# iptables -A INPUT -p tcp --sport 20:80 -j ACCEPT
+# iptables -A INPUT -p tcp --sport :80 -j ACCEPT
+
+3.还可以按数据包速率和状态匹配
+-m limit --limit匹配速率 如： -m limit --limit 50/s -j ACCEPT
+-m state --state 状态 如： -m state --state INVALID,RELATED -j ACCEPT
+
+4.还可以限制链接数-m connlimit --connlimit-above n 限制为多少个
+例如：iptables -I FORWARD -p tcp -m connlimit --connlimit-above 9 -j DROP        //表示限制链接数最大为9个
+
+
+
 
 ========================  iptables    nat     pat   ============================================
 
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING            
 
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+4个表的优先级由高到低的顺序为:raw-->mangle-->nat-->filter 
+
+ 在PRROUTING链上,
+即有mangle表,也有nat表,
+那么先由mangle处理,然后由nat表处理 
+
+RAW表只使用在PREROUTING链和OUTPUT链上,
+因为优先级最高，从而可以对收到的数据包在连接跟踪前进行处理。
+一但用户使用了RAW表,
+在某个链上,RAW表处理完后,
+将跳过NAT表和 ip_conntrack处理,
+即不再做地址转换和数据包的链接跟踪处理了. 
+RAW表可以应用在那些不需要做nat的情况下，以提高性能。
+如大量访问的web服务器，
+可以让80端口不再让iptables做数据包的链接跟踪处理，以提高用户的访问速度。
+
+
+
+1、常用命令列表： 
+ 常用命令(-A追加规则、-D删除规则、-R修改规则、-I插入规则、-L查看规则)
+2、常用封包比对参数：
+(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+ iptables的5个链（区分大小写）：
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
 
 
 Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
@@ -1850,6 +2752,610 @@ active
 [root@Va4 ~]# ps  -aux  |grep  iptable
 root      2270  0.0  0.0 112676   984 pts/0    S+   11:20   0:00 grep --color=auto iptable
 
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+
+-t  filter  -A  INPUT   -s 对方ip   -d 本机ip  动作-j  DROP 丢弃包  ## 限制 其他主机 访问本机 
+
+-t  filter  -A  OUTPUT   -s 本机ip   -d 对方ip   动作-j  DROP 丢弃包   #### 限制  本机  访问 其他主机
+
+-i 进入网卡、-o 出去网卡
+
+-t  filter  -A  INPUT   -i  eth0  -j  ACCEPT ## 允许 通过网卡eth0 访问本机
+-t  filter  -A  INPUT   -i  eth1  -j   REJECT  ## 拒绝 通过网卡 eth1 访问本机 并通知对方
+-t  filter  -A  OUTPUT   -o  eth0  -j  ACCEPT ## 允许 通过网卡eth0 访问 其他主机
+   源ip地址                     目标地址
+   client     ------->    server 入
+ 随机地址 【端口】              固定地址【端口 22】--dport
+
+   目标地址                      源ip地址
+   client     <-------    server   出
+ 随机地址 【端口】              固定地址【端口 22】--sport
+
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+# iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+[root@Va4 ~]# iptables   -t  raw   -nL  --line-numbers
+Chain PREROUTING (policy ACCEPT)
+。。。。。。。。。。。。。。。。
+Chain OUTPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。。 
+
+mangle表 包含 5个 链 PREROUTING  INPUT   FORWARD  OUTPUT   POSTROUTING
+nat 表 包含 4个 链 PREROUTING  INPUT   OUTPUT  POSTROUTING 
+filter表包含3链 INPUT   FORWARD   OUTPUT
+
+[root@Va4 ~]# iptables   -t  mangle   -nL  --line-numbers
+Chain PREROUTING (policy ACCEPT)
+。。。。。。。。。。。。。      
+Chain INPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。。
+Chain FORWARD (policy ACCEPT)
+。。。。。。。。。。。。。。。。。。。。。
+Chain OUTPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。。。
+Chain POSTROUTING (policy ACCEPT)
+。。。。。。。。。。。。。。。     
+1    CHECKSUM   udp  --  0.0.0.0/0   0.0.0.0/0  udp dpt:68 CHECKSUM fill
+
+nat 表 包含 4个 链 PREROUTING  INPUT   OUTPUT  POSTROUTING 
+filter表包含3链 INPUT   FORWARD   OUTPUT
+
+[root@Va4 ~]# iptables   -t  nat  -nL
+
+Chain PREROUTING (policy ACCEPT)
+。。。。。。。。。。。。。
+Chain INPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。
+Chain OUTPUT (policy ACCEPT)
+。。。。。。。。。。。。。。
+Chain POSTROUTING (policy ACCEPT)
+。。。。。。。。。。。。。。。。。。。。        
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24  
+
+[root@Va4 ~]# iptables   -t  filter   -nL
+Chain INPUT (policy DROP)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+
+filter表包含3链 INPUT   FORWARD   OUTPUT
+
+基本使用方法：
+查看已有规则：
+iptables -L
+
+清空所有规则：
+iptables -F
+
+拒绝INPUT
+iptables -P INPUT DROP
+
+允许所有ping：
+iptables -I INPUT -p icmp -j ACCEPT
+
+在末尾加入允许未被其他规则匹配的数据包：
+iptables -t filter -A INPUT -j -ACCEPT
+
+删除INPUT第二条规则：
+iptables -D INPUT 2
+-------------------------------------------------------------------------------------------------------------
+
+[root@Va4 ~]# > /var/log/messages
+[root@Va4 ~]# cat  /var/log/messages
+
+[root@Va4 ~]# iptables  -L   ## 查看已有规则
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+ACCEPT     icmp --  anywhere             anywhere            
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination     
+    
+[root@Va4 ~]# iptables  -t  filter  -I INPUT  -p  icmp  -j  LOG  ## 开启日志
+[root@Va4 ~]# iptables  -L   ## 多了一个规则  LOG  icmp --
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+LOG        icmp --  anywhere             anywhere             LOG level warning
+ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+ACCEPT     icmp --  anywhere             anywhere            
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+[root@Va4 ~]# 
+
+[root@Va3 ~]# ping  -c2  -i0.2  -w1  192.168.0.14     ## 注意 icmp_seq=1 icmp_seq=2
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+64 bytes from 192.168.0.14: icmp_seq=1 ttl=64 time=0.564 ms
+64 bytes from 192.168.0.14: icmp_seq=2 ttl=64 time=0.529 ms
+
+--- 192.168.0.14 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.529/0.546/0.564/0.029 ms
+
+           ## 注意 SEQ=1  SEQ=2   SRC=192.168.0.13  DST=192.168.0.14  PROTO=ICMP
+[root@Va4 ~]# cat  /var/log/messages       
+
+Dec 17 15:08:26 Va4 kernel: IN=eth0 OUT= MAC=52:54:00:8c:df:c5:52:54:00:5d:e5:34:08:00 SRC=192.168.0.13 DST=192.168.0.14 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=2237 DF PROTO=ICMP TYPE=8 CODE=0 ID=4673 SEQ=1 
+
+Dec 17 15:08:26 Va4 kernel: IN=eth0 OUT= MAC=52:54:00:8c:df:c5:52:54:00:5d:e5:34:08:00 SRC=192.168.0.13 DST=192.168.0.14 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=2421 DF PROTO=ICMP TYPE=8 CODE=0 ID=4673 SEQ=2 
+
+[root@Va4 ~]# iptables  -F   ## 默认清空 filter 表中的 所有规则
+[root@Va4 ~]# iptables   -L   ## 查看已有规则
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination   
+
+/*************************
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+ nat表 [mangle表]    filter表    filter表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链     input链     output链        forward链         postrouting链
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+ ## 默认清空 filter 表中的 所有规则
+
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+******/
+
+[root@Va4 ~]# iptables  -t  filter   -A  INPUT  -p  tcp  -j  ACCEPT  ## 默认 filter表，可以省略
+[root@Va4 ~]# iptables   -L     【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     tcp  --  anywhere             anywhere            
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination   
+
+[root@Va4 ~]# iptables  -t  filter   -I  INPUT  -p  udp  -j  ACCEPT
+[root@Va4 ~]# iptables  -L      【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     udp  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere            
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination    
+     
+[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 可以指定 插入位置的顺序
+
+[root@Va4 ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息 【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+      
+[root@Va4 ~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号 【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
+2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+    
+[root@Va4 ~]# iptables  -D  INPUT  2   ## -D  链名  标记号 ## 在INPUT链 里面 删除指定编号是 2 的规则
+
+[root@Va4 ~]# iptables  -nL   --line-numbers   【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+
+[root@Va4 ~]# iptables  -F   ## 默认清空 filter 表中的 所有规则
+[root@Va4 ~]# iptables   -L   ## 查看已有规则  【 ## 默认查看 filter 表中的 所有规则】
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+
+[root@Va4 ~]# iptables  -I  INPUT  -p tcp  -j  ACCEPT  # 先设置 一个允许INPUT链【入站规则 】
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+
+所有链的初始默认规则是ACCEPT
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+[root@Va4 ~]# iptables  -nL  --line-numbers  【 ## 默认查看 filter 表中的 所有规则】
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+      
+[root@Va4 ~]# iptables  -P  INPUT  DROP   ## -P  INPUT 【为默认 filter 表中指定的 规则链INPUT 预设定义默认规则 DROP 】
+
+[root@Va4 ~]# iptables  -nL  --line-numbers   ## INPUT 规则链 默认规则 变成了 DROP 拒绝
+
+Chain INPUT (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+
+---------------- 外面的主机Va5 和本地主机Va4 都 ping 不通 -------------
+[root@Va4 ~]# ping  -c2  192.168.0.14  ## 结果除了 tcp协议允许，其他协议如icmp都被拒绝【原因是默认规则设置了拒绝drop】
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+^C
+--- 192.168.0.14 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 999ms
+
+[root@Va4 ~]#
+---------------------- 外面的主机Va5 和本地主机Va4 都 ping 不通 ---------------
+[root@Va5 ~]#   ping  -c2  192.168.0.14  ## 结果除了 tcp协议允许，其他协议如icmp都被拒绝【原因是默认规则设置了拒绝drop】
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+^C
+--- 192.168.0.14 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 999ms
+--------------------------------------------------------
+
+[root@Va4 ~]# iptables  -nL INPUT  --line-numbers  ## 查看指定 规则链 INPUT  的所有规则  【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0    
+       
+      ## 查看指定 规则链  FORWARD 的所有规则  【 ## 默认查看 filter 表中的 所有规则】
+[root@Va4 ~]# iptables  -nL  FORWARD --line-numbers  
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination    
+     
+[root@Va4 ~]# iptables  -nL  OUTPUT  --line-numbers  ## 查看 默认 filter 表中的指定 规则链  OUTPUT 的所有规则
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+  iptables默认有4个表
+
+4个表的优先级由高到低的顺序为:raw-->mangle-->nat-->filter 
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+    filter 这个规则表是预设规则表，
+     拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+ mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+     使用率不高.
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------- nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链  ----
+
+[root@Va4 ~]# iptables   -t  nat  -nL   ## 查看指定 表 nat 所有 规则链   的所有规则
+
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24   
+ 
+----------- mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链 -------
+
+[root@Va4 ~]# iptables   -t  mangle   -nL  --line-numbers   ## 查看指定 表mangle 所有 规则链   的所有规则
+
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    CHECKSUM   udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:68 CHECKSUM fill
+
+------------------ raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链 ----------------------
+
+[root@Va4 ~]# iptables   -t  raw   -nL  --line-numbers    ## 查看指定 表raw 所有 规则链   的所有规则
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+--------------filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 --------------
+
+[root@Va4 ~]# iptables   -t  filter   -nL   ## 查看指定 表 filter 所有 规则链   的所有规则
+
+Chain INPUT (policy DROP)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination   
+
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+[root@Va4 ~]# iptables   -t  filter  -P  INPUT  ACCEPT  ##-P作用 【为指定 表 filter 中指定的 规则链 INPUT 预设定义默认规则 ACCEPT 】
+
+------------------- filter表包含3链 INPUT   FORWARD   OUTPUT -------
+
+[root@Va4 ~]# iptables   -t  filter   -nL
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+
+
+-t  filter  -A  INPUT   -s 对方ip   -d 本机ip  动作-j  DROP 丢弃包  ## 限制 其他主机 访问本机 
+
+-t  filter  -A  OUTPUT   -s 本机ip   -d 对方ip   动作-j  DROP 丢弃包   #### 限制  本机  访问 其他主机
+
+   源ip地址                     目标地址
+   client     ------->    server 入
+ 随机地址 【端口】              固定地址【端口 22】--dport
+
+   目标地址                      源ip地址
+   client     <-------    server   出
+ 随机地址 【端口】              固定地址【端口 22】--sport
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2130,6 +3636,127 @@ established   已建立的; 已设立的; 已制定的; 确定的
 receive 收到; 接待; 接到; 接纳;
           接收; 受理; 欢迎; 承受;
 TCP(Transmission Control Protocol)　传输控制协议
+-----------------------------------------------------------------------------------------------------
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+# iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+命令-N, --new-chain 【 定义新的规则链 】
+
+LOG将封包相关讯息记录在 /var/log/messages 中，
+详细位置请查阅 /etc/syslog.conf 组态档，
+进行完此处理动作后，将会继续比对其规则。
+例如：
+iptables -A INPUT -p tcp -j LOG --log-prefix "INPUT packets"
+
+SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将直接跳往下一个规则（mangleostrouting）。
+
+例如：
+iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规炼（filter:input 或 filter:forward）。
+
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+
+
 
 
 
