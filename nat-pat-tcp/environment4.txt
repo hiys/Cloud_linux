@@ -1,4 +1,14 @@
 
+在github上下载单个文件
+1、找到需要下载的文件，点击进入
+查看图片提示 
+     https://github.com/hiys/Cloud_linux/tree/master/nat-pat-tcp/下载git文件.png 
+2、在打开的页面中，找到 Raw 按钮，右键  选择 目标另存为
+查看图片提示
+    https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/下载git文件2.png
+============================================================
+
+
 [root@hiys ~]# echo 5  |clone-auto7
 
 [root@hiys ~]# ls  /etc/yum.repos.d/
