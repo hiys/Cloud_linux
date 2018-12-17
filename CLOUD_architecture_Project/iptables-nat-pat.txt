@@ -1,0 +1,3762 @@
+
+在github上下载单个文件
+1、找到需要下载的文件，点击进入
+查看图片提示 
+     https://github.com/hiys/Cloud_linux/tree/master/nat-pat-tcp/下载git文件.png 
+2、在打开的页面中，找到 Raw 按钮，右键  选择 目标另存为
+查看图片提示
+    https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/下载git文件2.png
+============================================================
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+
+[root@hiys ~]# echo 6  |clone-auto7
+
+[root@hiys ~]# ls  /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz     repo  rhel7.repo
+
+[root@hiys ~]# cat  /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://127.0.0.1/rhel7
+enabled=1
+gpgcheck=0
+[root@hiys ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -3
+
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@hiys ~]# tail  -3  /etc/fstab 
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /                       ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults        1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+
+======================   虚拟网络 命令 常用 =====================
+
+[root@hiys ~]# virsh  net-autostart --disable  vbr
+网络vbr取消标记为自动启动
+
+[root@hiys ~]# virsh  net-destroy   vbr
+网络 vbr 被删除
+
+[root@hiys ~]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+
+[root@hiys ~]# virsh net-undefine  vbr   ##取消定义一个非活跃的网络 vbr
+网络 vbr 已经被取消定义
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+==================  创建  虚拟网络  vbr   vbr1  private2  [ 10 ] ===========================
+
+
+
+[root@room9pc25 ~]# virsh  net-dumpxml  private2
+<network>
+  <name>private2</name>
+  <uuid>dca824f3-cdfc-4fcd-9b98-f8a46656c27d</uuid>
+  <bridge name='private2' stp='on' delay='0'/>
+  <mac address='52:54:00:f8:f9:d7'/>
+  <domain name='private2'/>
+  <ip address='192.168.2.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@room9pc25 ~]# 
+
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# cd  /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr.xml
+
+<network>
+  <name>vbr</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# cp  /etc/libvirt/qemu/networks/vbr.xml  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr1.xml
+
+<network>
+  <name>vbr1</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr1.xml  vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr.xml 
+Network vbr defined from vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr1.xml 
+Network vbr1 defined from vbr1.xml
+
+[root@hiys networks]# virsh  net-autostart  vbr
+Network vbr marked as autostarted
+
+[root@hiys networks]# virsh  net-autostart  vbr1
+Network vbr1 marked as autostarted
+
+[root@hiys networks]# virsh  net-start  vbr
+Network vbr started
+
+[root@hiys networks]# virsh  net-start  vbr1
+Network vbr1 started
+
+[root@hiys networks]# ifconfig vbr ;ifconfig vbr1
+
+
+[root@hiys ~]# cat  local.repo.txt
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+
+
+[root@hiys ~]# cat  local.repo.txt
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+
+[root@hiys ~]# vim   Vaxip.sh
+[root@hiys ~]# cat   Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+=======================
+ ~]# virt-manager   手动改变网卡
+ ～ 】 注意增加内存 2048 MiB
+ ～ 】 注意增加 cpu  2  个
+
+[root@hiys ~]# virsh console  Va1
+
+localhost login: root
+密码：
+  用户 root   123456 密码  修改密码 为 1 
+Va1  192.168.0.11 ---vbr 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 ---vbr 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 ---vbr 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 ---vbr 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 ---vbr1 外网 1 
+Va4  192.168.2.14 ---private2 外网 2  
+
+Va5  192.168.1.15 ---vbr1 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 ---private2 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+======================= =============================
+
+[root@localhost ~]# ifconfig  |grep  eth
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:6f:10:ef  txqueuelen 1000  (Ethernet)
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:f3:7b:05  txqueuelen 1000  (Ethernet)
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:7c:8d:51  txqueuelen 1000  (Ethernet)
+        ether 52:54:00:62:a0:90  txqueuelen 1000  (Ethernet)
+
+[root@localhost ~]# vim  Vaxip.sh
+
+[root@localhost ~]# cat   Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+[root@localhost ~]# . Vaxip.sh  1  11  ## 主机名 Va1    ip  11
+.............
+  tracker.x86_64 0:1.10.5-4.el7                                                 
+
+Complete!
+[root@localhost ~]# ifconfig  |awk '/inet /{print $2}'
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@localhost ~]# cat  /etc/hostname 
+Va1
+[root@localhost ~]# reboot
+
+[root@room9pc27 ~]# ssh  -o  StrictHostKeyChecking=no  -X  192.168.0.11
+Warning: .................
+root@192.168.0.11's password:   1
+........................
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           2000         100        1760           8         138        1744
+Swap:          2047           0        2047
+
+[root@Va1 ~]# ip -o  address
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+2: eth0    inet 192.168.0.11/24 brd 192.168.0.255 scope global eth0\       valid_lft forever preferred_lft forever
+2: eth0    inet6 fe80::5054:ff:fe6f:10ef/64 scope link \       valid_lft forever preferred_lft forever
+3: eth1    inet 192.168.1.11/24 brd 192.168.1.255 scope global eth1\       valid_lft forever preferred_lft forever
+3: eth1    inet6 fe80::5054:ff:fef3:7b05/64 scope link \       valid_lft forever preferred_lft forever
+4: eth2    inet 192.168.2.11/24 brd 192.168.2.255 scope global eth2\       valid_lft forever preferred_lft forever
+4: eth2    inet6 fe80::5054:ff:fe7c:8d51/64 scope link \       valid_lft forever preferred_lft forever
+5: virbr0    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0\       valid_lft forever preferred_lft forever
+
+[root@Va1 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.11 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.11 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va1 ~]# scp  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt  \
+>  /etc/yum.repos.d/local.repo
+ssh: connect to host 192.168.0.254 port 22: Connection refused
+
+[root@room9pc27 ~]# sed  -n  '16,17p;38p;65p'  /etc/ssh/sshd_config
+Port 7920
+#Port 22
+#PermitRootLogin yes
+PasswordAuthentication yes
+[root@room9pc27 ~]# sed  -i   '38s/#//'  /etc/ssh/sshd_config
+[root@room9pc27 ~]# systemctl  restart   sshd
+[root@room9pc27 ~]# sed  -n  '16,17p;38p;65p'  /etc/ssh/sshd_config 
+Port 7920
+#Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
+
+               ## -P  7920  使用非特定的 port 去对外联机
+
+[root@Va1 ~]# scp  -P 7920  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+Warning: Permanently added '[192.168.0.254]:7920' (ECDSA) to the list of known hosts.
+root@192.168.0.254's password: Taren1
+local.repo.txt                                                                  100%   99    65.5KB/s   00:00    
+
+[root@Va1 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va1 ~]# yum clean  all >/dev/null &&  yum  repolist |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
+/****
+[root@hiys ~]# scp  local.repo.txt  root@192.168.0.14:/etc/yum.repos.d/local.repo
+root@192.168.0.14's password: 1
+local.repo.txt                                   100%  195   225.8KB/s   00:00   
+*****/
+
+=====================================================
+
+==========================  TCP/IP三次握手四次断开  =================
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+发送SYN,请求建立连接(seq=100,ctl=SYN) send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                 receive SYN+ACK |<-- SYN+ACK ---| SYN+ACK send 发送SYN，ACK(seq=300,ack=101,ctl=SYN,ACK)
+                                        |            | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+            发送ACK(seq=101  ack=301  ctl=ACK) |-------------- ACK --------------->| receive ACK
+ 代表一个打开的连接，数据可以传送给用户 ESTABLISHED|                                  | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+      发送FIN 请求断开连接(FIN=1,ACK=1) send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                 receive ACK |<------------- ACK ----------------| send ACK 发送ACK(ACK=1)
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                     receive FIN |<------------- FIN ----------------| send FIN 发送FIN 请求断开连接(FIN=1,ACK=1)
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                            发送ACK(ACK=1) send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)[32位序列号 和 32 位确认号 举例,seq=100,]
+
+Acknowledge number(确认号码)
+established   已建立的; 已设立的; 已制定的; 确定的
+receive 收到; 接待; 接到; 接纳;
+          接收; 受理; 欢迎; 承受;
+TCP(Transmission Control Protocol)　传输控制协议
+
+====================  tcpdump  ======================
+
+
+[root@room9pc27 ~]# which tcpdump 
+/usr/sbin/tcpdump
+[root@room9pc27 ~]# tcpdump   ## listening on rhce 正在监听 网卡 rhce   ## 但是默认监听eth0
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on rhce, link-type EN10MB (Ethernet), capture size 262144 bytes
+^C
+0 packets captured
+0 packets received by filter
+0 packets dropped by kernel
+
+[root@room9pc27 ~]# ifconfig  rhce
+rhce: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.25.254.250  netmask 255.255.255.0  broadcast 172.25.254.255
+        ether 52:54:00:45:6a:61  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@room9pc27 ~]# ifconfig  |head -2
+enp1s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.209.134  netmask 255.255.255.0  broadcast 176.121.209.255
+
+[root@room9pc27 ~]# tcpdump   -i  enp1s0  ##on enp1s0 正在监听 网卡 enp1s0 ## -i 即 interface  
+
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on enp1s0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+12:48:58.485788 IP 176.121.209.128.41138 > 239.255.255.250.ssdp: UDP, length 172
+12:48:58.486593 IP room9pc27.tedu.cn.47864 > 176.121.0.100.domain: 47558+ PTR? 250.255.255.239.in-addr.arpa. (46)
+12:48:58.511118 IP 176.121.0.100.domain > room9pc27.tedu.cn.47864: 47558 NXDomain 0/1/0 (103)
+12:48:58.513407 IP room9pc27.tedu.cn.54511 > 176.121.0.100.domain: 41623+ PTR? 128.209.121.176.in-addr.arpa. (46)
+^C
+12:48:58.710057 IP 176.121.209.122.mdns > 224.0.0.251.mdns: 0*- [0q] 6/0/0 (Cache flush) TXT "", (Cache flush) A 176.121.209.122, (Cache flush) PTR room9cp01.local., (Cache flush) HINFO, (Cache flush) SRV room9cp01.local.:9 0 0, (Cache flush) AAAA fe80::ff76:efc9:e067:17b4 (219)
+
+5 packets captured
+46 packets received by filter
+0 packets dropped by kernel
+
+[root@room9pc27 ~]# 
+
+---------------------------------  tcpdump  ----------------------------
+表达式用于筛选输出哪些类型的数据包，
+如果没有给定表达式，
+所有的数据包都将输出，
+否则只输出表达式为true的包。
+在表达式中出现的shell元字符建议使用单引号包围。
+
+tcpdump的表达式由一个或多个"单元"组成，
+每个单元一般包含ID的修饰符
+和一个ID(数字或名称)。
+
+有三种修饰符：
+
+第一种是关于类型的关键字
+
+(1).type：指定ID的类型。
+可以给定的值有host/net/port/portrange。
+例如"host foo"，"net 128.3"，"port 20"，"portrange 6000-6008"。
+默认的type为host。
+
+第二种是确定传输方向的关键字，
+
+主要包括src , dst ,dst or src, dst and src ,
+这些关键字指明了传输的方向。
+举例说明，src 210.27.48.2 ,指明ip包中源地址是210.27.48.2 , 
+dst net 202.0.0.0 指明目的网络地址是202.0.0.0 。
+如果没有指明方向关键字，则缺省是src or dst关键字。
+(2).dir：指定ID的方向。
+可以给定的值包括src/dst/src or dst/src and dst，
+默认为src or dst。
+例如，"src foo"表示源主机为foo的数据包，
+"dst net 128.3"表示目标网络为128.3的数据包，
+"src or dst port 22"表示源或目的端口为22的数据包。
+
+第三种是协议的关键字，
+
+/****
+WLAN是利用无线通信技术在一定的局部范围内建立的网络，
+是计算机网络与无线通信技术相结合的产物，
+它以无线多址信道作为传输媒介，
+提供传统有线局域网LAN（LocalAreaNetwork）的功能，
+能够使用户真正实现随时、随地、随意的宽带网络接入。
+*****/
+
+主要包括 fddi,  ip,  arp,  rarp,  tcp,
+  udp，  wlan  等类型。
+Fddi指明是在FDDI(分布式光纤数据接口网络)上的特定 的网络协议，
+实际上它是"ether"的别名，
+fddi和ether具有类似的源地址和目的地址，
+所以可以将fddi协议包当作ether的包进行处理和 分析。
+
+其他的几个关键字就是指明了监听的包的协议内容。
+如果没有指定任何协议，则tcpdump将会监听所有协议的信息包。
+(3).proto：通过给定协议限定匹配的数据包类型。
+常用的协议有tcp/udp/arp/rarp/ip/ether/icmp等，
+若未给定协议类型，
+则匹配所有可能的类型。
+例如"tcp port 21"，
+"udp portrange 7000-7009"。
+
+除了这三种类型的关键字之外，
+其他重要的关键字如下：
+gateway, broadcast,less,greater,
+还有三种逻辑运算，
+取非运算是 'not ' '! ', 
+与运算是'and','&&;
+或运算 是'or' ,'||'；
+这些关键字可以组合起来构成强大的组合条件来满足人们的需要
+
+
+  普通情况下，直接启动tcpdump将监视第一个网络界面上所有流过的数据包。
+
+所以，一个基本的表达式单元格式为"proto dir type ID"
+
+tcpdump [ -DenNqvX ] [ -c count ] [ -F file ] [ -i interface ] [ -r file ]
+        [ -s snaplen ] [ -w file ] [ expression ]
+
+常用选项	具体含义
+-i	指定监听的网络接口。
+-nn	IP和端口均以数字形式显示。
+-c	在收到指定的数据分组后，tcpdump停止，
+   如果没有这个参数，会持续不断的监听用户，直到输入[Ctrl]+C为止。
+-t	再输入的每一行不打印时间戳。
+-q	只输出较少的协议信息，仅输出协议名称，不输出封包标记信息。
+-w	FILE直接将分组写入文件中，而不是到stdout。
+-r	FILE从后面接的文件将数据包数据读出来。
+-s	设置数据包抓取长度为len，如果不设置默认为65535字节。
+-D	列出可用于抓包的接口。列出接口的数值编号和接口名。可用于-i后。
+-L	列出网络接口的已知数据链路。
+-F	从文件中读取抓包的过滤表达式，若使用该选项，则命令行中给定的其他表达式都将失效。
+-A	数据包的内容以ASCLL显示，通常用来捕捉www的网页数据包资料
+-X	数据包内容以十六进制和ASCLL显示。
+-XX	比-X输出更详细。
+--------------------- 
+
+抓包选项：
+-c：指定要抓取的包数量。
+注意，是最终要获取这么多个包。
+例如，指定"-c 10"将获取10个包，
+但可能已经处理了100个包，只不过只有10个包是满足条件的包。
+
+-i interface：指定tcpdump需要监听的接口。
+若未指定该选项，
+将从系统接口列表中搜寻编号最小的已配置好的接口
+(不包括loopback接口，要抓取loopback接口使用tcpdump -i lo)，
+  ：一旦找到第一个符合条件的接口，搜寻马上结束。
+可以使用'any'关键字表示所有网络接口。
+
+-n：对地址以数字方式显式，否则显式为主机名，
+也就是说 -n 选项 不 做 主机名解析。
+
+-nn：除了-n的作用外，还把端口显示为数值，否则显示端口服务名。
+
+-N：不打印出host的域名部分。
+例如tcpdump将会打印'nic'而不是'nic.ddn.mil'。
+
+-P：指定要抓取的包是流入还是流出的包。
+可以给定的值为"in"、"out"和"inout"，默认为"inout"。
+
+-s len：设置tcpdump的数据包抓取长度为len，
+如果不设置默认将会是65535字节。
+对于要抓取的数据包较大时，
+长度设置不够可能会产生包截断，
+若出现包截断，
+      ：输出行中会出现"[|proto]"的标志(proto实际会显示为协议名)。
+但是抓取len越长，
+包的处理时间越长，
+并且会减少tcpdump可缓存的数据包的数量，
+      ：从而会导致数据包的丢失，
+所以在能抓取我们想要的包的前提下，
+抓取长度越小越好。
+
+输出选项：
+-e：输出的每行中都将包括数据链路层头部信息，
+例如源MAC和目标MAC。
+
+-q：快速打印输出。
+即打印很少的协议相关信息，
+从而输出行都比较简短。
+
+-X：输出包的头部数据，
+会以16进制和ASCII两种方式同时输出。
+
+-XX：输出包的头部数据，
+会以16进制和ASCII两种方式同时输出，更详细。
+
+-v：当分析和打印的时候，
+产生详细的输出。
+
+-vv：产生比-v更详细的输出。
+
+-vvv：产生比-vv更详细的输出。
+
+其他功能性选项：
+-D：列出可用于抓包的接口。
+将会列出接口的数值编号和接口名，
+它们都可以用于"-i"后。
+
+-F：从文件中读取抓包的表达式。
+若使用该选项，
+则命令行中给定的其他表达式都将失效。
+
+-w：将抓包数据输出到文件中而不是标准输出。
+  可以同时配合"-G time" 选项  使得 输出文件 每time秒 就自动 切换到 另一个文件。
+可通过"-r"选项载入这些文件以进行分析和打印。
+
+-r：从给定的数据包文件中读取数据。
+使用"-"表示从标准输入中读取。
+
+==========================  Va1   ==============================
+
+[root@Va1 ~]# ifconfig  |awk  '/inet /{print $2}'
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@Va1 ~]# rpm  -q  tcpdump
+tcpdump-4.9.0-5.el7.x86_64
+
+[root@Va1 ~]# ip   route  show
+
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.11 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.11 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va1 ~]# tcpdump
+................
+12:43:37.542388 IP gateway.39092 > Va1.ssh: Flags [P.], seq 2557:2593, ack 5991344, win 5253, options [nop,nop,TS val 10885411 ecr 4022623], length 36
+^C
+34737 packets captured
+34737 packets received by filter
+0 packets dropped by kernel
+
+[root@Va1 ~]# yum  -y install  elinks |tail  -3 ;rpm  -q elinks
+  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+[root@Va1 ~]# yum  -y install  httpd  elinks |tail  -3 ;rpm  -q elinks  httpd
+  httpd-tools.x86_64 0:2.4.6-67.el7        mailcap.noarch 0:2.1.41-2.el7       
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           2000         135        1500           8         364        1682
+Swap:          2047           0        2047
+
+[root@Va1 ~]# echo  " Va1  192.168.0.11 " > /var/www/html/index.html
+[root@Va1 ~]# systemctl  start  httpd
+[root@Va1 ~]# elinks   -dump    192.168.0.11
+   Va1 192.168.0.11
+
+[root@Va1 ~]# tcpdump  -i  eth1  -c  3  ## -i 指定监听的网络接口; -c 在收到指定的数据分组后，tcpdump停止
+
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+13:48:37.837293 STP 802.1d, Config, Flags [none], bridge-id 8000.52:54:00:92:c9:4d.8007, length 35
+13:48:39.837012 STP 802.1d, Config, Flags [none], bridge-id 8000.52:54:00:92:c9:4d.8007, length 35
+13:48:41.837089 STP 802.1d, Config, Flags [none], bridge-id 8000.52:54:00:92:c9:4d.8007, length 35
+3 packets captured
+3 packets received by filter
+0 packets dropped by kernel
+
+  ## ## -A数据包的内容以ASCLL显示
+
+-w：将抓包数据输出到文件中而不是标准输出。
+  可以同时配合"-G time" 选项  使得 输出文件 每time秒 就自动 切换到 另一个文件。
+可通过"-r"选项载入这些文件以进行分析和打印。
+
+[root@Va1 ~]# tcpdump  -Ai  eth1  -c  2
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+13:50:29.836992 STP 802.1d, Config, Flags [none], bridge-id 8000.52:54:00:92:c9:4d.8007, length 35
+.......RT...M......RT...M..........
+13:50:31.836980 STP 802.1d, Config, Flags [none], bridge-id 8000.52:54:00:92:c9:4d.8007, length 35
+.......RT...M......RT...M..........
+2 packets captured
+2 packets received by filter
+0 packets dropped by kernel
+
+[root@Va1 ~]# tcpdump  -Ai  eth0  -c2  -w  /tmp/tcpdump.cap  # -w：将抓包数据输出到文件中而不是标准输出
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+2 packets captured
+2 packets received by filter
+0 packets dropped by kernel
+
+[root@Va1 ~]# cat  /tmp/tcpdump.cap  ## 乱码 看不懂【二进制文件】
+...........
+           ��"����|����
+
+[root@Va1 ~]# tcpdump  -A  -r  /tmp/tcpdump.cap  ## -r：从给定的数据包文件中读取数据
+
+reading from file /tmp/tcpdump.cap, link-type EN10MB (Ethernet)
+13:58:25.531301 IP Va1.ssh > gateway.39092: Flags [P.], seq 297892766:297892890, ack 587190729, 
+win 295, options [nop,nop,TS val 8510612 ecr 15373370], length 124
+E...pQ@.@.G...............{."......'.......
+.......:....{..iV.(.n..~.=..F.Hm...
+...........S.t^...BT]-.....D..k......[..x..,........j...&.>....m6.	1.0....z.-X..rq........hD..89
+13:58:25.531380 IP gateway.39092 > Va1.ssh: Flags [.], ack 124, win 5253, options [nop,nop,TS val 15373398 ecr 8510612], length 0
+E..4)+@.@../............".....|............
+...V....
+[root@Va1 ~]# netstat  -npult  |grep  -E  'httpd|sshd'
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1080/sshd           
+tcp        0      0 127.0.0.1:6010          0.0.0.0:*               LISTEN      1293/sshd: root@pts 
+tcp6       0      0 :::80                   :::*                    LISTEN      3527/httpd          
+tcp6       0      0 :::22                   :::*                    LISTEN      1080/sshd           
+tcp6       0      0 ::1:6010                :::*                    LISTEN      1293/sshd: root@pts 
+
+[root@Va1 ~]# sed  -n   '17p;38p;65p'  /etc/ssh/sshd_config 
+#Port 22
+#PermitRootLogin yes
+PasswordAuthentication yes
+
+[root@Va1 ~]# sed  -i  '17s/#//;38s/#//'  /etc/ssh/sshd_config
+
+[root@Va1 ~]# sed  -n   '17p;38p;65p'  /etc/ssh/sshd_config 
+Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
+
+[root@Va1 ~]# systemctl  restart   sshd
+
+[root@Va1 ~]# sed  -n   '17p;38p;65p'  /etc/ssh/sshd_config 
+Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
+
+----- ## IP Va1.ssh > gateway.39092 注意gateway 192.168.0.254 表示 Va1 连接了真机 的 ip  192.168.0.254 ---
+
+[root@Va1 ~]# tcpdump   -i  eth0  -A  tcp  port 22   -c1  
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+15:23:00.105101 IP Va1.ssh > gateway.39092: Flags [P.], seq 297923398:297923586, ack 587203453,
+
+ win 295, options [nop,nop,TS val 13585185 ecr 20447941], length 188
+E...q.@.@.E................F#..}...'.<.....
+..K!.8..5..P..R@.J.B Q)8.h.I..2.GG......7....=...w......A..Sx.)...*....a"lz..G..C....	d.9m........$LDn.*...W..x&..x...XKIR..O...b`6..q?.*..9..X......4.bE.,..L.n.....K.:.(j.f..)..s.O.i.\....
+.:..8.
+1 packet captured
+2 packets received by filter
+0 packets dropped by kernel
+[root@Va1 ~]# 
+-------------------------------------
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  -b 192.168.1.12   192.168.1.11  ## 测试 Va2 连接了Va1 网卡接口eth1
+root@192.168.1.11's password: 
+Last login: Sun Dec 16 14:43:01 2018 from 192.168.2.12
+[root@Va1 ~]# 
+------------------------------------------------------
+[root@Va1 ~]# tcpdump   -i  eth1  -A  tcp  port 22   -c1  ##监听中
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+-----------------------------------------------------------------------
+[root@Va1 ~]# exit     ## Va2 的 网卡接口eth1 退出 Va1
+登出
+Connection to 192.168.1.11 closed.
+[root@Va2 ~]# 
+
+--------------## Va1 抓到了 Va2 的eth1 接口的信息IP 192.168.1.12.48932 > Va1.ssh:-------------
+
+[root@Va1 ~]# tcpdump   -i  eth1  -A  tcp  port 22   -c1    
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+15:27:02.731031 IP 192.168.1.12.48932 > Va1.ssh: Flags [P.], seq 4219290174:4219290210, ack 1978664305, 
+
+win 289, options [nop,nop,TS val 12614295 ecr 13715614], length 36
+E..X..@.@.2q.........$...}B>u..q...!.......
+..z...H...;.."..-.V.p...L...=...Bq.Z....2..O
+1 packet captured
+1 packet received by filter
+0 packets dropped by kernel
+
+---------------  测试  能够抓到 Va3  的网卡接口 eth2 连接 本机  eth2网络接口 -----
+
+[root@Va1 ~]# tcpdump   -Ai  eth2   tcp  port 22  and host  192.168.2.13  -c1 ## 注意and 的意思是并且条件限制 抓包
+
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth2, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+---------------------------- Va3 开始连接并退出 -------------
+[root@Va3 ~]# ssh  -o  StrictHostKeyChecking=no  -b  192.168.2.13   192.168.2.11  hostname
+Warning: Permanently added '192.168.2.11' (ECDSA) to the list of known hosts.
+root@192.168.2.11's password: 1
+Va1
+[root@Va3 ~]# hostname
+Va3
+----------------------  Va1 显示 结果 192.168.2.13.45698 > Va1.ssh  ----------------
+
+[root@Va1 ~]# tcpdump   -Ai  eth2   tcp  port 22  and host  192.168.2.13  -c1
+
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth2, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+15:44:43.557759 IP 192.168.2.13.45698 > Va1.ssh: Flags [S], seq 4218683850, 
+
+win 29200, options [mss 1460,sackOK,TS val 13650416 ecr 0,nop,wscale 7], length 0
+E..<H:@.@.m..............t........r............
+..I.........
+1 packet captured
+5 packets received by filter
+0 packets dropped by kernel
+
+---------------------------------------
+[root@Va1 ~]# tcpdump   -Ai  eth2   tcp  port 80  or  host  192.168.2.13  -c3
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth2, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+------------------------------ Va2 开始 访问 Va1的 web 页面 -------------
+[root@Va2 ~]# elinks  -dump  192.168.2.11
+   Va1 192.168.0.11
+
+----------   Va1 查到结果 192.168.2.12.51304 > Va1.http: -------------
+
+[root@Va1 ~]# tcpdump   -Ai  eth2   tcp  port 80  or  host  192.168.2.13  -c1 ## 注意抓包限制条件 或 " or "
+
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth2, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+15:57:02.283129 IP 192.168.2.12.51304 > Va1.http: Flags [S], seq 2925469549,
+
+ win 29200, options [mss 1460,sackOK,TS val 14413847 ecr 0,nop,wscale 7], length 0
+E..<.z@.@............h.P._.m......r............
+............
+1 packet captured
+5 packets received by filter
+0 packets dropped by kernel
+
+---------------------------- portrange 连续端口 20 到 80 ------------------------------
+
+[root@Va1 ~]# tcpdump   -Ai  eth2   tcp  portrange  20-80  or  host  192.168.2.13  -c1
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth2, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+------------------------------ Va2 开始 访问 Va1的 web 页面 -------------
+[root@Va2 ~]# elinks  -dump  192.168.2.11
+   Va1 192.168.0.11
+
+----------   Va1 查到结果 192.168.2.12.51304 > Va1.http: ------------
+
+16:05:16.701376 IP 192.168.2.12.51306 > Va1.http: Flags [S], seq 2296794955, win 29200, options [mss 1460,sackOK,TS val 14908265 ecr 0,nop,wscale 7], length 0
+E..<4"@.@..2.........j.P..OK......r............
+..{i........
+1 packet captured
+5 packets received by filter
+0 packets dropped by kernel
+
+  --------------------------- 监听  Va4 的 访问 本机 的 web  页面 【 或 20-80 端口 信息】-------------------
+[root@Va1 ~]# tcpdump   -Ai  eth0   tcp  portrange  20-80  and  dst  host  192.168.0.14  -c1
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+[root@Va4 ~]# elinks   -dump  192.168.0.11   ## 注意满足 and条件 必须 对应 Va1 网卡eth0
+   Va1 192.168.0.11
+
+-------- 【 源  Va1.http 】 > 【 192.168.0.14.52272  目标 】---------- 源IP  >  目标 IP ---------------
+
+[root@Va1 ~]# tcpdump   -Ai  eth0   tcp  portrange  20-80  and  dst  host  192.168.0.14  -c1
+
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+16:23:48.522966 IP Va1.http > 192.168.0.14.52272: Flags [S.], seq 1542525948, ack 446594963,
+
+ win 28960, options [mss 1460,sackOK,TS val 17233603 ecr 15935165,nop,wscale 7], length 0
+E..<..@.@..R.........P.0[.........q ...........
+......&.....
+1 packet captured
+2 packets received by filter
+0 packets dropped by kernel
+
+------------------------------------------------ ---------------------------------------------------------
+[root@Va1 ~]# tcpdump   -Ai  eth0   tcp  portrange  20-80  and  dst  host  192.168.0.14  -c3
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+/*******************
+[root@Va4 ~]# elinks   -dump  192.168.0.11
+   Va1 192.168.0.11
+**********************/
+
+16:37:28.202580 IP Va1.http > 192.168.0.14.52276: Flags [S.], seq 365327602, ack 2133694128, win 28960, options [mss 1460,sackOK,TS val 18053283 ecr 16754845,nop,wscale 7], length 0
+E..<..@.@..R.........P.4..t..-....q ...........
+..x.........
+16:37:28.202947 IP Va1.http > 192.168.0.14.52276: Flags [.], ack 147, win 235, options [nop,nop,TS val 18053283 ecr 16754846], length 0
+E..4.P@.@..
+.........P.4..t..-.B...........
+..x.....
+16:37:28.203499 IP Va1.http > 192.168.0.14.52276: Flags [P.], seq 1:336, ack 147, win 235, options [nop,nop,TS val 18053284 ecr 16754846], length 335: HTTP: HTTP/1.1 200 OK
+E....Q@.@............P.4..t..-.B...........
+..x.....HTTP/1.1 200 OK
+Date: Sun, 16 Dec 2018 08:37:28 GMT
+Server: Apache/2.4.6 (Red Hat Enterprise Linux)
+Last-Modified: Sun, 16 Dec 2018 05:12:06 GMT
+ETag: "14-57d1cb49bf1f9"
+Accept-Ranges: bytes
+Content-Length: 20
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+ Va1  192.168.0.11 
+
+3 packets captured
+3 packets received by filter
+0 packets dropped by kernel
+[root@Va1 ~]# 
+---------------------------------------------------------------------------
+==========================  TCP/IP三次握手四次断开  =================
+                   ---------   源IP    >     目标 IP ---------------
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+发送SYN,请求建立连接(seq=100,ctl=SYN) send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                 receive SYN+ACK |<-- SYN+ACK ---| SYN+ACK send 发送SYN，ACK(seq=300,ack=101,ctl=SYN,ACK)
+                                        |            | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+            发送ACK(seq=101  ack=301  ctl=ACK) |-------------- ACK --------------->| receive ACK
+ 代表一个打开的连接，数据可以传送给用户 ESTABLISHED|                                  | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+      发送FIN 请求断开连接(FIN=1,ACK=1) send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                 receive ACK |<------------- ACK ----------------| send ACK 发送ACK(ACK=1)
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                     receive FIN |<------------- FIN ----------------| send FIN 发送FIN 请求断开连接(FIN=1,ACK=1)
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                            发送ACK(ACK=1) send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)[32位序列号 和 32 位确认号 举例,seq=100,]
+
+Acknowledge number(确认号码)
+established   已建立的; 已设立的; 已制定的; 确定的
+receive 收到; 接待; 接到; 接纳;
+          接收; 受理; 欢迎; 承受;
+TCP(Transmission Control Protocol)　传输控制协议
+                         -------   源IP    >     目标 IP -------------
+
+16:56:19.837417 IP 192.168.0.12.40670 > Va1.http: Flags [S], seq 220172651, win 29200, options [.....]
+16:56:19.837458 IP Va1.http > 192.168.0.12.40670: Flags [S.], seq 3370927378, ack 220172652, win 28960, options [...]
+16:56:19.837597 IP 192.168.0.12.40670 > Va1.http: Flags [.], ack 1, win 229, options [........]
+
+
+16:56:19.837646 IP 192.168.0.12.40670 > Va1.http: Flags [P.], seq 1:147, ack 1, win 229, options [.......]
+Connection: Keep-Alive
+16:56:19.837663 IP Va1.http > 192.168.0.12.40670: Flags [.], ack 147, win 235, options [............]
+16:56:19.838398 IP Va1.http > 192.168.0.12.40670: Flags [P.], seq 1:336, ack 147, win 235, options [.....]
+16:56:19.838547 IP 192.168.0.12.40670 > Va1.http: Flags [.], ack 336, win 237, options [.........]
+
+                  Va2 192.168.0.12 Client                                   Server  Va1 192.168.0.11
+                               send SYN |--------------- SYN -------------->| receive SYN
+                        receive SYN+ACK |<- - - - -- SYN+ACK - - - - -- ----| SYN+ACK send 发送SYN，ACK(seq=300,ack=101,ctl=SYN,ACK)
+       发送ACK(seq=101  ack=301  ctl=ACK) |-------------- ACK --------------->| receive ACK
+
+
+ 发送FIN 请求断开连接(FIN=1,ACK=1) send FIN |-------------- FIN --------------->| receive FIN
+                            receive ACK |<------------- ACK ----------------| send ACK 发送ACK(ACK=1)
+                            receive FIN |<------------- FIN ----------------| send FIN 发送FIN 请求断开连接(FIN=1,ACK=1)
+                     发送ACK(ACK=1) send ACK |-------------- ACK --------------->| receive ACK
+
+
+[root@Va1 ~]# tcpdump   -Ai  eth0   tcp  portrange  20-80  and    host  192.168.0.12  -c7
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+
+[root@Va2 ~]# elinks  -dump  192.168.0.11
+   Va1 192.168.0.11
+
+             -------   源IP    >     目标 IP -------------
+
+[root@Va1 ~]# tcpdump   -Ai  eth0   tcp  portrange  20-80  and    host  192.168.0.12  -c7
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+16:56:19.837417 IP 192.168.0.12.40670 > Va1.http: Flags [S], seq 220172651, win 29200, options [mss 1460,sackOK,TS val 17971401 ecr 0,nop,wscale 7], length 0
+E..<..@.@..............P...k......r............
+..8.........
+16:56:19.837458 IP Va1.http > 192.168.0.12.40670: Flags [S.], seq 3370927378, ack 220172652, win 28960, options [mss 1460,sackOK,TS val 19184918 ecr 17971401,nop,wscale 7], length 0
+E..<..@.@..T.........P....E....l..q ...........
+.$....8.....
+16:56:19.837597 IP 192.168.0.12.40670 > Va1.http: Flags [.], ack 1, win 229, options [nop,nop,TS val 17971401 ecr 19184918], length 0
+E..4..@.@..............P...l..E............
+..8..$..
+16:56:19.837646 IP 192.168.0.12.40670 > Va1.http: Flags [P.], seq 1:147, ack 1, win 229, options [nop,nop,TS val 17971401 ecr 19184918], length 146: HTTP: GET / HTTP/1.1
+E.....@.@..&...........P...l..E...... .....
+..8..$..GET / HTTP/1.1
+Host: 192.168.0.11
+User-Agent: ELinks/0.12pre6 (textmode; Linux; -)
+Accept: */*
+Accept-Language: en
+Connection: Keep-Alive
+
+
+16:56:19.837663 IP Va1.http > 192.168.0.12.40670: Flags [.], ack 147, win 235, options [nop,nop,TS val 19184918 ecr 17971401], length 0
+E..4..@.@..V.........P....E................
+.$....8.
+16:56:19.838398 IP Va1.http > 192.168.0.12.40670: Flags [P.], seq 1:336, ack 147, win 235, options [nop,nop,TS val 19184919 ecr 17971401], length 335: HTTP: HTTP/1.1 200 OK
+E.....@.@............P....E................
+.$....8.HTTP/1.1 200 OK
+Date: Sun, 16 Dec 2018 08:56:19 GMT
+Server: Apache/2.4.6 (Red Hat Enterprise Linux)
+Last-Modified: Sun, 16 Dec 2018 05:12:06 GMT
+ETag: "14-57d1cb49bf1f9"
+Accept-Ranges: bytes
+Content-Length: 20
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+ Va1  192.168.0.11 
+
+16:56:19.838547 IP 192.168.0.12.40670 > Va1.http: Flags [.], ack 336, win 237, options [nop,nop,TS val 17971402 ecr 19184919], length 0
+E..4..@.@..............P......Fb...........
+..8..$..
+7 packets captured
+7 packets received by filter
+0 packets dropped by kernel
+
+[root@Va1 ~]# 
+
+
+==========================  Va 2   ==============================
+
+[root@Va2 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va2 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va2 ~]# yum  -y install  httpd  elinks |tail  -3 ;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va2 ~]# echo  " Va2  192.168.0.12 " > /var/www/html/index.html
+[root@Va2 ~]# systemctl  start  httpd
+[root@Va2 ~]# elinks   -dump    192.168.0.12
+   Va2 192.168.0.12
+  
+   ## 指定端口 -p 22  ； ## 指定登陆用户 -l root ; 
+ ## 绑定源地址 -b  192.168.1.12 适用于 客户端Va2 --- 192.168.1.12 有两个以上的 IP 地址
+
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  -b 192.168.0.12  -l root  -p22  192.168.0.13 ## 服务端主机0.13
+Warning: Permanently added '192.168.0.13' (ECDSA) to the list of known hosts.
+root@192.168.0.13's password: 
+Last login: Sun Dec 16 11:52:57 2018 from 192.168.0.254
+[root@Va3 ~]# hostname
+Va3
+[root@Va3 ~]# exit
+登出
+Connection to 192.168.0.13 closed.
+
+   ## 绑定源地址 -b  192.168.1.12 适用于 客户端Va2 --- 192.168.1.12 有两个以上的 IP 地址
+   
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  -b 192.168.1.12  -l root  -p22  192.168.1.11  ## 服务端主机1.11
+Warning: Permanently added '192.168.1.11' (ECDSA) to the list of known hosts.
+root@192.168.1.11's password: 
+Last login: Sun Dec 16 14:37:37 2018 from 192.168.0.12
+[root@Va1 ~]# hostname
+Va1
+[root@Va1 ~]# exit
+登出
+Connection to 192.168.1.11 closed.
+
+     ## 绑定源地址 -b  192.168.2.12 适用于 客户端 192.168.1.12 有两个以上的 IP 地址
+
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  -b 192.168.2.12  -l root  -p22  192.168.2.11  
+Warning: Permanently added '192.168.2.11' (ECDSA) to the list of known hosts.
+root@192.168.2.11's password: 
+Last login: Sun Dec 16 14:39:55 2018 from 192.168.1.12
+[root@Va1 ~]# hostname
+Va1
+[root@Va1 ~]# exit
+登出
+Connection to 192.168.2.11 closed.
+[root@Va2 ~]# 
+
+/************
+基本能完成常用的对于远程节点的管理，几个注意的点：
+双引号，必须有。
+如果不加双引号，第二个 ifconfig 命令在本地执行
+分号，两个命令之间用分号隔开
+多行命令可以输入双引号后回车，结尾使用双引号包裹
+
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  -b 192.168.0.12  \
+> 192.168.0.14  "hostname;ifconfig eth0 |awk  '/inet /{print $2}'"
+root@192.168.0.14's password: 1
+Va4
+        inet 192.168.0.14  netmask 255.255.255.0  broadcast 192.168.0.255
+
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  -b 192.168.0.12   192.168.0.14  "hostname;ifconfig eth0 |grep  'inet '"
+root@192.168.0.14's password: 1
+Va4
+        inet 192.168.0.14  netmask 255.255.255.0  broadcast 192.168.0.255
+
+[root@Va2 ~]# ifconfig eth0 |awk  '/inet /{print $2}'
+192.168.0.12
+
+
+
+==========================  Va3  ==============================
+
+[root@Va3 ~]# yum  -y install  httpd  elinks |tail  -3 ;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va3 ~]# echo  " Va3  192.168.0.13 " > /var/www/html/index.html
+[root@Va3 ~]# systemctl  start  httpd
+[root@Va3 ~]# elinks   -dump    192.168.0.13
+   Va3 192.168.0.13
+
+
+
+==========================  Va4   ==============================
+
+[root@Va4 ~]# yum  -y install  httpd  elinks |tail  -3 ;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va4 ~]# echo  " Va4  192.168.0.14 " > /var/www/html/index.html
+[root@Va4 ~]# systemctl  start  httpd
+[root@Va4 ~]# elinks   -dump    192.168.0.14
+   Va4 192.168.0.14
+
+
+
+==========================  Va5   ==============================
+
+[root@Va5 ~]# yum  -y install  httpd  elinks |tail  -3 ;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va5 ~]# echo  " Va5  192.168.1.15 " > /var/www/html/index.html
+[root@Va5 ~]# systemctl  start  httpd
+[root@Va5 ~]# elinks   -dump    192.168.1.15
+   Va5 192.168.1.15
+
+
+
+==========================  Va6  ==============================
+
+[root@Va6 ~]# yum  -y install  httpd  elinks |tail  -3 ;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va6 ~]# echo  " Va6  192.168.2.16 " > /var/www/html/index.html
+[root@Va6 ~]# systemctl  start  httpd
+[root@Va6 ~]# elinks   -dump    192.168.2.16
+   Va6 192.168.2.16
+
+
+====================  tcpdump  =======================================================
+===================================================================
+
+
+
+
+
+NAT英文全称是“Network Address Translation”
+顾名思义，它是一种把内部私有网络地址（IP地址）翻译成合法网络IP地址的技术。
+因此我们可以认为，NAT在一定程度上，能够有效的解决公网地址不足的问题
+分类：
+NAT有三种类型：静态NAT(Static NAT)、动态地址NAT(Pooled NAT)、网络地址端口转换NAPT（Port-Level NAT）
+其中，网络地址端口转换NAPT（Network Address Port Translation）
+则是把内部地址映射到外部网络的一个IP地址的不同端口上。
+它可以将中小型的网络隐藏在一个合法的IP地址后面。
+NAPT与 动态地址NAT不同，
+它将内部连接映射到外部网络中的一个单独的IP地址上，
+同时在该地址上加上一个由NAT设备选定的端口号.NAPT是使用最普遍的一种转换方式
+,它又细分为snat和dnat.
+(1)源NAT（Source NAT，SNAT）：修改数据包的源地址。
+源NAT改变第一个数据包的来源地址，它永远会在数据包发送到网络之前完成，
+数据包伪装就是一具SNAT的例子。
+(2)目的NAT（Destination NAT，DNAT）：修改数据包的目的地址。
+Destination NAT刚好与SNAT相反，它是改变第一个数据懈的目的地地址，
+如平衡负载、端口转发和透明代理就是属于DNAT
+应用：
+NAT主要可以实现以下几个功能：数据包伪装、平衡负载、端口转发和透明代理。
+数据伪装: 可以将内网数据包中的地址信息更改成统一的对外地址信息，
+不让内网主机直接暴露在因特网上，保证内网主机的安全。
+同时，该功能也常用来实现共享上网。
+端口转发:
+ 当内网主机对外提供服务时，由于使用的是内部私有IP地址，外网无法直接访问。
+因此，需要在网关上进行端口转发，将特定服务的数据包转发给内网主机。
+负载平衡: 目的地址转换NAT可以重定向一些服务器的连接到其他随机选定的服务器。
+失效终结: 目的地址转换NAT可以用来提供高可靠性的服务。
+如果一个系统有一台通过路由器访问的关键服务器，
+一旦路由器检测到该服务器当机，
+它可以使用目的地址转换NAT透明的把连接转移到一个备份服务器上。
+透明代理: 
+NAT可以把连接到因特网的HTTP连接重定向到一个指定的HTTP代理服务器以缓存数据和过滤请求。
+一些因特网服务提供商就使用这种技术来减少带宽的使用而不用让他们的客户配置他们的浏览器支持代理连接
+原理
+地址转换
+NAT的基本工作原理是，当私有网主机和公共网主机通信的IP包经过NAT网关时，
+将IP包中的源IP或目的IP在私有IP和NAT的公共IP之间进行转换
+要做SNAT的信息包被添加到POSTROUTING链中。
+要做DNAT的信息包被添加到PREROUTING链中。
+直接从本地出站的信息包的规则被添加到OUTPUT 链中。
+DNAT：若包是被送往PREROUTING链的，并且匹配了规则，
+则执行DNAT或REDIRECT目标。
+为了使数据包得到正确路由，必须在路由之前进行DNAT。
+路由：
+内核检查信息包的头信息，尤其是信息包的目的地。
+处理本地进程产生的包：
+对nat表OUTPUT链中的规则实施规则检查，对匹配的包执行目标动作。
+SNAT：
+若包是被送往POSTROUTING链的，并且匹配了规则，
+则执行SNAT或MASQUERADE目标。
+系统在决定了数据包的路由之后才执行该链中的规则
+但是nat也不是万能的，它也是有缺陷的，
+解决办法就是nat穿透技术:
+其实NAT穿越技术依赖于UPnP协议的支持，
+也就是说NAT设备必须支持UPnP，支持NAT穿越技术；
+而网络应用程序一样也需要支持UPnP，支持NAT穿越技术，
+只不过，这通常都是通过调用相关的NAT Traversal API实现的，
+window XP默认已经安装了NAT Traversal API，
+当然网络应用程序要调用它仍然需要进行一些修改，
+现在的MSN Messenger就支持调用NAT Traversal API. 
+这里不再详细说明，感兴趣的可以查找资料.
+    下面看看实际代码部分：
+     Nat的初始化工作和之前分析的filter几乎一样。
+Nat的ipv4部分在Iptables_nat.c 、
+     Core部分在nf_nat_core.c，不同的就是表不一样.
+这里我们拿snat一个实际例子分析，应用环境如图：
+
+很明显，直接lan内pc无法与外网通信,因为保留的ip地址即使外网能收到，但是回复的时候路由也会丢弃.所以需要snat：
+#iptables -t nat -A POSTROUTING -s  192.168.1.0/24  -j SNAT --to-source  202.20.65.5
+或#iptables -t nat -A POSTROUTING -s  192.168.1.0/24 -j MASQUERADE  //  默认会获取wan口地址进行映射. 
+钩子点POSTROUTING 对应SNAT    PREROUTING 对应DNAt（因为会影响以后的路由）;
+还需要说明的是不论prerouting的dnat 
+or  postrouting snat都在基本ct的后边，
+helper和confirm的前面.(DNAT的优先级高于SNAT)
+
+============================== iptables ================================
+
+iptables 不是真正的防火墙,
+用户通过这个iptables代理,把安全设定执行到对应的"安全框架"中,
+这个"安全框架" netfilter  才是真正的 防火墙
+netfilter  才是 防火墙 真正的 "安全框架"(framework),
+netfilter 位于内核空间
+netfilter/iptables(简称 iptables)
+iptables  是 内核提供的功能,不是真正的服务
+Netfilter 是Linux操作系统核心层内部的一个数据包处理模块
+
+NAT英文全称是“Network Address Translation”
+一种把内部私有网络地址（IP地址）翻译成合法公有网络IP地址的技术
+内核中的关卡
+input关卡和output关卡
+在 iptables 中称为 "链"
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+    filter 这个规则表是预设规则表，
+    拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+     mangle 此规则表拥有 Prerouting、FORWARD 和 postrouting 三个规则链。
+       使用率不高.
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING     
+
+4个表的优先级由高到低的顺序为:raw-->mangle-->nat-->filter 
+ 在PRROUTING链上,
+即有mangle表,也有nat表,
+那么先由mangle处理,
+然后由nat表处理 
+RAW表只使用在PREROUTING链和OUTPUT链上,因为优先级最高，
+从而可以对收到的数据包在连接跟踪前进行处理。
+一但用户使用了RAW表,
+在某个链上,RAW表处理完后,
+将跳过NAT表和 ip_conntrack处理,
+即不再做地址转换和数据包的链接跟踪处理了. 
+RAW表可以应用在那些不需要做nat的情况下，以提高性能。
+如大量访问的web服务器，
+可以让80端口不再让iptables做数据包的链接跟踪处理，以提高用户的访问速度。 
+
+ ----------------------  iptables的数据包的流程 ---------------------------
+
+基本步骤如下：  
+1. 数据包到达网络接口，比如 eth0。  
+
+2. 进入 raw 表的 PREROUTING 链，
+   这个链的作用是赶在连接跟踪之前处理数据包。  
+3. 如果进行了连接跟踪，在此处理。  
+
+4. 进入 mangle 表的 PREROUTING 链，
+    在此可以修改数据包，比如 TOS 等。  
+5. 进入 nat 表的 PREROUTING 链，
+    可以在此做DNAT，但不要做过滤。  
+6. 决定路由，看是交给本地主机还是转发给其它主机。  
+到了这里我们就得分两种不同的情况进行讨论了，一种情况就是数据包要转发给其它主机，这时候它会依次经过： 
+ 
+7. 进入 mangle 表的 FORWARD 链，这里也比较特殊，
+  这是在第一次路由决定之后，在进行最后的路由决定之前，我们仍然可以对数据包进行某些修改。  
+8. 进入 filter 表的 FORWARD 链，在这里我们可以对所有转发的数据包进行过滤。需要注意的是：经过这里的数据包是转发的，方向是双向的。  
+9. 进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改。  
+10. 进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤。  
+11. 进入出去的网络接口。完毕。  
+
+另一种情况是，数据包就是发给本地主机的，那么它会依次穿过：  
+7. 进入 mangle 表的 INPUT 链，这里是在路由之后，交由本地主机之前，我们也可以进行一些相应的修改。  
+8. 进入 filter 表的 INPUT 链，在这里我们可以对流入的所有数据包进行过滤，无论它来自哪个网络接口。  
+9. 交给本地主机的应用程序进行处理。  
+10. 处理完毕后进行路由决定，看该往那里发出。  
+
+11. 进入 raw 表的 OUTPUT 链，这里是在连接跟踪处理本地的数据包之前。  
+12. 连接跟踪对本地的数据包进行处理。  
+13. 进入 mangle 表的 OUTPUT 链，在这里我们可以修改数据包，但不要做过滤。  
+14. 进入 nat 表的 OUTPUT 链，可以对防火墙自己发出的数据做 NAT 。  
+15. 进入 filter 表的 OUTPUT 链，可以对本地出去的数据包进行过滤。
+ 16.再次进行路由决定。  
+17. 进入 mangle 表的 POSTROUTING 链，同上一种情况的第9步。注意，这里不光对经过防火墙的数据包进行处理，还对防火墙自己产生的数据包进行处理。 
+18. 进入 nat 表的 POSTROUTING 链，同上一种情况的第10步。  
+19. 进入出去的网络接口。完毕。 
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING  
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+   
+ ============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+
+# iptables -t nat -A POSTROUTING -p tcp -o eth0 -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+
+查看已有规则：
+iptables -L
+
+清空所有规则：
+iptables -F
+
+拒绝INPUT
+iptables -P INPUT DROP
+
+允许所有ping：
+iptables -I INPUT -p icmp -j ACCEPT
+
+在末尾加入允许未被其他规则匹配的数据包：
+iptables -t filter -A INPUT -j -ACCEPT
+
+删除INPUT第二条规则：
+iptables -D INPUT 2
+
+-t 参数
+用来指定规则表，
+内建的规则表有三个，分别是：nat、mangle 和 filter，
+当未指定规则表时，则一律视为是 filter。
+
+1、常用命令列表： 
+ 常用命令(-A追加规则、-D删除规则、-R修改规则、-I插入规则、-L查看规则)
+2、常用封包比对参数：
+(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+
+常用的处理动作：
+ (-j  指定对满足条件包的处理，常用动作有ACCEPT接受报、DROP丢弃报、REJECT丢弃报并通知对方、REDIRECT重定向包等)
+  -j   参数用来指定要进行的处理动作，
+常用的处理动作包括：ACCEPT、REJECT、DROP、REDIRECT、MASQUERADE、LOG、DNAT、SNAT、MIRROR、QUEUE、RETURN、MARK，
+
+分别说明如下：
+ACCEPT将封包放行，进行完此处理动作后，将不再比对其它规则，直接跳往下一个规则链（natostrouting）。
+
+REJECT拦阻该封包，并传送封包通知对方，
+可以传送的封包有几个选择：ICMP port-unreachable、ICMP echo-reply 
+或是 tcp-reset（这个封包会要求对方关闭联机），
+进行完此处理动作后，将不再比对其它规则，直接中断过滤程序。
+
+例如：iptables -A FORWARD -p TCP --dport 22 -j REJECT--reject-with tcp-reset
+
+
+DROP丢弃封包不予处理，进行完此处理动作后，
+将不再比对其它规则，直接中断过滤程序。
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+
+例如：
+iptables -t nat-A PREROUTING -p tcp --dport 80 -j REDIRECT--to-ports 8080
+
+ iptables的5个链（区分大小写）：
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+ iptables的4个表（区分大小写）：
+
+  iptables默认有4个表
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+filter 这个规则表是预设规则表，
+拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+使用率不高.
+
+
+
+[root@Va4 ~]# sysctl   -p
+net.ipv4.ip_forward = 1
+[root@Va4 ~]# cat   /proc/sys/net/ipv4/ip_forward
+1
+[root@Va4 ~]# lsmod |grep  iptable
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  3 iptable_filter,iptable_mangle,iptable_nat
+
+iptables工具__过滤包—命令(-A、-I、-D、-R、-L等)、
+参数(-p、-s、-d、--sport、--dport、-i、-o等)、
+动作-j (ACCEPT、DROP、REJECT、REDIRECT等)
+
+             #  iptables [-t 表名]   选项  [链名]   [条件]    [-j 目标操作]
+[root@proxy ~]# iptables -t filter  -I INPUT  -p icmp  -j ACCEPT ;
+-p为指定的链 设置默认规则
+//注意事项与规律：
+//可以不指定表，默认为filter表
+//可以不指定链，默认为对应表的所有链
+//如果没有找到匹配条件，则执行防火墙默认规则
+//选项/链名/目标操作用大写字母，其余都小写
+
+//目标操作：
+// ACCEPT：允许通过/放行
+// DROP：直接丢弃，不给出任何回应
+// REJECT：拒绝通过，必要时会给出提示
+// LOG：记录日志，然后传给下一条规则
+#LOG匹配即停止的唯一例外，记录日志，然后传给下一条规则
+[root@proxy ~]# iptables -t filter -I INPUT -p icmp -j LOG ;
+[root@proxy ~]# > /var/log/messages
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+基本使用方法：
+
+查看已有规则：
+iptables -L
+
+清空所有规则：
+iptables -F
+
+拒绝INPUT
+iptables -P INPUT DROP
+
+允许所有ping：
+iptables -I INPUT -p icmp -j ACCEPT
+
+在末尾加入允许未被其他规则匹配的数据包：
+iptables -t filter -A INPUT -j -ACCEPT
+
+删除INPUT第二条规则：
+iptables -D INPUT 2
+
+仅允许来自172.27.8.0/22的用户连接ssh服务
+iptables -I INPUT -s 172.27.8.0/22 -p tcp --dport 22 -j ACCEPT 
+iptables -A INPUT -p tcp --dport 22 -j REJECT
+
+不允许任何用户访问本机3306端口
+iptables -I INPUT -p tcp --dport 3306 -j REJECT 
+iptables -I INPUT -p udp --dport 3306 -j REJECT
+
+拒绝其他用户通过网卡eth1访问本机http服务
+iptables -I INPUT -i eth1 -p tcp --dport 80 -j REJECT
+
+禁止用户访问www.baidu.com
+iptables -I FORWARD -d www.baidu.com -j DROP
+
+禁止172.27.8.22的用户上网
+iptables -I FORWARD -s 172.27.8.22 -j DROP
+
+流量均衡：
+将访问流量分流至内网三台不同主机：
+iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT -to-destination 172.27.8.10
+iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT -to-destination 172.27.8.20
+iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --counter 0 --every 3 --packet 0 -j DNAT -to-destination 172.27.8.30
+
+使用上述操作，规则仅当前有效，
+如需重启依然有效，
+执行service iptables save 
+将规则写入/etc/sysconfig/iptables中 
+
+iptables工具__过滤包—命令(-A、-I、-D、-R、-L等)、
+参数(-p、-s、-d、--sport、--dport、-i、-o等)、
+动作-j (ACCEPT、DROP、REJECT、REDIRECT等)
+
+iptables 指令
+语法：iptables [-t table] command [match] [-j target/jump]
+
+-t 参数用来指定规则表，
+内建的规则表有三个，分别是：nat、mangle 和 filter，
+当未指定规则表时，则一律视为是 filter。
+
+各个规则表的功能如下：
+nat 此规则表拥有 Prerouting 和 postrouting 两个规则链，
+主要功能为进行一对一、一对多、多对多等网址转译工作（SNATDNAT），
+由于转译工作的特性，
+需进行目的地网址转译的封包，
+就不需要进行来源网址转译，
+
+反之亦然，因此为了提升改写封包的率，
+在防火墙运作时，每个封包只会经过这个规则表一次。
+如果我们把封包过滤的规则定义在这个数据表里，
+将会造成无法对同一包进行多次比对，
+因此这个规则表除了作网址转译外，请不要做其它用途。
+
+mangle 此规则表拥有 Prerouting、FORWARD 和 postrouting 三个规则链。
+除了进行网址转译工作会改写封包外，
+在某些特殊应用可能也必须去改写封包（TTL、TOS）
+或者是设定 MARK（将封包作记号，以进行后续的过滤），
+这时就必须将这些工作定义在 mangle 规则表中，
+使用率不高.
+
+
+filter 这个规则表是预设规则表，
+拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+这个规则表顾名思义是用来进行封包过滤的理动作
+（例如：DROP、 LOG、 ACCEPT 或 REJECT），
+我们会将基本规则都建立在此规则表中。
+主要包含：：
+命令表用来增加(-A、-I)
+删除(-D)
+修改(-R)
+查看(-L)规则等；
+常用参数用来指定
+协议(-p)、源地址(-s)、源端口(--sport)、目的地址(-d)、目的端口(--dport)、进入网卡(-i)、出去网卡(-o)等设定包信息（即什么样的包）；
+用来描述要处理包的信息。
+常用处理动作用   -j   来指定对包的处理(ACCEPT、DROP、REJECT、REDIRECT等)。
+
+1、常用命令列表： 
+ 常用命令(-A追加规则、-D删除规则、-R修改规则、-I插入规则、-L查看规则)
+2、常用封包比对参数：
+(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+范例 iptables -A INPUT ...
+说明新增规则(追加方式)到某个规则链(这里是INPUT规则链)中，该规则将会成为规则链中的最后一条规则。
+
+命令-D,--delete
+范例 iptables -D INPUT --dport 80 -j DROPiptables -D INPUT 1
+说明 从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除。
+
+命令-R, --replace
+范例 iptables -R INPUT1-s 192.168.0.1 -j DROP
+说明取代现行规则，规则被取代后并不会改变顺序。(1是位置)
+
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+范例 iptables -I INPUT1--dport 80 -j ACCEPT
+说明插入一条规则，原本该位置(这里是位置1)上的规则将会往后移动一个顺位。
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list
+范例 iptables -L INPUT
+说明 列出某规则链中的所有规则。
+[root@Va4 ~]# iptables  --list
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush
+范例 iptables -F INPUT
+说明 删除某规则链(这里是INPUT规则链)中的所有规则。
+
+命令-Z,--zero
+范例 iptables -Z INPUT
+说明 将封包计数器归零。
+封包计数器是用来计算同一封包出现次数，是过滤阻断式攻击不可或缺的工具。
+
+命令-N, --new-chain范例 iptables -N allowed
+说明 定义新的规则链。
+
+命令-X, --delete-chain
+范例 iptables -X allowed
+说明 删除某个规则链。
+
+命令-P, --policy
+范例 iptables -P INPUT DROP
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+说明 定义过滤政策。 
+也就是未符合过滤条件之封包，预设的处理方式。
+
+命令-E,--rename-chain
+范例 iptables -E allowed disallowed
+说明 修改某自订规则链的名称。
+
+2、常用封包比对参数：(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+
+参数-p, --protocol(指定协议)
+范例 iptables -A INPUT -p tcp(指定协议)      -p all   所有协议，  -p !tcp 去除tcp外的所有协议。
+说明 比对通讯协议类型是否相符，
+可以使用 ! 运算子进行反向比对，
+例如：-p ! tcp ，意思是指除 tcp 以外的其它类型，
+包含udp、icmp ...等。
+如果要比对所有类型，则可以使用 all 关键词，
+例如：-p all。
+
+参数-s, --src, --source(指定源地址，指定源端口--sport)
+例如： iptables -A INPUT -s 192.168.1.1
+说明 用来比对封包的来源 IP，可以比对单机或网络，
+比对网络时请用数字来表示屏蔽，
+例如：-s 192.168.0.0/24，
+比对 IP 时可以使用 ! 运算子进行反向比对，
+例如：-s ! 192.168.0.0/24。
+
+参数-d, --dst, --destination(指定目的地址，指定目的端口--dport)
+例如： iptables -A INPUT -d 192.168.1.1
+说明 用来比对封包的目的地 IP，设定方式同上。
+
+参数-i, --in-interface(指定入口网卡)      -i  eth+   所有网卡
+例如： iptables -A INPUT -i eth0
+说明 用来比对封包是从哪片网卡进入，可以使用通配字符 + 来做大范围比对，
+例如：-i eth+ 表示所有的 ethernet 网卡，也以使用 ! 运算子进行反向比对，
+例如：-i ! eth0。
+
+参数-o, --out-interface(指定出口网卡)
+例如： iptables -A FORWARD -o eth0
+说明 用来比对封包要从哪片网卡送出，设定方式同上。
+
+参数--sport, --source-port(源端口)
+例如： iptables -A INPUT -p tcp --sport 22
+说明 用来比对封包的来源端口号，可以比对单一埠，或是一个范围，
+例如：--sport 22:80，表示从 22 到 80 端口之间都算是符合件，
+如果要比对不连续的多个埠，则必须使用--multiport 参数，详见后文。
+比对埠号时，可以使用 ! 运算子进行反向比对。
+
+参数--dport, --destination-port(目的端口)
+例如： iptables -A INPUT -p tcp --dport 22
+说明 用来比对封包的目的端口号，设定方式同上。
+
+参数--tcp-flags(只过滤TCP中的一些包，比如SYN包，ACK包，FIN包，RST包等等)
+例如： iptables -p tcp --tcp-flags SYN,FIN,ACK SYN
+说明  比对 TCP 封包的状态旗号，参数分为两个部分，
+第一个部分列举出想比对的旗号，
+第二部分则列举前述旗号中哪些有被设，
+未被列举的旗号必须是空的。
+TCP 状态旗号包括：SYN（同步）、ACK（应答）、FIN（结束）、RST（重设）、URG（紧急）PSH（强迫推送） 
+等均可使用于参数中，除此之外还可以使用关键词 ALL 和NONE 进行比对。
+比对旗号时，可以使用 ! 运算子行反向比对。
+
+参数--syn例如： iptables -p tcp --syn
+说明 用来比对是否为要求联机之 TCP 封包，
+与 iptables -p tcp --tcp-flags SYN,FIN,ACK SYN 的作用完全相同，
+如果使用 !运算子，可用来比对非要求联机封包。
+
+参数-m multiport --source-port
+例如： iptables -A INPUT -p tcp -m multiport --source-port 22,53,80,110
+说明 用来比对不连续的多个来源埠号，
+一次最多可以比对 15 个埠，可以使用 !运算子进行反向比对。
+
+参数-m multiport --destination-port
+例如： iptables -A INPUT -p tcp -m multiport --destination-port 22,53,80,110
+说明 用来比对不连续的多个目的地埠号，设定方式同上。
+
+参数-m multiport --port
+例如： iptables -A INPUT -p tcp -m multiport --port 22,53,80,110
+说明 这个参数比较特殊，用来比对来源埠号和目的埠号相同的封包，设定方式同上。
+注意：在本范例中，如果来源端口号为 80目的地埠号为 110，
+这种封包并不算符合条件。
+
+参数--icmp-type
+例如： iptables -A INPUT -p icmp --icmp-type 8
+说明 用来比对 ICMP 的类型编号，可以使用代码或数字编号来进行比对。
+
+请打 iptables -p icmp --help 来查看有哪些代码可用。
+
+参数-m limit --limit
+例如： iptables -A INPUT -m limit --limit 3/hour
+
+说明 用来比对某段时间内封包的平均流量，
+上面的例子是用来比对：每小时平均流量是否超过一次 3 个封包。 
+除了每小时平均次外，也可以每秒钟、每分钟或每天平均一次，默认值为每小时平均一次，
+参数如后： /second、 /minute、/day。 
+除了进行封数量的比对外，
+设定这个参数也会在条件达成时，暂停封包的比对动作，
+以避免因骇客使用洪水攻击法，
+导致服务被阻断。
+
+参数--limit-burst
+范例 iptables -A INPUT -m limit --limit-burst 5
+说明 用来比对瞬间大量封包的数量，
+上面的例子是用来比对一次同时涌入的封包是否超过 5 个（这是默认值），
+超过此上限的封将被直接丢弃。
+使用效果同上。
+
+
+参数-m owner --uid-owner
+范例 iptables -A OUTPUT -m owner --uid-owner 500
+说明 用来比对来自本机的封包，是否为某特定使用者所产生的，这样可以避免服务器使用
+root 或其它身分将敏感数据传送出，可以降低系统被骇的损失。
+可惜这个功能无法比对出来自其它主机的封包。
+
+参数-m owner --gid-owner
+范例 iptables -A OUTPUT -m owner --gid-owner 0
+说明 用来比对来自本机的封包，是否为某特定使用者群组所产生的，使用时机同上。
+参数-m owner --pid-owner
+范例 iptables -A OUTPUT -m owner --pid-owner 78
+说明 用来比对来自本机的封包，是否为某特定行程所产生的，使用时机同上。
+
+参数-m owner --sid-owner
+范例 iptables -A OUTPUT -m owner --sid-owner 100
+说明 用来比对来自本机的封包，是否为某特定联机（Session ID）的响应封包，
+使用时机同上。
+
+参数-m state --state
+范例 iptables -A INPUT -m state --state RELATED,ESTABLISHED
+说明 用来比对联机状态，
+
+联机状态共有四种：INVALID、ESTABLISHED、NEW 和 RELATED。
+
+INVALID 表示该封包的联机编号（Session ID）无法辨识或编号不正确。
+
+ESTABLISHED 表示该封包属于某个已经建立的联机。
+
+NEW 表示该封包想要起始一个联机（重设联机或将联机重导向）。
+
+relate 
+（把…） 联系起来; 讲，叙述（故事等）;  讲述，叙述; 使…有联系; 建立或展示联系; 涉及; 有联系; 符合; 发生共鸣;
+RELATED 【relate 】表示该封包是属于某个已经建立的联机，所建立的新联机。
+例如：FTP-DATA 联机必定是源自某个 FTP 联机。
+
+ nat表 [mangle表]    filter表    filter表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链     input链     output链        forward链         postrouting链
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+             #  iptables   [-t 表名]    选项  [链名]   [条件]    [-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]   
+ 命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 等)
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+3、常用的处理动作：
+ (-j  指定对满足条件包的处理，常用动作有ACCEPT接受报、DROP丢弃报、REJECT丢弃报并通知对方、REDIRECT重定向包等)
+  -j   参数用来指定要进行的处理动作，
+常用的处理动作包括：ACCEPT、REJECT、DROP、REDIRECT、MASQUERADE、LOG、DNAT、SNAT、MIRROR、QUEUE、RETURN、MARK，
+
+分别说明如下：
+ACCEPT将封包放行，进行完此处理动作后，将不再比对其它规则，直接跳往下一个规则链（natostrouting）。
+
+REJECT拦阻该封包，并传送封包通知对方，
+可以传送的封包有几个选择：ICMP port-unreachable、ICMP echo-reply 
+或是 tcp-reset（这个封包会要求对方关闭联机），
+进行完此处理动作后，将不再比对其它规则，直接中断过滤程序。
+
+例如：iptables -A FORWARD -p TCP --dport 22 -j REJECT--reject-with tcp-reset
+
+
+DROP丢弃封包不予处理，进行完此处理动作后，
+将不再比对其它规则，直接中断过滤程序。
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+
+例如：
+iptables -t nat-A PREROUTING -p tcp --dport 80 -j REDIRECT--to-ports 8080
+
+
+masquerade 
+n.	伪装; 化装舞会; 掩饰;
+vi.	伪装; 假扮; 乔装; 冒充;
+
+MASQUERADE 【masquerade 】改写封包来源 IP 为防火墙 NIC IP，
+可以指定 port 对应的范围，进行完此处理动作后，
+直接跳往下一个规则（mangleostrouting）。
+
+这个功能与 SNAT 略有不同，
+当进行 IP 伪装时，不需指定要伪装成哪个 IP，
+IP 会从网卡直接读，
+当使用拨接连线时，
+IP 通常是由 ISP 公司的 DHCP 服务器指派的，
+这个时候 MASQUERADE 特别有用。
+例如：iptables -t nat-A POSTROUTING -p TCP -j MASQUERADE --to-ports 1024-31000
+
+
+LOG将封包相关讯息纪录在 /var/log 中，
+详细位置请查阅 /etc/syslog.conf 组态档，
+进行完此处理动作后，将会继续比对其规则。
+例如：
+iptables -A INPUT -p tcp -j LOG --log-prefix "INPUT packets"
+
+SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将直接跳往下一个规则（mangleostrouting）。
+
+例如：
+iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规炼（filter:input 或 filter:forward）。
+
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+四.拓展模块
+1.按来源MAC地址匹配
+# iptables -t filter -A FORWARD-m --mac-source 00:02:b2:03:a5:f6 -j DROP
+拒绝转发来自该MAC地址的数据包
+
+2.按多端口或连续端口匹配
+20:表示20以后的所有端口
+20:100表示20到100的端口
+:20表示20之前的所有端口
+-m multiport [--prots, --sports,--dports]
+
+例子：
+# iptables -A INPUT -p tcp -m multiport --dports 21,20,25,53,80 -j ACCEPT 【多端口匹配】
+# iptables -A INPUT -p tcp --dport 20: -j ACCEPT
+# iptables -A INPUT -p tcp --sport 20:80 -j ACCEPT
+# iptables -A INPUT -p tcp --sport :80 -j ACCEPT
+
+3.还可以按数据包速率和状态匹配
+-m limit --limit匹配速率 如： -m limit --limit 50/s -j ACCEPT
+-m state --state 状态 如： -m state --state INVALID,RELATED -j ACCEPT
+
+4.还可以限制链接数-m connlimit --connlimit-above n 限制为多少个
+例如：iptables -I FORWARD -p tcp -m connlimit --connlimit-above 9 -j DROP        //表示限制链接数最大为9个
+
+
+
+
+========================  iptables    nat     pat   ============================================
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING            
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+4个表的优先级由高到低的顺序为:raw-->mangle-->nat-->filter 
+
+ 在PRROUTING链上,
+即有mangle表,也有nat表,
+那么先由mangle处理,然后由nat表处理 
+
+RAW表只使用在PREROUTING链和OUTPUT链上,
+因为优先级最高，从而可以对收到的数据包在连接跟踪前进行处理。
+一但用户使用了RAW表,
+在某个链上,RAW表处理完后,
+将跳过NAT表和 ip_conntrack处理,
+即不再做地址转换和数据包的链接跟踪处理了. 
+RAW表可以应用在那些不需要做nat的情况下，以提高性能。
+如大量访问的web服务器，
+可以让80端口不再让iptables做数据包的链接跟踪处理，以提高用户的访问速度。
+
+
+
+1、常用命令列表： 
+ 常用命令(-A追加规则、-D删除规则、-R修改规则、-I插入规则、-L查看规则)
+2、常用封包比对参数：
+(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
+ iptables的5个链（区分大小写）：
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1 
+Va4  192.168.2.14 --- 外网 2  
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va1 ------------------------------------
+
+[root@Va1 ~]# ip  -o  address
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+2: eth0    inet 192.168.0.11/24 brd 192.168.0.255 scope global eth0\       valid_lft forever preferred_lft forever
+3: eth1    inet 192.168.1.11/24 brd 192.168.1.255 scope global eth1\       valid_lft forever preferred_lft forever
+4: eth2    inet 192.168.2.11/24 brd 192.168.2.255 scope global eth2\       valid_lft forever preferred_lft forever
+........................
+[root@Va1 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.11 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.11 
+
+[root@Va1 ~]# rpm  -q  tree
+tree-1.6.0-10.el7.x86_64
+
+[root@Va1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+
+[root@Va1 ~]# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+[root@Va1 ~]# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+
+[root@Va1 ~]# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+[root@Va1 ~]# route  add  default  gw  192.168.0.14   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@Va1 ~]# ip  route  show
+default via 192.168.0.14 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+
+[root@Va1 ~]# ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.11
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.0.14   ## ping 通成功
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+64 bytes from 192.168.0.14: icmp_seq=1 ttl=255 time=0.555 ms
+64 bytes from 192.168.0.14: icmp_seq=2 ttl=255 time=0.480 ms
+...................................
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.1.14  ## ping 通成功
+PING 192.168.1.14 (192.168.1.14) 56(84) bytes of data.
+64 bytes from 192.168.1.14: icmp_seq=1 ttl=255 time=0.272 ms
+64 bytes from 192.168.1.14: icmp_seq=2 ttl=255 time=0.533 ms
+..................................
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.2.14   ## ping 通成功
+PING 192.168.2.14 (192.168.2.14) 56(84) bytes of data.
+64 bytes from 192.168.2.14: icmp_seq=1 ttl=255 time=0.254 ms
+64 bytes from 192.168.2.14: icmp_seq=2 ttl=255 time=0.558 ms
+.............................
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.1.15  ## ping 不通
+
+PING 192.168.1.15 (192.168.1.15) 56(84) bytes of data.
+
+--- 192.168.1.15 ping statistics ---
+5 packets transmitted, 0 received, 100% packet loss, time 830ms
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.2.16  ## ping 不通
+
+PING 192.168.2.16 (192.168.2.16) 56(84) bytes of data.
+
+--- 192.168.2.16 ping statistics ---
+5 packets transmitted, 0 received, 100% packet loss, time 830ms
+
+[root@Va1 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va1 ~]# echo "<h1> Va1   192.168.0.11 </h1>" > /var/www/html/index.html
+
+[root@Va1 ~]# systemctl  start httpd && systemctl  enable  httpd
+..................
+[root@Va1 ~]# elinks  -dump  192.168.0.11
+                                Va1 192.168.0.11
+[root@Va1 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+ 
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va2 ------------------------------------
+
+[root@Va2 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.0.14   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@Va2 ~]# ifconfig   eth1  down
+[root@Va2 ~]# ifconfig   eth2  down
+
+[root@Va2 ~]# route  del  default  gw  192.168.0.254
+[root@Va2 ~]# route  add  default  gw  192.168.0.14
+
+[root@Va2 ~]# ip  route  show
+default via 192.168.0.14 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.12 
+
+[root@Va2 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.12
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@Va2 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va2 ~]# echo "<h1> Va2   192.168.0.12 </h1>" > /var/www/html/index.html
+
+[root@Va2 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink ..................
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+                                Va2 192.168.0.12
+[root@Va2 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va3 ------------------------------------
+
+# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.0.14   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@Va3 ~]# ifconfig  eth1  down
+[root@Va3 ~]# ifconfig   eth2  down
+[root@Va3 ~]# route  del default  gw  192.168.0.254
+[root@Va3 ~]# route  add  default  gw  192.168.0.14
+[root@Va3 ~]# ip  route  show
+default via 192.168.0.14 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.13 
+
+[root@Va3 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.13
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@Va3 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va3 ~]# echo "<h1> Va3   192.168.0.13 </h1>" > /var/www/html/index.html
+
+[root@Va3 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va3 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+
+[root@Va3 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va4 ------------------------------------
+
+[root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.14
+192.168.1.14
+192.168.2.14
+127.0.0.1
+192.168.122.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1003   0        0 eth1
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+
+[root@Va4 ~]# which  sysctl
+/usr/sbin/sysctl
+[root@Va4 ~]# rpm  -qf  /usr/sbin/sysctl 
+procps-ng-3.3.10-16.el7.x86_64
+[root@Va4 ~]# ll  /usr/sbin/sysctl
+-rwxr-xr-x. 1 root root 24128 8月   4 2017 /usr/sbin/sysctl
+
+[root@Va4 ~]# /usr/sbin/sysctl  -p
+
+[root@Va4 ~]# sysctl   -p
+
+  ## sysctl命令用于运行时配置内核参数
+ 命令格式：
+    sysctl [-n] [-e] -w variable=value
+    sysctl [-n] [-e] -p <filename> (default /etc/sysctl.conf)
+    sysctl [-n] [-e] -a
+    常用参数的意义：
+    -w   临时改变某个指定参数的值，如
+        sysctl -w net.ipv4.ip_forward=1
+    -a   显示所有的系统参数
+    -p   从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
+   ## 编辑/etc/sysctl.conf文件，即可手工或自动执行由sysctl控制的功能
+
+[root@Va4 ~]# cat  /etc/sysctl.conf    ## 永久性 开启 IP 转发 配置文件
+# sysctl settings are defined through files in
+# /usr/lib/sysctl.d/, /run/sysctl.d/, and /etc/sysctl.d/.
+#
+# Vendors settings live in /usr/lib/sysctl.d/.
+# To override a whole file, create a new file with the same in
+# /etc/sysctl.d/ and put new settings there. To override
+# only specific settings, add a file with a lexically later
+# name in /etc/sysctl.d/ and put new settings there.
+#
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+
+[root@Va4 ~]# sysctl   -a  |grep  netfilter  |tail -3
+sysctl: reading key "net.ipv6.conf.all.stable_secret"
+.................................
+net.netfilter.nf_log.7 = NONE
+net.netfilter.nf_log.8 = NONE
+net.netfilter.nf_log.9 = NONE
+
+[root@Va4 ~]# ll  /proc/sys/net/ipv4/ip_forward
+-rw-r--r-- 1 root root 0 12月 14 09:14 /proc/sys/net/ipv4/ip_forward
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward   ## 临时性 开启 IP 转发
+1
+
+[root@Va4 ~]# vim   /etc/sysctl.conf     ## 永久性 开启 IP 转发 路由功能 
+[root@Va4 ~]# tail  -2  /etc/sysctl.conf
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+net.ipv4.ip_forward=1
+[root@Va4 ~]# sysctl   -p  # 从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
+net.ipv4.ip_forward = 1
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+[root@Va4 ~]# sysctl  -w  net.ipv4.ip_forward=0   ## 临时性 开启 IP 转发
+net.ipv4.ip_forward = 0
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+0
+[root@Va4 ~]# sysctl   -p  ## 重新加载 开启 IP 转发 路由功能  默认配置文件/etc/sysctl.conf
+net.ipv4.ip_forward = 1
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+[root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.14
+192.168.1.14
+192.168.2.14
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+
+[root@Va4 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va4 ~]# echo "<h1> NAT-PAT-Va4  192.168.0.14 </h1>" > /var/www/html/index.html
+
+[root@Va4 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va4 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+
+
+[root@Va4 ~]# systemctl is-active  firewalld
+unknown
+[root@Va4 ~]# systemctl is-active  NetworkManager
+inactive
+
+[root@Va4 ~]# rpm  -qa |grep  iptables
+iptables-1.4.21-18.0.1.el7.centos.x86_64
+
+[root@Va4 ~]# yum  -y install  iptables-services  ## 能够永久保存规则的包
+已安装:
+  iptables-services.x86_64 0:1.4.21-18.0.1.el7.centos                                
+
+完毕！
+
+[root@Va4 ~]# rpm  -qa |grep  iptables
+iptables-services-1.4.21-18.0.1.el7.centos.x86_64
+iptables-1.4.21-18.0.1.el7.centos.x86_64
+
+[root@Va4 ~]# lsmod |grep  iptable
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  3 iptable_filter,iptable_mangle,iptable_nat
+
+[root@Va4 ~]# service  iptables   start  &&  chkconfig   iptables  on
+Redirecting to /bin/systemctl start iptables.service
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+
+
+[root@Va4 ~]# service    iptables  status  |grep  -io  Active
+Redirecting to /bin/systemctl status iptables.service
+Active
+active
+
+[root@Va4 ~]# ps  -aux  |grep  iptable
+root      2270  0.0  0.0 112676   984 pts/0    S+   11:20   0:00 grep --color=auto iptable
+
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+
+-t  filter  -A  INPUT   -s 对方ip   -d 本机ip  动作-j  DROP 丢弃包  ## 限制 其他主机 访问本机 
+
+-t  filter  -A  OUTPUT   -s 本机ip   -d 对方ip   动作-j  DROP 丢弃包   #### 限制  本机  访问 其他主机
+
+-i 进入网卡、-o 出去网卡
+
+-t  filter  -A  INPUT   -i  eth0  -j  ACCEPT ## 允许 通过网卡eth0 访问本机
+-t  filter  -A  INPUT   -i  eth1  -j   REJECT  ## 拒绝 通过网卡 eth1 访问本机 并通知对方
+-t  filter  -A  OUTPUT   -o  eth0  -j  ACCEPT ## 允许 通过网卡eth0 访问 其他主机
+   源ip地址                     目标地址
+   client     ------->    server 入
+ 随机地址 【端口】              固定地址【端口 22】--dport
+
+   目标地址                      源ip地址
+   client     <-------    server   出
+ 随机地址 【端口】              固定地址【端口 22】--sport
+
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+# iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+[root@Va4 ~]# iptables   -t  raw   -nL  --line-numbers
+Chain PREROUTING (policy ACCEPT)
+。。。。。。。。。。。。。。。。
+Chain OUTPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。。 
+
+mangle表 包含 5个 链 PREROUTING  INPUT   FORWARD  OUTPUT   POSTROUTING
+nat 表 包含 4个 链 PREROUTING  INPUT   OUTPUT  POSTROUTING 
+filter表包含3链 INPUT   FORWARD   OUTPUT
+
+[root@Va4 ~]# iptables   -t  mangle   -nL  --line-numbers
+Chain PREROUTING (policy ACCEPT)
+。。。。。。。。。。。。。      
+Chain INPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。。
+Chain FORWARD (policy ACCEPT)
+。。。。。。。。。。。。。。。。。。。。。
+Chain OUTPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。。。
+Chain POSTROUTING (policy ACCEPT)
+。。。。。。。。。。。。。。。     
+1    CHECKSUM   udp  --  0.0.0.0/0   0.0.0.0/0  udp dpt:68 CHECKSUM fill
+
+nat 表 包含 4个 链 PREROUTING  INPUT   OUTPUT  POSTROUTING 
+filter表包含3链 INPUT   FORWARD   OUTPUT
+
+[root@Va4 ~]# iptables   -t  nat  -nL
+
+Chain PREROUTING (policy ACCEPT)
+。。。。。。。。。。。。。
+Chain INPUT (policy ACCEPT)
+。。。。。。。。。。。。。。。。
+Chain OUTPUT (policy ACCEPT)
+。。。。。。。。。。。。。。
+Chain POSTROUTING (policy ACCEPT)
+。。。。。。。。。。。。。。。。。。。。        
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24  
+
+[root@Va4 ~]# iptables   -t  filter   -nL
+Chain INPUT (policy DROP)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+
+filter表包含3链 INPUT   FORWARD   OUTPUT
+
+基本使用方法：
+查看已有规则：
+iptables -L
+
+清空所有规则：
+iptables -F
+
+拒绝INPUT
+iptables -P INPUT DROP
+
+允许所有ping：
+iptables -I INPUT -p icmp -j ACCEPT
+
+在末尾加入允许未被其他规则匹配的数据包：
+iptables -t filter -A INPUT -j -ACCEPT
+
+删除INPUT第二条规则：
+iptables -D INPUT 2
+-------------------------------------------------------------------------------------------------------------
+
+[root@Va4 ~]# > /var/log/messages
+[root@Va4 ~]# cat  /var/log/messages
+
+[root@Va4 ~]# iptables  -L   ## 查看已有规则
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+ACCEPT     icmp --  anywhere             anywhere            
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination     
+    
+[root@Va4 ~]# iptables  -t  filter  -I INPUT  -p  icmp  -j  LOG  ## 开启日志
+[root@Va4 ~]# iptables  -L   ## 多了一个规则  LOG  icmp --
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+LOG        icmp --  anywhere             anywhere             LOG level warning
+ACCEPT     all  --  anywhere             anywhere             state RELATED,ESTABLISHED
+ACCEPT     icmp --  anywhere             anywhere            
+ACCEPT     all  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere             state NEW tcp dpt:ssh
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+[root@Va4 ~]# 
+
+[root@Va3 ~]# ping  -c2  -i0.2  -w1  192.168.0.14     ## 注意 icmp_seq=1 icmp_seq=2
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+64 bytes from 192.168.0.14: icmp_seq=1 ttl=64 time=0.564 ms
+64 bytes from 192.168.0.14: icmp_seq=2 ttl=64 time=0.529 ms
+
+--- 192.168.0.14 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.529/0.546/0.564/0.029 ms
+
+           ## 注意 SEQ=1  SEQ=2   SRC=192.168.0.13  DST=192.168.0.14  PROTO=ICMP
+[root@Va4 ~]# cat  /var/log/messages       
+
+Dec 17 15:08:26 Va4 kernel: IN=eth0 OUT= MAC=52:54:00:8c:df:c5:52:54:00:5d:e5:34:08:00 SRC=192.168.0.13 DST=192.168.0.14 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=2237 DF PROTO=ICMP TYPE=8 CODE=0 ID=4673 SEQ=1 
+
+Dec 17 15:08:26 Va4 kernel: IN=eth0 OUT= MAC=52:54:00:8c:df:c5:52:54:00:5d:e5:34:08:00 SRC=192.168.0.13 DST=192.168.0.14 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=2421 DF PROTO=ICMP TYPE=8 CODE=0 ID=4673 SEQ=2 
+
+[root@Va4 ~]# iptables  -F   ## 默认清空 filter 表中的 所有规则
+[root@Va4 ~]# iptables   -L   ## 查看已有规则
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination   
+
+/*************************
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+ nat表 [mangle表]    filter表    filter表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链     input链     output链        forward链         postrouting链
+          |                |               |                 |                      |
+        规则            规则            规则             规则                  规则
+          |                |               |                 |                      |
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+ ## 默认清空 filter 表中的 所有规则
+
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+命令-N, --new-chain 【 定义新的规则链 】
+******/
+
+[root@Va4 ~]# iptables  -t  filter   -A  INPUT  -p  tcp  -j  ACCEPT  ## 默认 filter表，可以省略
+[root@Va4 ~]# iptables   -L     【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     tcp  --  anywhere             anywhere            
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination   
+
+[root@Va4 ~]# iptables  -t  filter   -I  INPUT  -p  udp  -j  ACCEPT
+[root@Va4 ~]# iptables  -L      【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     udp  --  anywhere             anywhere            
+ACCEPT     tcp  --  anywhere             anywhere            
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination    
+     
+[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 可以指定 插入位置的顺序
+
+[root@Va4 ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息 【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+      
+[root@Va4 ~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号 【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
+2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
+3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+    
+[root@Va4 ~]# iptables  -D  INPUT  2   ## -D  链名  标记号 ## 在INPUT链 里面 删除指定编号是 2 的规则
+
+[root@Va4 ~]# iptables  -nL   --line-numbers   【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
+2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+
+[root@Va4 ~]# iptables  -F   ## 默认清空 filter 表中的 所有规则
+[root@Va4 ~]# iptables   -L   ## 查看已有规则  【 ## 默认查看 filter 表中的 所有规则】
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+
+[root@Va4 ~]# iptables  -I  INPUT  -p tcp  -j  ACCEPT  # 先设置 一个允许INPUT链【入站规则 】
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+
+所有链的初始默认规则是ACCEPT
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+
+[root@Va4 ~]# iptables  -nL  --line-numbers  【 ## 默认查看 filter 表中的 所有规则】
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+      
+[root@Va4 ~]# iptables  -P  INPUT  DROP   ## -P  INPUT 【为默认 filter 表中指定的 规则链INPUT 预设定义默认规则 DROP 】
+
+[root@Va4 ~]# iptables  -nL  --line-numbers   ## INPUT 规则链 默认规则 变成了 DROP 拒绝
+
+Chain INPUT (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+
+---------------- 外面的主机Va5 和本地主机Va4 都 ping 不通 -------------
+[root@Va4 ~]# ping  -c2  192.168.0.14  ## 结果除了 tcp协议允许，其他协议如icmp都被拒绝【原因是默认规则设置了拒绝drop】
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+^C
+--- 192.168.0.14 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 999ms
+
+[root@Va4 ~]#
+---------------------- 外面的主机Va5 和本地主机Va4 都 ping 不通 ---------------
+[root@Va5 ~]#   ping  -c2  192.168.0.14  ## 结果除了 tcp协议允许，其他协议如icmp都被拒绝【原因是默认规则设置了拒绝drop】
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+^C
+--- 192.168.0.14 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 999ms
+--------------------------------------------------------
+
+[root@Va4 ~]# iptables  -nL INPUT  --line-numbers  ## 查看指定 规则链 INPUT  的所有规则  【 ## 默认查看 filter 表中的 所有规则】
+Chain INPUT (policy DROP)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0    
+       
+      ## 查看指定 规则链  FORWARD 的所有规则  【 ## 默认查看 filter 表中的 所有规则】
+[root@Va4 ~]# iptables  -nL  FORWARD --line-numbers  
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination    
+     
+[root@Va4 ~]# iptables  -nL  OUTPUT  --line-numbers  ## 查看 默认 filter 表中的指定 规则链  OUTPUT 的所有规则
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination  
+
+INPUT链（入站规则）------ filter表
+OUTPUT链（出站规则）----- filter表
+FORWARD链（转发规则）----- filter表  [mangle表]
+PREROUTING链（路由前规则）------ nat表  [mangle表]
+POSTROUTING链（路由后规则）----- nat表  [mangle表]
+所有链的初始默认规则是ACCEPT
+  iptables默认有4个表
+
+4个表的优先级由高到低的顺序为:raw-->mangle-->nat-->filter 
+
+nat表{地址转换表}
+      负责 网络地址转换功能; 内核模块: iptable_nat
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+      负责过滤功能,防火墙; 内核模块: iptable_filter
+    filter 这个规则表是预设规则表，
+     拥有INPUT、FORWARD 和 OUTPUT三个规则链，
+
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+ mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+     使用率不高.
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------- nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链  ----
+
+[root@Va4 ~]# iptables   -t  nat  -nL   ## 查看指定 表 nat 所有 规则链   的所有规则
+
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24   
+ 
+----------- mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链 -------
+
+[root@Va4 ~]# iptables   -t  mangle   -nL  --line-numbers   ## 查看指定 表mangle 所有 规则链   的所有规则
+
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    CHECKSUM   udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:68 CHECKSUM fill
+
+------------------ raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链 ----------------------
+
+[root@Va4 ~]# iptables   -t  raw   -nL  --line-numbers    ## 查看指定 表raw 所有 规则链   的所有规则
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+--------------filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 --------------
+
+[root@Va4 ~]# iptables   -t  filter   -nL   ## 查看指定 表 filter 所有 规则链   的所有规则
+
+Chain INPUT (policy DROP)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination   
+
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+[root@Va4 ~]# iptables   -t  filter  -P  INPUT  ACCEPT  ##-P作用 【为指定 表 filter 中指定的 规则链 INPUT 预设定义默认规则 ACCEPT 】
+
+------------------- filter表包含3链 INPUT   FORWARD   OUTPUT -------
+
+[root@Va4 ~]# iptables   -t  filter   -nL
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+
+
+-t  filter  -A  INPUT   -s 对方ip   -d 本机ip  动作-j  DROP 丢弃包  ## 限制 其他主机 访问本机 
+
+-t  filter  -A  OUTPUT   -s 本机ip   -d 对方ip   动作-j  DROP 丢弃包   #### 限制  本机  访问 其他主机
+
+   源ip地址                     目标地址
+   client     ------->    server 入
+ 随机地址 【端口】              固定地址【端口 22】--dport
+
+   目标地址                      源ip地址
+   client     <-------    server   出
+ 随机地址 【端口】              固定地址【端口 22】--sport
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va5 ------------------------------------
+
+# ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
+# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.1.254   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@hiys ~]# ssh  -X  192.168.1.15
+Warning: Permanently added '192.168.1.15' (ECDSA) to the list of known hosts.
+root@192.168.1.15's password: 1
+.......................
+[root@Va5 ~]# ifconfig  |awk '/inet /{print  $2}'
+192.168.0.15
+192.168.1.15
+192.168.2.15
+127.0.0.1
+[root@Va5 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.15 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.15 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.15 
+
+[root@Va5 ~]# ifconfig  eth0  down
+[root@Va5 ~]# ifconfig  eth2  down
+[root@Va5 ~]# route  del  default  gw   192.168.0.254
+SIOCDELRT: 没有那个进程
+[root@Va5 ~]# echo  $?
+7
+[root@Va5 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+
+[root@Va5 ~]# route  add   default  gw   192.168.1.254
+
+[root@Va5 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.1.15
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+
+[root@Va5 ~]# ip  route  show
+
+default via 192.168.1.254 dev eth1 
+
+169.254.0.0/16 dev eth1 scope link metric 1003 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.15 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va5 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va5 ~]# cat  /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.1.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va5 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va5 ~]# yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
+[root@Va5 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va5 ~]# echo "<h1> NAT-PAT-Va5  192.168.1.15 </h1>" > /var/www/html/index.html
+
+[root@Va5 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va5 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va5 ~]# 
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va6 ------------------------------------
+
+# ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
+# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.2.254   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@hiys ~]# ssh  -X  192.168.2.16
+Warning:..............
+root@192.168.2.16's password: 1
+......................
+[root@Va6 ~]# ifconfig  |awk '/inet /{print  $2}'
+192.168.0.16
+192.168.1.16
+192.168.2.16
+127.0.0.1
+[root@Va6 ~]# ifconfig  eth0   down
+[root@Va6 ~]# ifconfig   eth1   down
+
+[root@Va6 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@Va6 ~]# ip  route  show
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.16 
+
+[root@Va6 ~]# route  add  default  gw   192.168.2.254
+
+[root@Va6 ~]# ip  route  show
+default via 192.168.2.254 dev eth2 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.16 
+
+[root@Va6 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.2.16
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.254   0.0.0.0         UG    0      0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@Va6 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va6 ~]# cat   /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.2.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va6 ~]# ls   /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va6 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
+[root@Va6 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.centos.x86_64
+
+[root@Va6 ~]# echo "<h1> NAT-PAT-Va6  192.168.2.16 </h1>" > /var/www/html/index.html
+
+[root@Va6 ~]# systemctl start  httpd  &&  systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va6 ~]# elinks  -dump  192.168.2.16
+                            NAT-PAT-Va6 192.168.2.16
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+==========================  TCP/IP三次握手四次断开  =================
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+发送SYN,请求建立连接(seq=100,ctl=SYN) send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                 receive SYN+ACK |<-- SYN+ACK ---| SYN+ACK send 发送SYN，ACK(seq=300,ack=101,ctl=SYN,ACK)
+                                        |            | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+            发送ACK(seq=101  ack=301  ctl=ACK) |-------------- ACK --------------->| receive ACK
+ 代表一个打开的连接，数据可以传送给用户 ESTABLISHED|                                  | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+      发送FIN 请求断开连接(FIN=1,ACK=1) send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                 receive ACK |<------------- ACK ----------------| send ACK 发送ACK(ACK=1)
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                     receive FIN |<------------- FIN ----------------| send FIN 发送FIN 请求断开连接(FIN=1,ACK=1)
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                            发送ACK(ACK=1) send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)[32位序列号 和 32 位确认号 举例,seq=100,]
+
+Acknowledge number(确认号码)
+established   已建立的; 已设立的; 已制定的; 确定的
+receive 收到; 接待; 接到; 接纳;
+          接收; 受理; 欢迎; 承受;
+TCP(Transmission Control Protocol)　传输控制协议
+-----------------------------------------------------------------------------------------------------
+============================================================
+注意事项
+1.       没有指定规则表则默认指filter表。
+2.       不指定规则链则指表内所有的规则链。
+3.       在规则链中匹配规则时会依次检查，匹配即停止（LOG规则除外），若没有匹配项则按链的默认状态处理。
+
+nat表{地址转换表}
+filter表（数据过滤表）
+【raw表（状态跟踪表） 一般禁用，耗CPU资源】
+mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
+
+ NETWORK 云 --> raw 表【PREROUTING链路由前】--> mangle 表 【PREROUTING链路由前】--> nat 表 【PREROUTING链路由前,可以在此做DNAT，但不要做过滤】
+                                                                                                                                      |
+                       Routing 【Decision 决定路由，看是交给本地主机还是转发给其它主机】<- -  - - - - - - - <- -|
+                                        \|/
+     |--------------------------------------------------|--------------------------------------------------------------------------------------|
+     |                                                                                                  |
+ mangle 表 【INPUT链入站规则,数据包是发给本地主机的                         mangle 表 【FORWARD链转发,数据包要转发给其它主机,
+ 这里是在路由之后，交由本地主机之前，可以做一些相应的修改 】                  这是第一次路由决定之后，在最后的路由决定之前,仍可以对数据包进行某些修改】
+     |  推断nat 表 【INPUT链 作用】                                                                  |
+ filter表 【INPUT链入站规则，在这里我们可以                                filter表 【FORWARD链转发,在这可以对所有转发的数据包进行过滤.
+  对流入的所有数据包进行过滤， 无论它来自哪个网络接口】                       注意：经过这里的数据包是转发的，方向是双向的】
+     |                                                                                                  |
+ Local Process【交给本地主机的应用程序进行处理】                                      |
+     |                                                                                                  |
+ Routing 【Decision 决定，处理完毕后进行路由决定，看该往哪里发出】                      |
+    \|/                                                                                                |
+ raw 表【OUTPUT链出站】-->mangle 表 【OUTPUT链出站，在这可以修改数据包，但不要做过滤】      |
+                                   |                                                                   |
+        nat 表 【OUTPUT链出站，可以对防火墙本机发出的数据做 NAT 】                            |
+                                   |                                                                   |
+        filter表 【OUTPUT链出站,可以对本地出去的数据包进行过滤】                              |
+                                   |                                                                   |
+               Routing 【Decision 决定】 < - - - - - - - - - - - - - - - - - - - |
+                                  \|/
+    mangle 表 【POSTROUTING 路由后规则链,这里对经过防火墙的其它主机的数据包进行处理，还对防火墙 本机 产生的数据包进行处理
+                                到这里已经做完了所有的路由决定，其它主机的数据包仍然在本地主机 】
+                                   |
+          nat 表 【POSTROUTING 路由后规则链，在这一般都用来做 SNAT ，不要做过滤】
+                                   |
+                      NETWORK 云 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
+
+raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
+mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+
+------------------------------------------------------------------------------------------------------------------------||
+                本机    HTTP   Web   服务     [ 终点/起点]
+                        |                                    |
+---------------------------------|---------------------------------------------------|---------------------------------|
+内核空间              /|\                                  \|/
+             input 入 站 规则--链              output 出站规则--链
+                       /|\                                  \|/
+                        是                                   |
+ 路由前规则--链         |                转发规则--链   链--路由后规则
+ prerouting-->|目标是否是本机?|--否-->forward-->postrouting---转发至
+       |                                                      |               \|/
+----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
+       |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
+
+ nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
+   prerouting链       input链           output链            forward链            postrouting链
+          |                   |                  |                      |                        |
+        规则               规则               规则                 规则                     规则
+          |                   |                  |                      |                        |
+
+             #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
+[root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 重定向包 ，LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+# iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
+命令-I,--insert 【插入 一条规则到 链 的开头位置】
+ ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
+
+命令-L, --list 【列出（某规则链中的)所有规则】
+ ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
+~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号
+
+命令-F, --flush [删除 (某规则链中的)所有规则]
+命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
+命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
+    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
+命令-N, --new-chain 【 定义新的规则链 】
+
+LOG将封包相关讯息记录在 /var/log/messages 中，
+详细位置请查阅 /etc/syslog.conf 组态档，
+进行完此处理动作后，将会继续比对其规则。
+例如：
+iptables -A INPUT -p tcp -j LOG --log-prefix "INPUT packets"
+
+SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将直接跳往下一个规则（mangleostrouting）。
+
+例如：
+iptables -t nat -A POSTROUTING -p tcp-o eth0 -j SNAT--to-source194.236.50.155-194.236.50.160:1024-32000
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规炼（filter:input 或 filter:forward）。
+
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 -j DNAT--to-destination 192.168.1.1-192.168.1.10:80-100
+
+
+
+
+
+
