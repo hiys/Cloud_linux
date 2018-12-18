@@ -1,4 +1,14 @@
 
+在github上下载单个文件
+1、找到需要下载的文件，点击进入
+查看图片提示 
+     https://github.com/hiys/Cloud_linux/tree/master/nat-pat-tcp/下载git文件.png 
+2、在打开的页面中，找到 Raw 按钮，右键  选择 目标另存为
+查看图片提示
+    https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/下载git文件2.png
+============================================================
+
+
 [root@hiys ~]# echo 5  |clone-auto7
 
 [root@hiys ~]# ls  /etc/yum.repos.d/
@@ -20,6 +30,22 @@ UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /                       ext4    defaul
 UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults        1 2
 /var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
 
+======================   虚拟网络 命令 常用 =====================
+
+[root@hiys ~]# virsh  net-autostart --disable  vbr
+网络vbr取消标记为自动启动
+
+[root@hiys ~]# virsh  net-destroy   vbr
+网络 vbr 被删除
+
+[root@hiys ~]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+
+[root@hiys ~]# virsh net-undefine  vbr   ##取消定义一个非活跃的网络 vbr
+网络 vbr 已经被取消定义
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
 
 ==================  创建  虚拟网络  vbr   vbr1  private2  [ 10 ] ===========================
 
