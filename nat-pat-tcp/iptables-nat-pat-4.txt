@@ -1,12 +1,5 @@
 
 https://www.jianshu.com/
-在github上下载单个文件
-1、找到需要下载的文件，点击进入
-查看图片提示 
-     https://github.com/hiys/Cloud_linux/tree/master/nat-pat-tcp/下载git文件.png 
-2、在打开的页面中，找到 Raw 按钮，右键  选择 目标另存为
-查看图片提示
-    https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/下载git文件2.png
 ============================================================
 TCP(Transmission Control Protocol)　传输控制协议
 ===================================================
@@ -352,39 +345,8 @@ PasswordAuthentication yes
                ## -P  7920  使用非特定的 port 去对外联机
 
 [root@Va1 ~]# scp  -P 7920  -o  StrictHostKeyChecking=no  root@192.168.0.254:/root/local.repo.txt  /etc/yum.repos.d/local.repo
-Warning: Permanently added '[192.168.0.254]:7920' (ECDSA) to the list of known hosts.
-root@192.168.0.254's password: Taren1
 
 ============================================================
-[root@Va1 ~]# lsmod |grep iptable
-iptable_raw     12678  0 
-iptable_mangle  12695  1 
-iptable_nat     12875  1 
-nf_nat_ipv4     14115  1 iptable_nat
-iptable_filter  12810  1 
-ip_tables       27115  4 iptable_filter,iptable_mangle,iptable_nat,iptable_raw
-
-[root@Va1 ~]# iptables  -t raw  -nL |grep  Chain
-Chain PREROUTING (policy ACCEPT)
-Chain OUTPUT (policy ACCEPT)
-
-[root@Va1 ~]# iptables  -t  mangle   -nL |grep  Chain
-Chain PREROUTING (policy ACCEPT)
-Chain INPUT (policy ACCEPT)
-Chain FORWARD (policy ACCEPT)
-Chain OUTPUT (policy ACCEPT)
-Chain POSTROUTING (policy ACCEPT)
-
-[root@Va1 ~]# iptables  -t   nat   -nL |grep  Chain
-Chain PREROUTING (policy ACCEPT)
-Chain INPUT (policy ACCEPT)
-Chain OUTPUT (policy ACCEPT)
-Chain POSTROUTING (policy ACCEPT)
-
-[root@Va1 ~]# iptables  -t   filter   -nL |grep  Chain
-Chain INPUT (policy ACCEPT)
-Chain FORWARD (policy ACCEPT)
-Chain OUTPUT (policy ACCEPT)
 
 ------------------------------------------------------- 四表 五链  关系 结构 --------------------------------------
  raw表【状态跟踪 表】                                                     raw表【状态跟踪 表】
@@ -734,6 +696,33 @@ iptables -A PREROUTING -i eth1 -p tcp --dport 80 -m state --state NEW -m nth --c
 #对多端口进行匹配，只要匹配以下端口，则全部放行
 [root@test3~]# iptables -A INPUT  -s 10.0.10.0/24 -d10.0.10.62 -p tcp 
  -m state --state NEW  -m multiport  --destination-port  21,22,80 -j ACCEPT
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+例如：
+iptables  -t  nat  -A  PREROUTING -p tcp --dport 80 -j  REDIRECT --to-ports 8080
+
+ ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  --dport 80 -j  REDIRECT --help |wc  -l
+87
+ ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  --dport  80 -j  REDIRECT  --help  |tail  -18
+
+REDIRECT target options:
+ --to-ports <port>[-<port>]
+				Port (range) to map to.
+ [--random]
+
+tcp match options:
+[!] --tcp-flags mask comp	match when TCP flags & mask == comp
+				(Flags: SYN ACK FIN RST URG PSH ALL NONE)
+[!] --syn			match when only SYN flag set
+				(equivalent to --tcp-flags SYN,RST,ACK,FIN SYN)
+[!] --source-port port[:port]
+ --sport ...
+				match source port(s)
+[!] --destination-port port[:port]
+ --dport ...
+				match destination port(s)
 
 
 参数-m multiport --port
@@ -1231,6 +1220,8 @@ Va2  ----|
 Va3  ----|
 
 -------------------------------------------- Va1 ------------------------------------
+## ifconfig  eth1 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.0.14;ifconfig |awk '/inet /{print $2}';route  -n
+
 
 [root@Va1 ~]# ip  -o  address
 ........................
@@ -1489,6 +1480,7 @@ Va3  ----|
 
 -------------------------------------------- Va4 ------------------------------------
 
+
 [root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
 192.168.0.14
 192.168.1.14
@@ -1500,50 +1492,16 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
 ............................
 
-[root@Va4 ~]# which  sysctl
-/usr/sbin/sysctl
-[root@Va4 ~]# rpm  -qf  /usr/sbin/sysctl 
-procps-ng-3.3.10-16.el7.x86_64
-
-[root@Va4 ~]# ll  /usr/sbin/sysctl
-.................
 [root@Va4 ~]# /usr/sbin/sysctl  -p
 
 [root@Va4 ~]# sysctl   -p
 
-  ## sysctl命令用于运行时配置内核参数
- 命令格式：
-    sysctl [-n] [-e] -w variable=value
-    sysctl [-n] [-e] -p <filename> (default /etc/sysctl.conf)
-    sysctl [-n] [-e] -a
-    常用参数的意义：
-    -w   临时改变某个指定参数的值，如
-        sysctl -w net.ipv4.ip_forward=1
-    -a   显示所有的系统参数
-    -p   从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
-   ## 编辑/etc/sysctl.conf文件，即可手工或自动执行由sysctl控制的功能
 
 [root@Va4 ~]# cat  /etc/sysctl.conf    ## 永久性 开启 IP 转发 配置文件
-# sysctl settings are defined through files in
-# /usr/lib/sysctl.d/, /run/sysctl.d/, and /etc/sysctl.d/.
-#
-# Vendors settings live in /usr/lib/sysctl.d/.
-# To override a whole file, create a new file with the same in
-# /etc/sysctl.d/ and put new settings there. To override
-# only specific settings, add a file with a lexically later
-# name in /etc/sysctl.d/ and put new settings there.
-#
-# For more information, see sysctl.conf(5) and sysctl.d(5).
+........................
 
 [root@Va4 ~]# sysctl   -a  |grep  netfilter  |tail -3
-sysctl: reading key "net.ipv6.conf.all.stable_secret"
-.................................
-net.netfilter.nf_log.7 = NONE
-net.netfilter.nf_log.8 = NONE
-net.netfilter.nf_log.9 = NONE
-
-[root@Va4 ~]# ll  /proc/sys/net/ipv4/ip_forward
--rw-r--r-- 1 root root 0 12月 14 09:14 /proc/sys/net/ipv4/ip_forward
+..................
 
 [root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward   ## 临时性 开启 IP 转发
 1
@@ -1571,17 +1529,6 @@ net.ipv4.ip_forward = 1
 
 [root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
 1
-[root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
-192.168.0.14
-192.168.1.14
-192.168.2.14
-127.0.0.1
-Kernel IP routing table
-Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
-192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
-192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
-192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
 
 [root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -3
 源标识                   源名称                                            状态
@@ -1605,7 +1552,6 @@ httpd-2.4.6-67.el7.x86_64
 [root@Va4 ~]# echo "<h1> NAT-PAT-Va4  192.168.0.14 </h1>" > /var/www/html/index.html
 
 [root@Va4 ~]# systemctl  start httpd && systemctl  enable  httpd
-Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
 
 [root@Va4 ~]# elinks  -dump  192.168.0.14
                             NAT-PAT-Va4 192.168.0.14
@@ -1615,9 +1561,6 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service t
 unknown
 [root@Va4 ~]# systemctl is-active  NetworkManager
 inactive
-
-[root@Va4 ~]# rpm  -qa |grep  iptables
-iptables-1.4.21-18.0.1.el7.centos.x86_64
 
 [root@Va4 ~]# yum  -y install  iptables-services  ## 能够永久保存规则的包
 已安装:
@@ -1639,18 +1582,11 @@ ip_tables              27115  4 iptable_filter,iptable_mangle,iptable_nat,iptabl
 
 
 [root@Va4 ~]# service  iptables   start  &&  chkconfig   iptables  on
-Redirecting to /bin/systemctl start iptables.service
-注意：正在将请求转发到“systemctl enable iptables.service”。
-Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
-
 
 [root@Va4 ~]# service    iptables  status  |grep  -io  Active
 Redirecting to /bin/systemctl status iptables.service
 Active
 active
-
-[root@Va4 ~]# ps  -aux  |grep  iptable
-root      2270  0.0  0.0 112676   984 pts/0    S+   11:20   0:00 grep --color=auto iptable
 
 ============================================================
  
@@ -1660,419 +1596,6 @@ root      2270  0.0  0.0 112676   984 pts/0    S+   11:20   0:00 grep --color=au
 # iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80
    -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
 
-命令-A,--append 【追加 一条规则到 链 的 末尾 位置】
-命令-I,--insert 【插入 一条规则到 链 的开头位置】
-[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 链名  2 可以指定 插入位置的顺序【第 2 位】
-
-命令-L, --list 【列出（某规则链中的)所有规则】
- ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
-
-命令-F, --flush [删除 (某规则链中的)所有规则]
-命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
-命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
-    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
-
-命令-N, --new-chain 【 定义新的规则链 】
-
-raw 表 【状态跟踪 表】
-包含 2个 链 PREROUTING 链   OUTPUT 链
-
-mangle表 【包标记 表，可以根据 标记 决定 是否 允许ip数据包通过 】
-包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
-
-nat 表 【地址转换 表】
-包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
-
-filter表【过滤 表】
-包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
-
-[root@Va4 ~]# iptables   -t  raw   -nL  --line-numbers 
-                                   ## --line-numbers 显示 规则链 中的规则序号
-Chain PREROUTING (policy ACCEPT)
-。。。。。。。。。。。。。。。。
-Chain OUTPUT (policy ACCEPT)
-。。。。。。。。。。。。。。。。。 
-
-
-[root@Va4 ~]# iptables   -t  mangle   -nL  --line-numbers
-.....................
-
-[root@Va4 ~]# iptables   -t  nat  -nL
-
-Chain PREROUTING (policy ACCEPT)
-。。。。。。。。。。。。。
-Chain INPUT (policy ACCEPT)
-。。。。。。。。。。。。。。。。
-Chain OUTPUT (policy ACCEPT)
-。。。。。。。。。。。。。。
-Chain POSTROUTING (policy ACCEPT)
-。。。。。。。。。。。。。。。。。。。。        
-RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
-RETURN     all  --  192.168.122.0/24     255.255.255.255     
-MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24  
-
-[root@Va4 ~]# iptables   -t  filter   -nL
-Chain INPUT (policy DROP)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-
-
--P  设置 【默认filter 表】默认规则 拒绝 INPUT
-iptables -P INPUT DROP
-
-允许所有ping：
-iptables -I INPUT -p icmp -j ACCEPT
-
-在末尾加入允许未被其他规则匹配的数据包：
-iptables -t filter -A INPUT -j -ACCEPT
-
-删除INPUT第二条规则：
-iptables -D INPUT 2
-
-pkts     被本机报文所匹配的个数
-bytes    报文所有大小记起来之和
-opt      额外的选项，--表示没有
-target   处理机制
-prot     放行哪种协议
-source   源地址
-destination  目标地址
--------------------------------------------------------------------------------------------------------------
-
-[root@Va4 ~]# > /var/log/messages
-[root@Va4 ~]# cat  /var/log/messages
-
-[root@Va4 ~]# lsmod |grep iptable
-iptable_raw            12678  0 
-iptable_mangle         12695  1 
-iptable_nat            12875  1 
-nf_nat_ipv4            14115  1 iptable_nat
-iptable_filter         12810  1 
-ip_tables              27115  4 iptable_filter,iptable_mangle,iptable_nat,iptable_raw
-
-[root@Va4 ~]# iptables  -L   ## 查看默认过滤表filter 已有规则
-Chain INPUT (policy ACCEPT)
-............... 
-    
-[root@Va4 ~]# iptables  -t  filter  -I INPUT  -p  icmp  -j  LOG  ## 开启 过滤表filter 日志
-
-[root@Va4 ~]# iptables  -L   ## 多了一个规则  LOG  icmp --
-Chain INPUT (policy ACCEPT)
-target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
-target        prot    opt    source               destination         
-LOG           icmp    --     anywhere             anywhere             LOG level warning
-ACCEPT        all     --     anywhere             anywhere             state RELATED,ESTABLISHED
-ACCEPT        icmp    --     anywhere             anywhere            
-ACCEPT        all     --     anywhere             anywhere            
-ACCEPT        tcp     --     anywhere             anywhere             state NEW tcp dpt:ssh
-REJECT        all     --     anywhere             anywhere             reject-with icmp-host-prohibited
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-REJECT     all  --  anywhere             anywhere             reject-with icmp-host-prohibited
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-[root@Va4 ~]# 
-
-[root@Va3 ~]# ping  -c2  -i0.2  -w1  192.168.0.14     ## 注意 icmp_seq=1 icmp_seq=2
-PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
-64 bytes from 192.168.0.14: icmp_seq=1 ttl=64 time=0.564 ms
-64 bytes from 192.168.0.14: icmp_seq=2 ttl=64 time=0.529 ms
-
---- 192.168.0.14 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 200ms
-rtt min/avg/max/mdev = 0.529/0.546/0.564/0.029 ms
-
-           ## 注意 SEQ=1  SEQ=2   SRC=192.168.0.13  DST=192.168.0.14  PROTO=ICMP
-[root@Va4 ~]# cat  /var/log/messages       
-
-Dec 17 15:08:26 Va4 kernel: IN=eth0 OUT= MAC=52:54:00:8c:df:c5:52:54:00:5d:e5:34:08:00 SRC=192.168.0.13 DST=192.168.0.14 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=2237 DF PROTO=ICMP TYPE=8 CODE=0 ID=4673 SEQ=1 
-
-Dec 17 15:08:26 Va4 kernel: IN=eth0 OUT= MAC=52:54:00:8c:df:c5:52:54:00:5d:e5:34:08:00 SRC=192.168.0.13 DST=192.168.0.14 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=2421 DF PROTO=ICMP TYPE=8 CODE=0 ID=4673 SEQ=2 
-
-[root@Va4 ~]# iptables  -F   ## 默认清空 filter 表中的 所有规则
-[root@Va4 ~]# iptables   -L   ## 查看已有规则
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination   
-
-[root@Va4 ~]# lsmod |grep iptable
-iptable_raw            12678  0 
-iptable_mangle         12695  1 
-iptable_nat            12875  1 
-nf_nat_ipv4            14115  1 iptable_nat
-iptable_filter         12810  1 
-ip_tables              27115  4 iptable_filter,iptable_mangle,iptable_nat,iptable_raw
-
-/*************************
-target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
-
-命令-I,--insert 【插入 一条规则到 链 的开头位置】
- ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I  链名  2 可以指定 插入位置的顺序【第 2 位】
-
-命令-L, --list 【列出（某规则链中的)所有规则】
- ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息
-~]# iptables  -nL   --line-numbers    ## --line-numbers 显示 规则链 中的规则序号
-
-命令-D,--delete 【从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除】
-命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
-    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
-
-命令-N, --new-chain 【 定义新的规则链 】
-******/
-
-[root@Va4 ~]# iptables  -t  filter   -A  INPUT  -p  tcp  -j  ACCEPT  ## 默认 filter表，可以省略
-
-[root@Va4 ~]# iptables   -L     【 ## 默认查看 filter 表中的 所有规则】
-target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  anywhere             anywhere            
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination   
-
-[root@Va4 ~]# iptables  -t  filter   -I  INPUT  -p  udp  -j  ACCEPT
-[root@Va4 ~]# iptables  -L      【 ## 默认查看 filter 表中的 所有规则】
-Chain INPUT (policy ACCEPT)
-...................
-     
-[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 可以指定 插入位置的顺序
-
-[root@Va4 ~]# iptables  -nL   ## -n 以数字形式显示地址，端口等信息 【 ## 默认查看 filter 表中的 所有规则】
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-      
-[root@Va4 ~]# iptables  -nL   --line-numbers   ## --line-numbers 显示 行号 【 ## 默认查看 filter 表中的 所有规则】
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-2    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0           
-3    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination  
-    
-[root@Va4 ~]# iptables  -D  INPUT  2   ## -D  链名  标记号 ## 在INPUT链 里面 删除指定编号是 2 的规则
-
-[root@Va4 ~]# iptables  -nL   --line-numbers   【 ## 默认查看 filter 表中的 所有规则】
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     udp  --  0.0.0.0/0            0.0.0.0/0           
-2    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination  
-
-[root@Va4 ~]# iptables  -F   ## 默认清空 filter 表中的 所有规则
-[root@Va4 ~]# iptables   -L   ## 查看已有规则  【 ## 默认查看 filter 表中的 所有规则】
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-
-[root@Va4 ~]# iptables  -I  INPUT  -p tcp  -j  ACCEPT  # 先设置 一个允许INPUT链【入站规则 】
-
-所有链的初始默认规则是ACCEPT
-命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
-    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
-
-[root@Va4 ~]# iptables  -nL  --line-numbers  【 ## 默认查看 filter 表中的 所有规则】
-
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination  
-      
-[root@Va4 ~]# iptables  -P  INPUT  DROP   ## -P  INPUT 【为默认 filter 表中指定的 规则链INPUT 预设定义默认规则 DROP 】
-
-[root@Va4 ~]# iptables  -nL  --line-numbers   ## INPUT 规则链 默认规则 变成了 DROP 拒绝
-
-Chain INPUT (policy DROP)
-num  target     prot opt source               destination         
-1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination  
-
----------------- 外面的主机Va5 和本地主机Va4 都 ping 不通 -------------
-[root@Va4 ~]# ping  -c2  192.168.0.14  ## 结果除了 tcp协议允许，其他协议如icmp都被拒绝【原因是默认规则设置了拒绝drop】
-PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
-^C
---- 192.168.0.14 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time 999ms
-
-[root@Va4 ~]#
----------------------- 外面的主机Va5 和本地主机Va4 都 ping 不通 ---------------
-[root@Va5 ~]#   ping  -c2  192.168.0.14  ## 结果除了 tcp协议允许，其他协议如icmp都被拒绝【原因是默认规则设置了拒绝drop】
-PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
-^C
---- 192.168.0.14 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time 999ms
---------------------------------------------------------
-
-[root@Va4 ~]# iptables  -nL INPUT  --line-numbers  ## 查看指定 规则链 INPUT  的所有规则  【 ## 默认查看 filter 表中的 所有规则】
-Chain INPUT (policy DROP)
-num  target     prot opt source               destination         
-1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0    
-       
-      ## 查看指定 规则链  FORWARD 的所有规则  【 ## 默认查看 filter 表中的 所有规则】
-[root@Va4 ~]# iptables  -nL  FORWARD --line-numbers  
-Chain FORWARD (policy ACCEPT)
-num  target     prot opt source               destination    
-     
-[root@Va4 ~]# iptables  -nL  OUTPUT  --line-numbers  ## 查看 默认 filter 表中的指定 规则链  OUTPUT 的所有规则
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination  
-
-
-
-------------- nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链  ----
-
-[root@Va4 ~]# iptables   -t  nat  -nL   ## 查看指定 表 nat 所有 规则链   的所有规则
-
-Chain PREROUTING (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain POSTROUTING (policy ACCEPT)
-target     prot opt source               destination         
-RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
-RETURN     all  --  192.168.122.0/24     255.255.255.255     
-MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24   
- 
------------ mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链 -------
-
-[root@Va4 ~]# iptables   -t  mangle   -nL  --line-numbers   ## 查看指定 表mangle 所有 规则链   的所有规则
-
-Chain PREROUTING (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain POSTROUTING (policy ACCEPT)
-num  target     prot opt source               destination         
-1    CHECKSUM   udp  --  0.0.0.0/0            0.0.0.0/0            udp dpt:68 CHECKSUM fill
-
------------------- raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链 ----------------------
-
-[root@Va4 ~]# iptables   -t  raw   -nL  --line-numbers    ## 查看指定 表raw 所有 规则链   的所有规则
-Chain PREROUTING (policy ACCEPT)
-num  target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-
---------------filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 --------------
-
-[root@Va4 ~]# iptables   -t  filter   -nL   ## 查看指定 表 filter 所有 规则链   的所有规则
-
-Chain INPUT (policy DROP)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination   
-
-命令-P, --policy 【为指定的 规则链 预设定义默认规则 】 
-    ##注意 -P  只能设置【 ACCEPT 接受包、DROP 丢弃包】，不能设置 【REJECT 丢弃包并通知对方】
-
-[root@Va4 ~]# iptables   -t  filter  -P  INPUT  ACCEPT  ##-P作用 【为指定 表 filter 中指定的 规则链 INPUT 预设定义默认规则 ACCEPT 】
-
-------------------- filter表包含3链 INPUT   FORWARD   OUTPUT -------
-
-[root@Va4 ~]# iptables   -t  filter   -nL
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0           
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-
-
-规则表先后顺序：raw表→mangle表→nat表→filter表 
-规则链先后顺序： 
-入站：PREROUTING → INPUT 
-出站：OUTPUT → POSTROUTING 
-转发：PREROUTING → FORWARD → POSTROUTING
-
-raw 表 【状态跟踪 表】
-包含 2个 链 PREROUTING 链   OUTPUT 链
-
-mangle表 【包标记 表，可以根据 标记 决定 是否 允许ip数据包通过 】
-包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
-
-nat 表 【地址转换 表】
-包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
-
-filter表【过滤 表】
-包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
-
 [root@Va4 ~]# iptables  -t mangle  -L |awk '/Chain/{print $2}'
 PREROUTING
 INPUT
@@ -2096,201 +1619,8 @@ POSTROUTING 路由后规则链  属于 2 个 表
                    mangle表【包标记 表】 nat表【地址转换 表】
 
 
-------------------------------------------------------- 四表 五链  关系 结构 --------------------------------------
- raw表【状态跟踪 表】                                                      raw表【状态跟踪 表】
- mangle表【包标记 表】    mangle表【包标记表】  mangle表【包标记表】 mangle表【包标记表】 mangle表【包标记 表】
- nat表【地址转换 表】      nat表【地址转换 表】                          nat表【地址转换 表】    nat表【地址转换 表】
-                       filter表【过滤 表】   filter表【过滤 表】 filter表【过滤 表】  
- prerouting路由前规则链  input入站规则链        forward转发规则链   output出站规则链   postrouting路由后规则链
-          |                          |                         |                      |                       |
-        规则                      规则                      规则                 规则                    规则
-          |                          |                         |                      |                       |
-        规则                      规则                      规则                 规则                    规则
-          |                          |                         |                      |                       |
- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-[root@Va4 ~]#  iptables  -t   nat   -nL   POSTROUTING  ## 查看 nat表中的 路由后规则链 中的所有规则
-Chain POSTROUTING (policy ACCEPT)
-
-target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
-
-target     prot opt source               destination         
-RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
-RETURN     all  --  192.168.122.0/24     255.255.255.255     
-MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24  
- 
-         # ## 查看 nat表中的 路由后规则链 中的所有规则 并且以数字形式显示所有规则的序号  
-
-[root@Va4 ~]#  iptables  -t   nat   -nL   POSTROUTING  --line-numbers
-
-Chain POSTROUTING (policy ACCEPT)
-num  target     prot opt source               destination         
-1    RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
-2    RETURN     all  --  192.168.122.0/24     255.255.255.255     
-3    MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-4    MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
-5    MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24  
-
-[root@Va4 ~]# iptables   -t   raw   -F
-[root@Va4 ~]# iptables   -t   mangle   -F
-[root@Va4 ~]# iptables   -t   nat   -F
-[root@Va4 ~]# iptables   -t   filter   -F
-
-[root@Va4 ~]# iptables   -t   raw   -L
-
-Chain PREROUTING (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination 
-        
-[root@Va4 ~]# iptables   -t   mangle   -L
-
-Chain PREROUTING (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain POSTROUTING (policy ACCEPT)
-target     prot opt source               destination 
-        
-[root@Va4 ~]# iptables   -t   nat   -L
-
-Chain PREROUTING (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain POSTROUTING (policy ACCEPT)
-target     prot opt source               destination         
-
-
-[root@Va4 ~]# iptables   -t   filter   -L
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-       
-[root@Va4 ~]# service  iptables   save
-iptables: Saving firewall rules to /etc/sysconfig/iptables:[  确定  ]
-
-[root@Va4 ~]# cat  /etc/sysconfig/iptables
-
-# Generated by iptables-save v1.4.21 on Tue Dec 18 16:43:31 2018
-*raw
-:PREROUTING ACCEPT [258:18392]
-:OUTPUT ACCEPT [138:14768]
-COMMIT
-# Completed on Tue Dec 18 16:43:31 2018
-# Generated by iptables-save v1.4.21 on Tue Dec 18 16:43:31 2018
-*mangle
-:PREROUTING ACCEPT [225:16052]
-:INPUT ACCEPT [225:16052]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [121:13144]
-:POSTROUTING ACCEPT [121:13144]
-COMMIT
-# Completed on Tue Dec 18 16:43:31 2018
-# Generated by iptables-save v1.4.21 on Tue Dec 18 16:43:31 2018
-*nat
-:PREROUTING ACCEPT [0:0]
-:INPUT ACCEPT [0:0]
-:OUTPUT ACCEPT [0:0]
-:POSTROUTING ACCEPT [0:0]
-COMMIT
-# Completed on Tue Dec 18 16:43:31 2018
-# Generated by iptables-save v1.4.21 on Tue Dec 18 16:43:31 2018
-*filter
-:INPUT ACCEPT [160:11320]
-:FORWARD ACCEPT [0:0]
-:OUTPUT ACCEPT [85:9712]
-COMMIT
-# Completed on Tue Dec 18 16:43:31 2018
-
-# iptables     [-t 表名]  
-  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
- 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
- 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 端口重定向包 ，
-          RETURN 返回主链继续匹配, MASQUERADE 地址伪装, MARK 打标签,
-        LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
-
-[root@Va4 ~]# iptables   -t  filter  -A  INPUT  -p  tcp  \
-> -s  192.168.0.11  --dport  22  -j  ACCEPT
-
-
-[root@Va4 ~]# iptables   -t  filter  -L  INPUT
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  192.168.0.11         anywhere   tcp dpt:ssh
-
-[root@Va4 ~]# iptables   -t  filter  -nL  INPUT
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     tcp  --  192.168.0.11         0.0.0.0/0    tcp dpt:22
-
- ## 查看 filter 表中的 入站规则链 中的所有规则 并且以数字形式显示所有规则的序号 
-
-[root@Va4 ~]# iptables   -t  filter  -nL  INPUT  --line-numbers
-Chain INPUT (policy ACCEPT) 
-    ##注意默认规则是ACCEPT ，用子命令选项 -P 链名 仅可设置 ACCEPT 与 DROP[默认只有这2项]
-target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
-
-num  target     prot opt source           destination         
-1    ACCEPT     tcp  --  192.168.0.11     0.0.0.0/0    tcp dpt:22
-
-
-[root@Va4 ~]# iptables  -t mangle  -L |awk '/Chain/{print $2}'
-PREROUTING
-INPUT
-FORWARD
-OUTPUT
-POSTROUTING
-
-
-PREROUTING 路由前规则链  属于 3个 表
-  raw表【状态跟踪 表】 mangle表【包标记 表】 nat表【地址转换 表】
-
-INPUT       入站规则链  属于 3 个 表
-                    mangle表【包标记 表】 nat表【地址转换 表】   filter表【过滤 表】
-
-FORWARD     转发规则链  属于 2 个 表
-                   mangle表【包标记 表】  filter表【过滤 表】
-
-OUTPUT      出站规则链  属于 4 个 表
-  raw表【状态跟踪 表】 mangle表【包标记 表】 nat表【地址转换 表】   filter表【过滤 表】
-
-POSTROUTING 路由后规则链  属于 2 个 表
-                   mangle表【包标记 表】 nat表【地址转换 表】
-
-
  参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
 
--t  filter  -A  INPUT   -s 对方ip   -d 本机ip  动作-j  DROP 丢弃包  ## 限制 其他主机 访问本机 
-
--t  filter  -A  OUTPUT   -s 本机ip   -d 对方ip   动作-j  DROP 丢弃包   #### 限制  本机  访问 其他主机
-
--i 进入网卡、-o 出去网卡
-
--t  filter  -A  INPUT   -i  eth0  -j  ACCEPT ## 允许 通过网卡eth0 访问本机
--t  filter  -A  INPUT   -i  eth1  -j   REJECT  ## 拒绝 通过网卡 eth1 访问本机 并通知对方
--t  filter  -A  OUTPUT   -o  eth0  -j  ACCEPT ## 允许 通过网卡eth0 访问 其他主机
    源ip地址                     目标地址
    client     ------->    server 入
  随机地址 【端口】              固定地址【端口 22】--dport
@@ -2299,18 +1629,6 @@ POSTROUTING 路由后规则链  属于 2 个 表
    client     <-------    server   出
  随机地址 【端口】              固定地址【端口 22】--sport
 
- 
-------------------------------------------------------- 四表 五链  关系 结构 --------------------------------------
- raw表【状态跟踪 表】                                                     raw表【状态跟踪 表】
- mangle表【包标记 表】    mangle表【包标记表】 mangle表【包标记表】 mangle表【包标记表】 mangle表【包标记 表】
- nat表【地址转换 表】      nat表【地址转换 表】                         nat表【地址转换 表】    nat表【地址转换 表】
-                       filter表【过滤 表】 filter表【过滤 表】 filter表【过滤 表】  
- prerouting路由前规则链  input入站规则链      forward转发规则链   output出站规则链   postrouting路由后规则链
-          |                          |                         |                      |                       |
-        规则                      规则                      规则                 规则                    规则
-          |                          |                         |                      |                       |
-        规则                      规则                      规则                 规则                    规则
-          |                          |                         |                      |                       |
 
 [root@Va4 ~]# iptables  -t  raw   -L |awk '/Chain/{print $2}'
 PREROUTING
@@ -2331,16 +1649,6 @@ INPUT
 FORWARD
 OUTPUT
 
-[root@Va4 ~]# iptables  -P  INPUT  DROP   ## -P  INPUT 【为默认 filter 表中指定的 规则链INPUT 预设定义默认规则 DROP 】
-
-[root@Va4 ~]# iptables  -nL  --line-numbers   ## INPUT 规则链 默认规则 变成了 DROP 拒绝
-
-Chain INPUT (policy DROP)
-num  target     prot opt source               destination         
-1    ACCEPT     tcp  --  0.0.0.0/0            0.0.0.0/0       
-
- ----------------------------------------------------------------------------------------------------------------------------------- 
-
              #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
 [root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
 
@@ -2350,358 +1658,7 @@ num  target     prot opt source               destination
 # iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
   -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
 
-[root@Va4 ~]# iptables  -I  INPUT  2  -p  icmp  -j  ACCEPT  # -I 链名  2 可以指定 插入位置的顺序【第 2 位】
 
-
-[root@Va4 ~]# iptables   -t  filter  -P  INPUT  ACCEPT  ##-P作用 【为指定 表 filter 中指定的 规则链 INPUT 预设定义默认规则 ACCEPT 】
-
-
-                         ## 允许客户主机 192.168.0.11 远程连接 本机
-[root@Va4 ~]# iptables   -t  filter  -A  INPUT  -p  tcp  \
-> -s  192.168.0.11  --dport  22  -j  ACCEPT
-
- ## 查看 filter 表中的 入站规则链 中的所有规则 并且以数字形式显示所有规则的序号 
-
-[root@Va4 ~]# iptables   -t  filter  -nL  INPUT  --line-numbers
-Chain INPUT (policy ACCEPT) 
- ##注意默认规则是ACCEPT ，用子命令选项 -P 链名 仅可设置 ACCEPT 与 DROP[默认只有这2项]
-num  target     prot opt source           destination         
-1    ACCEPT     tcp  --  192.168.0.11     0.0.0.0/0    tcp dpt:22
-
-                         ##注意 -R 修改规则[链名] 后必须有 规则序号【数字】
-
-[root@Va4 ~]# iptables   -t  filter  -R  INPUT  1  -p  tcp  -s  192.168.0.13  --dport  80   -j  ACCEPT
-
-[root@Va4 ~]# iptables  -t  filter  -nL  INPUT  --line-numbers
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     tcp  --  192.168.0.13         0.0.0.0/0            tcp dpt:80
-
- ##注意 -D 删除一条规则[链名] 后必须有 规则序号【数字】 {如果不用数字，可以输入完整规则}
-
-[root@Va4 ~]# iptables   -t  filter  -D  INPUT   -p  tcp  -s  192.168.0.13  --dport  80   -j  ACCEPT
-
-[root@Va4 ~]# iptables  -t  filter  -nL  INPUT  --line-numbers
-Chain INPUT (policy ACCEPT)
-num  target     prot opt source               destination  
-
-[root@Va4 ~]# iptables   -t  filter  -A  INPUT   -p icmp  --help |grep -A40 -n 'icmp match'
-71:icmp match options:
-72-[!] --icmp-type typename	match icmp type  # 匹配类型
-73-[!] --icmp-type type[/code]	(or numeric type or type/code)
-74-Valid ICMP Types:
-75-any
-76-echo-reply (pong) # 回应【应答包】
-77-destination-unreachable
-。。。。。。。。。。。。。。
-94-redirect
-。。。。。。。。。。。。。。。。。
-99-echo-request (ping)  # 请求【放行ping数据包 】
-。。。。。。。。。。。。。
-111-address-mask-reply
-[root@Va4 ~]# 
-
-   只允许 宿主机 连接 50 主机的 ssh 服务，其他主机 都不可以连接
- 但是 50 主机 可以ping 通 其他主机 ，但其他主机 ping 不通 50 主机
-             client                     server
-       src源  50 主机 ------>可以ping 通----------》其他主机 dst 目标
-     dst 目标 50 主机<--其他主机的 回应【应答包】--同意进入 50----其他主机  src源  
-                             应答包类型 数字0 代表 echo-reply
-
-iptables -t filter -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT ##允许应答包 进来
- 
-
-    其他主机src源 - -不通--echo-request- 请求【放行ping数据包 进入】---》 50 主机
-                            请求包类型 数字8 代表echo-request
-
-iptables -t filter -A INPUT -p icmp  --icmp-type  echo-request  -j REJECT ##拒绝 其他主机的请求包进来 
-
-
-  允许所有主机 连接 Va4 主机的 ssh 服务， 主机Va3 不可以连接
- 但是 Va4 主机 可以ping 通  主机Va3 ，但 主机Va3 ping 不通 Va4主机
-
-
-[root@Va4 ~]# iptables   -t  filter  -F
-
-[root@Va4 ~]# iptables  -t  filter  -nL
-
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination  
-       
-[root@Va4 ~]# iptables -t  filter -A  INPUT -p icmp --icmp-type  echo-reply  -s 192.168.0.13 -j ACCEPT
-[root@Va4 ~]# iptables -t  filter -nL INPUT  ## 注意应答包类型 数字0 代表 echo-reply
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 0
-
-[root@Va4 ~]# 
-[root@Va3 ~]# ping  -c2  192.168.0.14
-PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
-64 bytes from 192.168.0.14: icmp_seq=1 ttl=64 time=0.502 ms
-64 bytes from 192.168.0.14: icmp_seq=2 ttl=64 time=0.563 ms
-
---- 192.168.0.14 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 1000ms
-rtt min/avg/max/mdev = 0.502/0.532/0.563/0.038 ms
-[root@Va3 ~]# 
-
-[root@Va4 ~]# iptables  -t filter -A INPUT -p icmp --icmp-type  echo-request  -s 192.168.0.13 -j  REJECT
-[root@Va4 ~]# iptables  -t filter -nL INPUT ##注意请求包类型 数字8 代表echo-request
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-ACCEPT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 0
-REJECT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 8 reject-with icmp-port-unreachable
-
-[root@Va4 ~]# iptables  -t  filter  -L  INPUT
-Chain INPUT (policy ACCEPT)
-target     prot opt source          destination         
-ACCEPT     icmp --  192.168.0.13    anywhere   icmp echo-reply #echo-reply这里可以用数字 0 表示
-REJECT     icmp --  192.168.0.13    anywhere   icmp echo-request reject-with icmp-port-unreachable
-
-  ##现在Va3 不能ping通 主机Va4【原因Va3的请求包被拒绝echo-request -s 192.168.0.13 -j REJECT 】
-[root@Va3 ~]# ping  -c2  192.168.0.14    
-PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
-From 192.168.0.14 icmp_seq=1 Destination Port Unreachable
-From 192.168.0.14 icmp_seq=2 Destination Port Unreachable
-
---- 192.168.0.14 ping statistics ---
-2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1000ms
-
- ##但Va4主机 能够ping通 Va3【原因Va3的应答包被 允许进 --icmp-type echo-reply -s 192.168.0.13 -j  ACCEPT】
-[root@Va4 ~]# ping  -c2  192.168.0.13
-PING 192.168.0.13 (192.168.0.13) 56(84) bytes of data.
-64 bytes from 192.168.0.13: icmp_seq=1 ttl=64 time=0.388 ms
-64 bytes from 192.168.0.13: icmp_seq=2 ttl=64 time=0.590 ms
-
---- 192.168.0.13 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 999ms
-rtt min/avg/max/mdev = 0.388/0.489/0.590/0.101 ms
-
------------- #应答包 echo-reply 用数字 0 表示 ; 请求包类型 数字8 代表echo-request
-[root@Va4 ~]# iptables  -t  filter  -nL  INPUT --line-numbersChain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 0
-2    REJECT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 8 reject-with icmp-port-unreachable
-
-## 修改规则 -R 设置Va3的请求包 echo-request -s 192.168.0.13 -j  ACCEPT 允许 进入 Va4 的防火墙
-
-[root@Va4 ~]# iptables -t filter -R INPUT 2 -p icmp --icmp-type  echo-request -s 192.168.0.13 -j  ACCEPT  
-
-[root@Va4 ~]# iptables  -t  filter  -nL  INPUT --line-numbersChain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 0
-2    ACCEPT     icmp --  192.168.0.13         0.0.0.0/0            icmptype 8
-
-[root@Va3 ~]# ping  -c2  192.168.0.14  ## 现在 请求包echo-request 被Va4 允许进，所以通了
-PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
-64 bytes from 192.168.0.14: icmp_seq=1 ttl=64 time=0.407 ms
-64 bytes from 192.168.0.14: icmp_seq=2 ttl=64 time=0.593 ms
-
---- 192.168.0.14 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time 999ms
-rtt min/avg/max/mdev = 0.407/0.500/0.593/0.093 ms
-
-[root@Va3 ~]# 
-/*************************************
-
-======= 互联网通信不仅要防止 ip冲突，也需要防止  mac冲突 ==========
-## eth0，eth1，eth2……代表网卡一，网卡二，网卡三…… 
-   lo 代表 127.0.0.1，即localhost
-
-[root@Va1 ~]# ifconfig eth2  down  ## 先把网卡eth2 关闭
-
-[root@Va1 ~]# ifconfig eth2  hw  ether 52:54:00:7f:d5:ee 
-                ## 临时修改 MAC地址52:54:00:7f:d5:df 最后二位改成ee
-
-[root@Va1 ~]# ifconfig eth2  up  ## 把网卡eth2 打开
-
-[root@Va1 ~]# ifconfig eth2 |grep ether  ## 查看 eth2 的MAC 地址已经改变
-        ether 52:54:00:7f:d5:ee  txqueuelen 1000  (Ethernet)
-
-[root@Va1 ~]# reboot   ## 重启
-
-[root@hiys ~]# ssh  -X  192.168.0.11
-
-[root@Va1 ~]# ifconfig eth2 |grep ether  ## 重启后又恢复原先的MAC 地址了
-        ether 52:54:00:7f:d5:df  txqueuelen 1000  (Ethernet)
-
-[root@Va1 ~]# vim  /etc/sysconfig/network-scripts/ifcfg-eth2
-[root@Va1 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth2
-NAME="eth2"
-DEVICE="eth2"
-ONBOOT=yes
-NM_CONTROLLED="no"
-TYPE=Ethernet
-IPV6INIT=no
-IPV4_FAILURE_FATAL="no"
-BOOTPROTO="static"
-IPADDR="192.168.2.11"
-NETMASK="255.255.255.0"
-GATEWAY="192.168.0.254"
-MACADDR=52:54:00:7f:d5:bb ## 最后这一行MAC是手动添加的【永久修改MAC地址】
-
-[root@Va1 ~]# systemctl  restart  network  ## 重启网络
-
-[root@Va1 ~]# ifconfig eth2 |grep ether  ## 查看 eth2 的MAC 地址最后二位 已经改变 52:54:00:7f:d5:bb
-        ether 52:54:00:7f:d5:bb  txqueuelen 1000  (Ethernet)
-
-[root@Va1 ~]# reboot
-
-[root@hiys ~]# ssh  -X  192.168.0.11
-
-  ## 查看 eth2 的MAC 地址最后二位 已经永久改变 52:54:00:7f:d5:bb 
-[root@Va1 ~]# ifconfig eth2 |grep ether  
-        ether 52:54:00:7f:d5:bb  txqueuelen 1000  (Ethernet)
-
-拓展模块
-1.按来源MAC地址匹配
-# iptables -t filter -A FORWARD -m --mac-source 00:02:b2:03:a5:f6 -j DROP
-拒绝转发来自该MAC地址的数据包
-
-用ifconfig修改MAC地址
-ifconfig eth0 down //关闭网卡
-ifconfig eth0 hw ether 00:AA:BB:CC:DD:EE //修改MAC地址
-ifconfig eth0 up    //启动网卡
-
-启用和关闭ARP协议
-ifconfig eth0:ws arp 
-ifconfig eth0:ws -arp 
-
-**********************/
-
-[root@Va4 ~]# ip link  show  eth0
-2: eth0: ...............
-    link/ether 52:54:00:31:95:8a brd ff:ff:ff:ff:ff:ff
-
-[root@Va4 ~]# ip link  show  eth1
-3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP mode DEFAULT qlen 1000
-    link/ether 52:54:00:ed:76:f5 brd ff:ff:ff:ff:ff:ff
-
-[root@Va4 ~]# ip link  show  eth2
-4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> .............
-    link/ether 52:54:00:e9:96:19 brd ff:ff:ff:ff:ff:ff
-
-[root@Va5 ~]# ping  -c1 192.168.1.14 >/dev/null && echo OK  || echo "bad or is  blocked up"
-OK
-
-[root@Va5 ~]# ifconfig eth1 |grep  ether
-        ether 52:54:00:fd:9f:ea  txqueuelen 1000  (Ethernet)
-
-[root@Va4 ~]# arp  -n  |column  -t
-Address        HWtype  HWaddress          Flags Mask  Iface
-192.168.2.16   ether   52:54:00:75:7c:f3  C           eth2
-192.168.0.13   ether   52:54:00:0e:3b:b5  C           eth0
-192.168.0.254  ether   52:54:00:df:77:2b  C           eth0
-192.168.0.12   ether   52:54:00:d2:64:8d  C           eth0
-192.168.0.11   ether   52:54:00:a3:df:0b  C           eth0
-192.168.1.15   ether   52:54:00:fd:9f:ea  C           eth1
-
-[root@Va4 ~]# iptables  -t  filter  -L INPUT
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination 
- 
-  ---- 设置 mac 地址是 52:54:00:fd:9f:ea 的请求包 echo-request [数字8] 被拒绝 
-
-[root@Va4 ~]# iptables  -t  filter  -A  INPUT  -p icmp \
->  --icmp-type  echo-request  -m  mac  \
->  --mac-source  52:54:00:fd:9f:ea  -j  REJECT
-
-
-[root@Va4 ~]# iptables  -t  filter  -L INPUT
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-REJECT     icmp --  anywhere             anywhere             icmp echo-request MAC 52:54:00:FD:9F:EA reject-with icmp-port-unreachable
-
-[root@Va4 ~]# iptables  -t  filter  -nL INPUT 
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-REJECT     icmp --  0.0.0.0/0            0.0.0.0/0            icmptype 8 MAC 52:54:00:FD:9F:EA reject-with icmp-port-unreachable
-
---------------------------- 结果 Va5 ping 不通了 ----------------------
-[root@Va5 ~]# ping  -c1 192.168.1.14 && echo OK  || echo "bad or is  blocked up"
-PING 192.168.1.14...................
-From 192.168.1.14 icmp_seq=1 Destination Port Unreachable
-
---- 192.168.1.14 ping statistics ---
-1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
-
-bad or is  blocked up
-[root@Va5 ~]# 
---------- 但是Va4 默认Va5的应答包被 允许进 echo-reply[用数字 0 表示] 
-      所以 Va4 可以ping通 Va5 ----
-[root@Va4 ~]# ping  192.168.1.15 -c1 >/dev/null  && echo "ok" || echo "bad"
-ok
-
-
-## 修改规则-R 设置Va5的请求包echo-request[用数字8表示]允许 进入Va4 的防火墙
-
-[root@Va4 ~]# iptables  -t  filter  -R  INPUT  1 -p icmp \
-> --icmp-type  echo-request  \
-> -m  mac   --mac-source  52:54:00:fd:9f:ea \
-> -j  ACCEPT
-
-
-[root@Va4 ~]# iptables  -t  filter  -nL INPUT  --line-numbersChain INPUT (policy ACCEPT)
-num  target     prot opt source               destination         
-1    ACCEPT     icmp --  0.0.0.0/0            0.0.0.0/0            icmptype 8 MAC 52:54:00:FD:9F:EA
-
- ------------- 结果 Va5 ping  变通了  -----------
-
-[root@Va5 ~]# ping  -c1 192.168.1.14 >/dev/null && echo OK  || echo "bad or is  blocked up"
-OK
-
-[root@Va4 ~]# netstat  -nputl |egrep -i "sshd|chronyd|httpd"  |column  -t
-tcp   0  0  0.0.0.0:22      0.0.0.0:*  LISTEN       1117/sshd
-tcp   0  0  127.0.0.1:6010  0.0.0.0:*  LISTEN       1425/sshd:  root@pts
-tcp6  0  0  :::80           :::*       LISTEN       1127/httpd
-tcp6  0  0  :::22           :::*       LISTEN       1117/sshd
-tcp6  0  0  ::1:6010        :::*       LISTEN       1425/sshd:  root@pts
-udp   0  0  127.0.0.1:323   0.0.0.0:*               720/chronyd
-udp6  0  0  ::1:323         :::*                    720/chronyd
-
-[root@Va5 ~]# ssh  -o StrictHostKeyChecking=no -l root \
-> 192.168.1.14  "echo Va5 > Va5.txt"
-Warning: .....................
-root@192.168.1.14's password: 1
-
-[root@Va5 ~]# elinks  -dump  192.168.1.14
-                            NAT-PAT-Va4 192.168.0.14
-
-[root@Va4 ~]# cat Va5.txt 
-Va5
-
-拓展模块
-.按来源MAC地址匹配
-# iptables -t filter -A FORWARD -m --mac-source 00:02:b2:03:a5:f6 -j DROP
-拒绝转发来自该MAC地址的数据包
-
-.按多端口或连续端口匹配
-20:表示20以后的所有端口
-20:100表示20到100的端口
-:20表示20之前的所有端口
- -m  multiport [--ports, --sports,--dports]
-
-例子：
-# iptables -A INPUT -p tcp -m multiport --dports 21,20,25,53,80 -j ACCEPT 【多端口匹配】
-# iptables -A INPUT -p tcp --dport 20: -j ACCEPT
-# iptables -A INPUT -p tcp --sport 20:80 -j ACCEPT
-# iptables -A INPUT -p tcp --sport :80 -j ACCEPT
-
-
-   源ip地址                     目标地址
-     Va5   ---------->    Va4
-   client     ------->    server 入
- 随机地址 【端口】              固定地址【端口 22】--dport
-
-   目标地址                      源ip地址
-   client     <-------    server   出
- 随机地址 【端口】              固定地址【端口 22】--sport
 
 [root@proxy ~]# iptables  -A  INPUT  -p tcp   \
 > -m  multiport --dports  20:22,25,80,110,143,16501:16800  -j  ACCEPT
@@ -2838,6 +1795,7 @@ net.ipv4.ip_forward_use_pmtu = 0
 ............
 [root@Va4 ~]# tail  -1 /etc/sysctl.conf 
 net.ipv4.ip_forward=1
+
 [root@Va4 ~]# sysctl  -p
 net.ipv4.ip_forward = 1
 [root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
@@ -2907,53 +1865,6 @@ target     prot opt source               destination
 
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination       
-
-
-# iptables     [-t 表名]  
-  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
- 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
- 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 端口重定向包 ，
-          RETURN 返回主链继续匹配, MASQUERADE 地址伪装, MARK 打标签,
-        LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
-
-
-masquerade 
-n.	伪装; 化装舞会; 掩饰;
-vi.	伪装; 假扮; 乔装; 冒充;
-
-MASQUERADE 【masquerade 】改写封包来源 IP 为防火墙 NIC IP，
-可以指定 port 对应的范围，进行完此处理动作后，
-直接跳往下一个规则（mangleostrouting）。
-
-这个功能与 SNAT 略有不同，
-当进行 IP 伪装时，不需指定要伪装成哪个 IP，
-IP 会从网卡直接读，
-当使用拨接连线时，
-IP 通常是由 ISP 公司的 DHCP 服务器指派的，
-这个时候 MASQUERADE 特别有用。
-例如：iptables -t nat-A POSTROUTING -p tcp
-          -j MASQUERADE --to-ports 1024-31000
-
-
-SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
-可以指定 port 对应的范围，进行完此处理动作后，
-将直接跳往下一个规则（mangleostrouting）。
-例如：
-iptables -t nat -A POSTROUTING -p tcp -o eth0
-    -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
-
-DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
-可以指定 port 对应的范围，进行完此处理动作后，
-将会直接跳往下一个规则（filter:input 或 filter:forward）。
-例如：
-iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
-        -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
-
-# iptables -t nat -A POSTROUTING -p tcp  -o  eth0
-  -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
-
-# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
-  -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
 
 
 [root@Va4 ~]# iptables -t  raw    -F
@@ -3252,6 +2163,240 @@ default via 192.168.1.14 dev eth1
 
 
 
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 端口重定向包 ，
+          RETURN 返回主链继续匹配, MASQUERADE 地址伪装, MARK 打标签,
+        LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+
+masquerade 
+n.	伪装; 化装舞会; 掩饰;
+vi.	伪装; 假扮; 乔装; 冒充;
+
+MASQUERADE 【masquerade 】改写封包来源 IP 为防火墙 NIC IP，
+可以指定 port 对应的范围，进行完此处理动作后，
+直接跳往下一个规则（mangleostrouting）。
+
+这个功能与 SNAT 略有不同，
+当进行 IP 伪装时，不需指定要伪装成哪个 IP，
+IP 会从网卡直接读，
+当使用拨接连线时，
+IP 通常是由 ISP 公司的 DHCP 服务器指派的，
+这个时候 MASQUERADE 特别有用。
+例如：iptables -t nat-A POSTROUTING -p tcp
+          -j MASQUERADE --to-ports 1024-31000
+
+
+SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将直接跳往下一个规则（mangleostrouting）。
+例如：
+iptables -t nat -A POSTROUTING -p tcp -o eth0
+    -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
+
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规则（filter:input 或 filter:forward）。
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
+        -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
+
+# iptables -t nat -A POSTROUTING -p tcp  -o  eth0
+  -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
+
+# iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
+  -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
+
+ ----------  实现IP地址的伪装（SNAT源地址转换） --------------------
+
+[root@Va4 ~]# iptables -t nat  -A  POSTROUTING  \
+> -s  192.168.0.0/24  -p tcp  --dport  80   \
+> -j SNAT  --to-source   192.168.2.14
+
+
+2.DNAT目标地址转换对于目标地址转换，
+  数据流向是从外向内的，外面的是客户端，
+  里面的是服务器端
+  通过目标地址转换，
+我们可以让外面的ip通过
+我们对外的外网ip来
+访问我们服务器不同的服务器，
+而我们的服务却放在内网服务器的不同的服务器上。
+目标地址转换
+：iptables -t nat -A PREROUTING -d 192.168.10.18 -p tcp --dport 80 -j DNAT --to-destination 172.16.100.2
+目标地址转换要做在到达网卡之前进行转换,所以要做在PREROUTING这个位置上
+
+
+DNAT：只能用在PREROUTING、OUTPUT和自定义的链上
+--to-destination [ipaddr[-ipaddr]][:port[-port]] 轮询访问
+--random 随机访问
+--persistent 固定访问
+做DNAT只开放有限协议的有限端口，这是与SNAT不同的地方，
+对于服务器来讲要隐藏所有的东西，
+仅留一个需要开放给互联网访问的端口，
+而且SNAT和DNAT不建议在同一台主机使用。
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+例如：
+iptables  -t  nat  -A  PREROUTING -p tcp --dport 80 -j  REDIRECT --to-ports 8080
+
+ ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  --dport 80 -j  REDIRECT --help |wc  -l
+87
+ ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  --dport  80 -j  REDIRECT  --help  |tail  -18
+
+REDIRECT target options:
+ --to-ports <port>[-<port>]
+				Port (range) to map to.
+ [--random]
+
+tcp match options:
+[!] --tcp-flags mask comp	match when TCP flags & mask == comp
+				(Flags: SYN ACK FIN RST URG PSH ALL NONE)
+[!] --syn			match when only SYN flag set
+				(equivalent to --tcp-flags SYN,RST,ACK,FIN SYN)
+[!] --source-port port[:port]
+ --sport ...
+				match source port(s)
+[!] --destination-port port[:port]
+ --dport ...
+				match destination port(s)
+
+[root@localhost ~]# iptables -A PREROUTING -t nat -d 192.168.10.11 -p tcp --dport 80 -j REDIRECT --to-ports 8080
+#把来自80的访问映射到8080
+
+# iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -F
+
+[root@Va4 ~]# iptables -t raw -L ; iptables -t mangle -L; iptables -t  nat -L ; iptables -t filter -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+[root@Va4 ~]# 
+
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规则（filter:input 或 filter:forward）。
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
+        -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
+
+
+[root@Va4 ~]# iptables  -t  nat  -A PREROUTING -p tcp  -d 192.168.0.0/24   --dport  80 -j DNAT  --to-destination  192.168.0.11-192.168.0.13:9091-9093
+------------------------------------#把来自 9091-9093 的访问映射到 80 -------------------
+[root@Va4 ~]# iptables  -t nat  -I PREROUTING 1 -p  tcp -d 192.168.0.11  --dport  9091  -j  REDIRECT  --to-ports  80
+[root@Va4 ~]# iptables  -t nat  -I PREROUTING 2 -p  tcp -d 192.168.0.12  --dport  9092  -j  REDIRECT  --to-ports  80
+[root@Va4 ~]# iptables  -t nat  -I PREROUTING 3 -p  tcp -d 192.168.0.13  --dport  9093  -j  REDIRECT  --to-ports  80
+
+[root@Va4 ~]# iptables  -t  nat  -R  PREROUTING 4  -p tcp  -d  192.168.1.14   --dport  80 -j DNAT  --to-destination  192.168.0.11-192.168.0.13:9091-9093
+
+[root@Va4 ~]# iptables  -t nat  -nL PREROUTING --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.11         tcp dpt:9091 redir ports 80
+2    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.12         tcp dpt:9092 redir ports 80
+3    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.13         tcp dpt:9093 redir ports 80
+4    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11-192.168.0.13:9091-9093
+
+[root@Va4 ~]# iptables  -t  nat  -R PREROUTING 4  -p  tcp  -d   192.168.1.14   --dport  80 -j DNAT  --to-destination  192.168.0.11:80
+
+[root@Va4 ~]# iptables  -t nat  -nL PREROUTING --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.11         tcp dpt:9091 redir ports 80
+2    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.12         tcp dpt:9092 redir ports 80
+3    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.13         tcp dpt:9093 redir ports 80
+4    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11:80
+
+[root@Va6 ~]# elinks  -dump  192.168.2.14
+                            NAT-PAT-Va4 192.168.0.14
+
+[root@Va5 ~]# elinks  -dump  192.168.1.14
+                                Va1 192.168.0.11
+
+[root@Va4 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+[root@Va4 ~]# elinks  -dump  192.168.1.14
+                            NAT-PAT-Va4 192.168.0.14
+
+[root@Va4 ~]# iptables  -t  nat  -A PREROUTING   -p  tcp  -d   192.168.2.14   --dport  81  -j DNAT  --to-destination  192.168.0.12:80
+
+[root@Va6 ~]# elinks  -dump  192.168.2.14:81
+                                Va2 192.168.0.12
+
+[root@Va4 ~]# iptables  -t  nat  -A PREROUTING   -p  tcp  -d   192.168.1.14   --dport  83  -j DNAT  --to-destination  192.168.0.13:80
+
+[root@Va5 ~]# elinks  -dump  192.168.1.14
+                                Va1 192.168.0.11
+
+[root@Va5 ~]# elinks  -dump  192.168.1.14:83
+                                Va3 192.168.0.13
+
+[root@Va4 ~]# iptables  -t nat  -nL PREROUTING --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.11         tcp dpt:9091 redir ports 80
+2    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.12         tcp dpt:9092 redir ports 80
+3    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.13         tcp dpt:9093 redir ports 80
+4    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11:80
+5    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:81 to:192.168.0.12:80
+6    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:83 to:192.168.0.13:80
+[root@Va4 ~]# 
+[root@Va4 ~]# iptables  -t nat  -F  PREROUTING 
+[root@Va4 ~]# iptables  -t nat  -nL PREROUTING --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+[root@Va4 ~]# iptables  -t  nat  -A PREROUTING   -p  tcp   -d   192.168.1.14,192.168.2.14   --dport  80  -j DNAT  --to-destination   192.168.0.11-192.168.0.13:80
+
+[root@Va4 ~]# iptables  -t nat  -nL PREROUTING --line-numbersChain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11-192.168.0.13:80
+2    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:80 to:192.168.0.11-192.168.0.13:80
+
+[root@Va4 ~]# reboot
+Connection to 192.168.0.14 closed by remote host.
+Connection to 192.168.0.14 closed.
+[root@room9pc01 ~]# ssh  -X  192.168.0.14
+
+
+
 
 
 
@@ -3280,6 +2425,7 @@ Va2  ----|
 Va3  ----|
 
 ------------------------- Va5 -----------------------------
+ifconfig  eth0 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.1.254;ifconfig |awk '/inet /{print $2}';route  -n
 
 # ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
 # ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
@@ -3420,6 +2566,7 @@ Va2  ----|
 Va3  ----|
 
 -------------------------------------------- Va6 ------------------------------------
+#ifconfig  eth0 down;ifconfig eth1 down;route  del default gw 192.168.0.254;route add default gw  192.168.2.254;ifconfig |awk '/inet /{print $2}';route  -n
 
 # ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
 # ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
