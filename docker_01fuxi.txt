@@ -1,0 +1,941 @@
+
+
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]
+                HTTP  FTP  TFTP  SMTP  SNMP  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包
+                ICMP  IGMP    IP   ARP   RARP
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流
+
+          层            主机A                              主机B          数据单元
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+====================
+dpdk是 intel 公司发布的一款数据包转发处理套件. 
+它运行于linux userspace。
+这组套件包括了linux 进程所需要的大部分组件。
+
+但缺少一个传统的tcp/ip 协议栈。
+其他应用程序没办法方便的通过dpdk对外通信。
+可以移植一个TCP/IP协议栈到dpdk。
+
+DPDK(因特尔intel内核,tcp/ip协议栈重写) +  LVS  +  FULLNAT  +  OSPF
+--------------------------------------------------------------
+DPVS(开源,小米公司)= DPDK  +  LVS  +  FULLNAT
+DPVS + OSPF  主流大型架构
+---------------------------------------------------------------------------------
+
+常用的名词
+VS：Virtual Server，虚拟服务器，也称为Director
+RS：Real Server(lvs)，真正的服务器，集群中各节点
+
+OS ：【操作系统 Operating System 】
+
+CIP：客户端IP,用户的IP
+
+VIP：Director 虚拟服务器 向 外部 提供服务的IP
+VIP: LVS虚拟的IP，用于用户访问
+
+RIP：集群节点 真正的服务器 的 IP
+RIP: Real Server 的IP
+
+DIP：Director 虚拟服务器 与 RS真正的服务器 通信的IP
+DIP: LVS Director调度器自已的IP
+
+LIP: LVS Director调度器指定的local address 【内网ip地址】，FULLNAT模式下专用的
+
+LB  ：负载调度器（Load Balancer）
+
+IDC（Internet Data Center）
+TTL Time To Live
+  该字段指定IP包 被 路由器 丢弃之前 允许通过的 最大网段数量
+STP 生成树
+STP spanning tree
+ -----------------------------------------
+
+============================
+  - - -- LVS-NAT  - -- cip vip(dip) (rip) - -- -
+src-ip  -->   dst-ip
+cip     -1->   vip(dip内)
+dip(内) -2->   rip(内)
+(rip内) -3->  (dip内)vip
+vip     -4->  cip
+-------------------------------------------------------------------------
+
+--------------------------------------------------
+ FULLNAT工作流程 cip vip(lip) (dip)[伪装公网vip] (rip) ---
+
+    src-ip    -->     dst-ip
+
+  cip(客户端IP) --1-> vip(公网)[lip(内网)，FULLNAT模式]
+
+               OSPF
+  注意 这一步可以进行路由转发, 链接多个子服务器 lvs-nat模式
+
+lip(内网ip地址) --2-> dip(内网兼伪装公网vip)
+dip(内网兼伪装公网vip) -3->  rip(内)
+ (rip内)       --4->  (dip内)伪装公网vip
+伪装公网vip     --5->  cip
+
+=============================
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.2.15
+root@192.168.2.15's password: 1
+Last login: Fri Dec 21 15:39:44 2018 from 192.168.2.254
+[root@Va5 ~]# ifdown  eth0
+[root@Va5 ~]# ifdown  eth1
+[root@Va5 ~]# ifconfig  |grep  'inet '
+        inet 192.168.2.15  netmask 255.255.255.0  broadcast 192.168.2.255
+................
+[root@Va5 ~]# ping  114.114.114.114
+connect: 网络不可达
+[root@Va5 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@Va5 ~]# route  add  default  gw  192.168.2.14
+
+[root@Va5 ~]# ping  114.114.114.114
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+^C
+--- 114.114.114.114 ping statistics ---
+11 packets transmitted, 0 received, 100% packet loss, time 9999ms
+
+[root@Va5 ~]# 
+------------------------------  Va4 -------------------
+
+[root@Va4 ~]# service  iptables  status  |grep -io active
+Redirecting to /bin/systemctl status iptables.service
+Active
+active
+
+[root@Va4 ~]# iptables  -t nat  -nL
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24   
+ 
+[root@Va4 ~]# iptables  -t  nat  -I  POSTROUTING  -s  192.168.2.0/24 \
+> -o  eth0  -j  MASQUERADE
+
+[root@Va4 ~]# iptables  -t  nat  -nL  POSTROUTING  
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  192.168.2.0/24       0.0.0.0/0           
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24 
+   
+[root@Va4 ~]# 
+-------------------------  Va5 -------------------
+[root@Va5 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.14    0.0.0.0         UG    0      0        0 eth2
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+[root@Va5 ~]# ping  114.114.114.114  -c4
+PING 114.114.114.114 (114.114.114.114) 56(84) bytes of data.
+64 bytes from 114.114.114.114: icmp_seq=1 ttl=73 time=24.2 ms
+64 bytes from 114.114.114.114: icmp_seq=2 ttl=74 time=24.5 ms
+64 bytes from 114.114.114.114: icmp_seq=3 ttl=67 time=24.8 ms
+64 bytes from 114.114.114.114: icmp_seq=4 ttl=70 time=25.3 ms
+
+--- 114.114.114.114 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+rtt min/avg/max/mdev = 24.227/24.745/25.392/0.456 ms
+[root@Va5 ~]# 
+
+物理机上查找上网用的网卡
+打开路由转发
+sysctl -w net.ipv4.ip_forward=1
+设置伪装上网
+[root@room9pc19 docker]# iptables -t nat -I POSTROUTING  \ 
+ -s 192.168.4.0/24 -o enp2s0 -j MASQUERADE
+
+在虚拟机里面设置默认路由
+ip route replace default via 192.168.4.254
+
+-----------------------------------------------------
+
+[root@room9pc01 ~]# ls /var/git/
+iso-tar-rpm
+[root@room9pc01 ~]# ls /var/git/iso-tar-rpm/*.iso
+/var/git/iso-tar-rpm/CentOS7-1708.iso
+/var/git/iso-tar-rpm/CentOS-7-x86_64-DVD-1804.iso
+/var/git/iso-tar-rpm/rhcs2.0-rhosp9-20161113-x86_64.iso
+
+[root@room9pc01 ~]# tail -3   /etc/fstab
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /    ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults    1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+
+[root@room9pc01 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+rpm                      rpm                                                  23
+repolist: 5,009
+
+[root@room9pc01 ~]# vim  /etc/yum.repos.d/.CentOS7-1708.repo
+
+[root@room9pc01 ~]# ls  /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo  rpm.repo
+
+[root@room9pc01 ~]# cat /etc/yum.repos.d/.CentOS7-1708.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://127.0.0.1/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+
+[root@room9pc01 ~]# mkdir   /var/ftp/CentOS7-1708
+
+[root@room9pc01 ~]# mount  -o  loop,ro  -t  iso9660  /var/git/iso-tar-rpm/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+
+[root@room9pc01 ~]# ls  /var/ftp/CentOS7-1708/
+CentOS_BuildTag  GPL       LiveOS    RPM-GPG-KEY-CentOS-7
+EFI              images    Packages  RPM-GPG-KEY-CentOS-Testing-7
+EULA             isolinux  repodata  TRANS.TBL
+
+[root@room9pc01 ~]# du  -sh  /var/git/iso-tar-rpm/CentOS7-1708.iso 
+8.1G	/var/git/iso-tar-rpm/CentOS7-1708.iso
+
+[root@room9pc01 ~]# systemctl  is-active  vsftpd
+active
+[root@room9pc01 ~]# systemctl  is-enabled  vsftpd
+enabled
+
+[root@room9pc01 ~]# mv   /etc/yum.repos.d/.CentOS7-1708.repo  /etc/yum.repos.d/CentOS7-1708.repo
+[root@room9pc01 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -5源标识                      源名称                                   状态
+CentOS7-1708     CentOS7-1708                      9,591
+rhel7            rhel-server-7.4-x86_64-dvd.iso    4,986
+rpm              rpm                               23
+repolist: 14,600
+
+[root@room9pc01 ~]# mount  -o  loop,ro  -t  iso9660  /var/git/iso-tar-rpm/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+
+mount: /var/git/iso-tar-rpm/CentOS7-1708.iso 已经挂载
+
+[root@room9pc01 ~]# umount  /var/ftp/CentOS7-1708/
+
+[root@room9pc01 ~]# ls  /var/ftp/CentOS7-1708/
+[root@room9pc01 ~]# ll  /etc/rc.local 
+lrwxrwxrwx. 1 root root 13 3月  19 2018 /etc/rc.local -> rc.d/rc.local
+
+[root@room9pc01 ~]# ll  /etc/rc.d/rc.local 
+-rwxr-xr-x. 1 root root 568 12月 18 10:02 /etc/rc.d/rc.local
+
+[root@room9pc01 ~]# vim  /etc/rc.local
+
+[root@room9pc01 ~]# tail  -2  /etc/rc.local
+
+echo -e  "nameserver 176.121.0.100\nsearch tedu.cn" >/etc/resolv.conf
+mount  -o  loop,ro  -t  iso9660  /var/git/iso-tar-rpm/CentOS7-1708.iso   /var/ftp/CentOS7-1708/
+[root@room9pc01 ~]# .  /etc/rc.local
+
+[root@room9pc01 ~]# 2018/12/21 16:59:27 *************************************************************
+.......................
+2018/12/21 16:59:27 *************************************************************
+2018/12/21 16:59:27 listen tcp4 0.0.0.0:1017: bind: address already in use
+
+[1]+  退出 1                /usr/bin/crack_pycharm
+[root@room9pc01 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -5
+源标识                  源名称                                状态
+CentOS7-1708       CentOS7-1708                  9,591
+rhel7              rhel-server-7.4-x86_64-dvd.iso   4,986
+rpm                rpm                           23
+repolist: 14,600
+
+[root@room9pc01 ~]# cat  local.repo.txt
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@room9pc01 ~]# for i  in  192.168.0.1{1..9};  \
+ do scp  -o  StrictHostKeyChecking=no  local.repo.txt  \
+ root@$i:/etc/yum.repos.d/local.repo ; done
+................ 00:00 
+   
+
+Hypervisor
+ 一种运行在基础物理服务器 和 操作系统之间的中间软件层，
+可允许 多个操作系统和 应用 共享硬件。
+也可叫做VMM（ virtual machine monitor ），
+即虚拟机监视器。
+
+Hypervisors
+ 是一种在虚拟环境中的“元”操作系统。
+他们可以访问服务器上包括磁盘和内存在内的所有物理设备。
+Hypervisors
+ 不但协调着这些硬件资源的访问，
+也同时在各个虚拟机之间施加防护。
+
+当服务器启动并执行Hypervisor时，
+它会加载所有 虚拟机客户端的操作系统 同时会 
+分配给每一台虚拟机适量的内存，CPU，网络和磁盘。
+
+作用
+Hypervisor是所有虚拟化技术的核心。 
+非中断地支持多工作负载迁移的能力是Hypervisor的基本功能。
+
+-----------------------------------
+Docker与KVM对比
+
+1.     Docker 容器的启动可以在秒级实现，
+这相比传统的虚拟机方式要快得多。
+
+ 其次，Docker 对系统资源的利用率很高，
+一台主机上可以同时运行数千个 Docker 容器。
+
+2.     容器除了运行其中应用外，
+基本不消耗额外的系统资源，
+使得应用的性能很高，同时系统的开销尽量小。
+
+传统虚拟机方式运行 10 个不同的应用就要起 10 个虚拟机，
+而Docker 只需要启动 10 个隔离的应用即可。
+
+3.     虚拟化技术依赖物理CPU和内存，是硬件级别的；
+而docker构建在操作系统上，
+利用操作系统的containerization技术，
+所以docker甚至可以在虚拟机上运行。
+
+4.     虚拟化系统一般都是指操作系统镜像，比较复杂，称为“系统”；
+而docker开源而且轻量，称为“容器”，
+单个容器适合部署少量应用，
+比如部署一个Redis、一个memcached。
+
+5.     传统的虚拟化技术使用 快照 来保存状态；
+而docker在保存状态上不仅更为轻便和低成本，
+而且引入了类似源代码管理机制，
+将容器的快照历史版本一一记录，
+切换成本很低。
+
+6.     传统的虚拟化技术在构建系统的时候较为复杂，需要大量的人力；
+而docker可以通过Dockfile来构建整个容器，
+重启和构建速度很快。
+更重要的是Dockfile可以手动编写，
+这样应用程序开发人员可以
+通过发布Dockfile来指导系统环境和依赖，
+这样对于持续交付十分有利。
+
+7.     KVM对比于容器也有一个比较大的优势
+就是可以使用不同的操作系统或内核。
+至于Docker，
+所有容器都必须使用同样的操作系统和内核。
+
+具体说来，Docker 在如下几个方面具有较大的优势。
+
+2.1 更快速的交付和部署
+
+对开发和运维 人员来说，
+最希望的就是一次创建或配置，
+可以在任意地方正常运行。
+
+开发者可以使用一个标准的镜像来构建一套开发容器，
+开发完成之后，
+运维人员可以直接使用这个容器来部署代码。 
+Docker 可以快速创建容器，
+快速迭代应用程序，并让整个过程全程可见，
+使团队中的其他成员更容易理解应用程序是如何创建和工作的。 
+Docker 容器很轻很快！容器的启动时间是秒级的，大量地节约开发、测试、部署的时间。
+
+2.2 更高效的虚拟化
+
+Docker 容器的运行
+不需要额外的
+ hypervisor 支持，
+
+它是内核级的虚拟化，
+
+因此可以实现更高的性能和效率。
+
+2.3 更轻松的迁移和扩展
+
+Docker 容器几乎可以在任意的平台上运行，
+包括物理机、虚拟机、公有云、私有云、个人电脑、服务器等。
+这种兼容性可以让用户把一个应用程序从一个平台直接迁移到另外一个。
+
+2.4 更简单的管理
+
+使用 Docker，只需要小小的修改，就可以替代以往大量的更新工作。
+所有的修改都以增量的方式被分发和更新，
+从而实现自动化并且高效的管理。
+
+2.5 对比传统虚拟机（KVM）总结
+
+特性               容器              虚拟机
+启动               秒级              分钟级
+硬盘使用        一般为 MB       一般为 GB
+性能             接近原生             弱于
+系统支持量   单机支持上千个容器   一般几十个
+ 
+
+三、Docker在实际应用中的一些问题和局限性
+
+LXC是基于cgroup等linux kernel功能的，
+因此Container的guest系统
+只能是linux base的
+
+隔离性相比KVM之类的虚拟化方案还是有些欠缺，
+所有container公用一部分的运行库
+
+网络管理相对简单，主要是基于namespace隔离
+
+cgroup的cpu和cpuset提供的cpu功能
+和KVM的等虚拟化方案相比
+难以度量(所以dotcloud主要是按内存收费)
+
+container随着用户进程的停止而销毁，
+container中的log等用户数据不便收集
+
+另外，Docker是面向应用的，
+其终极目标是构建PAAS平台，
+
+而现有虚拟机主要目的是
+提供一个灵活的计算资源池，
+是面向架构的，
+其终极目标是构建一个IAAS平台，
+所以docker不能替代传统虚拟化解决方案。
+
+目前在容器可管理性方面，对于方便运维，
+提供UI来管理监控各个containers的功能还不足，
+还都是第三方实现。
+
+因为容器技术本身更适于解决大规模应用场景，
+所以通常都是集群基础上的部署、运维，
+但是目前对这一系列任务的自动化处理尚无统一的或者标准的框架。
+
+两者有不同的使用场景。
+虚拟机更擅长于彻底隔离整个运行环境。
+例如，云服务提供商通常采用虚拟机技术隔离不同的用户。
+
+而Docker通常用于隔离不同的应用，
+例如前端，后端以及数据库。
+--------------------- 
+
+基础设施(Infrastructure)
+它可以是你的个人电脑，数据中心的服务器，
+或者是云主机。
+
+虚拟机管理系统(Hypervisor)
+利用Hypervisor，
+可以在主操作系统之上运行多个不同的从操作系统。
+
+ 类型 1 的Hypervisor有
+支持MacOS的HyperKit，
+支持Windows的Hyper-V、Xen以及KVM。
+
+类型 2 的Hypervisor有
+VirtualBox和VMWare workstation。
+客户机操作系统(Guest Operating System)。
+
+假设你需要运行3个相互隔离的应用，
+则需要使用Hypervisor启动3个客户机操作系统，
+
+也就是3个虚拟机。
+这些虚拟机都非常大，将占用2.1GB的磁盘空间.
+它们还会消耗很多CPU和内存。
+
+各种依赖。
+每一个客户机操作系统都需要安装许多依赖。
+如果你的应用需要连接PostgreSQL的话，
+则需要安装libpq-dev；
+如果你使用Ruby的话，
+应该需要安装gems；
+如果使用其他编程语言，比如Python或者Node.js，
+都会需要安装对应的依赖库。
+
+应用。
+安装依赖之后，
+就可以在各个客户机操作系统分别运行应用了，
+这样各个应用就是相互隔离的。
+
+----------------
+Docker简洁很多。
+不需要运行一个臃肿的客户机操作系统了
+
+基础设施(Infrastructure)。
+
+主操作系统(Host Operating System)。
+
+所有主流的Linux发行版都可以运行Docker。
+对于MacOS和Windows，
+也有一些办法”运行”Docker。
+
+Docker守护进程(Docker Daemon)。
+
+Docker守护进程取代了Hypervisor，
+它是运行在操作系统之上的后台进程，
+负责管理Docker容器。
+
+各种依赖。
+对于Docker，
+应用的所有依赖都打包在Docker镜像中，
+Docker容器是基于Docker镜像创建的。
+
+应用。
+应用的源代码与它的依赖都打包在Docker镜像中，
+不同的应用需要不同的Docker镜像。
+不同的应用运行在不同的Docker容器中，
+它们是相互隔离的。
+
+
+[root@room9pc01 ~]# ll  /etc/redhat-release 
+lrwxrwxrwx. 1 root root 14 3月  19 2018 /etc/redhat-release -> centos-release
+
+[root@room9pc01 ~]# ll /etc/centos-release
+-rw-r--r--. 1 root root 38 8月  30 2017 /etc/centos-release
+
+[root@room9pc01 ~]# cat  /etc/centos-release
+CentOS Linux release 7.4.1708 (Core) 
+
+[root@room9pc01 ~]# for i  in  192.168.0.1{1,2}; \
+> do  scp  -o  StrictHostKeyChecking=no        \
+> /var/git/iso-tar-rpm/{docker_images.zip,docker-engine-1.12.1-1.el7.centos.x86_64.rpm,docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm}      \
+> root@$i:/root/
+> done
+
+root@192.168.0.11's password: 1
+docker_images.zip                                     100%  246MB 123.1MB/s   00:02    
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          100%   19MB 121.8MB/s   00:00    
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  100%   28KB   2.9MB/s   00:00    
+root@192.168.0.12's password: 1
+docker_images.zip                                     100%  246MB 123.1MB/s   00:02    
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          100%   19MB 134.4MB/s   00:00    
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  100%   28KB   2.5MB/s   00:00    
+
+[root@room9pc01 ~]# mkdir  /var/ftp/docker
+
+[root@room9pc01 ~]# ls  /var/ftp/
+CentOS7-1708  docker  pub  rhel7  share
+
+[root@room9pc01 ~]# cd  /var/ftp/docker/;ls
+
+[root@room9pc01 docker]# cp  -f  /var/git/iso-tar-rpm/{docker_images.zip,docker-engine-1.12.1-1.el7.centos.x86_64.rpm,docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm}  ./
+
+[root@room9pc01 docker]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@room9pc01 docker]# createrepo   .  ## 创建yum 源
+
+Spawning worker 0 with 1 pkgs
+................
+[root@room9pc01 docker]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@room9pc01 docker]# 
+
+
+------------------------ Va1  ---------------------
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Fri Dec 21 09:32:25 2018 from 192.168.0.254
+
+[root@Va1 ~]# free  -m |column  -t
+       total used  free  shared  buff/cache  available
+Mem:   3951  122   3688    8           140        3629
+Swap:  2047  0     2047
+
+[root@Va1 ~]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@Va1 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+源标识                      源名称                                         状态
+CentOS7-1708                CentOS7-1708                                   9,591
+rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
+repolist: 14,577
+
+[root@Va1 ~]# systemctl  is-enabled  firewalld
+Failed to get unit file state for firewalld.service: No such file or directory
+[root@Va1 ~]#  systemctl  is-active  firewalld
+unknown
+[root@Va1 ~]# getenforce 
+Disabled
+
+[root@Va1 ~]# ls
+anaconda-ks.cfg                                       ip.sh  文档
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          公共   下载
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  模板   音乐
+docker_images.zip                                     视频   桌面
+......................
+[root@Va1 ~]# mkdir  /var/git
+
+[root@Va1 ~]# ls  /var/git/
+
+[root@Va1 ~]# cp  -f  docker*  /var/git/
+
+[root@Va1 ~]# ls  /var/git/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@Va1 ~]# which  createrepo 
+/usr/bin/createrepo
+[root@Va1 ~]# rpm  -qf  /usr/bin/createrepo 
+createrepo-0.9.9-28.el7.noarch
+
+[root@Va1 ~]# createrepo  /var/git/   ## 创建 yum 仓库源
+
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@Va1 ~]# ls  /var/git/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@Va1 ~]# cd  /var/git/
+[root@Va1 git]# vim  /etc/hosts
+[root@Va1 git]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va1 git]# vim  /etc/yum.repos.d/local.repo 
+[root@Va1 git]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=file:///var/git/
+gpgckeck=0
+enabled=1
+[root@Va1 git]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@Va1 git]# yum  search  docker
+....................
+CentOS7-1708                                             | 3.6 kB     00:00     
+docker                                                   | 2.9 kB     00:00     
+rhel7                                                    | 4.1 kB     00:00     
+docker/primary_db                                          | 3.4 kB   00:00     
+============================= N/S matched: docker ==============================
+pcp-pmda-docker.x86_64 : Performance Co-Pilot (PCP) metrics from the Docker
+                       : daemon
+docker-engine.x86_64 : The open-source application container engine
+docker-engine-selinux.noarch : SELinux Policies for the open-source application
+                             : container engine
+
+  名称和简介匹配 only，使用“search all”试试。
+
+[root@Va1 git]# yum  -y  install  docker-engine  
+....................
+您已启用软件包 GPG 签名检查，这样很好。
+不过您尚未安装任何 GPG 公钥。
+请下载您希望安装的软件签名公钥并安装。假设公钥已下载，安装命令是：
+    rpm --import public.gpg.key
+
+或者，在软件源配置中，使用 'gpgkey' 选项指定软件源使用的公钥 URL，
+这样 yum 会自动安装它。
+
+详情请联系发行版或软件包制作人。
+
+问题源：docker
+.................
+-----------------------  提示 您尚未安装任何 GPG 公钥  没有签名
+               ###    后面加上 --nogpgcheck 参数 即可
+
+[root@Va1 ~]# yum  -y  install  docker-engine  --nogpgcheck
+...................
+已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                                             
+
+作为依赖被安装:
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                                     
+
+完毕！
+[root@Va1 ~]# rpm  -qa  |grep  docker-engine
+docker-engine-selinux-1.12.1-1.el7.centos.noarch
+docker-engine-1.12.1-1.el7.centos.x86_64
+
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.0.12
+.................
+[root@Va2 ~]# free  -m  |column  -t
+       total used  free  shared  buff/cache  available
+Mem:   3951  117   3693    8           140        3634
+Swap:  2047  0     2047
+[root@Va2 ~]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   20G  0 disk 
+
+[root@Va2 ~]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+源标识                      源名称                                  状态
+CentOS7-1708         CentOS7-1708                      9,591
+rhel7                rhel-server-7.4-x86_64-dvd.iso    4,986
+repolist: 14,577
+
+[root@Va2 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va2 ~]# uname  -r
+3.10.0-693.el7.x86_64
+
+[root@Va2 ~]# cat  /etc/redhat-release 
+Red Hat Enterprise Linux Server release 7.4 (Maipo)
+
+[root@Va2 ~]# ll  /etc/redhat-release
+-rw-r--r--. 1 root root 52 6月  29 2017 /etc/redhat-release
+
+[root@Va2 ~]# systemctl  is-active  firewalld
+unknown
+[root@Va2 ~]# systemctl  is-enabled  firewalld
+Failed to get unit file state for firewalld.service: No such file or directory
+
+[root@Va2 ~]# getenforce 
+Disabled
+
+[root@Va2 ~]# ls
+anaconda-ks.cfg                                       ip.sh  文档
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          公共   下载
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  模板   音乐
+docker_images.zip                                     视频   桌面
+initial-setup-ks.cfg                                  图片
+
+[root@Va2 ~]# mkdir   /var/git/
+
+[root@Va2 ~]# ls   /var/git/
+
+[root@Va2 ~]# cp   -f  docker*    /var/git/
+
+[root@Va2 ~]# cd  /var/git/;ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@Va2 git]# createrepo   .  ## 创建 yum 仓库源
+
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@Va2 git]# ls
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@Va2 git]# ls  repodata/
+.......-primary.xml.gz
+repomd.xml
+
+[root@Va2 git]# vim  /etc/hosts
+[root@Va2 git]# cat   /etc/hosts
+
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va2 git]# vim  /etc/yum.repos.d/local.repo 
+[root@Va2 git]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=ftp://192.168.0.254/docker
+gpgckeck=0
+enabled=1
+
+[root@Va2 git]# yum clean all >/dev/null &&  yum repolist  |tail  -4
+CentOS7-1708                CentOS7-1708                                   9,591
+docker                      docker-engine                                      2
+rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
+repolist: 14,579
+[root@Va2 git]#  yum  -y  install  docker-engine  |tail  -4
+
+ 已安装:
+  docker-engine.x86_64 0:1.12.1-1.el7.centos                                                    
+
+作为依赖被安装:
+  docker-engine-selinux.noarch 0:1.12.1-1.el7.centos                                            
+
+完毕！
+[root@Va2 git]#  vim /etc/yum.conf 
+[root@Va2 git]# grep  -B7  -A3  -n "gpgcheck="  /etc/yum.conf
+1-[main]
+2-cachedir=/var/cache/yum/$basearch/$releasever
+3-keepcache=0
+4-debuglevel=2
+5-logfile=/var/log/yum.log
+6-exactarch=1
+7-obsoletes=1
+8:gpgcheck=0
+9-plugins=1
+10-installonly_limit=3
+11-
+[root@Va2 git]#   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
