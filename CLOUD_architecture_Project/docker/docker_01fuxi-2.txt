@@ -1,5 +1,17 @@
 
-
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
 
 			             OSI参考模型(七层框架)
 
@@ -525,57 +537,24 @@ Docker容器是基于Docker镜像创建的。
 不同的应用需要不同的Docker镜像。
 不同的应用运行在不同的Docker容器中，
 它们是相互隔离的。
+------------------- namespace ---------------------
 
-1 容器的核心技术有哪几种？
+Namespace并不是Linux才推出的东西，
+早在很久之前，Unix上就有类似的东西，
+而HPUX和Solaris商用的Conatiner更是以前就有推出。
+而在Linux的2.6之后的版本Namespace就逐步的被加了进来。
 
-参考答案
-Cgroups（Control Groups）-资源管理
-NameSpace-进程隔离
-SELinux安全
-2 阐述docker的优缺点
+Linux Namespace的6大类型
 
-参考答案
-优点：
-相比于传统的虚拟化技术，容器更加简洁高效
-传统虚拟机需要给每个VM安装操作系统
-容器使用的共享公共库和程序
-缺点：
-容器的隔离性没有虚拟化强
-共用Linux内核，安全性有先天缺陷
-SELinux难以驾驭
-监控容器和容器排错是挑战
-3 如何上传，下载镜像
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
 
-参考答案
-下载镜像
-[root@docker1 ~]# docker  pull  rhel7
-上传镜像
-[root@docker1 ~]# docker  push  rhel7
-4 docker镜像常用命令有哪些
-
-参考答案
-docker images 查看镜像列表
-docker history 查看镜像制作历史
-docker inspect 查看镜像底层信息
-docker pull 下载镜像
-docker push 上传镜像
-docker rmi 删除本地镜像
-docker save 镜像另存为tar包
-docker load 使用tar包导入镜像
-docker search 搜索镜像
-docker tag 修改镜像名称和标签
-5 docker容器常用命令有哪些
-
-参考答案
-docker run 运行容器
-docker ps 查看容器列表
-docker stop 关闭容器
-docker start 启动容器
-docker restart 重启容器
-docker attach|exec 进入容器
-docker inspect 查看容器底层信息
-docker top 查看容器进程列表
-docker rm 删除容器
+--------------------- 
 
 [root@room9pc01 ~]# ll  /etc/redhat-release 
 lrwxrwxrwx. 1 root root 14 3月  19 2018 /etc/redhat-release -> centos-release
@@ -798,8 +777,162 @@ docker-engine-selinux.noarch : SELinux Policies for the open-source application
 docker-engine-selinux-1.12.1-1.el7.centos.noarch
 docker-engine-1.12.1-1.el7.centos.x86_64
 
-[root@Va1 ~]# 
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         149        3623           8         178        3581
+Swap:          2047           0        2047
+[root@Va1 ~]# uname  -r
+3.10.0-693.el7.x86_64
 
+[root@Va1 ~]# uname  -a
+Linux Va1 3.10.0-693.el7.x86_64 #1 SMP Thu Jul 6 19:56:57 EDT 2017 x86_64 x86_64 x86_64 GNU/Linux
+ 
+
+
+[root@Va1 ~]# echo  $$  ## 确认当前进程PID
+2195
+
+[root@Va1 ~]# ls  -l  /proc/$$/ns  ## 确认当前进程的各个namespace
+总用量 0
+lrwxrwxrwx 1 root root 0 12月 22 09:38 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 uts -> uts:[4026531838]
+
+项番	内容说明
+No.1	linux会在/proc下创建所对应的进程相关的信息，ns则为Namespace的信息
+No.2	$$为当前进程PID，/proc/$$/ns下的Namespace的个数回随着Linux内核的
+        高低不同显示的个数不同，因为Linux所支持的Namespace不是一次到位的
+No.3	mnt:[4026531840]，不同的Namespace都有不同的编号，
+        比如32968的mnt的namespace的编号就是4026531840
+
+--------------------- 
+------------------------  namespace  ----------------
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+--------------------- cgroup ------------ 
+--------------------- cgroup ------------ 
+
+docker 通过 cgroup 来控制容器使用的资源配额，
+包括 CPU、内存、磁盘三大方面，
+基本覆盖了常见的资源配额和使用量控制。
+
+cgroup 是 Control Groups 的缩写，
+是 Linux 内核提供的一种可以
+限制、记录、隔离 进程组 所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，
+被 LXC、docker 等很多项目用于实现进程资源控制。
+
+cgroup 将任意进程进行分组化管理的 Linux 内核功能。
+cgroup 本身是提供将进程进行分组化管理的功能和接口的基础结构，
+I/O 或内存的分配控制等具体的资源管理功能是通过这个功能来实现的。
+这些具体的资源管理功能称为 cgroup 子系统，
+有以下几大子系统实现：
+
+blkio：设置限制每个块设备的输入输出控制。例如:磁盘，光盘以及 usb 等等。
+cpu：使用调度程序为 cgroup 任务提供 cpu 的访问。
+cpuacct：产生 cgroup 任务的 cpu 资源报告。
+cpuset：如果是多核心的 cpu，
+   这个子系统会为 cgroup 任务分配单独的 cpu 和内存。
+devices：允许或拒绝 cgroup 任务对设备的访问。
+freezer：暂停和恢复 cgroup 任务。
+memory：设置每个 cgroup 的内存限制以及产生内存资源报告。
+net_cls：标记每个网络包以供 cgroup 方便使用。
+ns：命名空间子系统。
+perf_event：增加了对每 group 的监测跟踪的能力，
+        可以监测属于某个特定的 group 的所有线程以及运行在特定CPU上的线程。
+
+目前 docker 只是用了其中一部分子系统，实现对资源配额和使用的控制。
+
+ 一、CPU资源配额控制
+二、对内存的限额  
+三、对 Block IO 的限制
+
+--------------------- 
+
+[root@Va1 ~]# echo  $$  ## 确认当前进程PID
+2195
+[root@Va1 ~]# ls  -l  /proc/2195/ns
+总用量 0
+lrwxrwxrwx 1 root root 0 12月 22 09:38 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 12月 22 09:38 uts -> uts:[4026531838]
+
+项番	内容说明
+No.1	linux会在/proc下创建所对应的进程相关的信息，ns则为Namespace的信息
+No.2	$$为当前进程PID，/proc/$$/ns下的Namespace的个数回随着Linux内核的
+        高低不同显示的个数不同，因为Linux所支持的Namespace不是一次到位的
+No.3	mnt:[4026531840]，不同的Namespace都有不同的编号，
+        比如32968的mnt的namespace的编号就是4026531840
+
+--------------------- 
+[root@Va1 ~]# ls    /proc/2195/
+attr             cpuset   limits      net            projid_map  stat
+autogroup        cwd      loginuid    ns             root        statm
+auxv             environ  map_files   numa_maps      sched       status
+cgroup           exe      maps        oom_adj        schedstat   syscall
+clear_refs       fd       mem         oom_score      sessionid   task
+cmdline          fdinfo   mountinfo   oom_score_adj  setgroups   timers
+comm             gid_map  mounts      pagemap        smaps       uid_map
+coredump_filter  io       mountstats  personality    stack       wchan
+
+[root@Va1 ~]# ll  /proc/2195/cpuset
+-r--r--r-- 1 root root 0 12月 22 09:38 /proc/2195/cpuset
+
+[root@Va1 ~]# cat  /proc/2195/cpuset
+/
+[root@Va1 ~]# cat  /proc/2195/cpuset
+/
+
+[root@Va1 ~]# ll  /proc/2195/cgroup
+-r--r--r-- 1 root root 0 12月 22 09:38 /proc/2195/cgroup
+
+[root@Va1 ~]# cat /proc/2195/cgroup
+11:net_prio,net_cls:/
+10:cpuset:/
+9:pids:/
+8:memory:/
+7:blkio:/
+6:freezer:/
+5:devices:/
+4:hugetlb:/
+3:cpuacct,cpu:/
+2:perf_event:/
+1:name=systemd:/user.slice/user-0.slice/session-4.scope
+
+[root@Va1 ~]# ls    /proc/2195/
+attr             cpuset   limits      net            projid_map  stat
+autogroup        cwd      loginuid    ns             root        statm
+auxv             environ  map_files   numa_maps      sched       status
+cgroup           exe      maps        oom_adj        schedstat   syscall
+clear_refs       fd       mem         oom_score      sessionid   task
+cmdline          fdinfo   mountinfo   oom_score_adj  setgroups   timers
+comm             gid_map  mounts      pagemap        smaps       uid_map
+coredump_filter  io       mountstats  personality    stack       wchan
+
+[root@Va1 ~]# ls    /proc/2195/ns/
+ipc  mnt  net  pid  user  uts
+
+[root@Va1 ~]# ll  /proc/2195/ns/mnt 
+lrwxrwxrwx 1 root root 0 12月 22 09:38 /proc/2195/ns/mnt -> mnt:[4026531840]
+
+[root@Va1 ~]# cat  /proc/2195/ns/mnt
+cat: /proc/2195/ns/mnt: 无效的参数
+[root@Va1 ~]# cat  /proc/2195/ns/pid 
+cat: /proc/2195/ns/pid: 无效的参数
+[root@Va1 ~]# 
 
 
 
@@ -971,7 +1104,115 @@ repolist: 14,579
 9-plugins=1
 10-installonly_limit=3
 11-
-[root@Va2 git]#   
+
+[root@Va2 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         145        3628           8         178        3585
+Swap:          2047           0        2047
+[root@Va2 ~]# uname  -r
+3.10.0-693.el7.x86_64
+
+[root@Va2 ~]# uname   -a
+Linux Va2 3.10.0-693.el7.x86_64 #1 SMP Thu Jul 6 19:56:57 EDT 2017 x86_64 x86_64 x86_64 GNU/Linux
+
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
+------------------------  namespace  ----------------
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+--------------------- cgroup ------------ 
+--------------------- cgroup ------------ 
+
+docker 通过 cgroup 来控制容器使用的资源配额，
+包括 CPU、内存、磁盘三大方面，
+基本覆盖了常见的资源配额和使用量控制。
+
+cgroup 是 Control Groups 的缩写，
+是 Linux 内核提供的一种可以
+限制、记录、隔离进程组所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，
+被 LXC、docker 等很多项目用于实现进程资源控制。
+
+cgroup 将任意进程进行分组化管理的 Linux 内核功能。
+cgroup 本身是提供将进程进行分组化管理的功能和接口的基础结构，
+I/O 或内存的分配控制等具体的资源管理功能是通过这个功能来实现的。
+这些具体的资源管理功能称为 cgroup 子系统，
+有以下几大子系统实现：
+
+blkio：设置限制每个块设备的输入输出控制。例如:磁盘，光盘以及 usb 等等。
+cpu：使用调度程序为 cgroup 任务提供 cpu 的访问。
+cpuacct：产生 cgroup 任务的 cpu 资源报告。
+cpuset：如果是多核心的 cpu，
+   这个子系统会为 cgroup 任务分配单独的 cpu 和内存。
+devices：允许或拒绝 cgroup 任务对设备的访问。
+freezer：暂停和恢复 cgroup 任务。
+memory：设置每个 cgroup 的内存限制以及产生内存资源报告。
+net_cls：标记每个网络包以供 cgroup 方便使用。
+ns：命名空间子系统。
+perf_event：增加了对每 group 的监测跟踪的能力，
+        可以监测属于某个特定的 group 的所有线程以及运行在特定CPU上的线程。
+
+目前 docker 只是用了其中一部分子系统，实现对资源配额和使用的控制。
+
+ 一、CPU资源配额控制
+二、对内存的限额  
+三、对 Block IO 的限制
+
+--------------------- 
+
+[root@Va2 ~]# echo  $$  ##确认当前进程PID
+1551
+[root@Va2 ~]# ll  /proc/$$/ns  ## 确认当前进程的各个namespace
+总用量 0
+lrwxrwxrwx 1 root root 0 12月 22 09:39 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 uts -> uts:[4026531838]
+[root@Va2 ~]# 
+项番	内容说明
+No.1	linux会在/proc下创建所对应的进程相关的信息，ns则为Namespace的信息
+No.2	$$为当前进程PID，/proc/$$/ns下的Namespace的个数回随着Linux内核的
+        高低不同显示的个数不同，因为Linux所支持的Namespace不是一次到位的
+No.3	mnt:[4026531840]，不同的Namespace都有不同的编号，
+        比如32968的mnt的namespace的编号就是4026531840
+
+--------------------- 
+
+[root@Va2 ~]# echo  $$
+1551
+[root@Va2 ~]# ll  /proc/1551/ns 
+总用量 0
+lrwxrwxrwx 1 root root 0 12月 22 09:39 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 12月 22 09:39 uts -> uts:[4026531838]
+
+[root@Va2 ~]# which  chkconfig 
+/usr/sbin/chkconfig
+[root@Va2 ~]# which  chroot
+/usr/sbin/chroot
 
 
 
@@ -986,6 +1227,291 @@ repolist: 14,579
 
 
 
+1 容器的核心技术有哪几种？
+
+参考答案
+Cgroups（Control Groups）-进程资源管理
+NameSpace-进程隔离
+SELinux安全
+2 阐述docker的优缺点
+
+参考答案
+优点：
+相比于传统的虚拟化技术，容器更加简洁高效
+传统虚拟机需要给每个VM安装操作系统
+容器使用的共享公共库和程序
+缺点：
+容器的隔离性没有虚拟化强
+共用Linux内核，安全性有先天缺陷
+SELinux难以驾驭
+监控容器和容器排错是挑战
+3 如何上传，下载镜像
+
+参考答案
+下载镜像
+[root@docker1 ~]# docker  pull  rhel7
+上传镜像
+[root@docker1 ~]# docker  push  rhel7
+4 docker镜像常用命令有哪些
+
+参考答案
+docker images 查看镜像列表
+docker history 查看镜像制作历史
+docker inspect 查看镜像底层信息
+docker pull 下载镜像
+docker push 上传镜像
+docker rmi 删除本地镜像
+docker save 镜像另存为tar包
+docker load 使用tar包导入镜像
+docker search 搜索镜像
+docker tag 修改镜像名称和标签
+5 docker容器常用命令有哪些
+
+参考答案
+docker run 运行容器
+docker ps 查看容器列表
+docker stop 关闭容器
+docker start 启动容器
+docker restart 重启容器
+docker attach|exec 进入容器
+docker inspect 查看容器底层信息
+docker top 查看容器进程列表
+docker rm 删除容器
+
+
+一、Docker简介
+
+       Docker 是一个开源的应用容器引擎，
+让开发者可以打包他们的应用以及依赖包到一个可移植的容器中，
+然后发布到任何流行的 Linux 机器上，也可以实现虚拟化。
+容器 相互之间不会有任何接口。
+Docker是一个构建在LXC之上的,
+基于进程容器(Process container)的轻量级VM解决方案。
+
+1.Docker与传统的VM对比
+
+      传统的虚拟化技术
+
+        1、纯软件的虚拟化是通过对于硬件层的模拟从而实现
+          允许运行多个操作系统。
+               Guest OS运行在VMM之上
+Hypervisor
+ 一种运行在基础物理服务器 和 操作系统之间的中间软件层，
+可允许 多个操作系统和 应用 共享硬件。
+也可叫做VMM（ virtual machine monitor ），
+即 虚拟机监视器。
+               VMM（Virtual Machine Monitor）运行在Host OS之上
+               Host OS负责真正的对于底层硬件的调用
+基础设施(Infrastructure)。
+主操作系统(Host Operating System)。
+        2、硬件辅助虚拟化需要硬件层面对于虚拟化的支持，类似Interl-TV技术等，
+          具有更高的运行效率。
+
+          system-level virtualization
+             系统级虚拟化
+        1、server virtualization method where the kernel 
+          allows multiple isolated user space instances.
+            内核允许的多个隔离的用户空间实例的服务器虚拟化方法 
+          2、  不需要模拟硬件层 
+          3、共享同一个Host OS的Kernal
+        4、user space instance = Container
+               用户空间实例=容器
+
+1. SaaS：Software-as-a-Service（软件即服务）
+提供给客户的服务是运营商运行在云计算基础设施上的应用程序
+2. PaaS：Platform-as-a-Service（平台即服务）
+提供给消费者的服务是把客户采用提供的开发语言和工具（例如Java，python, .Net等）
+3. IaaS： Infrastructure-as-a-Service（基础设施即服务）
+提供给消费者的服务是对所有计算基础设施的利用，
+包括处理CPU、内存、存储、网络和其它基本的计算资源，
+用户能够部署和运行任意软件，包括操作系统和应用程序
+
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
+
+2、Docker核心技术
+
+1、CGroups限制容器的资源使用(cpu时间片、内存)
+
+      1、资源限制（Resource Limitation）：
+         cgroups可以对进程组使用的资源总额进行限制。
+          如设定应用运行时使用内存的上限，
+          一旦超过这个配额就发出OOM（Out of Memory）。
+
+       2、优先级分配（Prioritization）：通过分配的CPU时间片数量及硬盘IO带宽大小，
+             实际上就相当于控制了进程运行的优先级。
+       3、资源统计（Accounting）： cgroups可以统计系统的资源使用量，
+           如CPU使用时长、内存用量等等，这个功能非常适用于计费。
+       4、进程控制（Control）：cgroups可以对进程组执行挂起、恢复等操作。
+
+2、Namespace机制，实现容器间的隔离（网络、进程表）
+
+        1、pid，容器有自己独立的进程表和1号进程
+        2、net，容器有自己独立的network info
+        3、ipc，在ipc通信时候，需要加入额外信息来标示进程 
+        4、mnt，每个容器有自己唯一的目录挂载
+        5、utc，每个容器有独立的hostname和domain
+
+3、chroot，文件系统的隔离（对文件系统根目录隔离）
+
+        1、隔离根文件系统
+
+3、docker实现
+
+1、docker也是container技术的实现，最早使用LXC作为container的引擎
+
+         最新版本的docker使用libcontainer替换了lxc
+
+2、采用aufs文件系统来管理Image和container
+
+        1、advanced multi layer unification filesystem
+                先进的多层统一文件系统
+
+           2、可以实现把多个不同目录的内容合并在一起
+           3、运行read-only和read-write目录并存
+
+3、基于C/S架构的实现，Server端使用UnixSocket，也可以切换到TcpProtocol
+
+4、docker hub（Docker的仓库）
+
+1、类似于Github的服务，用来分发Image
+2、大量标准的Image，例如Tutum/Ubuntu, Tutum/Mysql
+
+5、docker的局限性
+
+1、基于Linux64的，不能再32bit的环境下运行
+2、GuestOS只能是Linux Base
+3、隔离性相对于KVM等虚拟化技术有所欠缺
+4、采用cgroup的resource control对于cpu的度量很难
+5、container随着用户进程的停止而销毁
+
+6、docker和LXC的区别
+
+1、docker更专注的部署，而LXC专注于进程的隔离
+2、docker有更好的api的方便对于docker容器的管理
+3、dockerfile让image的创建变的容易
+4、通过docker hub方便image的分享
+--------------------- 
+
+
+------------------------  namespace  ----------------
+Linux Namespace的6大类型
+
+项番	类型	               功能说明
+No.1	MNT Namespace	提供磁盘挂载点和文件系统的隔离能力
+No.2	IPC Namespace	提供进程间通信的隔离能力
+No.3	Net Namespace	提供网络隔离能力
+No.4	UTS Namespace	提供主机名隔离能力
+No.5	PID Namespace	提供进程隔离能力
+No.6	User Namespace	提供用户隔离能力
+
+--------------------- cgroup ------------ 
+
+docker 通过 cgroup 来控制容器使用的资源配额，
+包括 CPU、内存、磁盘三大方面，
+基本覆盖了常见的资源配额和使用量控制。
+
+cgroup 是 Control Groups 的缩写，
+是 Linux 内核提供的一种可以
+限制、记录、隔离进程组所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，
+被 LXC、docker 等很多项目用于实现进程资源控制。
+
+cgroup 将任意进程进行分组化管理的 Linux 内核功能。
+cgroup 本身是提供将进程进行分组化管理的功能和接口的基础结构，
+I/O 或内存的分配控制等具体的资源管理功能是通过这个功能来实现的。
+这些具体的资源管理功能称为 cgroup 子系统，
+有以下几大子系统实现：
+
+blkio：设置限制每个块设备的输入输出控制。例如:磁盘，光盘以及 usb 等等。
+cpu：使用调度程序为 cgroup 任务提供 cpu 的访问。
+cpuacct：产生 cgroup 任务的 cpu 资源报告。
+cpuset：如果是多核心的 cpu，
+   这个子系统会为 cgroup 任务分配单独的 cpu 和内存。
+devices：允许或拒绝 cgroup 任务对设备的访问。
+freezer：暂停和恢复 cgroup 任务。
+memory：设置每个 cgroup 的内存限制以及产生内存资源报告。
+net_cls：标记每个网络包以供 cgroup 方便使用。
+ns：命名空间子系统。
+perf_event：增加了对每 group 的监测跟踪的能力，
+        可以监测属于某个特定的 group 的所有线程以及运行在特定CPU上的线程。
+
+目前 docker 只是用了其中一部分子系统，实现对资源配额和使用的控制。
+
+可以使用 stress 工具来测试 CPU 和内存。
+使用下面的 Dockerfile 来创建一个基于 Ubuntu 的 stress 工具镜像。
+
+# Version 0.0.1
+FROM ubuntu:14.04
+MAINTAINER wzlinux "admin@wzlinux.com"
+RUN sed -i 's/archive.ubuntu.com/cn.archive.ubuntu.com/g' /etc/apt/sources.list
+RUN sed -i 's/security.ubuntu/cn.archive.ubuntu/g' /etc/apt/sources.list
+RUN apt-get -y update && apt-get -y install stress
+docker build -t ubuntu:stress . 
+
+  一、CPU资源配额控制
+
+我们第一次可能出现下面的警告信息。
+
+WARNING: Your kernel does not support cgroup swap limit.WARNING: Your
+kernel does not support swap limit capabilities.
+需要我们修改 grub 开启这个功能，我们需要编辑文件 /etc/default/grub，修改成如下信息。
+
+GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"
+然后重启服务器即可。
+
+二、对内存的限额
+
+与操作系统类似，容器可使用的内存包括两部分：物理内存和 swap。
+ Docker 通过下面两组参数来控制容器内存的使用量。
+
+-m 或 --memory：设置内存的使用限额，例如 100M, 2G。
+--memory-swap：设置 内存+swap 的使用限额。
+
+三、对 Block IO 的限制
+
+Block IO 是另一种可以限制容器使用的资源。
+ Block IO 指的是磁盘的读写，docker 可通过设置权重、限制 bps 和 iops 的方式控制容器读写磁盘的带宽。
+
+------------------
+
+[root@room9pc01 ~]# cat  /etc/yum.conf  |wc  -l
+26
+[root@room9pc01 ~]# grep  -B7  -A2  -n "gpgcheck=1"  /etc/yum.conf 
+1-[main]
+2-cachedir=/var/cache/yum/$basearch/$releasever
+3-keepcache=0
+4-debuglevel=2
+5-logfile=/var/log/yum.log
+6-exactarch=1
+7-obsoletes=1
+8:gpgcheck=1
+9-plugins=1
+10-installonly_limit=5
+[root@room9pc01 ~]# sed  -i  "/gpgcheck/s/1/0/"  /etc/yum.conf 
+[root@room9pc01 ~]# grep  -B7  -A2  -n "gpgcheck=1"  /etc/yum.conf 
+[root@room9pc01 ~]# grep  -B7  -A2  -n "gpgcheck=0"  /etc/yum.conf 
+1-[main]
+2-cachedir=/var/cache/yum/$basearch/$releasever
+3-keepcache=0
+4-debuglevel=2
+5-logfile=/var/log/yum.log
+6-exactarch=1
+7-obsoletes=1
+8:gpgcheck=0
+9-plugins=1
+10-installonly_limit=5
+[root@room9pc01 ~]# 
 
 
 
