@@ -803,10 +803,17 @@ Chain OUTPUT (policy ACCEPT)
 出站：OUTPUT → POSTROUTING 
 转发：PREROUTING → FORWARD → POSTROUTING
 
-raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
-mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
-nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
-filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+raw 表(状态跟踪表)[一般禁用，耗CPU资源] 
+    包含 2个 链 PREROUTING 链   OUTPUT 链
+
+mangle表包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】 
+    包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+
+nat表{地址转换表} 
+    包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+    包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
 
 ------------------------------------------------------------------------------------------------------------------------||
                 本机    HTTP   Web   服务     [ 终点/起点]
@@ -822,11 +829,19 @@ filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链
 ----------|---------------------------------  本机  网卡  ----------------------|-----------------------|-----
        |---------------------------------- 本机 ---------------------------------|                |---->>转发至 其他主机
 
- nat表 [mangle表]    filter表，nat表   filter表，nat表   filter表 [mangle表]   nat表 [mangle表]
-   prerouting链       input链           output链            forward链            postrouting链
-          |                   |                  |                      |                        |
-        规则               规则               规则                 规则                     规则
-          |                   |                  |                      |                        |
+
+------------------------------------------------------- 四表 五链  关系 结构 --------------------------------------
+ raw表【状态跟踪 表】                                                     raw表【状态跟踪 表】
+ mangle表【包标记 表】    mangle表【包标记表】 mangle表【包标记表】 mangle表【包标记表】 mangle表【包标记 表】
+ nat表【地址转换 表】      nat表【地址转换 表】                         nat表【地址转换 表】    nat表【地址转换 表】
+                       filter表【过滤 表】 filter表【过滤 表】 filter表【过滤 表】  
+ prerouting路由前规则链  input入站规则链      forward转发规则链   output出站规则链   postrouting路由后规则链
+          |                          |                         |                      |                       |
+        规则                      规则                      规则                 规则                    规则
+          |                          |                         |                      |                       |
+        规则                      规则                      规则                 规则                    规则
+          |                          |                         |                      |                       |
+ ----------------------------------------------------------------------------------------------------------------------------------- 
 
              #  iptables   [-t 表名]   命令选项  [链名]   参数[条件]    动作[-j 目标操作]
 [root@proxy ~]# iptables   -t  filter  -I   INPUT  -p icmp  -j ACCEPT ;
@@ -900,7 +915,7 @@ REJECT拦阻该封包，并传送封包通知对方，
 或是 tcp-reset（这个封包会要求对方关闭联机），
 进行完此处理动作后，将不再比对其它规则，直接中断过滤程序。
 
-例如：iptables -A FORWARD -p TCP --dport 22 -j REJECT--reject-with tcp-reset
+例如：iptables -A FORWARD -p TCP --dport 22 -j REJECT --reject-with tcp-reset
 
 
 DROP丢弃封包不予处理，进行完此处理动作后，
@@ -911,43 +926,44 @@ REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
 这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
 
 例如：
-iptables -t nat-A PREROUTING -p tcp --dport 80 -j REDIRECT--to-ports 8080
+iptables -t nat-A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
 
  iptables的5个链（区分大小写）：
 
-INPUT链（入站规则）------ filter表
-OUTPUT链（出站规则）----- filter表
-FORWARD链（转发规则）----- filter表  [mangle表]
-PREROUTING链（路由前规则）------ nat表  [mangle表]
-POSTROUTING链（路由后规则）----- nat表  [mangle表]
+PREROUTING链（路由前规则 属于 3 表）------ raw表  mangle表  nat表
+
+INPUT链（入站规则 属于 3 表）------mangle表  nat表  filter表
+
+FORWARD链（转发规则 属于 2 表）-----mangle表  filter表  
+
+OUTPUT链（出站规则 属于4表）----- raw表【状态跟踪 表】  mangle表【包标记表】 nat表  filter表
+
+POSTROUTING链（路由后规则 属于 2 表）----- mangle表   nat表 
+
 所有链的初始默认规则是ACCEPT
 
-raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
-mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
-nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
-filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+规则表先后顺序：raw表→mangle表→nat表→filter表 
+规则链先后顺序： 
+入站：PREROUTING → INPUT 
+出站：OUTPUT → POSTROUTING 
+转发：PREROUTING → FORWARD → POSTROUTING
 
- iptables的4个表（区分大小写）：
+raw 表(状态跟踪表)[一般禁用，耗CPU资源] 
+    关闭raw 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+    包含 2个 链 PREROUTING 链   OUTPUT 链
 
-  iptables默认有4个表
+mangle表包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】 
+    拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+    包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+    使用率不高
 
-nat表{地址转换表}
-      负责 网络地址转换功能; 内核模块: iptable_nat
-nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+nat表{地址转换表} 
+    负责 网络地址转换功能; 内核模块: iptable_nat
+    包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
 
 filter表（数据过滤表）
-      负责过滤功能,防火墙; 内核模块: iptable_filter
-filter 这个规则表是预设规则表，
-拥有INPUT、FORWARD 和 OUTPUT三个规则链，
-
-【raw表（状态跟踪表） 一般禁用，耗CPU资源】
-       关闭nat 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
-
-mangle表（包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】
-       拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
-mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
-使用率不高.
-
+    负责过滤功能,防火墙; 内核模块: iptable_filter
+    包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
 
 
 [root@Va4 ~]# sysctl   -p
@@ -1070,13 +1086,25 @@ iptables 指令
 语法：iptables [-t table] command [match] [-j target/jump]
 
 -t 参数用来指定规则表，
-内建的规则表有三个，分别是：nat、mangle 和 filter，
+内建的规则表有4个，分别是：raw, nat、mangle 和 filter，
 当未指定规则表时，则一律视为是 filter。
 
-raw 表 包含 2个 链 PREROUTING 链   OUTPUT 链
-mangle表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
-nat 表 包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
-filter表包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
+raw 表(状态跟踪表)[一般禁用，耗CPU资源] 
+    关闭raw 表上启用的连接 追踪机制 ; 内核模块: iptable_raw
+    包含 2个 链 PREROUTING 链   OUTPUT 链
+
+mangle表包标记表）【64跳 15跳，新路由协议支持超过 15 跳 】 
+    拆解 修改报文,并重新封装 功能; 内核模块: iptable_mangle
+    包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
+    使用率不高
+
+nat表{地址转换表} 
+    负责 网络地址转换功能; 内核模块: iptable_nat
+    包含 4个 链 PREROUTING 链   INPUT 链    OUTPUT 链   POSTROUTING 链 
+
+filter表（数据过滤表）
+    负责过滤功能,防火墙; 内核模块: iptable_filter
+    包含3链 INPUT 链    FORWARD 链    OUTPUT 链 
 
 各个规则表的功能如下：
 nat 此规则表拥有 Prerouting 和 postrouting 两个规则链， ##??
@@ -1091,7 +1119,7 @@ nat 此规则表拥有 Prerouting 和 postrouting 两个规则链， ##??
 将会造成无法对同一包进行多次比对，
 因此这个规则表除了作网址转译外，请不要做其它用途。
 
-mangle 此规则表拥有 Prerouting、FORWARD 和 postrouting 三个规则链。##??
+mangle 此规则表 包含 5个 链 PREROUTING 链  INPUT 链   FORWARD 链  OUTPUT 链   POSTROUTING 链
 除了进行网址转译工作会改写封包外，
 在某些特殊应用可能也必须去改写封包（TTL、TOS）
 或者是设定 MARK（将封包作记号，以进行后续的过滤），
@@ -1141,7 +1169,8 @@ filter 这个规则表是预设规则表，
 说明新增规则(追加方式)到某个规则链(这里是INPUT规则链)中，该规则将会成为规则链中的最后一条规则。
 
 命令-D,--delete
-范例 iptables -D INPUT --dport 80 -j DROPiptables -D INPUT 1
+范例 iptables -D INPUT --dport 80 -j DROP
+iptables -D INPUT 1
 说明 从某个规则链中删除一条规则，可以输入完整规则，或直接指定规则编号加以删除。
 
 命令-R, --replace
@@ -1171,7 +1200,8 @@ filter 这个规则表是预设规则表，
 说明 将封包计数器归零。
 封包计数器是用来计算同一封包出现次数，是过滤阻断式攻击不可或缺的工具。
 
-命令-N, --new-chain范例 iptables -N allowed
+命令-N, --new-chain
+范例 iptables -N allowed
 说明 定义新的规则链。
 
 命令-X, --delete-chain
@@ -1193,7 +1223,9 @@ filter 这个规则表是预设规则表，
 2、常用封包比对参数：(-p协议、-s源地址、-d目的地址、--sport源端口、--dport目的端口、-i进入网卡、-o 出去网卡)
 
 参数-p, --protocol(指定协议)
-范例 iptables -A INPUT -p tcp(指定协议)      -p all   所有协议，  -p !tcp 去除tcp外的所有协议。
+范例 iptables -A INPUT -p tcp(指定协议)    
+  -p all   所有协议，
+  -p !tcp 去除tcp外的所有协议。
 说明 比对通讯协议类型是否相符，
 可以使用 ! 运算子进行反向比对，
 例如：-p ! tcp ，意思是指除 tcp 以外的其它类型，
@@ -1213,7 +1245,8 @@ filter 这个规则表是预设规则表，
 例如： iptables -A INPUT -d 192.168.1.1
 说明 用来比对封包的目的地 IP，设定方式同上。
 
-参数-i, --in-interface(指定入口网卡)      -i  eth+   所有网卡
+参数-i, --in-interface(指定入口网卡)    
+  -i  eth+   所有网卡
 例如： iptables -A INPUT -i eth0
 说明 用来比对封包是从哪片网卡进入，可以使用通配字符 + 来做大范围比对，
 例如：-i eth+ 表示所有的 ethernet 网卡，也以使用 ! 运算子进行反向比对，
@@ -1677,7 +1710,7 @@ iptables -N filter_web
 
 -Z ：计算器清零
 
-iptables-Z
+iptables -Z
 
 -E ：重命名自定义链
 
@@ -1843,16 +1876,17 @@ INVALID状态说明数据包不能被识别属于哪个连接或没有任何状�
 
 多端口规则匹配
 使用参数-m multiport 可以指定15个以内的非连续端口，比如21-22,80
--mmulitport  
-   --src-prots
+-m mulitport  
+   --src-ports
    --dst-ports
-   --prots
+   --ports
 
 #对多端口进行匹配，只要匹配以下端口，则全部放行
-[root@test3~]# iptables -A INPUT  -s 10.0.10.0/24 -d10.0.10.62 -p tcp -m state --state NEW  -m mulitport --destination-ports 21,22,80 -j ACCEPT
+[root@test3~]# iptables -A INPUT  -s 10.0.10.0/24 -d10.0.10.62 -p tcp 
+ -m state --state NEW  -m multiport --destination-ports 21,22,80 -j ACCEPT
 
 多IP匹配,指定匹配的IP地址范围：
--miprange
+-m iprange
    --src-range
    --dst-range
 
@@ -1861,7 +1895,7 @@ INVALID状态说明数据包不能被识别属于哪个连接或没有任何状�
 
 指定速率匹配
 默认为每秒匹配3个报文，基于令牌桶算法
--mlimit
+-m  limit
    --limit             #NUMBER，表示允许收集多少个空闲令牌
    --limit-burst          #RATE，允许放行多少个报文
 
@@ -1873,7 +1907,7 @@ INVALID状态说明数据包不能被识别属于哪个连接或没有任何状�
 只有在大量空闲令牌存储的情况下，才可有limit-burst控制
 
 例：控制NEW状态的请求
-[root@test3~]# iptables -A INPUT -s 10.0.10.0/24 -d 10.0.10.62 -m state --state NEW -mlimit --limit 12/min --limit 12/min --limit-burst 2 -j ACCEPT
+[root@test3~]# iptables -A INPUT -s 10.0.10.0/24 -d 10.0.10.62 -m state --state NEW -m limit --limit 12/min --limit 12/min --limit-burst 2 -j ACCEPT
 
 例2：每次只允许2个ping包进来
 [root@test3~]# iptables -F

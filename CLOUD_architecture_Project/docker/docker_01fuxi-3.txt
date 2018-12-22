@@ -314,229 +314,7 @@ enabled=1
  do scp  -o  StrictHostKeyChecking=no  local.repo.txt  \
  root@$i:/etc/yum.repos.d/local.repo ; done
 ................ 00:00 
-   
 
-Hypervisor
- 一种运行在基础物理服务器 和 操作系统之间的中间软件层，
-可允许 多个操作系统和 应用 共享硬件。
-也可叫做VMM（ virtual machine monitor ），
-即虚拟机监视器。
-
-Hypervisors
- 是一种在虚拟环境中的“元”操作系统。
-他们可以访问服务器上包括磁盘和内存在内的所有物理设备。
-Hypervisors
- 不但协调着这些硬件资源的访问，
-也同时在各个虚拟机之间施加防护。
-
-当服务器启动并执行Hypervisor时，
-它会加载所有 虚拟机客户端的操作系统 同时会 
-分配给每一台虚拟机适量的内存，CPU，网络和磁盘。
-
-作用
-Hypervisor是所有虚拟化技术的核心。 
-非中断地支持多工作负载迁移的能力是Hypervisor的基本功能。
-
------------------------------------
-Docker与KVM对比
-
-1.     Docker 容器的启动可以在秒级实现，
-这相比传统的虚拟机方式要快得多。
-
- 其次，Docker 对系统资源的利用率很高，
-一台主机上可以同时运行数千个 Docker 容器。
-
-2.     容器除了运行其中应用外，
-基本不消耗额外的系统资源，
-使得应用的性能很高，同时系统的开销尽量小。
-
-传统虚拟机方式运行 10 个不同的应用就要起 10 个虚拟机，
-而Docker 只需要启动 10 个隔离的应用即可。
-
-3.     虚拟化技术依赖物理CPU和内存，是硬件级别的；
-而docker构建在操作系统上，
-利用操作系统的containerization技术，
-所以docker甚至可以在虚拟机上运行。
-
-4.     虚拟化系统一般都是指操作系统镜像，比较复杂，称为“系统”；
-而docker开源而且轻量，称为“容器”，
-单个容器适合部署少量应用，
-比如部署一个Redis、一个memcached。
-
-5.     传统的虚拟化技术使用 快照 来保存状态；
-而docker在保存状态上不仅更为轻便和低成本，
-而且引入了类似源代码管理机制，
-将容器的快照历史版本一一记录，
-切换成本很低。
-
-6.     传统的虚拟化技术在构建系统的时候较为复杂，需要大量的人力；
-而docker可以通过Dockfile来构建整个容器，
-重启和构建速度很快。
-更重要的是Dockfile可以手动编写，
-这样应用程序开发人员可以
-通过发布Dockfile来指导系统环境和依赖，
-这样对于持续交付十分有利。
-
-7.     KVM对比于容器也有一个比较大的优势
-就是可以使用不同的操作系统或内核。
-至于Docker，
-所有容器都必须使用同样的操作系统和内核。
-
-具体说来，Docker 在如下几个方面具有较大的优势。
-
-2.1 更快速的交付和部署
-
-对开发和运维 人员来说，
-最希望的就是一次创建或配置，
-可以在任意地方正常运行。
-
-开发者可以使用一个标准的镜像来构建一套开发容器，
-开发完成之后，
-运维人员可以直接使用这个容器来部署代码。 
-Docker 可以快速创建容器，
-快速迭代应用程序，并让整个过程全程可见，
-使团队中的其他成员更容易理解应用程序是如何创建和工作的。 
-Docker 容器很轻很快！容器的启动时间是秒级的，大量地节约开发、测试、部署的时间。
-
-2.2 更高效的虚拟化
-
-Docker 容器的运行
-不需要额外的
- hypervisor 支持，
-
-它是内核级的虚拟化，
-
-因此可以实现更高的性能和效率。
-
-2.3 更轻松的迁移和扩展
-
-Docker 容器几乎可以在任意的平台上运行，
-包括物理机、虚拟机、公有云、私有云、个人电脑、服务器等。
-这种兼容性可以让用户把一个应用程序从一个平台直接迁移到另外一个。
-
-2.4 更简单的管理
-
-使用 Docker，只需要小小的修改，就可以替代以往大量的更新工作。
-所有的修改都以增量的方式被分发和更新，
-从而实现自动化并且高效的管理。
-
-2.5 对比传统虚拟机（KVM）总结
-
-特性               容器              虚拟机
-启动               秒级              分钟级
-硬盘使用        一般为 MB       一般为 GB
-性能             接近原生             弱于
-系统支持量   单机支持上千个容器   一般几十个
- 
-
-三、Docker在实际应用中的一些问题和局限性
-
-LXC是基于cgroup等linux kernel功能的，
-因此Container的guest系统
-只能是linux base的
-
-隔离性相比KVM之类的虚拟化方案还是有些欠缺，
-所有container公用一部分的运行库
-
-网络管理相对简单，主要是基于namespace隔离
-
-cgroup的cpu和cpuset提供的cpu功能
-和KVM的等虚拟化方案相比
-难以度量(所以dotcloud主要是按内存收费)
-
-container随着用户进程的停止而销毁，
-container中的log等用户数据不便收集
-
-另外，Docker是面向应用的，
-其终极目标是构建PAAS平台，
-
-而现有虚拟机主要目的是
-提供一个灵活的计算资源池，
-是面向架构的，
-其终极目标是构建一个IAAS平台，
-所以docker不能替代传统虚拟化解决方案。
-
-目前在容器可管理性方面，对于方便运维，
-提供UI来管理监控各个containers的功能还不足，
-还都是第三方实现。
-
-因为容器技术本身更适于解决大规模应用场景，
-所以通常都是集群基础上的部署、运维，
-但是目前对这一系列任务的自动化处理尚无统一的或者标准的框架。
-
-两者有不同的使用场景。
-虚拟机更擅长于彻底隔离整个运行环境。
-例如，云服务提供商通常采用虚拟机技术隔离不同的用户。
-
-而Docker通常用于隔离不同的应用，
-例如前端，后端以及数据库。
---------------------- 
-
-基础设施(Infrastructure)
-它可以是你的个人电脑，数据中心的服务器，
-或者是云主机。
-
-虚拟机管理系统(Hypervisor)
-利用Hypervisor，
-可以在主操作系统之上运行多个不同的从操作系统。
-
- 类型 1 的Hypervisor有
-支持MacOS的HyperKit，
-支持Windows的Hyper-V、Xen以及KVM。
-
-类型 2 的Hypervisor有
-VirtualBox和VMWare workstation。
-客户机操作系统(Guest Operating System)。
-
-假设你需要运行3个相互隔离的应用，
-则需要使用Hypervisor启动3个客户机操作系统，
-
-也就是3个虚拟机。
-这些虚拟机都非常大，将占用2.1GB的磁盘空间.
-它们还会消耗很多CPU和内存。
-
-各种依赖。
-每一个客户机操作系统都需要安装许多依赖。
-如果你的应用需要连接PostgreSQL的话，
-则需要安装libpq-dev；
-如果你使用Ruby的话，
-应该需要安装gems；
-如果使用其他编程语言，比如Python或者Node.js，
-都会需要安装对应的依赖库。
-
-应用。
-安装依赖之后，
-就可以在各个客户机操作系统分别运行应用了，
-这样各个应用就是相互隔离的。
-
-----------------
-Docker简洁很多。
-不需要运行一个臃肿的客户机操作系统了
-
-基础设施(Infrastructure)。
-
-主操作系统(Host Operating System)。
-
-所有主流的Linux发行版都可以运行Docker。
-对于MacOS和Windows，
-也有一些办法”运行”Docker。
-
-Docker守护进程(Docker Daemon)。
-
-Docker守护进程取代了Hypervisor，
-它是运行在操作系统之上的后台进程，
-负责管理Docker容器。
-
-各种依赖。
-对于Docker，
-应用的所有依赖都打包在Docker镜像中，
-Docker容器是基于Docker镜像创建的。
-
-应用。
-应用的源代码与它的依赖都打包在Docker镜像中，
-不同的应用需要不同的Docker镜像。
-不同的应用运行在不同的Docker容器中，
-它们是相互隔离的。
 ------------------- namespace ---------------------
 
 Namespace并不是Linux才推出的东西，
@@ -822,15 +600,6 @@ docker-engine-selinux.noarch : SELinux Policies for the open-source application
 ....................
 您已启用软件包 GPG 签名检查，这样很好。
 不过您尚未安装任何 GPG 公钥。
-请下载您希望安装的软件签名公钥并安装。假设公钥已下载，安装命令是：
-    rpm --import public.gpg.key
-
-或者，在软件源配置中，使用 'gpgkey' 选项指定软件源使用的公钥 URL，
-这样 yum 会自动安装它。
-
-详情请联系发行版或软件包制作人。
-
-问题源：docker
 .................
 -----------------------  提示 您尚未安装任何 GPG 公钥  没有签名
                ###    后面加上 --nogpgcheck 参数 即可
@@ -1046,102 +815,25 @@ PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
 64 bytes from 8.8.8.8: icmp_seq=1 ttl=40 time=129 ms
 64 bytes from 8.8.8.8: icmp_seq=2 ttl=40 time=128 ms
 64 bytes from 8.8.8.8: icmp_seq=3 ttl=40 time=128 ms
-
---- 8.8.8.8 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 128.106/128.602/129.163/0.599 ms
-
+....................
 [root@Va1 ~]# ping  192.168.2.12  -c3    ## 注意ttl=64
 PING 192.168.2.12 (192.168.2.12) 56(84) bytes of data.
 64 bytes from 192.168.2.12: icmp_seq=1 ttl=64 time=0.736 ms
 64 bytes from 192.168.2.12: icmp_seq=2 ttl=64 time=0.495 ms
 64 bytes from 192.168.2.12: icmp_seq=3 ttl=64 time=0.639 ms
 
---- 192.168.2.12 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2000ms
-rtt min/avg/max/mdev = 0.495/0.623/0.736/0.101 ms
-
+.........................
 [root@Va1 ~]# elinks   -dump  119.75.217.109  |head  -25  |tail  -5
                           [18]百度首页[19]设置[20]登录
    [21]新闻[22]hao123[23]地图[24]视频[25]贴吧[26]学术[27]登录[28]设置[29]更多
                                       产品
    网页 [30]资讯 [31]贴吧 [32]知道 [33]音乐 [34]图片 [35]视频 [36]地图 [37]文
    库 [38]更多»
+
 /*** http://dockone.io/article/783
 https://www.cnblogs.com/bethal/p/5942369.html
 
-
-Image Layer Definition
-
-为了将零星的数据整合起来，
-提出了镜像层（image layer）这个概念
-
-一个镜像层，
-一个层并不仅仅包含文件系统的改变，
-它还能包含了其他重要信息。 
-
-元数据（metadata）就是关于这个层的额外信息，
-它不仅能够让Docker获取运行和构建时的信息，
-还包括父层的层次信息。
-需要注意，只读层和读写层都包含元数据。
-
-除此之外，
-每一层都包括了一个指向父层的指针。
-如果一个层没有这个指针，
-说明它处于最底层。
- 
-镜像（Image）
-就是一堆只读层（read-only layer）的统一视角
-
-多个只读层，它们重叠在一起。
-除了最下面一层，其它层都会有一个指针指向下一层。
-这些层是Docker内部的实现细节，
-并且能够 在主机（译者注：运行Docker的机器）的文件系统上访问到。
-统一文件系统（union file system）技术
-能够将不同的层整合成一个文件系统，
-为这些层提供了一个统一的视角，
-这样就隐藏了多层的存在，
-在用户的角度看来，只存在一个文件系统。 
-
-
-
-容器（container）
-的定义和镜像（image）几乎一模一样，
-也是一堆层的统一视角，
-唯一区别在于
-容器的最上面那一层是可读可写的。 
-
-容器的定义并没有提及容器是否在运行
-
-容器 = 镜像 + 可读可写层。
-并且容器的定义并没有提及是否要运行容器
-
-Running Container Definition
-一个运行态容器（running container）被定义为
-一个可读写的统一文件系统 加上
-隔离的进程空间 和
-包含其中的进程
-
-文件系统隔离技术 
-使得Docker成为了一个前途无量的技术。
-一个容器中的进程可能会对文件进行修改、删除、创建，
-这些改变都将作用于可读写层（read-write layer）
-
-docker create 命令
-为指定的镜像（image）添加了一个可读写层，
-构成了一个新的容器。
-注意，这个容器并没有运行。 
-
-Docker start命令
-为容器文件系统创建了一个进程隔离空间。
-注意，每一个容器只能够有一个进程隔离空间。 
-
-docker run 命令
-先是利用镜像创建了一个容器，
-然后运行这个容器。
-这个命令非常的方便，并且隐藏了两个命令的细节
-
-我认为docker run命令
+docker run命令
 类似于git pull命令。
 git pull命令
 就是git fetch 和 git merge两个命令的组合，
@@ -1263,15 +955,18 @@ docker inspect 查看容器底层信息
 docker top 查看容器进程列表
 docker rm 删除容器
 
+docker run
+就是docker create 和 docker start两个命令的组合
+
+docker create 命令为指定的镜像（image）添加了一个可读写层，
+构成了一个新的容器。
+注意，这个容器并没有运行。
+
+Docker start命令为容器文件系统创建了一个进程隔离空间。
+注意，每一个容器只能够有一个进程隔离空间
+
 [root@Va1 ~]# docker  help  images
 .....................
-  -a, --all             Show all images (default hides intermediate images)
-      --digests         Show digests
-  -f, --filter value    Filter output based on conditions provided (default [])
-      --format string   Pretty-print images using a Go template
-      --help            Print usage
-      --no-trunc        Don't truncate output
-  -q, --quiet           Only show numeric IDs
 
 [root@Va1 ~]# docker  images  --help
 
@@ -1372,31 +1067,7 @@ busybox.tar: POSIX tar archive
 
 [root@Va1 ~]# tar  -xvf  busybox.tar  ## 解压
 
-59788edf1f3e78cd0ebe6ce1446e9d10788225db3dedcfd1a59f764bad2b2690.json
-dc7e561ac7acbee61721b30930d81d0085f734112f2c2c519e2df7bf0cf09764/
-dc7e561ac7acbee61721b30930d81d0085f734112f2c2c519e2df7bf0cf09764/VERSION
-dc7e561ac7acbee61721b30930d81d0085f734112f2c2c519e2df7bf0cf09764/json
-dc7e561ac7acbee61721b30930d81d0085f734112f2c2c519e2df7bf0cf09764/layer.tar
-manifest.json
-tar: manifest.json：不可信的旧时间戳 1970-01-01 08:00:00
-repositories
-tar: repositories：不可信的旧时间戳 1970-01-01 08:00:00
-
 [root@Va1 ~]# ls
-59788edf1f3e78cd0ebe6ce1446e9d10788225db3dedcfd1a59f764bad2b2690.json
-anaconda-ks.cfg
-busybox.tar
-
-dc7e561ac7acbee61721b30930d81d0085f734112f2c2c519e2df7bf0cf09764
-
-docker-engine-1.12.1-1.el7.centos.x86_64.rpm
-docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
-docker_images.zip
-initial-setup-ks.cfg
-ip.sh
-
-manifest.json
-repositories
 .................
 [root@Va1 ~]# tar  -tvf  busybox.tar ## 查看
 
@@ -1433,6 +1104,34 @@ docker search 搜索镜像
 
 docker tag 修改镜像名称和标签
 
+容器常用命令命令列表
+
+docker run
+就是docker create 和 docker start两个命令的组合
+
+docker create 命令为指定的镜像（image）添加了一个可读写层，
+构成了一个新的容器。
+注意，这个容器并没有运行。
+
+Docker start命令为容器文件系统创建了一个进程隔离空间。
+注意，每一个容器只能够有一个进程隔离空间
+
+– docker run 
+//运行容器 -i 交互式 -t 终端 -d 后台
+PID为1的进程 （根进程）就是系统 （pstree -p）
+
+docker attach 容器ID 进入后退出后容器就完蛋了 如果想让他继续执行 则ctrl +p q 先按p 后按q
+docker run -it 镜像名：标签 命令 （交互）
+docker run -d 镜像名：标签 (非交互式)
+docker run -itd 镜像名：标签 命令 （交互式后台进程）
+docker ps 显示运行的容器 -a 显示所有容器 -q 只显示容器ID
+docker start|stop|restart 容器ID
+docker attach 容器ID 进入容器console终端
+docker exec -it 容器ID 命令 （/bin/bash）
+docker inspect 容器ID 显示容器的详细信息
+docker top 容器ID 显示容器进程
+docker rm 容器ID 删除容器ID
+
 [root@Va1 ~]# ll docker_images.zip 
 -rwxr-xr-x 1 root root 258246973 12月 21 19:59 docker_images.zip
 [root@Va1 ~]# unzip  docker_images.zip
@@ -1468,11 +1167,285 @@ centos              latest              e934aafc2206        8 months ago        
 registry            latest              d1fd7d86a825        11 months ago       33.26 MB
 nginx               latest              a5311a310510        2 years ago         181.4 MB
 redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@Va1 ~]# hostname
+Va1
+[root@Va1 ~]# pwd
+/root
+[root@Va1 ~]# ls  /
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+
+[root@Va1 ~]# ps    -ef   |wc  -l
+134
+[root@Va1 ~]# ip  address  show |grep  "inet "
+    inet 127.0.0.1/8 scope host lo
+    inet 192.168.0.11/24 brd 192.168.0.255 scope global eth0
+    inet 192.168.1.11/24 brd 192.168.1.255 scope global eth1
+    inet 192.168.2.11/24 brd 192.168.2.255 scope global eth2
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+    inet 172.17.0.1/16 scope global docker0
+
+容器常用命令命令
+docker run
+就是docker create 和 docker start两个命令的组合
+
+docker create 命令为指定的镜像（image）添加了一个可读写层，
+构成了一个新的容器。
+注意，这个容器并没有运行。
+
+Docker start命令为容器文件系统创建了一个进程隔离空间。
+注意，每一个容器只能够有一个进程隔离空间
+
+– docker run 
+//运行容器 -i 交互式 -t 终端 -d 后台
+PID为1的进程 （根进程）就是系统 （pstree -p）
+
+docker run -it 镜像名：标签 命令(镜像里的) （交互）
+
+[root@Va1 ~]# docker run  -it  centos:latest  /bin/bash
+
+[root@Va1 ~]# docker  run  -it  centos:latest  /bin/bash
+[root@7e59a30eb998 /]# hostname  ## 查看主机名
+7e59a30eb998
+[root@7e59a30eb998 /]# pwd  ##
+/
+[root@7e59a30eb998 /]# ls  /  ## 查看根文件系统
+anaconda-post.log  dev  home  lib64  mnt  proc  run   srv  tmp  var
+bin                etc  lib   media  opt  root  sbin  sys  usr
+
+[root@7e59a30eb998 /]# ip  address  show
+bash: ip: command not found
+
+[root@7e59a30eb998 /]# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 09:03 ?        00:00:00 /bin/bash
+root        16     1  0 09:06 ?        00:00:00 ps -ef
+ 
+[root@7e59a30eb998 /]# cd  /etc/yum.repos.d/
+[root@7e59a30eb998 yum.repos.d]# ls
+CentOS-Base.repo       CentOS-Media.repo    CentOS-fasttrack.repo
+CentOS-CR.repo         CentOS-Sources.repo
+CentOS-Debuginfo.repo  CentOS-Vault.repo
+
+[root@7e59a30eb998 yum.repos.d]# mkdir  repo; mv  *.repo   repo
+[root@7e59a30eb998 yum.repos.d]# ls
+repo
+[root@7e59a30eb998 yum.repos.d]# vim  local.repo
+bash: vim: command not found
+[root@7e59a30eb998 yum.repos.d]# vi  local.repo
+
+[root@7e59a30eb998 yum.repos.d]# cat  local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@7e59a30eb998 yum.repos.d]# yum  clean  all >/dev/null &&  yum repolist |tail -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+[root@7e59a30eb998 yum.repos.d]# yum  list  |grep vim
+
+vim-minimal.x86_64                       2:7.4.160-2.el7            @CentOS     
+................
+vim-enhanced.x86_64                      2:7.4.160-2.el7            CentOS7-1708
+...............
+[root@7e59a30eb998 yum.repos.d]# yum  provides  ifconfig
+..............   
+net-tools-2.0-0.22.20131004git.el7.x86_64 : Basic networking tools
+Repo        : CentOS7-1708
+Matched from:
+Filename    : /sbin/ifconfig
+
+[root@7e59a30eb998 yum.repos.d]# yum  -y  install  net-tools  vim-enhanced |tail -4
+.................
+私有地址的范围：
+A类地址范围：10.0.0.0—10.255.255.255
+B类地址范围：172.16.0.0---172.31.255.555
+C类地址范围：192.168.0.0---192.168.255.255
+
+[root@7e59a30eb998 yum.repos.d]#  ifconfig  ## 查看ip地址
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:2  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+        RX packets 522  bytes 13557030 (12.9 MiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 390  bytes 27348 (26.7 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@7e59a30eb998 yum.repos.d]# cd
+[root@7e59a30eb998 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         190        1434           8        2327        3472
+Swap:          2047           0        2047
+[root@7e59a30eb998 ~]# echo  $$ ## 查看进程
+1
+[root@7e59a30eb998 ~]# cat  /etc/passwd |wc -l  ## 查看用户数量
+15
+[root@7e59a30eb998 ~]# exit
+exit
+[root@Va1 ~]# docker  images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+busybox             latest              59788edf1f3e        11 weeks ago        1.154 MB
+ubuntu              latest              452a96d81c30        7 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+容器常用命令命令
+docker run
+就是docker create 和 docker start两个命令的组合
+
+docker create 命令为指定的镜像（image）添加了一个可读写层，
+构成了一个新的容器。
+注意，这个容器并没有运行。
+
+Docker start命令为容器文件系统创建了一个进程隔离空间。
+注意，每一个容器只能够有一个进程隔离空间
+
+– docker run 
+//运行容器 -i 交互式 -t 终端 -d 后台
+PID为1的进程 （根进程）就是系统 （pstree -p）
+
+docker run -it 镜像名：标签 命令(镜像里的) （交互）
+
+[root@Va1 ~]# docker  run  -it  busybox:latest   ls  /bin/ |wc  -l
+99
+/**************
+awk 命令 
+$0就表示一个记录，$1表示记录中的第一个字段。
+一般 {print $0} 就是打印整行内容
+
+
+[root@Va1 ~]# docker  run  -it  busybox:latest   ls  /bin/sh
+/bin/sh
+[root@Va1 ~]# docker  run  -it  busybox:latest    /bin/sh
+/ # ls
+bin   dev   etc   home  proc  root  sys   tmp   usr   var
+/ # pwd
+/
+/ # hostname 
+52e6c4d45683
+/ # ls  /etc/
+group        hosts        mtab         passwd       shadow
+hostname     localtime    network      resolv.conf
+
+/ # cat   /etc/hosts
+127.0.0.1	localhost
+::1	localhost ip6-localhost ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+172.17.0.2	52e6c4d45683
+
+/ # echo  $$
+1
+/ # ps  -ef
+PID   USER     TIME  COMMAND
+    1 root      0:00 /bin/sh
+   12 root      0:00 ps -ef
+
+/ # cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search vbr
+
+/ # route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+/ # ifconfig  eth0 | grep  "inet "
+          inet addr:172.17.0.2  Bcast:0.0.0.0  Mask:255.255.0.0
+/ # exit
+
+    - - - - - - - --   - - - -- - - - - --  --- -  --- -- - - - -- -- - - -- 
+      redhat           |        debian
+----------------------------------------------------------------------------------
+        rhel           |        debian
+        centos         |        ubuntu
+        selinux        |
+------------------------------------------------------------------------------
+   yum                |   apt-get
+   rpm                |   dpkg
+
+
+[root@Va1 ~]# docker  run  -it  ubuntu:latest   /bin/bash
+root@19c3c5f8ad61:/# pwd
+/
+root@19c3c5f8ad61:/# hostname
+19c3c5f8ad61
+
+root@19c3c5f8ad61:/# echo $$
+1
+root@19c3c5f8ad61:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 10:18 ?        00:00:00 /bin/bash
+root        10     1  0 10:18 ?        00:00:00 ps -ef
+
+root@19c3c5f8ad61:/# ls   
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+
+root@19c3c5f8ad61:/# ls  /etc/
+adduser.conf            hostname       networks       resolv.conf
+alternatives            hosts          nsswitch.conf  rmt
+apt                     init.d         opt            securetty
+bash.bashrc             issue          os-release     security
+bindresvport.blacklist  issue.net      pam.conf       selinux
+cron.daily              kernel         pam.d          shadow
+debconf.conf            ld.so.cache    passwd         shells
+debian_version          ld.so.conf     profile        skel
+default                 ld.so.conf.d   profile.d      subgid
+deluser.conf            legal          rc0.d          subuid
+dpkg                    libaudit.conf  rc1.d          sysctl.conf
+environment             login.defs     rc2.d          sysctl.d
+fstab                   logrotate.d    rc3.d          systemd
+gai.conf                lsb-release    rc4.d          terminfo
+group                   machine-id     rc5.d          update-motd.d
+gshadow                 mke2fs.conf    rc6.d
+host.conf               mtab           rcS.d
+
+
+root@19c3c5f8ad61:/# cat  /etc/host.conf 
+# The "order" line is only used by old versions of the C library.
+order hosts,bind
+multi on
+
+root@19c3c5f8ad61:/# ls  /etc/dpkg/
+dpkg.cfg  dpkg.cfg.d  origins
+
+root@19c3c5f8ad61:/# cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search vbr
+
+root@19c3c5f8ad61:/# ls  /etc/apt/
+apt.conf.d  preferences.d  sources.list  sources.list.d  trusted.gpg.d
+
+root@19c3c5f8ad61:/# ls   /etc/apt/apt.conf.d/
+01-vendor-ubuntu      70debconf                   docker-gzip-indexes
+01autoremove          docker-autoremove-suggests  docker-no-languages
+01autoremove-kernels  docker-clean
+
+root@19c3c5f8ad61:/# exit
+exit
 [root@Va1 ~]# 
-
-
-
-
 
 
 
@@ -1844,10 +1817,7 @@ rtt min/avg/max/mdev = 37.610/38.153/38.696/0.543 ms
 
 [root@Va2 ~]# elinks   -dump  119.75.217.109  |head  -25  |tail  -5
                           [18]百度首页[19]设置[20]登录
-   [21]新闻[22]hao123[23]地图[24]视频[25]贴吧[26]学术[27]登录[28]设置[29]更多
-                                      产品
-   网页 [30]资讯 [31]贴吧 [32]知道 [33]音乐 [34]图片 [35]视频 [36]地图 [37]文
-   库 [38]更多»
+........................
 [root@Va2 ~]# ls  /var/lib/docker/
 containers  devicemapper  image  network  swarm  tmp  trust  volumes
 
@@ -2312,5 +2282,73 @@ Block IO 是另一种可以限制容器使用的资源。
 10-installonly_limit=5
 [root@room9pc01 ~]# 
 
+=========Ubuntu(Debian)的aptitude与apt-get的区别和联系 =============
+aptitude 与 apt-get 一样，
+是 Debian 及其衍生系统中功能极其强大的包管理工具。
+与 apt-get 不同的是，
+aptitude 在处理依赖问题上更佳一些。
+举例来说，
+aptitude 在删除一个包时，
+会同时删除本身所依赖的包。
+这样，系统中不会残留无用的包，整个系统更为干净。
+以下是一些常用 aptitude 命令
+
+命令 作用
+aptitude update 更新可用的包列表
+aptitude upgrade 升级可用的包
+aptitude dist-upgrade 将系统升级到新的发行版
+aptitude install pkgname 安装包
+aptitude remove pkgname 删除包
+aptitude purge pkgname 删除包及其配置文件
+aptitude search string 搜索包
+aptitude show pkgname 显示包的详细信息
+aptitude clean 删除下载的包文件
+aptitude autoclean 仅删除过期的包文件
+
+=================ubuntu 下dpkg 与apt-get ======================
+
+dpkg     -i      <package>        //安装软件
+dpkg     -r                       //移除一个已经安装的软件包    
+dpkg     -P                       //unstall software and 配置文件
+dpkg     -L                       //列出安装的软件包清单
+dpkg     -s                       //显示软件包的安装状态
+
+dpkg 和 apt的区别： 
+dpkg安装的时候需要自己手动添加安装包的依赖文件以及配置文件， 
+而apt就不需要了，它会自动的添加安装包的依赖，两者是两种不同的软件包管理
+
+APT的工作原理： 
+采用软件仓库机制，软件源，一般在/etc/apt/sources.list列出最适合访问的镜像站点地址
+
+apt-get   子命令     optional
+1
+update          下载更新软件包列表信息
+upgrade         将系统中所有软件包升级到最新版本
+install         下载所需软件包并进行安装配置
+remove          卸载软件包
+autoremove      将不满足依赖关系的软件包自动卸载
+source          下载源码包
+build-dep       为源码包构建所需的编译环境
+dist-upgrade    发布版升级
+dselect-upgrade 根据dselete的选择来进行软件包升级
+clean           删除缓存区所有已下载的包文件
+autoclean       删除缓存区中老版本的已下载的包文件
+check           检查系统中依赖关系的完整性
+
+apt-get check=====apt-get -f install
+apt-get --reinstall install      //重新安装软件
+apt-get remove                  //仅卸载软件包还有依赖文件
+apt-get --purge remove         //完全卸载，删除配置文件
+
+
+apt-get clean                //清除缓冲区的文件
+apt-get autoclean            //只保留最新版
+
+软件包查询：
+
+apt-cache show          //获取软件包的详细内容
+apt-cahce policy        //查询软件包的状态
+apt-cache depends       //查询软件包的依赖
+apt-cache rdepends      //被哪个所依赖
 
 

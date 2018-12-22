@@ -1,0 +1,134 @@
+
+
+https://mirror
+
+https://www.aliyun.com/jiaocheng/linux_23743.html
+阿里云   >    linux教程    >   EPEL
+EPEL
+
+CentOS 6.x/7.x下安装EPEL yum源 
+安装过程很简单Centos7下执行如下命令:
+rpm -ivh http://mirrors.kernel.org/fedora-epel/7/x86_64/e/epel-release-7-10.noarch.rpm
+Centos6下执行如下命令:rpm -ivh http://mirrors.kernel.org/fedora-epel/6/i386/epel-release-6-8.noarch.rpm
+或者rpm -ivh  http://mirrors.kernel.org/fedor
+
+linux系统中安装软件的方法
++yum仓库+yum源+epel源 
+linux系统中安装软件的方法
++yum仓库+yum源+epel源
+一、Linux(centos)系统中安装软件的几种方法
+1、rpm方式安装rpm-ivh包名.rpm【缺点】不能定制
+2、yum方式安装自动解决rpm方式安装的依赖问题【优点】解决了rpm方式安装的依赖问题【缺点】不能定制
+3、编译安装./configure(配置)make(编译成二进制文件等)makeinstall(安装)【优点】可以定制
+【缺点】复杂、效率低4、定制化制作rpm包,搭建yum仓库,把定制的rpm包放在
+
+安装epel源 1.yum -y install epel-release2. 
+修改/etc/yum.repos.d/epel.repo,将#baseurl和mirrorlist
+修改为baseurl和#mirrorlist
+如下
+[epel]name=ExtraPackagesforEnterpriseLinux6-$basearchbaseurl=http://download.fedoraproject.org/pub/epel/6/$basearch#mirrorlist=https://mirr
+yum扩展源epel安装后无法使用 1.错误信息
+
+https://www.aliyun.com/jiaocheng/linux_23743.html
+
+
+
+
+    EPEL (Extra Packages for Enterprise Linux)是基于Fedora的一个项目，为“红帽系”的操作系统提供额外的软件包，适用于RHEL、CentOS和Scientific Linux.
+
+使用很简单：
+1. 首先我们需要安装一个叫”epel-release”的软件包，这个软件包会自动配置yum的软件仓库。当然你也可以不安装这个包，自己配置软件仓库也是一样的。
+
+#用于RHEL5系列
+
+wget http://download.fedoraproject.org/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+rpm -ivh epel-release-5-4.noarch.rpm
+#用于RHEL6系列
+
+wget http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
+rpm -ivh epel-release-6-5.noarch.rpm
+ 
+
+2. 安装完成之后你就可以直接使用yum来安装额外的软件包了
+
+yum clean all
+
+yum makecache
+yum install nginx pure-ftpd
+ 
+
+3.直接自己手工添加软件仓库配置文件
+
+复制代码
+vi /etc/yum.repos.d/epel.repo
+
+[epel]
+name=epel
+mirrorlist=http://mirrors.fedoraproject.org/mirrorlist?repo=epel-releasever&arch=releasever&arch=basearch
+enabled=1
+gpgcheck=0
+
+
+ CentOS6.5添加阿里云的EPEL源
+
+yum localinstall --nogpgcheck http://mirrors.aliyun.com/epel/6/x86_64/epel-release-6-8.noarch.rpm
+ 安装阿里云EPEL源
+
+1、 首先卸载以前装的epel以免影响
+
+rpm -e epel-release
+2、 下载阿里提供的epel
+
+wget -P /etc/yum.repos.d/ http://mirrors.aliyun.com/repo/epel-6.repo
+
+3、yum clean all
+
+4、yum makecache
+
+阿里云源安装示例：
+
+Epel
+1、备份(如有配置其他epel源)
+
+mv /etc/yum.repos.d/epel.repo /etc/yum.repos.d/epel.repo.backup
+
+mv /etc/yum.repos.d/epel-testing.repo /etc/yum.repos.d/epel-testing.repo.backup
+ 
+
+2、下载新repo 到/etc/yum.repos.d/
+
+epel(RHEL 7)
+
+wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-7.repo
+ 
+
+epel(RHEL 6)
+
+wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-6.repo
+epel(RHEL 5)
+
+wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel-5.repo
+分类: Linux,Linux软件包管理基础,网络运维
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

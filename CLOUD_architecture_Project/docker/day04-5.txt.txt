@@ -136,7 +136,22 @@ Extended IP access list 100
     30 permit ip any any
 SERVER>ping 192.168.1.1
     Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
-===========================================================
+========================================
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.2.1 eq 21
+R3(config)#access-list 100 deny tcp host 192.168.2.1 host 192.168.2.1 eq 80
+R3(config)#access-list 100 permit ip any  any
+R3(config)#interface gigabitEthernet 0/1
+R3(config-if)#ip access-group 100 in  
+
+R3(config)#ip access-list extended 100 ##进入扩展访问列表
+
+R3(config-ext-nacl)#no 10
+R3(config-ext-nacl)#no 20
+
+R3(config-ext-nacl)#do show access-list
+Extended IP access list 100
+    30 permit ip any any (13 match(es))
+===================
 ==================nat=======================
 -------NAT Networ  Address Translation 网络地址转换----
 ##静态转换static translation
@@ -193,6 +208,8 @@ PAT的配置：
 在R1上配置端口映射
  192.168.1.1的80端口映射为100.0.0.2的80端口
 
+https://github.com/hiys/Cloud_linux/nat-pat-tcp/iptables-nat-pat-5.txt
+https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/iptables-nat-pat-5.txt
 
 R#show running-config 
 
@@ -271,6 +288,9 @@ IP NAT debugging is on
 SERVER>ping 100.0.0.10
 Ping statistics for 100.0.0.10:
     Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+关闭nat排错功能
+R#undebug ip nat 
+IP NAT debugging is off
 ====================================================================
 
 

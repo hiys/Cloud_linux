@@ -1,0 +1,699 @@
+
+[root@Va1 ~]# elinks  -dump   192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+[root@Va1 ~]# elinks  -dump   192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va1 ~]# history  |tail  -30
+   81  elinks -dump  192.168.1.15
+   82  elinks -dump  192.168.2.16
+   83  elinks -dump  192.168.1.14
+   84  elinks -dump  192.168.2.14
+   85  elinks -dump  192.168.2.15
+   86  elinks -dump  192.168.1.15
+   87  elinks -dump  192.168.1.16
+   88  elinks -dump  192.168.1.15
+   89  elinks -dump  192.168.2.16
+   90  elinks -dump  192.168.0.17
+   91  elinks -dump  192.168.1.18
+   92  elinks -dump  192.168.2.19
+   93  route  -n
+   94  elinks -dump  192.168.2.19
+   95  elinks -dump  192.168.1.18
+   96  elinks -dump  192.168.0.17
+   97  elinks -dump  192.168.2.16
+   98  elinks -dump  192.168.1.15
+   99  elinks -dump  192.168.2.16
+  100  elinks -dump  192.168.0.17
+  101  elinks -dump  192.168.1.15
+  102  ping  114.114.114.114
+  103  ping  114.114.114.114  -c2
+  104  ssh   192.168.1.15
+  105  ssh   192.168.2.16
+  106  ssh -o StrictHostKeyChecking=no  192.168.2.19
+  107  elinks  -dump   192.168.2.18
+  108  elinks  -dump   192.168.0.14
+  109  elinks  -dump   192.168.2.19
+  110  history  |tail  -30
+[root@Va1 ~]# 
+
+
+[root@Va2 ~]# history  |tail  -30
+   23  yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   24  systemctl  start httpd && systemctl  enable  httpd
+   25   echo "<h1> Va2   192.168.0.12 </h1>" > /var/www/html/index.html
+   26   elinks  -dump  192.168.0.12
+   27  ifconfig   eth1  down; ifconfig  eth2  down
+   28  route  del default  gw  192.168.0.254;route add default gw  192.168.0.14
+   29  ip  route  show;ifconfig |awk '/inet /{print $2}'
+   30  elinks  -dump  192.168.0.14
+   31  ping  -c2  192.168.0.14
+   32  route  -n
+   33  elinks  -dump  192.168.0.14
+   34  elinks  -dump  192.168.1.15
+   35  elinks  -dump  192.168.2.16
+   36  elinks  -dump  192.168.1.15
+   37  elinks  -dump  192.168.2.16
+   38  elinks  -dump  192.168.1.15
+   39  ifconfig  eth1 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.0.14;ifconfig |awk '/inet /{print $2}';route  -n
+   40  elinks  -dump  192.168.0.12
+   41  elinks  -dump  192.168.1.15
+   42  elinks  -dump  192.168.1.18
+   43  elinks  -dump  192.168.1.15
+   44  elinks  -dump  192.168.1.18
+   45  elinks  -dump  192.168.2.16
+   46  elinks  -dump  192.168.2.19
+   47   ping  114.114.114.114  -c2
+   48   ping  114.114.114.114  -c4
+   49   ping  114.114.114.114  
+   50  clear
+   51  ssh  -o StrictHostKeyChecking=no  192.168.1.18
+   52  history  |tail  -30
+[root@Va2 ~]# 
+
+
+
+[root@Va3 ~]# history  |tail  -30
+   33  route  del default  gw  192.168.0.254;route add default gw  192.168.0.14
+   34  ip  route  show;ifconfig |awk '/inet /{print $2}'
+   35  elinks  -dump  192.168.0.14
+   36  ping  -c2  192.168.0.14
+   37  route  -n
+   38  elinks  -dump  192.168.0.14
+   39  elinks  -dump  192.168.1.15
+   40  elinks  -dump  192.168.2.15
+   41  elinks  -dump  192.168.2.16
+   42  elinks  -dump  192.168.2.15
+   43  elinks  -dump  192.168.1.15
+   44  ifconfig  eth1 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.0.14;ifconfig |awk '/inet /{print $2}';route  -n
+   45  elinks  -dump  192.168.0.13
+   46  elinks  -dump  192.168.1.15
+   47  elinks  -dump  192.168.1.18
+   48  elinks  -dump  192.168.2.19
+   49  elinks  -dump  192.168.0.17
+   50  elinks  -dump  192.168.1.15
+   51  elinks  -dump  192.168.2.16
+   52  elinks  -dump  192.168.2.19
+   53  elinks  -dump  192.168.1.18
+   54  elinks  -dump  192.168.1.15
+   55  elinks  -dump  192.168.2.16
+   56  elinks  -dump  192.168.0.17
+   57  elinks  -dump  192.168.1.18
+   58  elinks  -dump  192.168.2.19
+   59  elinks  -dump  192.168.2.14
+   60   ping  114.114.114.114  -c2
+   61   ping  114.114.114.114 
+   62  history  |tail  -30
+[root@Va3 ~]# 
+
+
+
+[root@Va4 ~]# history  |tail  -60
+  332  clear
+  333* iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -
+  334  iptables -t raw -L ; iptables -t mangle -L; iptables -t  nat -L ; iptables -t filter -L
+  335  clear
+  336  iptables -t raw -L ;echo "------mangle-----------"; iptables -t mangle -L; echo "-----------nat-------";  iptables -t  nat -L ;echo "-----------filter----------";  iptables -t filter -L
+  337  clear
+  338  service  iptables  status |grep  -io active
+  339  iptables  -t  nat  -A  POSTROUTING  -s  192.168.0.0/24  -p  tcp  --dport  80 -j  SNAT  --to-source  192.168.1.14,192.168.2.14
+  340  iptables  -t  nat  -A  POSTROUTING  -s  192.168.0.0/24  -p  tcp  --dport  80 -j  SNAT  --to-source  192.168.1.14
+  341  iptables  -t   nat  -nL
+  342  elinks -dump  192.168.1.15
+  343  route  -n
+  344  ifconfig  |grep  'inet '
+  345  elinks -dump  192.168.1.14
+  346  elinks -dump  192.168.1.15
+  347  route  -n
+  348  route  -n |head -3
+  349  ip  route  show
+  350  ip  route  show |grep default
+  351  clear
+  352  iptables   -t  nat  -R   POSTROUTING  1 -s  192.168.0.0/24  -p  tcp  --dport  80 -j   MASQUERADE
+  353  iptables   -t  nat  -nL   POSTROUTING  --line-numbers
+  354  iptables  -t  nat  -A  PREROUTING  -p  tcp  -d  192.168.1.14  --dport  80  -j  DNAT  --to-destination   192.168.0.11:80
+  355  iptables  -t  nat  -A  PREROUTING  -p  tcp  -d  192.168.1.14  --dport  80  -j  DNAT  --to-destination   192.168.0.12:82
+  356  iptables  -t  nat  -A  PREROUTING  -p  tcp  -d  192.168.1.14  --dport  80  -j  DNAT  --to-destination   192.168.0.13:83
+  357  iptables   -t  nat  -nL    --line-numbers
+  358  iptables  -t  nat  -R  PREROUTING  2 -p  tcp  -d  192.168.1.14  --dport  82  -j  DNAT  --to-destination   192.168.0.12:80
+  359  iptables  -t  nat  -R  PREROUTING  3 -p  tcp  -d  192.168.1.14  --dport  83  -j  DNAT  --to-destination   192.168.0.13:80
+  360  iptables   -t  nat  -nL    --line-numbers
+  361   clear
+  362  iptables   -t  nat  -nL    --line-numbers
+  363  iptables  -t  nat  -F  PREROUTING
+  364  iptables   -t  nat  -nL    --line-numbers
+  365  iptables  -t  nat  -A  PREROUTING   -p  tcp -d  192.168.1.14,192.168.2.14  --dport  80  -j  DNAT  --to-destination   192.168.0.11:80
+  366  iptables  -t  nat  -A  PREROUTING   -p  tcp -d  192.168.1.14,192.168.2.14  --dport  8091  -j  DNAT  --to-destination   192.168.0.12:80
+  367  iptables  -t  nat  -A  PREROUTING   -p  tcp -d  192.168.1.14,192.168.2.14  --dport  8093  -j  DNAT  --to-destination   192.168.0.13:80
+  368  iptables   -t  nat  -nL    --line-numbers
+  369  clear
+  370  iptables  -t  nat  -A  PREROUTING   -p  tcp -d  192.168.0.11:192.168.0.13  --dport  8093  -j  REDIRECT  --to-ports  80
+  371  iptables  -t  nat  -A  PREROUTING   -p  tcp  -d  192.168.0.13  --dport  8093  -j  REDIRECT  --to-ports  80
+  372  iptables  -t  nat  -A  PREROUTING   -p  tcp  -d  192.168.0.12  --dport  8092  -j  REDIRECT  --to-ports  80
+  373  iptables  -t  nat  -A  PREROUTING   -p  tcp  -d  192.168.0.11  --dport  8091  -j  REDIRECT  --to-ports  80
+  374  iptables   -t  nat  -nL    --line-numbers
+  375  elinks -dump  192.168.0.11:8091
+  376  elinks -dump  192.168.0.11
+  377  elinks -dump  192.168.0.11:8091
+  378  elinks -dump  192.168.0.13
+  379  elinks -dump  192.168.0.13:8093
+  380   ping  114.114.114.114  -c2
+  381  clear
+  382  iptables  -t  nat  -A  POSTROUTING  -s 192.168.0.0/24  -p  tcp  --dport  22  -j  MASQUERADE
+  383  iptables  -t  nat  -A  PREROUTING  -p tcp  -d  192.168.1.14,192.168.2.14  --dport  22  -j  DNAT  --to-destination  192.168.0.11:22 
+  384  iptables  -t  nat  -A  PREROUTING  -p tcp  -d  192.168.1.14,192.168.2.14  --dport  9022  -j  DNAT  --to-destination  192.168.0.12:22 
+  385  iptables  -t  nat  -A  PREROUTING  -p tcp  -d  192.168.1.14,192.168.2.14  --dport  9023  -j  DNAT  --to-destination  192.168.0.13:22 
+  386  iptables  -t  nat  -L
+  387  clear
+  388  iptables  -t  nat  -nL  --line-numbers
+  389  history  |tail  -30
+  390    
+  391  history  |tail  -60
+[root@Va4 ~]# 
+
+
+
+[root@Va1 ~]# elinks  -dump   192.168.0.12
+                                Va2 192.168.0.12
+[root@Va1 ~]# exit
+登出
+Connection to 192.168.1.14 closed.
+[root@Va5 ~]# history  |tail  -30
+   70  route   add   default  gw  192.168.1.254
+   71  ip  route  show
+   72  tail  -1  /var/log/httpd/access_log 
+   73   elinks  -dump  192.168.2.16
+   74  route  -n
+   75  route  del  default  gw  192.168.1.254
+   76  route   add  default   gw  192.168.1.14
+   77  ip  route  show
+   78   elinks  -dump  192.168.2.16
+   79  ifconfig  eth0 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.1.254;ifconfig |awk '/inet /{print $2}';route  -n
+   80  elinks  -dump  192.168.1.14
+   81  elinks  -dump  192.168.1.14:83
+   82  elinks  -dump  192.168.1.14
+   83  elinks -dump  192.168.1.15
+   84  service    iptables  status  |grep  -io  Active
+   85  iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -F
+   86  iptables -t raw -L ;echo "------mangle-----------"; iptables -t mangle -L; echo "-----------nat-------";  iptables -t  nat -L ;echo "-----------filter----------";  iptables -t filter -L
+   87  tail  -1  /var/log/httpd/access_log 
+   88  clear
+   89  elinks -dump  192.168.1.15
+   90  elinks -dump  192.168.1.14
+   91  elinks -dump  192.168.1.14:82
+   92  elinks -dump  192.168.1.14:83
+   93   ping  114.114.114.114  -c2
+   94  ssh   192.168.2.16
+   95  ssh   192.168.0.11
+   96  ssh   192.168.0.13
+   97  ssh   192.168.2.14
+   98  ssh   192.168.1.14
+   99  history  |tail  -30
+[root@Va5 ~]# 
+
+
+
+
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va2 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va2 ~]# exit
+登出
+Connection to 192.168.2.14 closed.
+[root@Va6 ~]# history  |tail  -30
+   43   elinks  -dump  192.168.2.16
+   44  tail   -1  /var/log/httpd/access_log 
+   45  ifconfig  eth0 down;ifconfig eth1 down;route  del default gw 192.168.0.254;route add default gw  192.168.2.254;ifconfig |awk '/inet /{print $2}';route  -n
+   46  elinks  -dump  192.168.0.11
+   47  elinks  -dump  192.168.2.14
+   48  elinks  -dump  192.168.2.14:80
+   49  elinks  -dump  192.168.2.14:8080
+   50  elinks  -dump  192.168.2.14:9091
+   51  elinks  -dump  192.168.1.14
+   52  elinks  -dump  192.168.2.14
+   53  elinks  -dump  192.168.2.14:81
+   54  elinks  -dump  192.168.2.14
+   55  elinks  -dump  192.168.1.14
+   56  elinks  -dump  192.168.2.14
+   57  elinks -dump  192.168.1.15
+   58  service    iptables  status  |grep  -io  Active
+   59  iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -F
+   60  iptables -t raw -L ;echo "------mangle-----------"; iptables -t mangle -L; echo "-----------nat-------";  iptables -t  nat -L ;echo "-----------filter----------";  iptables -t filter -L
+   61  tail  -1  /var/log/httpd/access_log 
+   62  tail  -3  /var/log/httpd/access_log 
+   63  tail  -1  /var/log/httpd/access_log 
+   64  clear
+   65   ping  114.114.114.114  -c2
+   66   ping  114.114.114.114  
+   67  ssh   192.168.0.11
+   68  ssh   192.168.0.13
+   69  ssh   192.168.2.14:9022
+   70  ssh   192.168.2.14
+   71  ssh  -o  StrictHostKeyChecking=no  -p9022   192.168.2.14
+   72  history  |tail  -30
+[root@Va6 ~]#  
+
+
+
+
+[root@Va7 ~]# history  |tail  -30
+    4  vim /etc/selinux/config 
+    5  grubby --update-kernel=ALL --args="console=ttyS0"
+    6  reboot 
+    7  vim  ip.sh
+    8  cat   ip.sh
+    9  .  ip.sh   7   17
+   10  ifconfig   |awk  '/inet /{print $2}';cat  /etc/hostname 
+   11  reboot
+   12  scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+   13  cat  /etc/yum.repos.d/local.repo
+   14   yum clean  all >/dev/null &&  yum repolist  |tail  -3
+   15  hostname
+   16  shutdown  -h  now
+   17  cat /etc/hostname 
+   18  ifconfig 
+   19  ifconfig  eth1 down;ifconfig eth2 down;ifconfig |awk '/inet /{print $2}';route  -n
+   20   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   21  ls  /etc/yum.repos.d/
+   22  cat  /etc/yum.repos.d/local.repo 
+   23   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   24   yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+   25  echo "<h1> NAT-PAT-Va7  192.168.0.17 </h1>" > /var/www/html/index.html
+   26  systemctl  start httpd && systemctl  enable  httpd
+   27  elinks  -dump  192.168.0.17
+   28  tail  -1  /var/log/httpd/access_log 
+   29  elinks  -dump  192.168.0.14
+   30  elinks  -dump  192.168.0.14:8091
+   31   ping  114.114.114.114  -c2
+   32  clear
+   33  history  |tail  -30
+[root@Va7 ~]# 
+
+
+
+[root@Va8 ~]# history  |tail  -30
+    9  .  ip.sh   8   18
+   10  ifconfig   |awk  '/inet /{print $2}';cat  /etc/hostname 
+   11  reboot
+   12  ifconfig 
+   13  cat /etc/hostname 
+   14  shutdown  -h now
+   15  scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+   16  cat  /etc/yum.repos.d/local.repo
+   17   yum clean  all >/dev/null &&  yum repolist  |tail  -3
+   18  ifconfig  |grep  inet
+   19   shutdown  -h  now
+   20  ifconfig  eth0 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.1.254;ifconfig |awk '/inet /{print $2}';route  -n
+   21   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   22   yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+   23   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   24   yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+   25   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   26  echo "<h1> NAT-PAT-Va8  192.168.1.18 </h1>" > /var/www/html/index.html
+   27  systemctl  start httpd && systemctl  enable  httpd
+   28  elinks  -dump  192.168.1.18
+   29  tail  -1  /var/log/httpd/access_log 
+   30  elinks   -dump  192.168.1.14
+   31  elinks   -dump  192.168.1.14:82
+   32  elinks   -dump  192.168.1.14:83
+   33  elinks   -dump  192.168.1.14
+   34  elinks   -dump  192.168.1.14:8091
+   35  elinks   -dump  192.168.1.14:8093
+   36   ping  114.114.114.114  -c2
+   37   
+   38  history  |tail  -30
+[root@Va8 ~]# 
+
+
+[root@Va9 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va9 ~]#  ssh  -o  StrictHostKeyChecking=no  -p 9023   192.168.2.14
+Warning: Permanently added '[192.168.2.14]:9023' (ECDSA) to the list of known hosts.
+root@192.168.2.14's password: 
+Last login: Thu Dec 20 08:58:19 2018 from 192.168.0.254
+[root@Va3 ~]# hostname
+Va3
+[root@Va3 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va3 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va3 ~]# elinks  -dump  192.168.0.17
+                            NAT-PAT-Va7 192.168.0.17
+[root@Va3 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+[root@Va3 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+[root@Va3 ~]# tail  -1  /etc/httpd/logs/access_log 
+192.168.0.13 - - [20/Dec/2018:19:16:57 +0800] "GET / HTTP/1.1" 200 30 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+[root@Va3 ~]# exit
+登出
+Connection to 192.168.2.14 closed.
+[root@Va9 ~]# hostname
+Va9
+[root@Va9 ~]# history  |tail  -30
+    9  .  ip.sh   9    19
+   10  ifconfig   |awk  '/inet /{print $2}';cat  /etc/hostname 
+   11  reboot
+   12  ifconfig 
+   13  shutdown  -h now
+   14  scp  -o  StrictHostKeyChecking=no   root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+   15  cat  /etc/yum.repos.d/local.repo
+   16   yum clean  all >/dev/null &&  yum repolist  |tail  -3
+   17  ifconfig |grep  'inet '
+   18  hostname
+   19   shutdown  -h  now
+   20  ifconfig  eth0 down;ifconfig eth1 down;route  del default gw 192.168.0.254;route add default gw  192.168.2.254;ifconfig |awk '/inet /{print $2}';route  -n
+   21   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   22   yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+   23   yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+   24  echo "<h1> NAT-PAT-Va9  192.168.2.19 </h1>" > /var/www/html/index.html
+   25  systemctl  start httpd && systemctl  enable  httpd
+   26  elinks  -dump  192.168.2.19
+   27  tail  -1  /var/log/httpd/access_log 
+   28  elinks   -dump  192.168.2.14
+   29  elinks   -dump  192.168.2.14:82
+   30  elinks   -dump  192.168.2.14
+   31  elinks   -dump  192.168.2.14:8091
+   32  elinks   -dump  192.168.2.14:8093
+   33   ping  114.114.114.114  -c2
+   34  elinks  dump  192.168.2.19
+   35  elinks  -dump  192.168.2.19
+   36   ssh  -o  StrictHostKeyChecking=no  -p 9023   192.168.2.14
+   37  hostname
+   38  history  |tail  -30
+[root@Va9 ~]# 
+
+
+生成树协议STP使用哪两个参数来选举根网桥 ___D___。
+
+A．网桥优先级和IP地址
+B．链路速率和IP地址
+C．链路速率和MAC地址
+D．网桥优先级和MAC地址
+
+STP  Spanning Tree Protocol生成树协议
+网桥BID值最小的交换机 是网络中的根网桥
+默认值32768 
+网桥优先级取值范围0 ~ 65535
+
+[root@Va1 ~]# echo  "2^7" |bc
+128
+[root@Va1 ~]# echo  "2^8" |bc
+256
+[root@Va1 ~]# echo  "2^10" |bc
+1024
+[root@Va1 ~]# echo  "2^11" |bc
+2048
+
+[root@Va1 ~]# echo  "2^12" |bc
+4096
+[root@Va1 ~]# echo  "2^13" |bc
+8192
+[root@Va1 ~]# echo  "2^14" |bc
+16384
+[root@Va1 ~]# echo  "2^15" |bc
+32768
+[root@Va1 ~]# echo  "2^16" |bc
+65536
+[root@Va1 ~]# 
+
+  0     4096  8192  12288 16384 20480 24576 28672
+  32768 36864 40960 45056 49152 53248 57344 61440
+SW1(config)#spanning-tree vlan 1 priority 24576
+SW1(config)#spanning-tree vlan 1 root primary
+
+SW2(config)#spanning-tree vlan 1 priority  28672
+SW2(config)#spanning-tree vlan 1 root secondary
+
+Sw3#show spanning-tree
+VLAN0001
+  Bridge ID  Priority    32769  (priority 32768 sys-id-ext 1)
+             Address     00D0.BA94.6627
+
+Fa0/1            Altn BLK 19        128.1    P2p
+Fa0/2            Root FWD 19        128.2    P2p
+=====24576--primary  28672--secondary  32768 
+
+SW2#show spanning-tree
+VLAN0001
+  Bridge ID  Priority    28673  (priority 28672 sys-id-ext 1)
+Fa0/1            Root FWD 19        128.1    P2p
+Fa0/2            Desg FWD 19        128.2    P2p
+
+SW1#show spanning-tree
+VLAN0001
+Fa0/2            Desg FWD 19        128.2    P2p
+Fa0/1            Desg FWD 19        128.1    P2p
+
+============20480 24576 28672 {默认32768} 36864====
+Switch(config)#hostname SW1
+SW1(config)#line console 0
+SW1(config-line)#exec-timeout 0 0
+SW1(config-line)#logging synchronous
+
+SW1(config)#spanning-tree vlan 1 priority 0001
+% Bridge Priority must be in increments of 4096.
+% Allowed values are:
+  0     4096  8192  12288 16384 20480 24576 28672
+  32768 36864 40960 45056 49152 53248 57344 61440
+======================================================
+
+一、STP算法
+　　IEEE802.1D标准定义了STP的生成树算法。该算法依赖于BID、路径开销和端口ID参数来做出决定。
+　　1、BID（网桥ID）：
+　　BID是生成树算法的第一个参数，BID决定了桥接网络的中心，称为根网桥或根交换机。
+BID参数是一个8字节域。
+前2个字节（10进制）称为“网桥优先级”，
+后6个字节（16进制）是交换机的一个MAC地址。
+网桥优先级用来衡量一个网桥的优先度，范围是0——65535，默认是32768。
+思科交换机中的PVST+（每VLAN生成树）生成树协议使每个VLAN都有一个STP实例。
+比较两个BID的大小的原则：
+一是网桥优先级小的BID优先，二是如果网桥优先级相同，BID中的后六个字节的MAC小的则BID优先。
+　　2、路径开销：
+　　路径开销是生成树算法的第二个参数，决定到根网桥（根交换机）的路径。
+　　通俗说，路径开销是用来衡量网桥之间的距离的远近的，其值是两个网桥之间某条路径上所有链路开销的总和。
+　　路径开销与跳数无关。
+　　路径开销决定到根网桥或根交换机的最佳路径，最小的路径开销是到根交换机的最佳路径。
+　　路径开销的值的规律：带宽越大，STP开销越小。
+　　3、端口ID：
+   端口ID是生成树算法的第三个参数，也决定到根交换机的路径。
+它由2个字节组成，包括“端口优先级”和“端口号”，各占8位。
+　　端口优先级值从0——255，默认128；端口号包括256个。
+　　端口ID大小的判定与BID大小的判定相同。
+　　二、STP的过程
+　　1、STP判决和BPDU交换：
+　　当创建一个逻辑无环的拓扑时，STP总是通过发送BPDU的第二层帧来传递生成树协议，并执行相同的4步判决顺序：
+　　步骤1，确定根交换机；
+　　步骤2，计算到根交换机的最小路径开销；
+
+
+TTL （生存时间值） 
+TTL是 Time To Live的缩写，
+  该字段指定IP包 被 路由器 丢弃之前 允许通过的 最大网段数量。
+TTL是IPv4包头的一个8 bit字段。
+TTL 寓    意 域名解析在DNS服务器中存留时间 
+
+功能特点编辑
+在IPv4包头中TTL是一个8 bit字段，
+它位于IPv4包的第9个字节。
+每一行表示 32 bit（4字节），位从0开始编号，即0~31。
+ipv4报文头部的TTL字段
+
+TTL的作用是
+ 限制IP数据包 在计算机网络中 的存在时间。
+TTL的最大值是255，
+TTL的一个推荐值是64。
+
+ 实际上TTL是IP数据包 在计算机网络中 可以转发 的 最大 跳数。
+ TTL字段由IP数据包的发送者设置，
+ 在IP数据包从源到目的的整个转发路径上，
+ 每经过一个路由器，
+ 路由器都会修改这个TTL字段值，
+ 具体的做法是把该TTL的值减1，然后再将IP包转发出去。
+ 如果在IP包到达目的IP之前，TTL减少为0，
+ 路由器将会丢弃收到的TTL=0的IP包
+ 并向IP包的发送者发送 ICMP time exceeded消息。
+
+[root@Va1 ~]# ping  -c 1  192.168.1.15
+PING 192.168.1.15 (192.168.1.15) 56(84) bytes of data.
+
+--- 192.168.1.15 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+[root@Va1 ~]# ping   192.168.1.15
+PING 192.168.1.15 (192.168.1.15) 56(84) bytes of data.
+^C
+--- 192.168.1.15 ping statistics ---
+205 packets transmitted, 0 received, 100% packet loss, time 204001ms
+
+[root@Va1 ~]# ping  -c 3  192.168.0.14  ##TTL的一个推荐值是64。ttl=64
+PING 192.168.0.14 (192.168.0.14) 56(84) bytes of data.
+64 bytes from 192.168.0.14: icmp_seq=1 ttl=64 time=0.398 ms
+64 bytes from 192.168.0.14: icmp_seq=2 ttl=64 time=0.631 ms
+64 bytes from 192.168.0.14: icmp_seq=3 ttl=64 time=0.580 ms
+
+--- 192.168.0.14 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 0.398/0.536/0.631/0.101 ms
+[root@Va1 ~]# 
+
+
+TTL的主要作用是
+避免IP包在网络中的无限循环和收发[ 即 路由环路现象 ]
+节省了网络资源，并能使IP包的发送者能收到告警消息。
+TTL 是由发送主机设置的，
+以防止数据包不断在IP互联网络上永不终止地循环。
+转发IP数据包时，
+要求路由器至少将 TTL 减小 1。
+TTL值的注册表位置HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters 其中有个DefaultTTL的DWORD值，
+其数据就是默认的TTL值了，我们可以修改，
+但不能大于十进制的255。
+Windows系统设置后重启才生效。
+
+生存时间，
+就是一条域名解析记录在DNS服务器中的存留时间。
+当各地的DNS服务器接受到解析请求时，
+就会向域名指定的NS服务器(权威域名服务器）发出解析请求从而获得解析记录；
+在获得这个记录之后，
+记录会在DNS服务器(各地的缓存服务器，也叫递归域名服务器）中保存一段时间，
+这段时间内如果再接到这个域名的解析请求，
+DNS服务器将不再向NS服务器发出请求，
+而是直接返回刚才获得的记录；
+而这个记录在DNS服务器上保留的时间，就是TTL值。
+
+访问者指定的DNS服务器
+（或是他的ISP，互联网服务商，动态分配的)
+
+[root@Va4 ~]# sysctl  -h
+
+Usage:
+ sysctl [options] [variable[=value] ...]
+
+Options:
+  -a, --all            display all variables
+....................
+  -p, --load[=<file>]  read values from file
+....................
+  -w, --write          enable writing a value to variable
+.....................
+For more details see sysctl(8).
+[root@Va4 ~]# man  sysctl
+
+[root@Va4 ~]# /usr/sbin/sysctl  -p
+
+[root@Va4 ~]# sysctl   -p
+
+  ## sysctl命令用于运行时配置内核参数
+ 命令格式：
+    sysctl [-n] [-e] -w variable=value
+    sysctl [-n] [-e] -p <filename> (default /etc/sysctl.conf)
+    sysctl [-n] [-e] -a
+    常用参数的意义：
+    -w   临时改变某个指定参数的值，如
+        sysctl -w net.ipv4.ip_forward=1
+    -a   显示所有的系统参数
+    -p   从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
+   ## 编辑/etc/sysctl.conf文件，即可手工或自动执行由sysctl控制的功能
+
+[root@Va4 ~]# cat  /etc/sysctl.conf    ## 永久性 开启 IP 转发 配置文件
+.......................
+
+[root@Va4 ~]#   tail  -2 /etc/sysctl.conf
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+net.ipv4.ip_forward=1
+
+# 从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
+
+[root@Va4 ~]# sysctl   -p  
+net.ipv4.ip_forward = 1
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+[root@Va4 ~]# sysctl  -w  net.ipv4.ip_forward=0   ## 临时性 开启 IP 转发
+net.ipv4.ip_forward = 0
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+0
+[root@Va4 ~]# sysctl   -p  ## 重新加载 开启 IP 转发 路由功能  默认配置文件/etc/sysctl.conf
+net.ipv4.ip_forward = 1
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+
+[root@Va4 ~]#   tail  -2 /etc/sysctl.conf
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+net.ipv4.ip_forward=1
+
+[root@Va4 ~]# sysctl   -a  |grep  net.ipv4.ip_default
+
+net.ipv4.ip_default_ttl = 64
+
+linux系统只需要修改修改/etc/sysctl.conf配置文件，添加如下一行：
+
+net.ipv4.ip_default_ttl = 128
+
+保存退出后需要重启下，再ping 下，TTL基数就变为128了。
+
+[root@Va4 ~]# sysctl  -w  net.ipv4.ip_default_ttl=128
+net.ipv4.ip_default_ttl = 128
+
+[root@Va4 ~]# ping  -c2  192.168.1.15
+PING 192.168.1.15 (192.168.1.15) 56(84) bytes of data.
+64 bytes from 192.168.1.15: icmp_seq=1 ttl=64 time=0.564 ms
+64 bytes from 192.168.1.15: icmp_seq=2 ttl=64 time=0.529 ms
+
+--- 192.168.1.15 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1000ms
+rtt min/avg/max/mdev = 0.529/0.546/0.564/0.029 ms
+
+[root@Va4 ~]# vim   /etc/sysctl.conf 
+[root@Va4 ~]# tail  -2  /etc/sysctl.conf 
+net.ipv4.ip_forward=1
+net.ipv4.ip_default_ttl=128
+
+[root@Va4 ~]# sysctl   -p
+net.ipv4.ip_forward = 1
+net.ipv4.ip_default_ttl = 128
+
+[root@Va4 ~]# ping  -c2  192.168.1.15
+PING 192.168.1.15 (192.168.1.15) 56(84) bytes of data.
+64 bytes from 192.168.1.15: icmp_seq=1 ttl=64 time=0.377 ms
+64 bytes from 192.168.1.15: icmp_seq=2 ttl=64 time=0.515 ms
+
+--- 192.168.1.15 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1000ms
+rtt min/avg/max/mdev = 0.377/0.446/0.515/0.069 ms
+
+[root@Va4 ~]# ls  /proc/sys/net/ipv4/ |grep ip_
+ip_default_ttl
+ip_dynaddr
+ip_early_demux
+ip_forward
+ip_forward_use_pmtu
+ip_local_port_range
+ip_local_reserved_ports
+ip_nonlocal_bind
+ip_no_pmtu_disc
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_default_ttl
+128
+[root@Va4 ~]# reboot
+[root@Va4 ~]# vim  /etc/sysctl.conf 
+[root@Va4 ~]# tail  -3   /etc/sysctl.conf
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+net.ipv4.ip_forward=1
+net.ipv4.ip_default_ttl=64
+[root@Va4 ~]# sysctl   -p
+net.ipv4.ip_forward = 1
+net.ipv4.ip_default_ttl = 64
+[root@Va4 ~]# cat   /proc/sys/net/ipv4/ip_default_ttl 
+64
+[root@Va4 ~]# 
+
+
+
+
+
+
+
+
+
+
+

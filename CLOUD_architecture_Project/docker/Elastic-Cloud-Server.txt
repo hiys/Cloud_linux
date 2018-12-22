@@ -1,0 +1,583 @@
+
+https://auth.huaweicloud.com/authui/login
+https://auth.huaweicloud.com/authui/login#/login
+https://www.huaweicloud.com/
+***/
+
+https://bbs.huaweicloud.com/blogs/1cab883fa03411e7b8317ca23e93a891
+【摘要】 弹性云服务器(Elastic Cloud Server)是华为云推出的一种可随时获取、弹性可扩展的计算云服务器，帮助您打造可靠、安全、灵活、高效的应用环境，确保业务持久稳定运行。
+
+https://console.huaweicloud.com/ecm/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/ecs/createVm
+
+详情
+产品类型	产品规格	计费模式	数量	
+价格
+云服务器	
+地域	广州	
+可用区	可用区2	
+规格	通用计算型 | s2.small.1 | 1vCPUs | 1GB	
+镜像	CentOS 7.5 64bit	
+系统盘	高IO, 40GB	
+虚拟私有云	vpc-8747	
+安全组	sg-9810	
+网卡	
+subnet-8747(192.168.1.0/24)
+弹性公网IP	
+暂时不使用弹性公网IP
+云服务器名称	ecs-VM1	
+按需计费	1	
+¥0.07/小时
+
+
+fe3630yinHi
+
+fe3630yinHi
+
+fe3630yinHi
+
+详情
+产品类型	产品规格	计费模式	数量	
+价格
+云服务器	
+地域	广州	
+可用区	可用区2	
+规格	通用计算型 | s2.small.1 | 1vCPUs | 1GB	
+镜像	CentOS 7.5 64bit	
+系统盘	高IO, 40GB	
+虚拟私有云	vpc-8747	
+安全组	sg-9810	
+网卡	
+subnet-8747(192.168.1.0/24)
+弹性公网IP	
+暂时不使用弹性公网IP
+云服务器名称	ecs-VM2
+
+https://console.huaweicloud.com/ecm/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/ecs/manager/vmList
+开机关机重启更多所有运行状态名称
+标签搜索
+
+名称/ID	可用区	状态	规格/镜像	IP地址	计费模式	操作
+ecs-VM1
+fc884604-bd38-4a93-b4c8-27ac2cf21e6e
+可用区2	 运行中
+1vCPUs | 1GB | s2.small.1
+CentOS 7.5 64bit
+192.168.1.249(私有)
+按需计费
+远程登录更多
+ecs-VM2
+9affc0be-91a5-4e23-86d8-4ab66809dd48
+可用区2	 运行中
+1vCPUs | 1GB | s2.small.1
+CentOS 7.5 64bit
+192.168.1.230(私有)
+按需计费
+远程登录更多
+
+
+https://console.huaweicloud.com/vpc/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/vpc/vpcmanager/eips
+
+https://console.huaweicloud.com/vpc/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/vpc/vpcmanager/eips
+
+绑定弹性公网IP
+弹性公网IP	139.159.225.229	
+选择实例	
+云服务器 裸金属服务器 虚拟IP地址	
+所有运行状态名称
+标签搜索
+fe3630yinHi
+名称	状态	弹性公网IP	私有IP地址	ID
+ecs-VM1	运行中	--	192.168.1.249	fc884604-bd38-4a93-b4c8-27ac2cf21e6e
+ecs-VM2	运行中	--	192.168.1.230	9affc0be-91a5-4e23-86d8-4ab66809dd48
+网卡	IP:192.168.1.249,MAC: fa:16:3e:42:71:20(主网卡)
+已选实例：	
+ecs-VM1
+网卡：	IP:192.168.1.249,MAC: fa:16:3e:42:71:20(主网卡)	
+
+[root@hiys ~]# ssh  -X  139.159.225.229
+root@139.159.225.229's password: 
+X11 forwarding request failed on channel 0
+Last login: Fri Nov 30 14:11:01 2018 from 113.67.157.115
+  ######################################################################
+  #                              Notice                                #
+  #                                                                    #
+  #  1. Please create unique passwords that use a combination of words,#
+  #   numbers, symbols, and both upper-case and lower-case letters.    #
+  #   Avoid using simple adjacent keyboard combinations such as        #
+  #   "Qwert!234","Qaz2wsx",etc.                                       #
+  #                                                                    #
+  #  2. Unless necessary, please DO NOT open or use high-risk ports,   #
+  #   such as Telnet-23, FTP-20/21, NTP-123(UDP), RDP-3389,            #
+  #   SSH/SFTP-22, Mysql-3306, SQL-1433,etc.                           #
+  #                                                                    #
+  #                                                                    #
+  #                     Any questions please contact 4000-955-988      #
+  ######################################################################
+[root@ecs-vm1 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.249  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::f816:3eff:fe42:7120  prefixlen 64  scopeid 0x20<link>
+        ether fa:16:3e:42:71:20  txqueuelen 1000  (Ethernet)
+        RX packets 570  bytes 96749 (94.4 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 524  bytes 49268 (48.1 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 2  bytes 272 (272.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 2  bytes 272 (272.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@ecs-vm1 ~]# hostname
+ecs-vm1.novalocal
+
+[root@ecs-vm1 ~]# yum  repolist
+已加载插件：fastestmirror
+Repodata is over 2 weeks old. Install yum-cron? Or run: yum makecache fast
+Determining fastest mirrors
+ * base: mirrors.aliyun.com
+ * extras: mirrors.aliyun.com
+ * updates: centos.ustc.edu.cn
+源标识                                               源名称                                                状态
+!base/7/x86_64                                       CentOS-7 - Base                                       9,911
+!extras/7/x86_64                                     CentOS-7 - Extras                                       402
+!updates/7/x86_64                                    CentOS-7 - Updates                                    1,348
+repolist: 11,661
+[root@ecs-vm1 ~]# cat  /etc/resolv.conf
+# Generated by NetworkManager
+search openstacklocal novalocal
+nameserver 100.125.1.250
+nameserver 100.125.136.29
+
+[root@ecs-vm1 ~]# ping  -c3  192.168.1.230
+PING 192.168.1.230 (192.168.1.230) 56(84) bytes of data.
+64 bytes from 192.168.1.230: icmp_seq=1 ttl=64 time=1.67 ms
+64 bytes from 192.168.1.230: icmp_seq=2 ttl=64 time=0.323 ms
+64 bytes from 192.168.1.230: icmp_seq=3 ttl=64 time=0.341 ms
+
+--- 192.168.1.230 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 0.323/0.778/1.672/0.632 ms
+
+[root@ecs-vm1 ~]# ping  -c3  192.168.1.111
+PING 192.168.1.111 (192.168.1.111) 56(84) bytes of data.
+From 192.168.1.249 icmp_seq=1 Destination Host Unreachable
+From 192.168.1.249 icmp_seq=2 Destination Host Unreachable
+From 192.168.1.249 icmp_seq=3 Destination Host Unreachable
+
+--- 192.168.1.111 ping statistics ---
+3 packets transmitted, 0 received, +3 errors, 100% packet loss, time 2000ms
+pipe 3
+[root@ecs-vm1 ~]# 
+
+
+
+
+
+yum  -y remove  postfix
+ps  -ef  |grep  ntp
+
+yum  -y install  chronyd
+
+vim  /etc/chrony.conf
+
+server  huawei iburst
+
+server  ntp.myhuaweicloud.com
+
+
+systemctl stop  ntpd
+             postf
+
+OPTIONS   -4
+
+
+
+systemctl  restart chronyd
+
+
+yum  remove  -y  ntp
+
+
+
+ss  -ltun
+
+sestatus
+rpm  -qa  |grep  firewalld
+iptables save
+
+systemctl  status  firewalld
+
+
+
+https://support.huaweicloud.com/ecs_faq/zh-cn_topic_0043941022.html
+
+操作场景
+用户需要更新弹性云服务器的系统或者软件时，可以连接Internet，通过外部CentOS镜像源提供相关服务。
+但是，如果弹性云服务器无法访问Internet，
+或者外部CentOS镜像源提供的服务不稳定时，可以使用华为云提供的CentOS镜像源进行更新。
+
+约束与限制
+本节内容仅限华北区、华东区、华南区及香港用户使用。
+请确认已经配置了华为云提供的内网DNS服务器地址。华为云内网DNS地址，请参见https://support.huaweicloud.com/dns_faq/dns_faq_002.html。
+操作步骤
+以root用户登录弹性云服务器。
+执行以下命令，备份CentOS-Base.repo文件。
+mkdir -p /etc/yum.repos.d/repo_bak/
+
+mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/repo_bak/
+
+/*****************
+使用curl命令下载对应版本的CentOS-Base.repo文件，并将其放入/etc/yum.repos.d/目录。
+针对华为云当前支持的CentOS镜像源版本，使用的curl命令分别如下：
+CentOS 6
+curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.myhuaweicloud.com/repo/CentOS-Base-6.repo
+
+CentOS 7
+curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.myhuaweicloud.com/repo/CentOS-Base-7.repo
+
+/**********************
+CURL，全称Command Line URL Viewer，是一个Linux命令行工具，能从服务器下载数据，
+也能往服务器上发送数据，支持多种协议，
+支持的协议有：DICT，FILE，FTP，FTPS，GOPHER，HTTP，HTTPS，
+IMAP，IMAPS，LDAP，LDAPS，POP3，POP3S，RTMP，RTSP，SCP，
+SFTP，SMB，SMBS，SMTP，SMTPS，TELNET和TFTP。
+从CURL支持的协议就可以看出，CURL命令非常强大
+
+curl url
+访问百度主页，返回的是百度主页的网页源码
+$ curl www.baidu.com
+------------------------
+curl -o/-O filename url
+
+# 命令形式：$ curl -o/-O filename url，保存访问的网页或文件，-o参数是保存，
+filename是要保存的文件名，
+-O是将远端的文件以远端文件的文件名自动保存到本地，
+这个命令主要是下载文件，
+如果需要获取多个文件，可以采用curl -O url1 -O url2
+
+# 访问百度主页，并将访问内容保存到baidu.html中
+$ curl -o baidu.html www.baidu.com
+
+
+# 从远端服务器下载一张图片，保存为1.jpg
+$ curl -o 1.jpg http://ocs628urt.bkt.clouddn.com/table_1.1.png
+
+
+# 从远程服务器下载一张图片，保存的文件名为图片在远程服务器上的名字
+$ curl -O http://ocs628urt.bkt.clouddn.com/table_1.1.png
+
+# 下载多个文件
+$ curl  -O  http://ocs628urt.bkt.clouddn.com/table_1.1.png  -O  http://ocs628urt.bkt.clouddn.com/table_java_2.png
+
+
+curl -i/-I url
+# 命令形式：$ curl -i url，访问网页并显示response信息，-i参数是显示response信息，-I参数是只显示response信息
+
+# 访问百度主页，并将访问内容保存到baidu.html中
+$ curl -i www.baidu.com
+
+
+curl -v url/curl --trace filename url
+
+# 命令形式：$ curl -v url，-v参数是显示http访问的整个过程，即整个通信过程，
+curl --trace filename url相比-v信息更详细，并且会将访问过程输出到一个文件中
+
+$ curl -v www.baidu.com
+
+
+# 访问百度，访问的详细信息输出到output.txt文件中
+$ curl --trace output.txt www.baidu.com
+
+
+[root@hiys ~]# ssh  -X  139.159.225.229
+root@139.159.225.229's password: 
+X11 forwarding request failed on channel 0
+Last login: Fri Nov 30 14:13:53 2018 from 113.67.157.115
+  ######################################################################
+  #                              Notice                                #
+  #                                                                    #
+  #  1. Please create unique passwords that use a combination of words,#
+  #   numbers, symbols, and both upper-case and lower-case letters.    #
+  #   Avoid using simple adjacent keyboard combinations such as        #
+  #   "Qwert!234","Qaz2wsx",etc.                                       #
+  #                                                                    #
+  #  2. Unless necessary, please DO NOT open or use high-risk ports,   #
+  #   such as Telnet-23, FTP-20/21, NTP-123(UDP), RDP-3389,            #
+  #   SSH/SFTP-22, Mysql-3306, SQL-1433,etc.                           #
+  #                                                                    #
+  #                                                                    #
+  #                     Any questions please contact 4000-955-988      #
+  ######################################################################
+[root@ecs-vm1 ~]# ls  /etc/yum.repos.d/
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Media.repo    CentOS-Vault.repo
+CentOS-CR.repo    CentOS-fasttrack.repo  CentOS-Sources.repo
+[root@ecs-vm1 ~]# mkdir   -p  /etc/yum.repos.d/repo_bak
+[root@ecs-vm1 ~]# mv  /etc/yum.repos.d/*.repo  /etc/yum.repos.d/repo_bak/
+[root@ecs-vm1 ~]# ls  /etc/yum.repos.d/
+repo_bak
+[root@ecs-vm1 ~]# curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.myhuaweicloud.com/repo/CentOS-Base-6.repo
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  2283  100  2283    0     0   311k      0 --:--:-- --:--:-- --:--:--  318k
+[root@ecs-vm1 ~]# 
+[root@ecs-vm1 ~]# curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.myhuaweicloud.com/repo/CentOS-Base-7.repo
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1737  100  1737    0     0   236k      0 --:--:-- --:--:-- --:--:--  242k
+[root@ecs-vm1 ~]# 
+[root@ecs-vm1 ~]# ls  /etc/yum.repos.d/
+CentOS-Base.repo  repo_bak
+[root@ecs-vm1 ~]# yum  makecache
+已加载插件：fastestmirror
+Loading mirror speeds from cached hostfile
+base                                                                         | 3.6 kB  00:00:00     
+extras                                                                       | 3.4 kB  00:00:00     
+updates                                                                      | 3.4 kB  00:00:00     
+(1/10): extras/7/x86_64/prestodelta                                          | 100 kB  00:00:00     
+(2/10): extras/7/x86_64/primary_db                                           | 204 kB  00:00:00     
+(3/10): extras/7/x86_64/other_db                                             | 126 kB  00:00:00     
+(4/10): extras/7/x86_64/filelists_db                                         | 603 kB  00:00:00     
+(5/10): updates/7/x86_64/prestodelta                                         | 649 kB  00:00:00     
+(6/10): base/7/x86_64/other_db                                               | 2.5 MB  00:00:00     
+(7/10): updates/7/x86_64/filelists_db                                        | 3.2 MB  00:00:00     
+(8/10): updates/7/x86_64/other_db                                            | 573 kB  00:00:00     
+(9/10): base/7/x86_64/filelists_db                                           | 6.9 MB  00:00:00     
+(10/10): updates/7/x86_64/primary_db                                         | 6.0 MB  00:00:00     
+元数据缓存已建立
+[root@ecs-vm1 ~]# yum clean all >/dev/null  && yum repolist
+已加载插件：fastestmirror
+Determining fastest mirrors
+base                                                                         | 3.6 kB  00:00:00     
+extras                                                                       | 3.4 kB  00:00:00     
+updates                                                                      | 3.4 kB  00:00:00     
+(1/4): base/7/x86_64/group_gz                                                | 166 kB  00:00:00     
+(2/4): extras/7/x86_64/primary_db                                            | 204 kB  00:00:00     
+(3/4): base/7/x86_64/primary_db                                              | 5.9 MB  00:00:00     
+(4/4): updates/7/x86_64/primary_db                                           | 6.0 MB  00:00:00     
+源标识                                        源名称                                           状态
+base/7/x86_64                                 CentOS-7 - Base                                  9,911
+extras/7/x86_64                               CentOS-7 - Extras                                  432
+updates/7/x86_64                              CentOS-7 - Updates                               1,543
+repolist: 11,886
+[root@ecs-vm1 ~]# 
+
+
+[root@ecs-vm1 ~]# ss  -anpult |grep  ntp
+udp    UNCONN     0      0      192.168.1.249:123                   *:*                   users:(("ntpd",pid=459,fd=21))
+udp    UNCONN     0      0      127.0.0.1:123                   *:*                   users:(("ntpd",pid=459,fd=18))
+udp    UNCONN     0      0         *:123                   *:*                   users:(("ntpd",pid=459,fd=16))
+udp    UNCONN     0      0      fe80::f816:3eff:fe42:7120%eth0:123                  :::*                   users:(("ntpd",pid=459,fd=22))
+udp    UNCONN     0      0       ::1:123                  :::*                   users:(("ntpd",pid=459,fd=19))
+udp    UNCONN     0      0        :::123                  :::*                   users:(("ntpd",pid=459,fd=17))
+[root@ecs-vm1 ~]# 
+[root@ecs-vm1 ~]# 
+[root@ecs-vm1 ~]# ls
+anaconda-ks.cfg
+[root@ecs-vm1 ~]# vim  anaconda-ks.cfg 
+-bash: vim: 未找到命令
+[root@ecs-vm1 ~]# yum  -y install  vim  net-tools |tail  -9
+  perl-macros.x86_64 4:5.16.3-292.el7                                           
+  perl-parent.noarch 1:0.225-244.el7                                            
+  perl-podlators.noarch 0:2.5.1-3.el7                                           
+  perl-threads.x86_64 0:1.87-4.el7                                              
+  perl-threads-shared.x86_64 0:1.43-6.el7                                       
+  vim-common.x86_64 2:7.4.160-4.el7                                             
+  vim-filesystem.x86_64 2:7.4.160-4.el7                                         
+
+完毕！
+[root@ecs-vm1 ~]# vim  anaconda-ks.cfg
+[root@ecs-vm1 ~]# cat  anaconda-ks.cfg
+#version=DEVEL
+# System authorization information
+auth --enableshadow --passalgo=sha512
+# Use CDROM installation media
+cdrom
+# Use graphical install
+graphical
+# Run the Setup Agent on first boot
+firstboot --enable
+ignoredisk --only-use=vda
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=eth0 --onboot=off --ipv6=auto --no-activate
+network  --hostname=localhost.localdomain
+
+# Root password
+rootpw --iscrypted $6$bXPYCnBVdOn43Se/$z37.22Yn7QVCu9qWViMZTeq1MHxr1MMrl8zHAmZSvEwy8E0F.p2lPKImiyGCv.1lav/ZEpvA5ln7pZmN/CFVv/
+# System services
+services --disabled="chronyd"
+# System timezone
+timezone Asia/Shanghai --isUtc --nontp
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=vda
+# Partition clearing information
+clearpart --none --initlabel
+# Disk partitioning information
+part / --fstype="ext4" --ondisk=vda --size=40959
+
+%packages
+@^minimal
+@core
+kexec-tools
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+[root@ecs-vm1 ~]# 
+
+[root@ecs-vm1 ~]# cat  /etc/resolv.conf
+# Generated by NetworkManager
+search openstacklocal novalocal
+nameserver 100.125.1.250
+nameserver 100.125.136.29
+
+[root@ecs-vm1 ~]# packet_write_wait: Connection to 139.159.225.229 port 22: Broken pipe
+[root@hiys ~]#   
+
+vim pstree  
+
+
+
+halt   -p ## 关机
+
+yum  -y install vsftpd
+vim  /etc/vsftpd/vsftpd.conf
+listen 
+cd   /var/ftp/
+yum  -y install createrepo
+
+createrepo  ./
+cd  ~
+
+
+cd  /var/ftp/local_repo/
+
+
+scp  nginx-1.10.3.x86_64.rpm  root  @139.9.43.11:./
+
+nginx
+
+curl  http://139.159.225.229/  -o  index.html
+
+
+再买 弹性公网ip
+绑定 弹性公网
+
+https://console.huaweicloud.com/vpc/?agencyId=14e551ee10264ecbbf896af18cb65ae1&region=cn-south-1&locale=zh-cn#/vpc/vpcmanager/sgDetail/sgRules?instanceId=98621422-7e1c-433d-9f7e-63d2a55fb72e
+华为云 入方向规则  出  关联实例  解释
+  
+
+what why  when  where  how
+接入层：
+
+
+
+100-256台划一个vlan，这样好些。
+具体数字取决于你的应用环境和用户行为
+理论上一个网段的电脑不应该超过256台，实际上超过一百台就应该划分vlan,
+避免引起广播风暴
+
+例如DHCP获取时，就是通过广播来找DHCP服务器的，这个广播肯定不能被省略，所以，一般会合理地划分VLAN来减小广播域，提高网络的利用率
+
+
+
+[root@hiys ~]# which  uniq
+/usr/bin/uniq
+[root@hiys ~]# uniq  -c  --help
+用法：uniq [选项]... [文件]
+Filter adjacent matching lines from INPUT (or standard input),
+writing to OUTPUT (or standard output).
+
+With no options, matching lines are merged to the first occurrence.
+
+Mandatory arguments to long options are mandatory for short options too.
+  -c, --count           prefix lines by the number of occurrences
+................
+  -w, --check-chars=N	对每行第N 个字符以后的内容不作对照
+      --help		显示此帮助信息并退出
+      --version		显示版本信息并退出
+
+若域中为先空字符(通常包括空格以及制表符)，然后非空字符，域中字符前的空字符将被跳过。
+...............
+GNU coreutils online help: <http://www.gnu.org/software/coreutils/>
+请向<http://translationproject.org/team/zh_CN.html> 报告uniq 的翻译错误
+要获取完整文档，请运行：info coreutils 'uniq invocation'
+[root@hiys ~]# curl  -s   139.11.11.11
+
+
+ip  add
+
+ping  -I  192.168.1.12  www.baidu.com
+
+ifconfig  192.168.1.12:1
+
+curl  -s  122.16.1.12
+
+
+
+
+[root@mob ~]# rpm  -qa |grep bridge-utils
+bridge-utils-1.5-9.el7.x86_64
+
+[root@mob ~]# yum  -y install  lrzsz
+
+Installed:
+  lrzsz.x86_64 0:0.12.20-36.el7                                                 
+
+Complete!
+[root@mob ~]# rpm  -q  lrzsz
+lrzsz-0.12.20-36.el7.x86_64
+
+[root@mob ~]# yum list  |grep bash-completion
+bash-completion.noarch                   1:2.1-6.el7               CentOS7-1708 
+libguestfs-bash-completion.noarch        1:1.36.3-6.el7            CentOS7-1708 
+
+[root@mob ~]# yum  -y install  bash-completion
+...................
+Installed:
+  bash-completion.noarch 1:2.1-6.el7                                            
+
+Complete!
+[root@mob ~]# rp
+rpcbind      rpc.gssd     rpc.mountd   rpc.statd    rpmdb        rpmverify
+rpcdebug     rpc.idmapd   rpc.nfsd     rpm          rpmkeys      
+rpcgen       rpcinfo      rpc.rquotad  rpm2cpio     rpmquery  
+   
+[root@mob ~]# rpm  -qa |grep  bash
+bash-completion-2.1-6.el7.noarch
+bash-4.2.46-28.el7.x86_64
+
+[root@mob ~]# ip  route  show
+default via 192.168.1.254 dev eth0 
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.123 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@mob ~]# sysctl -a
+
+命令行提示符号是 PS1 定义的
+PS1='\u@\t  \w\$ '
+PS1='[ \u@\h  \W] \$ '
+
+
+
+
+
+
+
