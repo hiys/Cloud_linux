@@ -679,10 +679,951 @@ redis               latest              1aa84b1b434e        2 years ago         
 CONTAINER ID   IMAGE     COMMAND    CREATED     STATUS       PORTS       NAMES
 
 [root@Va1 ~]# 
+/******
+创建网络
+
+在安装docker Engine时会自动创建一个默认的bridge网络docker0。 
+此外，还可以创建自己的bridge网络或overlay网络。
+
+bridge网络依附于运行Docker Engine的单台主机上，而overlay网络能够覆盖运行各自Docker Engine的多主机环境中。
+
+创建bridge网络比较简单如下：
+
+ # 不指定网络驱动时默认创建的bridge网络
+docker  network  create  --subnet=172.18.0.1/16  docker1
+
+docker network create  -d bridge --subnet=172.18.0.1/16   simple-network
+
+ # 查看网络内部信息
+ docker network inspect simple-network
+
+ # 应用到容器时，可进入容器内部使用ifconfig查看容器的网络详情
+
+但是创建一个overlay网络就需要一些前提条件（具体操作请参考Docker容器网络相关内容）： 
+- key-value store（Engine支持Consul、Etcd和ZooKeeper等分布式存储的key-value store）
+ 
+- 集群中所有主机已经连接到key-value store 
+- swarm集群中每个主机都配置了下面的daemon参数 
+- –cluster-store 
+- –cluster-store-opt 
+- –cluster-advertise 
+
+然后创建overlay网络：
+
+# 创建网络时，使用参数`-d`指定驱动类型为overlay
+docker network create -d overlay my-multihost-network
+
+就使用--subnet选项创建子网而言，bridge网络只能指定一个子网，而overlay网络支持多个子网。
+
+在bridge和overlay网络驱动下创建的网络可以指定不同的参数，
+具体请参考：https://docs.docker.com/engine/userguide/networking/work-with-networks/
+
+创建三个容器，分别前两个使用默认网络启动容器，第三个使用自定义bridge网络启动。 
+然后再将第二个容器添加到自定义网络。这三个容器的网络情况如下
+
+第一个容器：只有默认的docker0
+第二个容器：属于两个网络——docker0、自定义网络
+第三个容器：只属于自定义网络
+说明：通过容器启动指定的网络会覆盖默认bridge网络docker0。
+
+# 创建三个容器 conTainer1,container2,container3
+docker run -itd --name=container1 busybox
+docker run -itd --name=container2 busybox
+# 创建网络mynet
+docker network create -d bridge --subnet 172.25.0.0/16 mynet
+# 将容器containerr2连接到新建网络mynet
+docker network connect mynet container2
+# 使用mynet网络来容器container3
+docker run --net=mynet --ip=172.25.3.3 -itd --name=container3 busybox
+
+移除网络要求网络中所有的容器关闭或断开与此网络的连接时，才能够使用移除命令：
+
+# 断开最后一个连接到mynet网络的容器
+docker network disconnet mynet container3
+# 移除网络
+docker network rm mynet
+
+https://blog.csdn.net/u012891504/article/details/77367140
+
+
+
+创建一个docker网络my-docker
+
+docker network create -d bridge \
+--subnet=192.168.0.0/24 \
+--gateway=192.168.0.100 \
+--ip-range=192.168.0.0/24 \
+my-docker
+利用刚才创建的网络启动一个容器
+
+#docker run --network=my-docker --ip=192.168.0.5 -itd --name=con_name -h lb01 image_name
+--network   #指定容器网络
+--ip        #设定容器ip地址
+-h          #给容器设置主机名
+查看容器pid
+
+#方法一：
+docker top con_name
+
+#方法二：
+docker inspect --format "{{.State.Pid}}" con_name
+
+运行dockerfile并给dockerfile创建的镜像建立名字
+
+docker build -t mysql:3.6.34 `pwd`
+
+mariadb容器启动前需先设置密码方法
+docker run -d -P -e MYSQL_ROOT_PASSWORD=password  img_id
+
+docker修改镜像名
+docker tag imageid name:tag
+
+进入docker容器脚本
+[root@docker ~]# cat nsenter.sh 
+PID=`docker inspect --format "{{.State.Pid}}" $1`
+nsenter -t $PID -u --mount -i -n -p
+
+创建一个网络
+docker network create --driver bridge --subnet 172.22.16.0/24 --gateway 172.22.16.1 my_net2
+
+将容器添加到my_net2网络 connect
+docker network connect my_net2 oldboy1
+
+
+
+第一步：创建自定义网络
+备注：这里选取了172.172.0.0网段，也可以指定其他任意空闲的网段
+备注1：这里是固定IP地址的一个应用场景的延续，仅作记录用，可忽略不看。
+
+docker network create --subnet=172.172.0.0/16 docker-ice
+注：docker-ice为自定义网桥的名字，可自己任意取名。
+
+第二步：在你自定义的网段选取任意IP地址作为你要启动的container的静态IP地址
+备注：这里在第二步中创建的网段中选取了172.172.0.10作为静态IP地址。这里以启动docker-ice为例。
+docker run -d --net docker-ice --ip 172.172.0.10 ubuntu:16.04
+
+备注2：如果需要将指定IP地址的容器出去的请求的源地址改为宿主机上的其他可路由IP地址，
+可用iptables来实现。
+比如将静态IP地址 172.18.0.10出去的请求的源地址改成公网IP104.232.36.109(前提是本机存在这个IP地址)，
+可执行如下命令：
+iptables -t nat -I POSTROUTING -o eth0 -d  0.0.0.0/0 -s 172.18.0.10  -j SNAT --to-source 104.232.36.109
+
+[root@Va1 ~]# ifconfig   docker0
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:1cff:fe98:1a8a  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:1c:98:1a:8a  txqueuelen 0  (Ethernet)
+....................
+
+[root@Va1 ~]# docker  network  create  --subnet=172.17.1.1/16  docker1
+Error response from daemon: cannot create network 83d5a2c091c79adeda65c1879ae772bcf0243044c4354f94aaf217a96821595f (br-83d5a2c091c7): conflicts with network e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e (docker0): networks have overlapping IPv4
+/*******
+conflicts with network    网络冲突
+networks have overlapping IPv4  网络与IPv4重叠
+
+docker0   e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e
+
+私有 ip 地址的范围：
+A类地址范围：10.0.0.0—10.255.255.255
+B类地址范围：172.16.0.0---172.31.255.555
+C类地址范围：192.168.0.0---192.168.255.255
+
+----------------------------  创建一个docker网络 docker1 -----------------------
+                                 ## 注意子网格式 错误,应该是 172.18.0.0/16
+[root@Va1 ~]# docker  network  create  --subnet=172.18.0.1/16  docker1
+
+417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53
+
+[root@Va1 ~]# ifconfig 
+br-417bc39e9b21: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+.............
+
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+.........................
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+................
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+.....................
+
+[root@Va1 ~]# docker  network  ls   ## 查看docker网络
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+417bc39e9b21        docker1             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local   
+
+/*********
+docker0          inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0 
+   e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e
+
+br-417bc39e9b21: inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+   417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53
+****/
+----------------------------  创建一个docker网络 docker2 -------------------
+                                         ## 注意子网格式 错误,应该是 172.19.0.0/16
+[root@Va1 ~]# docker network create -d bridge --subnet=172.19.0.1/16  docker2
+
+0e15fbeddda141375b9988453304b2191b87ef738442a76fa23a85ae35a0c14c
+
+[root@Va1 ~]# docker  network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+417bc39e9b21        docker1             bridge              local               
+0e15fbeddda1        docker2             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local               
+
+/*********
+docker0          inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0 
+   e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e
+
+br-417bc39e9b21: inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+   417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53
+
+br-0e15fbeddda1: inet 172.19.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+   0e15fbeddda141375b9988453304b2191b87ef738442a76fa23a85ae35a0c14c
+
+****/
+
+[root@Va1 ~]# ifconfig  
+br-0e15fbeddda1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.19.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+......................
+br-417bc39e9b21: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+...................
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+..........................
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+.........................
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+....................
+[root@Va1 ~]# 
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'
+172.19.0.1
+172.18.0.1
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+
+ # 查看网络内部信息
+ docker network inspect NAME
+
+[root@Va1 ~]# docker  network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+417bc39e9b21        docker1             bridge              local               
+0e15fbeddda1        docker2             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local  
+
+[root@Va1 ~]# docker  network  inspect   bridge  ##  查看网络内部信息
+[
+    {
+        "Name": "bridge",
+        "Id": "e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+  ............................
+    }
+]
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  network  inspect   docker1   ##  查看网络内部信息
+[
+    {
+        "Name": "docker1",
+        "Id": "417bc39e9b21c3cb50f71b5a623cdeb0407a98b65ce630e832da44fa1a647a53",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.1/16"
+                }
+..........................
+    }
+]
+[root@Va1 ~]# docker  network  inspect   docker2    ##  查看网络内部信息
+[
+    {
+        "Name": "docker2",
+        "Id": "0e15fbeddda141375b9988453304b2191b87ef738442a76fa23a85ae35a0c14c",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.19.0.1/16"
+                }
+  ..........................
+]
+[root@Va1 ~]# docker  network   rm  docker1   # # 移除网络docker1
+docker1
+[root@Va1 ~]# docker  network   rm  docker2   # 移除网络docker2
+docker2
+[root@Va1 ~]# docker  network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local               
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+---------------------------- 创建自定义 网络  docker1 -------------------------
+
+[root@Va1 ~]# docker  network  create  --driver  bridge  \
+> --subnet=172.18.0.0/16    --gateway=172.18.0.1     \
+> --ip-range=172.18.0.0/16   docker1
+
+36c303b8ab2d419634b159a5da51c871cba495c7906cbe48f7e49069ebdb1238
+
+[root@Va1 ~]# docker  network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+e90b4a6a5b24        bridge              bridge              local               
+36c303b8ab2d        docker1             bridge              local               
+8f6605f31fd8        host                host                local               
+5ff79f969369        none                null                local  
+             
+[root@Va1 ~]# docker  network  inspect   docker1   ##  查看网络内部信息
+[
+    {
+        "Name": "docker1",
+        "Id": "36c303b8ab2d419634b159a5da51c871cba495c7906cbe48f7e49069ebdb1238",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "IPRange": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+[root@Va1 ~]# docker  network  inspect   bridge  ##  查看网络内部信息
+[
+    {
+        "Name": "bridge",
+        "Id": "e90b4a6a5b246aa9e9a9c8ee243de5bf1f7c3ede71241248addc96fbb5d3ba8e",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Containers": {},
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {}
+    }
+]
+[root@Va1 ~]# 
+[root@Va1 ~]# ifconfig  |awk '/inet /{print  $2}'172.18.0.1
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+
+[root@Va1 ~]# ifconfig  |head  -12
+br-36c303b8ab2d: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:5e:15:25:26  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:1cff:fe98:1a8a  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:1c:98:1a:8a  txqueuelen 0  (Ethernet)
+[root@Va1 ~]# 
+           ---------- 利用 默认创建的 网络 docker0 启动一个容器        --------------------
+
+[root@Va1 ~]# docker  run  --network=bridge  --ip=172.17.0.11  -td  centos:latest
+
+64afbfe0c3aaf1711c2bfebc0224631e80a66897d5c7e31a02e8c0ef31d5df12
+docker: Error response from daemon: User specified IP address is supported on user defined networks only.
+  守护进程的错误响应 : 仅在用户定义的网络上支持用户指定的IP地址
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# docker  ps -a
+CONTAINER ID  IMAGE        COMMAND      CREATED      STATUS  PORTS    NAMES
+64afbfe0c3aa  centos:latest "/bin/bash" 39 seconds ago  Created   adoring_kirch
+
+[root@Va1 ~]# docker  rm   adoring_kirch  ## 删除容器
+adoring_kirch
+[root@Va1 ~]# docker  ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# 
+
+Error response from daemon 
+守护进程的错误响应
+User specified IP address is supported on user defined networks only
+仅在用户定义的网络上支持用户指定的IP地址。
+----------------------------------------------------------------------------------
+[root@Va1 ~]# docker  create  --help |grep  -E "\--network|--ip|--name"
+
+      --ip string                   Container IPv4 address (e.g. 172.30.100.104)
+      --ip6 string                  Container IPv6 address (e.g. 2001:db8::33)
+      --ipc string                  IPC namespace to use
+      --name string                 Assign a name to the container
+      --network string              Connect a container to a network (default "default")
+      --network-alias value         Add network-scoped alias for the container (default [])
+
+---- -利用刚才创建的网络docker1  创建一个容器 设置 ip 和 容器名自定义 centos-172.18.0.11--------
+
+[root@Va1 ~]# docker  create  --network=docker1  --ip=172.18.0.11  \
+>   --name=centos-172.18.0.11  centos:latest
+
+9b4d9c117136695a7aa3884b0d963a01d8dbcb940e3fc6732dbcd062f694d450
+
+
+-------------利用默认的网络 bridge(docker0)  创建一个容器 容器名自定义 --------------
+
+[root@Va1 ~]# docker  create   --name=centos-1   centos:latest
+
+00846b40439e753e0a1b6b57afa481275f044cfe4972543679555a4eb9c7b733
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+
+[root@Va1 ~]# docker  ps -a
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+00846b40439e  centos:latest  "/bin/bash"  13 seconds ago  Created   centos-1
+9b4d9c117136  centos:latest  "/bin/bash"  2 minutes ago   Created  centos-172.18.0.11
+
+[root@Va1 ~]# docker   rm   centos-1  ## 删除容器
+centos-1
+[root@Va1 ~]# docker   rm   centos-172.18.0.11  ## 删除容器
+centos-172.18.0.11
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+
+[root@Va1 ~]# docker  images 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@Va1 ~]# docker   run  -td  centos:latest  /bin/bash  ## 创建新容器 并且后台-d 运行
+
+d1b04d35429696149f03b0543c3dee278e245d74a4782e3839437a797a862f43
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+d1b04d354296        centos:latest       "/bin/bash"         About a minute ago   Up About a minute                       gigantic_pike
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID   IMAGE  COMMAND  CREATED   STATUS     PORTS     NAMES
+d1b04d354296        centos:latest       "/bin/bash"         About a minute ago   Up About a minute                       gigantic_pike
+
+----- docker exec 进入容器,退出时不会关闭容器 ----------------------
+ ## docker  exec  -it  容器id前三或五位  运行镜像里的 命令
+
+[root@Va1 ~]# docker   exec  -it   d1b  /bin/bash  ## 注意 必须有 镜像里的 命令
+
+[root@d1b04d354296 /]# hostname
+d1b04d354296
+[root@d1b04d354296 /]# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 10:21 ?        00:00:00 /bin/bash
+root        13     0  0 10:23 ?        00:00:00 /bin/bash
+root        26    13  0 10:31 ?        00:00:00 ps -ef
+
+[root@d1b04d354296 /]# pstree  -p
+bash: pstree: command not found
+
+[root@d1b04d354296 /]# cd  /etc/yum.repos.d/
+
+[root@d1b04d354296 yum.repos.d]# ls
+CentOS-Base.repo  CentOS-Debuginfo.repo  CentOS-Sources.repo  CentOS-fasttrack.repo
+CentOS-CR.repo    CentOS-Media.repo      CentOS-Vault.repo
+
+[root@d1b04d354296 yum.repos.d]# mkdir  repo; mv  *.repo   repo
+[root@d1b04d354296 yum.repos.d]# ls
+repo
+[root@d1b04d354296 yum.repos.d]# ls  repo/ |wc  -l
+7
+[root@d1b04d354296 yum.repos.d]# vim  local.repo
+bash: vim: command not found
+[root@d1b04d354296 yum.repos.d]# vi   local.repo
+[root@d1b04d354296 yum.repos.d]# cat   local.repo
+[CentOS7-1708]
+
+name=CentOS7-1708
+
+baseurl=ftp://192.168.0.254/CentOS7-1708
+
+gpgcheck=0
+
+enabled=1
+[root@d1b04d354296 yum.repos.d]# yum  clean  all >/dev/null &&  yum repolist |tail -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+
+[root@d1b04d354296 yum.repos.d]# yum  -y  install  net-tools  vim-enhanced |tail -4
+  vim-filesystem.x86_64 2:7.4.160-2.el7                                         
+  which.x86_64 0:2.20-7.el7                                                     
+
+Complete!
+[root@d1b04d354296 yum.repos.d]#  ifconfig 
+ 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+        inet6 fe80::42:acff:fe11:2  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+ ....................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+...............
+[root@d1b04d354296 yum.repos.d]# cd
+[root@d1b04d354296 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         193        3001           8         756        3488
+Swap:          2047           0        2047
+[root@d1b04d354296 ~]# echo  $$  ##确认当前进程PID
+13
+[root@d1b04d354296 ~]# exit
+exit
+---- --- ---------- docker exec 进入容器,退出时不会关闭容器 ----------------------
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+d1b04d354296        centos:latest       "/bin/bash"         22 minutes ago      Up 22 minutes                           gigantic_pike
+
+----------------------------------  查看容器pid  #方法一：-----------------
+
+[root@Va1 ~]# docker  top   gigantic_pike
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                8598                8585                0                   18:21               pts/1               00:00:00            /bin/bash
+
+----------------------------------  查看容器pid  #方法2：-----------------
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       800     1  0 09:00 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      8598  8585  0 18:21 pts/1    00:00:00 /bin/bash
+root      8937  2254  0 18:47 pts/0    00:00:00 grep --color=auto /bin/bash
+
+----------------------------------  查看容器pid  #方法3：-----------------
+docker  inspect {镜像名|容器名|网络} # 查看{镜像|容器|网络}底层详细信息和属性
+
+[root@Va1 ~]# docker  inspect  --format  "{{.State.Pid}}"   gigantic_pike
+8598
+
+----------------------------  查看容器pid  #方法4：-----------------
+
+[root@Va1 ~]# docker  inspect   gigantic_pike   |grep  "\"Pid\":"
+            "Pid": 8598,
+
+
+[root@Va1 ~]# docker  inspect   gigantic_pike  \
+> |egrep  "\"Path\":|Status|HostnamePath|\"Name\": \"/"
+
+        "Path": "/bin/bash",
+            "Status": "running",
+        "HostnamePath": "/var/lib/docker/containers/d1b04d35429696149f03b0543c3dee278e245d74a4782e3839437a797a862f43/hostname",
+        "Name": "/gigantic_pike",  ## 容器实际名称
+
+[root@Va1 ~]# 
+-----------------------------------------------------------------------------------
+ - - - - - - - --   - - - -- - - - - --  --- -  --- -- - - - -- -- - - -- 
+ redhat    |   debian
+----------------------------------------------------------------------------------
+  rhel     |   debian
+  centos   |   ubuntu
+  selinux  |
+------------------------------------------------------------------------------
+yum Yellowdog Update Manager| apt-get   .deb
+rpm redhat package manager  | dpkg 是Debian package的简写
+-------------------------------------------------------------------------------------------
+  ----------------------------- ## 进入终端-t 后台-d 运行 -------------------
+
+[root@Va1 ~]# docker  run  -td  nginx  /bin/bash    ## 注意 ubuntu
+
+75f8af7d6f1d9c0cedd4e2b277d99f5e8654f3d7a4c8ca7b87196a3f9ff78934
+
+----- docker exec 进入容器,退出时不会关闭容器 ----------------------
+ ## docker  exec  -it  容器id前三或五位  运行镜像里的 命令
+
+[root@Va1 ~]# docker   exec  -it   75f8   /bin/bash
+
+root@75f8af7d6f1d:/# hostname
+75f8af7d6f1d
+root@75f8af7d6f1d:/# echo  $$  ## 当前进程号
+5
+root@75f8af7d6f1d:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 11:06 ?        00:00:00 /bin/bash
+root         5     0  0 11:07 ?        00:00:00 /bin/bash
+root        10     5  0 11:09 ?        00:00:00 ps -ef
+
+root@75f8af7d6f1d:/# ip  address show   ## 查看ip
+
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+...........................
+27: eth0@if28: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.3/16 scope global eth0
+    ........................
+
+root@75f8af7d6f1d:/# dpkg  -l  |tail  -3
+ii  udev                      215-17+deb8u5            amd64        /dev/ and hotplug management daemon
+ii  util-linux                2.25.2-6                 amd64        Miscellaneous system utilities
+ii  zlib1g:amd64              1:1.2.8.dfsg-2+b1        amd64        compression library - runtime
+
+root@75f8af7d6f1d:/# ls  /etc/nginx/
+conf.d		koi-utf  mime.types  nginx.conf   uwsgi_params
+fastcgi_params	koi-win  modules     scgi_params  win-utf
+
+root@75f8af7d6f1d:/# ls  /etc/nginx/conf.d/
+default.conf
+
+root@75f8af7d6f1d:/# vi  /etc/nginx/conf.d/default.conf 
+bash: vi: command not found
+root@75f8af7d6f1d:/# vim  /etc/nginx/conf.d/default.conf
+bash: vim: command not found
+
+root@75f8af7d6f1d:/# ls  /usr/
+bin  games  include  lib  local  sbin  share  src
+
+root@75f8af7d6f1d:/# ls  /usr/share/nginx/
+html
+root@75f8af7d6f1d:/# ls  /usr/share/nginx/html/
+50x.html  index.html
+
+root@75f8af7d6f1d:/# ping  172.17.0.1  -c2
+
+PING 172.17.0.1 (172.17.0.1): 56 data bytes
+64 bytes from 172.17.0.1: icmp_seq=0 ttl=64 time=0.163 ms
+64 bytes from 172.17.0.1: icmp_seq=1 ttl=64 time=0.097 ms
+......................
+
+root@75f8af7d6f1d:/# ping  172.17.0.2  -c2
+PING 172.17.0.2 (172.17.0.2): 56 data bytes
+64 bytes from 172.17.0.2: icmp_seq=0 ttl=64 time=0.163 ms
+64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.091 ms
+................
+
+root@75f8af7d6f1d:/# ping  172.17.0.3  -c2
+PING 172.17.0.3 (172.17.0.3): 56 data bytes
+64 bytes from 172.17.0.3: icmp_seq=0 ttl=64 time=0.095 ms
+64 bytes from 172.17.0.3: icmp_seq=1 ttl=64 time=0.097 ms
+................
+root@75f8af7d6f1d:/# exit
+exit
+
+[root@Va1 ~]# docker   exec  -it   75f8   /bin/bash  ## 以 exec 方式进入容器
+
+root@75f8af7d6f1d:/# ls  /usr/share/nginx/
+html
+root@75f8af7d6f1d:/# ls  /usr/share/      
+................................
+common-licenses  fontconfig   java	       nginx	 readline
+
+root@75f8af7d6f1d:/# ls  /etc/nginx/
+conf.d		koi-utf  mime.types  nginx.conf   uwsgi_params
+fastcgi_params	koi-win  modules     scgi_params  win-utf
+
+root@75f8af7d6f1d:/# exit
+exit
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED      STATUS    PORTS       NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         39 minutes ago      Up 39 minutes       80/tcp, 443/tcp     thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         About an hour ago   Up About an hour                        gigantic_pike
+
+[root@Va1 ~]# docker  restart  75f8af7d6f1d  ## 重启容器
+75f8af7d6f1d
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED      STATUS    PORTS       NAMES
+
+75f8af7d6f1d        nginx               "/bin/bash"         40 minutes ago      Up 10 seconds       80/tcp, 443/tcp     thirsty_wright
+
+d1b04d354296        centos:latest       "/bin/bash"         About an hour ago   Up About an hour                        gigantic_pike
+
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3  ## 原因 没有开启 nginx 服务
+ELinks: 拒绝连接
+
+[root@Va1 ~]# docker   exec  -it   75f8   /bin/bash
+
+root@75f8af7d6f1d:/# which  nginx
+/usr/sbin/nginx
+root@75f8af7d6f1d:/# ls  /usr/sbin/
+add-shell	   e2freefrag	 nginx		      service
+....................
+
+root@75f8af7d6f1d:/# ls  /usr/sbin/nginx  -l
+-rwxr-xr-x 1 root root 1132376 Oct 11  2016 /usr/sbin/nginx
+root@75f8af7d6f1d:/# nginx
+root@75f8af7d6f1d:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 11:47 ?        00:00:00 /bin/bash
+root         5     0  0 11:49 ?        00:00:00 /bin/bash
+root        13     0  0 11:50 ?        00:00:00 nginx: master process nginx
+nginx       14    13  0 11:50 ?        00:00:00 nginx: worker process
+root        15     5  0 11:50 ?        00:00:00 ps -ef
+root@75f8af7d6f1d:/# exit
+exit
+^P^P[root@Va1 ~]# 
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+                               Welcome to nginx!
+......................
+   Thank you for using nginx.
+
+References
+
+   Visible links
+   1. http://nginx.org/
+   2. http://nginx.com/
+/***************************
+ ## Env 表示设置的环境变量 ,设置搜索命令路径
+                 ## Cmd 表示默认的容器启动的命令
+
+[root@Va1 ~]#  docker  inspect  75f8  |grep -A2  -n  "\"Env\": \["
+125:            "Env": [
+126-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+127-                "NGINX_VERSION=1.11.5-1~jessie"
+
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  rm  $(docker  stop  $(docker  ps  -q)) #删除 正在运行的容器
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                       PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         About an hour ago   Exited (137) 9 minutes ago                       thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         2 hours ago         Exited (137) 9 minutes ago                       gigantic_pike
+[root@Va1 ~]# docker  start  75f8
+75f8
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED      STATUS    PORTS       NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         About an hour ago   Up 9 seconds        80/tcp, 443/tcp     thirsty_wright
+[root@Va1 ~]# docker  top
+"docker top" requires at least 1 argument(s).
+See 'docker top --help'.
+
+Usage:  docker top CONTAINER [ps OPTIONS]
+
+Display the running processes of a container
+
+[root@Va1 ~]# docker  top  75f8
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                10372               10358               0                   20:26               pts/1               00:00:00            /bin/bash
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+^C
+[root@Va1 ~]# 
+[root@Va1 ~]# docker   exec  -it  75f8  /bin/bash
+
+root@75f8af7d6f1d:/# ls  /usr/sbin/nginx  -l
+-rwxr-xr-x 1 root root 1132376 Oct 11  2016 /usr/sbin/nginx
+
+root@75f8af7d6f1d:/# ls   /usr/share/nginx/html/
+50x.html  index.html
+
+root@75f8af7d6f1d:/# echo  "75f8af7d6f1d \/usr\/share\/nginx\/html\/index.html" > /usr/share/nginx/html/index.html 
+root@75f8af7d6f1d:/# /usr/sbin/nginx    root@75f8af7d6f1d:/# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 12:26 ?        00:00:00 /bin/bash
+root         5     0  0 12:33 ?        00:00:00 /bin/bash
+root        12     0  0 12:36 ?        00:00:00 nginx: master process /usr/sbin/nginx
+nginx       13    12  0 12:36 ?        00:00:00 nginx: worker process
+root        14     5  0 12:36 ?        00:00:00 ps -ef
+root@75f8af7d6f1d:/# exit
+exit
+^P^P   ## Ctrl +p   +q  退出 (卡机的时候)
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2
+   75f8af7d6f1d \/usr\/share\/nginx\/html\/index.html
+
+[root@Va1 ~]# pstree  -p  |head  -3
+systemd(1)-+-ModemManager(667)-+-{ModemManager}(746)
+           |                   `-{ModemManager}(757)
+           |-abrt-watch-log(681)
+
+查看进程有多少个线程:pstree -p pid (pstree -p pid |wc -l 可以查看线程总数)
+
+[root@Va1 ~]# pstree  -p  0
+?()─┬─kthreadd(2)─┬─ata_sff(277)
+    │             ├─bioset(22)
+    │             ├─bioset(368)
+    │             ├─bioset(380)
+......................
+    │             ├─xfsalloc(394)
+    │             └─xprtiod(504)
+    └─systemd(1)─┬─ModemManager(667)─┬─{ModemManager}(746)
+                 │                   └─{ModemManager}(757)
+                 ├─abrt-watch-log(681)
+                 ├─abrt-watch-log(684)
+..........................
+                 ├─dbus-daemon(688)
+                 ├─dnsmasq(1317)───dnsmasq(1318)
+                 ├─dockerd(1091)─┬─docker-containe(1230)─┬─docker-containe(10358)─┬─ba+
+..............................................................................
+                 │               │                       │                        └─{d+
+                 │               │                       ├─docker-containe(10425)─┬─ng+
+.................................................................................................
+                 │               │                       │                        └─{d+
+.............................................................................
+                 │               │                       └─{docker-containe}(2830)
+                 │               ├─{dockerd}(1129)
+..................................................
+                 │               └─{dockerd}(7678)
+                 ├─gssproxy(742)─┬─{gssproxy}(747)
+....................................
+                 │               └─{gssproxy}(751)
+                 ├─httpd(1098)─┬─httpd(1130)
+..............................................
+                 │             └─httpd(1134)
+                 ├─irqbalance(669)
+                 ├─libvirtd(1094)─┬─{libvirtd}(1208)
+....................................
+                 │                └─{libvirtd}(1226)
+                 ├─lsmd(761)
+                 ├─lvmetad(501)
+                 ├─master(1207)─┬─pickup(10463)
+                 │              └─qmgr(1219)
+................................
+                 ├─smartd(664)
+                 ├─sshd(1090)───sshd(2252)───bash(2254)───pstree(10481)
+                 ├─systemd-journal(473)
+                 ├─systemd-logind(676)
+                 ├─systemd-udevd(513)
+                 └─tuned(1083)─┬─{tuned}(1247)
+                               ├─{tuned}(1248)
+                               ├─{tuned}(1249)
+                               └─{tuned}(1250)
+
+查看进程有多少个线程:pstree -p pid (pstree -p pid |wc -l 可以查看线程总数)
+
+[root@Va1 ~]# pstree  -p  0  |wc  -l
+191
+[root@Va1 ~]# pstree  -p  1  |wc  -l
+103
+[root@Va1 ~]# pstree  -p  1230 |wc  -l
+24
+[root@Va1 ~]# ps  -ef  |grep sshd
+root      1090     1  0 09:01 ?        00:00:00 /usr/sbin/sshd -D
+root      2252  1090  0 10:31 ?        00:00:01 sshd: root@pts/0
+root     10515  2254  0 21:04 pts/0    00:00:00 grep --color=auto sshd
+    
+[root@Va1 ~]# docker  attach  75f8
+^P
+^P
+^P^P
+^P
+^P    继续执行 则ctrl +p q  # 先按p 后按q
+^P    ##  Ctrl +  p  q  正常退出且不关闭容器
+^C   ## 卡机 状态  Ctrl +  c
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 hours ago         Up 45 minutes       80/tcp, 443/tcp     thirsty_wright
+
+[root@Va1 ~]# docker  stop  75f8  #### 卡机 状态 不能关闭
+^C
+[root@Va1 ~]# docker  top  75f8    #### 卡机 状态 不能查看 容器的pid号
+^C
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root     10372 10358  0 20:26 pts/1    00:00:00 /bin/bash
+root     10588  2254  0 21:12 pts/0    00:00:00 grep --color=auto /bin/bash
+[root@Va1 ~]# kill   -9  10372   #最简单粗暴的杀招
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# 
+
+[root@Va1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 hours ago         Up About a minute   80/tcp, 443/tcp     thirsty_wright
+[root@Va1 ~]# docker  attach  75f8
+
+[root@Va1 ~]# docker  attach  75f8
+^P
+^P
+^C
+[root@Va1 ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 hours ago         Up 2 minutes        80/tcp, 443/tcp     thirsty_wright
 
 
 
 
+
+
+
+
+docker attach 进入容器  exit 会导致 容器关闭
+docker  attach  容器id前三或五位
+
+
+查看容器pid
+
+#方法一：
+docker top con_name
+
+#方法二：
+docker inspect --format "{{.State.Pid}}" con_name
 
 
 
