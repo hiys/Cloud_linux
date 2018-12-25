@@ -1,0 +1,1633 @@
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+..........
+[root@Va1 ~]# echo "scale=2;1024*4"|bc
+4096
+[root@Va1 ~]# echo "scale=2;1024*5"|bc
+5120
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           3951         137        3618           8         196        3584
+Swap:          2047           0        2047
+[root@Va1 ~]# ifconfig 
+br-36c303b8ab2d: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+.................
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+.................
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+ .....................
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+  ...................
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.11  netmask 255.255.255.0  broadcast 192.168.2.255
+   ......................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+   .................
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+..................
+
+[root@Va1 ~]# docker ps  
+CONTAINER ID    IMAGE      COMMAND    CREATED    STATUS    PORTS    NAMES
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID  IMAGE  COMMAND    CREATED       STATUS              PORTS      NAMES
+75f8af7d6f1d  nginx "/bin/bash" 14 hours ago  Exited (0) 12 hours ago  thirsty_wright
+d1b04d354296  centos:latest "/bin/bash" 15 hours ago  Exited (0) 13 hours ago  gigantic_pike
+
+[root@Va1 ~]# docker  start   thirsty_wright  ## 开启容器(镜像名nginx)
+thirsty_wright
+[root@Va1 ~]# docker  start    d1b04d354296   ## 开启容器(镜像名centos)
+d1b04d354296
+
+[root@Va1 ~]# docker  ps  
+CONTAINER ID  IMAGE  COMMAND     CREATED       STATUS          PORTS          NAMES
+75f8af7d6f1d  nginx  "/bin/bash" 14 hours ago  Up 36 seconds   80/tcp, 443/tcp  thirsty_wright
+d1b04d354296  centos:latest  "/bin/bash" 15 hours ago  Up 7 seconds     gigantic_pike
+        
+[root@Va1 ~]# docker exec  -it   gigantic_pike  /bin/bash  ## 进入容器(镜像名centos)
+
+[root@d1b04d354296 /]# hostname
+d1b04d354296
+[root@d1b04d354296 /]# ls  /etc/yum.repos.d/
+local.repo  repo
+[root@d1b04d354296 /]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+
+name=CentOS7-1708
+
+baseurl=ftp://192.168.0.254/CentOS7-1708
+
+gpgcheck=0
+
+enabled=1
+
+[root@d1b04d354296 /]# yum  -y  install  httpd  elinks |tail  -3
+  nss_compat_ossl.x86_64 0:0.9.6-8.el7                                          
+
+Complete!
+[root@d1b04d354296 /]# rpm  -q   elinks  httpd
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.centos.x86_64
+
+[root@d1b04d354296 /]# ifconfig |head   -12
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.3  netmask 255.255.0.0  broadcast 0.0.0.0
+.........................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+
+[root@d1b04d354296 /]# ifconfig  |awk  '/inet /{print $2}'
+172.17.0.3
+127.0.0.1
+
+[root@d1b04d354296 /]# rpm  -q  net-tools  vim-enhanced
+net-tools-2.0-0.22.20131004git.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+[root@d1b04d354296 /]# which  apachectl
+/usr/sbin/apachectl
+
+[root@d1b04d354296 /]# /usr/sbin/apachectl   ## 启动 httpd 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.3. Set the 'ServerName' directive globally to suppress this message
+
+Could not reliably determine the server's fully qualified domain name 
+无法可靠地确定服务器的完全限定域名
+Set the 'ServerName' directive globally to suppress this message 
+设置“ServerName”指令全局以抑制此消息
+
+[root@d1b04d354296 /]# cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search vbr
+
+[root@d1b04d354296 /]# apachectl   ## 启动 httpd 服务
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.3. Set the 'ServerName' directive globally to suppress this message
+httpd (pid 83) already running
+[root@d1b04d354296 /]# netstat  -npult |grep  httpd
+tcp6  0   0 :::80      :::*       LISTEN    83/httpd
+
+Linux中的ps命令
+是Process Status的缩写。
+ps命令用来列出系统中当前运行的进程的快照。
+
+动态的显示进程信息，
+使用top命令
+
+“ ps -ef ” 显示所有进程信息，连同命令行
+ps aux  ##查看所有进程的详细信息
+
+与 ps -aux 是不同的，
+例如 -u 参数表示打印进程的 uid，
+而参数 u 表示显示进程的详细信息。
+
+
+[root@d1b04d354296 /]# ps  -C  httpd #通过进程名 httpd 显示进程
+  PID TTY          TIME CMD
+   83 ?        00:00:00 httpd
+   84 ?        00:00:00 httpd
+   85 ?        00:00:00 httpd
+   86 ?        00:00:00 httpd
+   87 ?        00:00:00 httpd
+   88 ?        00:00:00 httpd
+
+[root@d1b04d354296 /]# ls  /var/www/html/
+[root@d1b04d354296 /]# echo  "d1b04d354296  centos:latest  gigantic_pike" 
+ >  /var/www/html/index.html
+
+[root@d1b04d354296 /]# cat  /var/www/html/index.html
+d1b04d354296  centos:latest  gigantic_pike
+
+[root@d1b04d354296 /]# elinks  -dump  http://172.17.0.3
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@d1b04d354296 /]# exit
+exit
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2  ## 原因 没有开启 nginx 服务
+ELinks: 拒绝连接
+ - - - - - - - --   - - - -- - - - - --  --- -  --- -- - - - -- -- - - -- 
+ redhat    |   debian
+----------------------------------------------------------------------------------
+  rhel     |   debian
+  centos   |   ubuntu
+  selinux  |
+------------------------------------------------------------------------------
+yum Yellowdog Update Manager| apt-get   .deb
+rpm redhat package manager  | dpkg 是Debian package的简写
+-------------------------------------------------------------------------------------------
+  ----------------------------- ## 进入终端-t 后台-d 运行 -------------------
+------------------------------------------------- ## 注意 ubuntu ---------
+
+[root@Va1 ~]# docker  exec  -it   75f8af7d6f1d  /bin/bash  ## 进入容器(镜像名nginx)
+
+root@75f8af7d6f1d:/# ip  address show   ## 查看ip
+
+1: lo:..........
+    inet 127.0.0.1/8 scope host lo
+................
+9: eth0@if10:...............
+    inet 172.17.0.2/16 scope global eth0
+   ..............
+root@75f8af7d6f1d:/# echo  $$  ## 查看当前进程号
+5
+root@75f8af7d6f1d:/# dpkg  -l  |tail  -1
+ii  zlib1g:amd64     1:1.2.8.dfsg-2+b1   amd64    compression library - runtime
+
+root@75f8af7d6f1d:/# head  -4 /etc/nginx/conf.d/default.conf  ##从配置文件
+server {
+    listen       80;
+    server_name  localhost;
+
+root@75f8af7d6f1d:/# cat  /etc/nginx/conf.d/default.conf |grep  -A3 -n "location /"
+8:    location / {
+9-        root   /usr/share/nginx/html;  ## 注意 网页根目录
+10-        index  index.html index.htm;  ## 注意网页首页文件
+11-    }
+
+root@75f8af7d6f1d:/# ping  -c1  172.17.0.3
+PING 172.17.0.3 (172.17.0.3): 56 data bytes
+64 bytes from 172.17.0.3: icmp_seq=0 ttl=64 time=0.063 ms
+................
+
+root@75f8af7d6f1d:/# which  nginx
+/usr/sbin/nginx
+root@75f8af7d6f1d:/# /usr/sbin/nginx   ##开启服务执行文件
+
+root@75f8af7d6f1d:/# echo  "75f8af7d6f1d  nginx   80/tcp, 443/tcp  thirsty_wright /usr/share/nginx/html/index.html"  >
+ /usr/share/nginx/html/index.html     ## 注意网页首页文件
+
+root@75f8af7d6f1d:/# dpkg  -l  |grep  nginx
+ii  nginx                   1.11.5-1~jessie     amd64   high performance web server
+ii  nginx-module-geoip       1.11.5-1~jessie      amd64  nginx GeoIP dynamic modules
+ii  nginx-module-image-filter 1.11.5-1~jessie       amd64 nginx image filter dynamic module
+ii  nginx-module-njs          1.11.5.0.1.3-1~jessie amd64 nginx nginScript dynamic modules
+ii  nginx-module-perl        1.11.5-1~jessie      amd64  nginx Perl dynamic module
+ii  nginx-module-xslt       1.11.5-1~jessie     amd64   nginx xslt dynamic module
+
+root@75f8af7d6f1d:/# apt-get  install  elinks  ##装包
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+E: Unable to locate package elinks
+
+root@75f8af7d6f1d:/# dpkg  -L  nginx  |grep  nginx
+
+/etc/default/nginx
+..................
+/etc/nginx/scgi_params
+..............
+/etc/nginx/conf.d/default.conf  ##从配置文件
+.....................
+/etc/nginx/nginx.conf  ###主配置文件
+
+/etc/init.d/nginx
+...............
+/usr/share/nginx/html/index.html ## 注意网页首页文件
+
+..............
+/usr/sbin/nginx  ## ##开启服务执行文件
+
+/usr/sbin/nginx-debug
+/var/log/nginx
+/var/cache/nginx
+/etc/nginx/modules
+
+root@75f8af7d6f1d:/# ls  -l  /etc/default/nginx
+-rw-r--r-- 1 root root 125 Oct 11  2016 /etc/default/nginx
+
+root@75f8af7d6f1d:/# cat   /etc/default/nginx   ### default/nginx 
+
+# Defaults for nginx initscript
+# sourced by /etc/init.d/nginx
+
+# Additional options that are passed to nginx
+DAEMON_ARGS=""
+
+root@75f8af7d6f1d:/# 
+
+---------------------###主配置文件 nginx/nginx.conf ---------------------------
+
+root@75f8af7d6f1d:/# cat  /etc/nginx/nginx.conf ###主配置文件 nginx/nginx.conf
+
+user  nginx;         ## 注意 user
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;     ## 注意 pid
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf; ##注意这句最关键包含 从配置文件
+}
+
+root@75f8af7d6f1d:/# 
+------------------------- ##从配置文件 nginx/conf.d/default.conf --------------
+
+root@75f8af7d6f1d:/# cat   /etc/nginx/conf.d/default.conf  ##从配置文件 nginx/conf.d/default.conf
+
+server {
+    listen       80;
+    server_name  localhost;
+
+    #charset koi8-r;
+    #access_log  /var/log/nginx/log/host.access.log  main;
+
+    location / {
+        root   /usr/share/nginx/html;  ## 注意 网页根目录
+        index  index.html index.htm;   ## 注意网页首页文件
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    #location ~ \.php$ {
+    #    root           html;
+    #    fastcgi_pass   127.0.0.1:9000;
+    #    fastcgi_index  index.php;
+    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+
+    #    include      fastcgi_params;  ## 注意 include  fastcgi.conf;区别
+    #}
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+
+root@75f8af7d6f1d:/# exit
+exit
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2
+   75f8af7d6f1d nginx 80/tcp, 443/tcp thirsty_wright
+   /usr/share/nginx/html/index.html
+
+[root@Va1 ~]# cat  /var/lib/docker/containers/75f8af7d6f1d9c0cedd4e2b277d99f5e8654f3d7a4c8ca7b87196a3f9ff78934/hosts
+127.0.0.1	localhost
+::1	localhost ip6-localhost ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+172.17.0.2	75f8af7d6f1d
+[root@Va1 ~]# cat  /var/lib/docker/containers/75f8af7d6f1d9c0cedd4e2b277d99f5e8654f3d7a4c8ca7b87196a3f9ff78934/resolv.conf
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search vbr
+[root@Va1 ~]# cat  /var/lib/docker/containers/75f8af7d6f1d9c0cedd4e2b277d99f5e8654f3d7a4c8ca7b87196a3f9ff78934/hostname 
+
+75f8af7d6f1d
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2
+
+   75f8af7d6f1d nginx 80/tcp, 443/tcp thirsty_wright
+   /usr/share/nginx/html/index.html
+
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+
+   d1b04d354296 centos:latest gigantic_pike
+
+  
+[root@Va1 ~]# curl -i  http://172.17.0.3
+HTTP/1.1 200 OK
+Date: Tue, 25 Dec 2018 04:53:10 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Tue, 25 Dec 2018 02:10:54 GMT
+ETag: "2b-57dcf39318f55"
+Accept-Ranges: bytes
+Content-Length: 43
+Content-Type: text/html; charset=UTF-8
+
+d1b04d354296  centos:latest  gigantic_pike
+
+同时显示 HTTP 头和文件内容，使用 -i 选项
+-i 参数可以显示 http response 的头信息，连同网页代码一起。
+
+-I 参数则只显示 http response 的头信息。
+
+[root@Va1 ~]# curl -i  http://172.17.0.2
+HTTP/1.1 200 OK
+Server: nginx/1.11.5
+Date: Tue, 25 Dec 2018 04:53:13 GMT
+Content-Type: text/html
+Content-Length: 87
+Last-Modified: Tue, 25 Dec 2018 02:35:15 GMT
+Connection: keep-alive
+ETag: "5c219763-57"
+Accept-Ranges: bytes
+
+75f8af7d6f1d  nginx   80/tcp, 443/tcp  thirsty_wright /usr/share/nginx/html/index.html
+
+==========------------------------------------------------
+[root@Va1 ~]# curl -I  http://172.17.0.3
+HTTP/1.1 200 OK
+Date: Tue, 25 Dec 2018 05:04:18 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Tue, 25 Dec 2018 02:10:54 GMT
+ETag: "2b-57dcf39318f55"
+Accept-Ranges: bytes
+Content-Length: 43
+Content-Type: text/html; charset=UTF-8
+
+-i 参数可以显示 http response 的头信息，连同网页代码一起。
+-I 参数则只显示 http response 的头信息。
+
+[root@Va1 ~]# curl -I  http://172.17.0.2
+HTTP/1.1 200 OK
+Server: nginx/1.11.5
+Date: Tue, 25 Dec 2018 05:04:21 GMT
+Content-Type: text/html
+Content-Length: 87
+Last-Modified: Tue, 25 Dec 2018 02:35:15 GMT
+Connection: keep-alive
+ETag: "5c219763-57"
+Accept-Ranges: bytes
+
+[root@Va1 ~]# 
+
+[root@Va1 ~]# curl  -o  nginx.html  http://172.17.0.2  -o  apache.html  http://172.17.0.3
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    87  100    87    0     0   182k      0 --:--:-- --:--:-- --:--:-- 87000
+100    43  100    43    0     0   112k      0 --:--:-- --:--:-- --:--:--  112k
+
+[root@Va1 ~]# cat  apache.html 
+d1b04d354296  centos:latest  gigantic_pike
+
+[root@Va1 ~]# cat   nginx.html 
+75f8af7d6f1d  nginx   80/tcp, 443/tcp  thirsty_wright /usr/share/nginx/html/index.html
+[root@Va1 ~]# 
+
+将链接保存到文件
+我们可以使用 > 符号将输出重定向到本地文件中。 
+curl http://www.codebelief.com > index.html 
+也可以通过 curl 自带的 -o/-O 选项将内容保存到文件中。
+
+-o（小写的 o）：结果会被保存到命令行中提供的文件名 
+-O（大写的 O）：URL 中的文件名会被用作保存输出的文件名 
+curl -o index.html http://www.codebelief.com 
+curl -O http://www.codebelief.com/page/2/ 
+注意：使用 -O 选项时，必须确保链接末尾包含文件名，否则 curl 无法正确保存文件。如果遇到链接中无文件名的情况，应该使用 -o 选项手动指定文件名，或使用重定向符号。
+
+4. 同时下载多个文件
+
+我们可以使用 -o 或 -O 选项来同时指定多个链接，按照以下格式编写命令： 
+curl -O http://www.codebelief.com/page/2/ -O http://www.codebelief.com/page/3/
+
+或者： 
+curl -o page1.html http://www.codebelief.com/page/1/ -o page2.html http://www.codebelief.com/page/2/
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         18 hours ago        Up 3 hours          80/tcp, 443/tcp     thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         19 hours ago        Up 3 hours                              gigantic_pike
+[root@Va1 ~]# docker  restart  d1b
+^C
+[root@Va1 ~]# docker  ps   #### 卡机 状态 不能查看 容器
+ ^C
+[root@Va1 ~]# docker  stop  d1b04d354296  #### 卡机 状态 不能关闭
+^C
+[root@Va1 ~]# docker  top   d1b04d354296  #### 卡机 状态 不能查看 容器的pid号
+^C
+[root@Va1 ~]# docker  top   75f8af7d6f1d
+^C
+[root@Va1 ~]# docker  stop  75f8af7d6f1d
+^C
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      1776  1761  0 09:35 pts/1    00:00:00 /bin/bash
+root      1830  1816  0 09:35 pts/2    00:00:00 /bin/bash
+root      4521  4430  0 13:30 pts/0    00:00:00 grep --color=auto /bin/bash
+[root@Va1 ~]# kill  -9    1776  #最简单粗暴的杀招
+[root@Va1 ~]# kill  -9    1830  #最简单粗暴的杀招
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+d1b04d354296        centos:latest       "/bin/bash"         19 hours ago        Up 44 seconds                           gigantic_pike
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      4638  4625  0 13:31 pts/1    00:00:00 /bin/bash
+root      4677  4430  0 13:32 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# kill  -9  4638  #最简单粗暴的杀招
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+
+----- 注意 root 791  1  0 09:10 ?  00:00:00 /bin/bash /usr/sbin/ksmtuned
+     这个进程791 /usr/sbin/ksmtuned 不能杀 是正常需要的  ----------------------
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      4705  4430  0 13:33 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE   COMMAND     CREATED    STATUS     PORTS     NAMES
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID     IMAGE    COMMAND     CREATED     STATUS       PORTS      NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         18 hours ago        Exited (137) 8 minutes ago                       thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         19 hours ago        Exited (137) 6 minutes ago                       gigantic_pike
+
+[root@Va1 ~]# docker start  d1b
+d1b
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      4822  4807  0 13:40 pts/1    00:00:00 /bin/bash
+root      4847  4430  0 13:41 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# docker  exec  -it  db1  /bin/bash  ## 容器id 号写错了
+Error response from daemon: No such container: db1
+守护进程的错误响应
+
+[root@Va1 ~]# docker  exec  -it  d1b  /bin/bash  ## 进入容器
+
+[root@d1b04d354296 /]# netstat  -npult  |grep   httpd
+                                                          ## 进入容器
+[root@d1b04d354296 /]# /usr/sbin/apachectl   ##手动开启apache 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+
+[root@d1b04d354296 /]# netstat  -npult  |grep   httpd
+tcp6   0      0 :::80   :::*     LISTEN      34/httpd   
+         
+[root@d1b04d354296 /]# ls  /var/www/html/
+index.html
+[root@d1b04d354296 /]# ls  -ld   /var/www/html/
+drwxr-xr-x 2 root root 24 Dec 25 02:10 /var/www/html/
+
+[root@d1b04d354296 /]# ls  -l  /var/www/html/index.html 
+-rw-r--r-- 1 root root 43 Dec 25 02:10 /var/www/html/index.html
+
+[root@d1b04d354296 /]# mkdir   /var/www/html/test/  
+   
+[root@d1b04d354296 /]# echo "apache test1.html" > /var/www/html/test/test1.html
+[root@d1b04d354296 /]# echo "apache test2.html" > /var/www/html/test/test2.html
+
+[root@d1b04d354296 /]# ifconfig |head  -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+
+[root@d1b04d354296 /]# elinks  -dump  172.17.0.2
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@d1b04d354296 /]# elinks  -dump  172.17.0.2/test/test1.html
+   apache test1.html
+[root@d1b04d354296 /]# elinks  -dump  172.17.0.2/test/test2.html
+   apache test2.html
+[root@d1b04d354296 /]# exit
+exit
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE   COMMAND     CREATED    STATUS     PORTS     NAMES
+d1b04d354296    centos:latest  "/bin/bash"   19 hours ago   Up 7 minutes      gigantic_pike
+[root@Va1 ~]# elinks  -dump  172.17.0.2/test/test2.html
+   apache test2.html
+
+[root@Va1 ~]# curl  -O  http://172.17.0.2/test/test1.html   \
+> -O  http://172.17.0.2/test/test2.html       ## 注意大写O
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    18  100    18    0     0  28526      0 --:--:-- --:--:-- --:--:-- 18000
+100    18  100    18    0     0   105k      0 --:--:-- --:--:-- --:--:--  105k
+[root@Va1 ~]# ls test*
+test1.html  test2.html
+[root@Va1 ~]# cat  test1.html 
+apache test1.html
+[root@Va1 ~]# cat  test2.html 
+apache test2.html
+ 
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID  IMAGE   COMMAND    CREATED    STATUS     PORTS     NAMES
+d1b04d354296  centos:latest "/bin/bash" 19 hours ago Up 19 minutes  gigantic_pike
+
+[root@Va1 ~]# docker top  d1b  ## 只能查看处于运行中的容器 pid
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                4822                4807                0                   13:40               pts/1               00:00:00            /bin/bash
+root                4917                1                   0                   13:43               ?                   00:00:00            /usr/sbin/httpd
+apache              4918                4917                0                   13:43               ?                   00:00:00            /usr/sbin/httpd
+apache              4919                4917                0                   13:43               ?                   00:00:00            /usr/sbin/httpd
+apache              4920                4917                0                   13:43               ?                   00:00:00            /usr/sbin/httpd
+apache              4921                4917                0                   13:43               ?                   00:00:00            /usr/sbin/httpd
+apache              4922                4917                0                   13:43               ?                   00:00:00            /usr/sbin/httpd
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                        PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         18 hours ago        Exited (137) 29 minutes ago                       thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         19 hours ago        Up 19 minutes                                     gigantic_pike
+[root@Va1 ~]# docker top  75f8   ## 容器未运行
+Error response from daemon: Container 
+75f8af7d6f1d9c0cedd4e2b277d99f5e8654f3d7a4c8ca7b87196a3f9ff78934 is not running
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      4822  4807  0 13:40 pts/1    00:00:00 /bin/bash
+root      5139  4430  0 14:00 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# yum  provides  pstree
+.................  
+psmisc-22.20-15.el7.x86_64 : Utilities for managing processes on your system
+.......................
+psmisc-22.20-15.el7.x86_64 : Utilities for managing processes on your system
+....................
+psmisc-22.20-15.el7.x86_64 : Utilities for managing processes on your system
+.................
+[root@Va1 ~]# rpm  -q  psmisc
+psmisc-22.20-15.el7.x86_64
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID  IMAGE   COMMAND    CREATED    STATUS     PORTS     NAMES
+d1b04d354296  centos:latest "/bin/bash" 19 hours ago Up 19 minutes  gigantic_pike
+
+
+[root@Va1 ~]# docker  exec  -it  d1b04   /bin/bash  ## 进入容器
+
+[root@d1b04d354296 /]# cat  /etc/yum.repos.d/local.repo
+ 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@d1b04d354296 /]# yum   -y  install  psmisc  |tail  -2
+
+Complete!
+[root@d1b04d354296 /]# pstree   -p  0
+?()-+-bash(1)
+    |-bash(58)---pstree(76)
+    `-httpd(34)-+-httpd(35)
+                |-httpd(36)
+                |-httpd(37)
+                |-httpd(38)
+                `-httpd(39)
+
+[root@d1b04d354296 /]# exit
+exit
+[root@Va1 ~]# docker top  d1b
+UID    PID   PPID  C  STIME  TTY   TIME       CMD
+root   4822  4807  0  13:40  pts/1 00:00:00  /bin/bash
+root   4917  1     0  13:43  ?     00:00:00  /usr/sbin/httpd
+apache 4918  4917  0  13:43  ?     00:00:00  /usr/sbin/httpd
+...........................
+apache  4922  4917  0   13:43   ?   00:00:00   /usr/sbin/httpd
+[root@Va1 ~]# docker stop   d1b  ## 关闭容器
+d1b
+[root@Va1 ~]# docker top  d1b
+Error response from daemon: Container d1b04d35429696149f03b0543c3dee278e245d74a4782e3839437a797a862f43 is not running
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID    IMAGE      COMMAND    CREATED    STATUS    PORTS    NAMES
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      5549  4430  0 14:29 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# docker  start   d1b04  ## 后端运行/bin/bash
+d1b04
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      5650  5636  0 14:36 pts/1    00:00:00 /bin/bash
+root      5675  4430  0 14:36 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# docker top  d1b  |column  -t 
+UID   PID   PPID  C  STIME  TTY    TIME      CMD
+root  5650  5636  0  14:36  pts/1  00:00:00  /bin/bash
+
+---------------------#  ##  进入容器  exec  -td   容器id号  ##手动开启apache 服务 ----
+------------------ ##注意 /usr/sbin/apachectl 是 centos 镜像内的命令 ----------
+
+[root@Va1 ~]# docker  exec  -td   d1b04   /usr/sbin/apachectl
+
+[root@Va1 ~]# docker top  d1b  |column  -t 
+
+UID     PID   PPID  C  STIME  TTY    TIME      CMD
+root    5650  5636  0  14:36  pts/1  00:00:00  /bin/bash
+root    5827  1     0  14:45  ?      00:00:00  /usr/sbin/httpd
+apache  5828  5827  0  14:45  ?      00:00:00  /usr/sbin/httpd
+apache  5829  5827  0  14:45  ?      00:00:00  /usr/sbin/httpd
+apache  5830  5827  0  14:45  ?      00:00:00  /usr/sbin/httpd
+apache  5831  5827  0  14:45  ?      00:00:00  /usr/sbin/httpd
+apache  5832  5827  0  14:45  ?      00:00:00  /usr/sbin/httpd
+
+[root@Va1 ~]# elinks  -dump  172.17.0.2/test/test2.html
+   apache test2.html
+[root@Va1 ~]# elinks  -dump  172.17.0.2/test/test1.html
+   apache test1.html
+[root@Va1 ~]# elinks  -dump  172.17.0.2
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@Va1 ~]#  ifconfig  |awk '/inet /{print $2}'
+172.18.0.1
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@Va1 ~]# docker  ps
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+d1b04d354296  centos:latest "/bin/bash"  20 hours ago  Up 18 minutes gigantic_pike
+
+[root@Va1 ~]# docker  start  75f8
+75f8
+------------------- ##注意 /usr/sbin/nginx是 nginx镜像内的命令 ----------
+
+[root@Va1 ~]# docker  exec  -td  75f8   /usr/sbin/nginx  ##镜像内的命令##开启nginx 服务
+
+[root@Va1 ~]# ps  -ef  |grep  "/usr/sbin/nginx"
+root      6076  6059  0 14:59 ?        00:00:00 nginx: master process /usr/sbin/nginx
+root      6152  4430  0 15:03 pts/0    00:00:00 grep --color=auto /usr/sbin/nginx
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       791     1  0 09:10 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      5650  5636  0 14:36 pts/1    00:00:00 /bin/bash
+root      6039  6024  0 14:59 pts/2    00:00:00 /bin/bash
+root      6154  4430  0 15:03 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va1 ~]# elinks  -dump  172.17.0.3
+   75f8af7d6f1d nginx 80/tcp, 443/tcp thirsty_wright
+   /usr/share/nginx/html/index.html
+
+[root@Va1 ~]# elinks  -dump  172.17.0.2
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         20 hours ago        Up 8 minutes        80/tcp, 443/tcp     thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         20 hours ago        Up 31 minutes                           gigantic_pike
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+....................
+[root@Va2 ~]# echo  "scale=2;1024*5" |bc
+5120
+[root@Va2 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           4959         156        4594           8         209        4563
+Swap:          2047           0        2047
+
+[root@Va2 ~]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.1
+192.168.0.12
+192.168.1.12
+192.168.2.12
+127.0.0.1
+192.168.122.1
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES 
+
+[root@Va2 ~]#  ps  -ef  |grep  "/bin/bash"
+root       796     1  0 09:19 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      4699  1433  0 15:12 pts/0    00:00:00 grep --color=auto /bin/bash
+
+[root@Va2 ~]# docker  images  |column  -t
+REPOSITORY  TAG     IMAGE         ID  CREATED        SIZE
+newnamebb   newtag  59788edf1f3e  11  weeks    ago   1.154  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va2 ~]# docker  create   centos:latest  ## 创建新容器 默认自动命名
+
+7203853fb483f0779f7187058faae17c782080526be8ee177d314fe2b3f91378
+
+[root@Va2 ~]# docker  ps 
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES 
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES 
+7203853fb483  centos:latest "/bin/bash"  13 seconds ago  Created  admiring_franklin
+
+------------------- ##注意 /bin/bash 是 nginx镜像内的命令 ----------
+
+[root@Va2 ~]# docker  start   7203853fb483  ## 开启容器
+7203853fb483
+
+[root@Va2 ~]# docker ps
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+
+[root@Va2 ~]# docker  exec  -it  7203853fb483  /bin/bash  ## 进入容器 
+Error response from daemon: Container 7203853fb483f0779f7187058faae17c782080526be8ee177d314fe2b3f91378 is not running
+
+--------- 错误原因 只能使用 run 创建并且运行容器 待今后 查看 docker 官网 ----------------------
+
+[root@Va2 ~]# docker ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+7203853fb483        centos:latest       "/bin/bash"         14 minutes ago      Exited (0) 5 minutes ago                       admiring_franklin
+
+[root@Va2 ~]# docker  rm  720  # #删除 容器
+720
+[root@Va2 ~]# docker ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+
+
+
+======= 1 制作自定义的镜像 mycentos:latest  开始 ==========
+
+==== 在一个裸的centos上面安装新功能软件,保存，封装成一个新centos镜像 =====
+### 拉去最新centos镜像：docker pull centos   ##下载镜像
+
+-------------------------- ## 创建并且运行容器 -------------------------------
+
+# docker  inspect ###查看底层信息  ## Cmd 表示默认的容器启动的命令
+docker run -itd 镜像名：标签 命令 （交互式后台进程） 可以省略默认的镜像内部命令
+
+[root@Va2 ~]# docker  run  -itd   centos:latest  ## 创建并且运行容器
+3d8381c45716f921c75cef647eebcb7c2ca780092d2a9206a4d9f9f755a8762c
+
+[root@Va2 ~]# docker  ps 
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+3d8381c45716        centos:latest       "/bin/bash"         21 seconds ago      Up 19 seconds                           modest_lalande
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+3d8381c45716        centos:latest       "/bin/bash"         25 seconds ago      Up 22 seconds                           modest_lalande
+
+---  -- ---- - ## 进入容器 3d8  #注意必须有镜像的内部命令 
+
+[root@Va2 ~]# docker  exec  -it   3d8  /bin/bash  ## 进入容器 #注意必须有镜像的内部命令
+
+[root@3d8381c45716 /]# rm  -f  /etc/yum.repos.d/*.repo
+[root@3d8381c45716 /]# ls  /etc/yum.repos.d/
+[root@3d8381c45716 /]# vi  
+vi    view  vigr  vipw  
+[root@3d8381c45716 /]# vi  /etc/yum.repos.d/local.repo
+
+[root@3d8381c45716 /]# cat  /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@3d8381c45716 /]# yum  clean  all >/dev/null &&  yum repolist |tail -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+[root@3d8381c45716 /]# yum  -y  install  net-tools  vim-enhanced  psmisc  elinks  httpd |tail -7
+  perl-threads.x86_64 0:1.87-4.el7                                              
+  perl-threads-shared.x86_64 0:1.43-6.el7                                       
+  vim-common.x86_64 2:7.4.160-2.el7                                             
+  vim-filesystem.x86_64 2:7.4.160-2.el7                                         
+  which.x86_64 0:2.20-7.el7                                                     
+
+Complete!
+[root@3d8381c45716 /]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           4959         201        3907           8         850        4484
+Swap:          2047           0        2047
+
+[root@3d8381c45716 /]# yum list |grep iproute
+iproute.x86_64                           3.10.0-87.el7              CentOS7-1708
+iproute-devel.i686                       3.10.0-87.el7              CentOS7-1708
+iproute-devel.x86_64                     3.10.0-87.el7              CentOS7-1708
+iproute-doc.x86_64                       3.10.0-87.el7              CentOS7-1708
+
+[root@3d8381c45716 /]# yum  list  |grep  bash-completion
+bash-completion.noarch                   1:2.1-6.el7                CentOS7-1708
+libguestfs-bash-completion.noarch        1:1.36.3-6.el7             CentOS7-1708
+
+###########  bash-completion-2.1-6.el7.noarch     ## 支持Tab键
+
+[root@3d8381c45716 /]# yum  -y  install  iproute  bash-completion |tail   -3
+  libnfnetlink.x86_64 0:1.0.1-4.el7                                             
+
+Complete!
+[root@3d8381c45716 /]# rpm  -q  net-tools  vim-enhanced  psmisc  elinks  httpd \
+>  iproute  bash-completion 
+
+net-tools-2.0-0.22.20131004git.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+psmisc-22.20-15.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+
+httpd-2.4.6-67.el7.centos.x86_64
+iproute-3.10.0-87.el7.x86_64
+bash-completion-2.1-6.el7.noarch
+
+[root@3d8381c45716 /]# yum  clean  all >/dev/null
+
+[root@3d8381c45716 /]# history  -c
+[root@3d8381c45716 /]# history   -w
+[root@3d8381c45716 /]# history
+    1  history   -w
+    2  history
+[root@3d8381c45716 /]# history  -c
+[root@3d8381c45716 /]# history  -w
+
+[root@3d8381c45716 /]# exit
+exit
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+3d8381c45716        centos:latest       "/bin/bash"         38 minutes ago      Up 38 minutes                           modest_lalande
+
+[root@Va2 ~]# docker  stop   3d831  ## 容器id 号写错
+
+Error response from daemon: No such container: 3d831
+
+[root@Va2 ~]# docker  stop   3d838   ## 关闭容器
+3d838
+
+[root@Va2 ~]# docker  ps 
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+
+3d8381c45716 centos:latest "/bin/bash" 40 minutes ago Exited (137) 15 seconds ago  modest_lalande
+
+~]# docker  commit  容器id号  新自定义镜像名:自定义标签(标签有相当于软链接的功能)
+
+[root@Va2 ~]# docker  commit  3d838  mycentos:latest
+
+sha256:b717c768dc5f0d4f1680879a48dda994c75c4a825d9a5673e59b8850abb40f9e
+
+[root@Va2 ~]# docker  images  |column  -t
+REPOSITORY  TAG     IMAGE         ID  CREATED        SIZE
+mycentos    latest  b717c768dc5f  27  seconds  ago   319.9  MB
+newnamebb   newtag  59788edf1f3e  11  weeks    ago   1.154  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+============[ 1 ] 制作自定义的镜像 mycentos:latest  完成==========
+
+
+
+-----------  ##查看自定义的镜像 mycentos 制作历史 镜像 centos 有 4 层  最上层是自定义的---
+
+[root@Va2 ~]# docker  history   mycentos:latest  
+
+IMAGE         CREATED       CREATED  BY                                  SIZE   COMMENT
+b717c768dc5f  3 minutes ago /bin/bash                                    121.2 MB
+e934aafc2206  8 months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]           0 B
+<missing>     8 months ago  /bin/sh -c #(nop)  LABEL org.label-schema.sch  0 B
+<missing>     8 months ago  /bin/sh -c #(nop)  ADD file:f755805244a649ecca 198.6 MB
+
+[root@Va2 ~]# docker  ps   -aq      ### # ## 查看容器id号
+3d8381c45716
+[root@Va2 ~]# docker  rm  $(docker  ps  -aq)  #删除容器
+3d8381c45716
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
+
+== 在一个裸的centos上面安装新功能软件,保存，封装成一个新centos镜像 已经全部完成=====
+======================================================
+
+
+
+------------- IDC(Internet Data Center) 互联网数据中心 ----------
+    #删除本地镜像 newnamebb   #注意如果默认标签不是latest, 必须有标签名
+     #格式   # docker  rmi  newnamebb:newtag
+
+[root@Va2 ~]# docker rmi  newnamebb:newtag  ##   #删除本地镜像 
+Untagged: newnamebb:newtag
+Deleted: sha256:59788edf1f3e78cd0ebe6ce1446e9d10788225db3dedcfd1a59f764bad2b2690
+Deleted: sha256:8a788232037eaf17794408ff3df6b922a1aedf9ef8de36afdae3ed0b0381907b
+
+[root@Va2 ~]# docker  images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+mycentos            latest              b717c768dc5f        37 minutes ago      319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+# docker  images  OPTIONS说明：
+-a :列出本地所有的镜像（含中间映像层，默认情况下，过滤掉中间映像层）；
+--digests :显示镜像的摘要信息；
+-f :显示满足条件的镜像；
+--format :指定返回值的模板文件；
+--no-trunc :显示完整的镜像信息；
+-q :只显示镜像ID。
+
+[root@Va2 ~]# docker  run  -it   mycentos:latest  /bin/bash  ## 创建并且运行进入容器
+
+[root@1d02447d65a7 /]# yum repolist  |tail   -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+[root@1d02447d65a7 /]# rpm -q  httpd  elinks  psmisc  bash-completion  iproute  vim-enhanced  net-tools
+
+httpd-2.4.6-67.el7.centos.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+psmisc-22.20-15.el7.x86_64
+bash-completion-2.1-6.el7.noarch
+iproute-3.10.0-87.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+net-tools-2.0-0.22.20131004git.el7.x86_64
+
+[root@1d02447d65a7 /]# pstree  -p  0
+?()---bash(1)---pstree(24)
+
+[root@1d02447d65a7 /]# ss  -anpult 
+Netid  State  Recv-Q Send-Q Local Address:Port    Peer Address:Port 
+
+[root@1d02447d65a7 /]# ss  -s      
+Total: 296 (kernel 348)
+TCP:   15 (estab 0, closed 15, orphaned 0, synrecv 0, timewait 0/0), ports 0
+
+Transport Total     IP        IPv6
+*	  348       -         -        
+RAW	  0         0         0        
+UDP	  0         0         0        
+TCP	  0         0         0        
+INET	  0         0         0        
+FRAG	  0         0         0        
+
+[root@1d02447d65a7 /]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+ ..................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+...............
+[root@1d02447d65a7 /]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+
+[root@1d02447d65a7 /]# cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search    vbr
+search    vbr1
+[root@1d02447d65a7 /]# exit  ## -it 退出容器自动关闭
+exit
+[root@Va2 ~]# cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search    vbr
+search    vbr1
+
+
+================================================
+
+=====方式二 : 在一个裸的centos上面安装新功能软件,保存，封装成一个新centos镜像 
+
+=============[ 2 ] 制作镜像  centosimg:newtag =================
+
+[root@Va2 ~]# mkdir  dockerFile
+
+[root@Va2 ~]# cd  dockerFile/ 
+
+[root@Va2 dockerFile]# vim  local.repo
+[root@Va2 dockerFile]# cat   local.repo
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va2 dockerFile]# 
+
+ ----------------- 注意 必须是文件名为 Dockerfile 且大小写都是固定的 ------
+[root@Va2 dockerFile]# vim  Dockerfile
+
+[root@Va2 dockerFile]# cat   Dockerfile  ##制作镜像的文件
+
+FROM  centos:latest
+RUN   rm  -f  /etc/yum.repos.d/*.repo
+ADD   local.repo   /etc/yum.repos.d/local.repo ##把当前文件传到新镜像里的目录下
+RUN   yum  install -y vim-enhanced  net-tools psmisc iproute elinks bash-completion  &&  yum clean  all
+
+[root@Va2 dockerFile]# ls
+Dockerfile  local.repo
+
+[root@Va2 dockerFile]# cd
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------  # docker   build     [OPTIONS]           PATH   
+
+[root@Va2 ~]# docker  build  -t  centosimg:newtag  /root/dockerFile/  ##创建镜像
+....................
+Complete!
+Loaded plugins: fastestmirror, ovl
+Cleaning repos: CentOS7-1708
+Cleaning up everything
+Maybe you want: rm -rf /var/cache/yum, to also free up space taken by orphaned data from disabled or removed repos
+Cleaning up list of fastest mirrors
+ ---> 352c992437b4
+Removing intermediate container b3248fe77055
+Successfully built 352c992437b4
+
+[root@Va2 ~]# docker  images 
+REPOSITORY TAG    IMAGE ID     CREATED             SIZE
+centosimg  newtag 352c992437b4 About a minute ago  287.1 MB
+mycentos   latest b717c768dc5f About an hour ago   319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago         79.62 MB
+centos              latest              e934aafc2206        8 months ago         198.6 MB
+registry            latest              d1fd7d86a825        11 months ago        33.26 MB
+nginx               latest              a5311a310510        2 years ago          181.4 MB
+redis               latest              1aa84b1b434e        2 years ago          182.8 MB
+
+==============[ 2 ] 创建 镜像 centosimg:newtag  完成=========
+
+
+
+
+[root@Va2 ~]# /**************
+对比 前面 方式 一 制作的镜像 docker  commit  3d838  mycentos:latest
+sha256:b717c768dc5f 0d4f1680879a48dda994c75c4a825d9a5673e59b8850abb40f9e
+************************/
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE          COMMAND       CREATED         STATUS         PORTS     NAMES
+1d02447d65a7  mycentos:latest  "/bin/bash" 54 minutes ago Exited (0) 38 minutes ago  boring_swirles
+
+-------------------------  ## 新建运行进入容器(交互式) --------------------------------
+
+[root@Va2 ~]# docker  run  -it   centosimg:newtag  /bin/bash  ## 新建运行进入容器(交互式)
+
+[root@c8ef34b9b747 /]# yum repolist  |tail  -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+[root@c8ef34b9b747 /]# ifconfig  |head  -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+[root@c8ef34b9b747 /]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@c8ef34b9b747 /]# pstree  -p
+bash(1)---pstree(27)
+[root@c8ef34b9b747 /]# ss  -s
+Total: 296 (kernel 348)
+TCP:   15 (estab 0, closed 15, orphaned 0, synrecv 0, timewait 0/0), ports 0
+
+Transport Total     IP        IPv6
+*	  348       -         -        
+RAW	  0         0         0        
+UDP	  0         0         0        
+TCP	  0         0         0        
+INET	  0         0         0        
+FRAG	  0         0         0        
+
+[root@c8ef34b9b747 /]# vi
+vi        view      vigr      vim       vimdiff   vimtutor  vipw
+[root@c8ef34b9b747 /]# exit   ##交互式 退出自动关闭容器
+exit
+
+[root@Va2 ~]# docker  ps  
+CONTAINER ID  IMAGE    COMMAND       CREATED         STATUS         PORTS     NAMES
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID  IMAGE          COMMAND       CREATED         STATUS         PORTS     NAMES
+c8ef34b9b747  centosimg:newtag "/bin/bash" 2 minutes ago Exited (0) 12 seconds ago  big_hawking
+1d02447d65a7 mycentos:latest "/bin/bash" About an hour ago Exited (0) 44 minutes ago boring_swirles
+
+
+[root@Va2 ~]# docker  images 
+REPOSITORY TAG    IMAGE ID     CREATED             SIZE
+centosimg  newtag 352c992437b4 About a minute ago  287.1 MB
+mycentos   latest b717c768dc5f About an hour ago   319.9 MB
+ubuntu     latest 452a96d81c30 8 months ago        79.62 MB
+...................
+
+
+
+-----------  ##查看自定义的镜像 mycentos 制作历史 镜像 centos 有 4 层  最上层是自定义的---
+
+[root@Va2 ~]# docker  history   mycentos:latest  
+
+IMAGE         CREATED       CREATED  BY                                  SIZE   COMMENT
+b717c768dc5f  3 minutes ago /bin/bash                                    121.2 MB
+e934aafc2206  8 months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]           0 B
+<missing>     8 months ago  /bin/sh -c #(nop)  LABEL org.label-schema.sch  0 B
+<missing>     8 months ago  /bin/sh -c #(nop)  ADD file:f755805244a649ecca 198.6 MB
+
+--------  ##查看自定义的镜像centosimg:newtag 制作历史 镜像 有 6 层  最上3层是自定义的---
+
+[root@Va2 ~]# docker  history  centosimg:newtag
+
+IMAGE         CREATED       CREATED  BY                                     SIZE   COMMENT
+352c992437b4  21 minutes ago /bin/sh -c yum  install -y vim-enhanced  net-   88.46 MB            
+f673e6ef1104  23 minutes ago /bin/sh -c #(nop) ADD file:9ed46d0d0b959663e3   95 B                
+3467d5da6273  23 minutes ago /bin/sh -c rm  -f  /etc/yum.repos.d/*.repo      0 B                 
+e934aafc2206  8 months ago   /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+<missing>     8 months ago   /bin/sh -c #(nop)  LABEL org.label-schema.sch   0 B                 
+<missing>     8 months ago   /bin/sh -c #(nop) ADD file:f755805244a649ecca   198.6 MB    
+
+[root@Va2 ~]# ls  dockerFile/
+Dockerfile  local.repo
+
+[root@Va2 ~]# cat  dockerFile/Dockerfile 
+FROM  centos:latest
+RUN   rm  -f  /etc/yum.repos.d/*.repo
+ADD   local.repo   /etc/yum.repos.d/local.repo  
+RUN   yum  install -y vim-enhanced  net-tools psmisc iproute elinks bash-completion  &&  yum clean  all
+
+Dockerfile语法格式：
+FROM   基础镜像:标签
+MAINTAINER 镜像创建者信息(说明){maintainer 维修者，维护物}
+
+EXPOSE 开放的端口
+ENV 设置环境变量
+ADD 复制文件到镜像
+RUN 制作镜像时执行的命令,可以有多个
+WORKDIR 定义容器默认工作目录
+CMD 容器启动时执行的命令,仅可以有一条CMD
+
+
+ls   -a   -l
+数组["ls", "-a", "-l"]
+ls   -al
+数组["ls", "-al"]
+
+[root@Va2 ~]# cat dockerFile/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+==============================================
+
+==============[ 3 ] 制作镜像  myos:python ===========---------
+
+[root@Va2 ~]# mkdir  dockerfile2/
+[root@Va2 ~]# cp  dockerFile/local.repo   dockerfile2/
+
+[root@Va2 ~]# ls  dockerfile2/
+local.repo
+[root@Va2 ~]# vim  dockerfile2/Dockerfile
+
+[root@Va2 ~]# cat  dockerfile2/Dockerfile   ## 制作镜像的配置文件
+
+FROM  mycentos:latest
+CMD   ["/usr/bin/python"]    ## 注意数组形式 /usr/bin/python
+
+/***********
+ls   -a   -l
+数组["ls", "-a", "-l"]
+ls   -al
+数组["ls", "-al"]
+***********/
+
+----------  # docker   build     [OPTIONS]           PATH 
+
+[root@Va2 ~]# docker  build  -t   myos:python    dockerfile2/  ##创建镜像
+
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+ [root@Va2 ~]# docker  build  -t   myos:python    dockerfile2/  ##创建镜像
+
+Sending build context to Docker daemon 3.072 kB
+Step 1 : FROM mycentos:latest
+ ---> b717c768dc5f
+Step 2 : CMD /usr/bin/python
+ ---> Running in a8fb48b2de21
+ ---> 703e26a376c0
+Removing intermediate container a8fb48b2de21
+Successfully built 703e26a376c0
+
+[root@Va2 ~]# docker  images
+
+REPOSITORY  TAG    IMAGE ID            CREATED             SIZE
+myos      python   703e26a376c0        30 seconds ago      319.9 MB
+centosimg newtag   352c992437b4        About an hour ago   287.1 MB
+mycentos  latest   b717c768dc5f        2 hours ago         319.9 MB
+ubuntu    latest   452a96d81c30        8 months ago        79.62 MB
+centos    latest   e934aafc2206        8 months ago        198.6 MB
+registry  latest   d1fd7d86a825        11 months ago       33.26 MB
+nginx     latest   a5311a310510        2 years ago         181.4 MB
+redis     latest   1aa84b1b434e        2 years ago         182.8 MB
+
+--------  ##查看自定义的镜像myos:python 制作历史 镜像 有 5 层  最上2层是自定义的---
+
+[root@Va2 ~]# docker  history   myos:python
+IMAGE         CREATED       CREATED BY                                   SIZE   COMMENT
+703e26a376c0  4 minutes ago /bin/sh -c #(nop)  CMD ["/usr/bin/python"]    0 B                 
+b717c768dc5f  2 hours ago   /bin/bash                                     121.2 MB            
+e934aafc2206  8 months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]          0 B                 
+<missing>     8 months ago  /bin/sh -c #(nop)  LABEL org.label-schema.sch 0 B                 
+<missing>     8 months ago  /bin/sh -c #(nop) ADD file:f755805244a649ecca 198.6 MB   
+
+============[ 3 ] 自定义的镜像myos:python 制作 完成===========
+============================================
+
+
+[root@Va2 ~]# which  python
+/usr/bin/python
+
+[root@Va2 ~]# python
+Python 2.7.5 (default, May  3 2017, 07:55:04) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-14)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> exit
+Use exit() or Ctrl-D (i.e. EOF) to exit
+>>> quit
+Use quit() or Ctrl-D (i.e. EOF) to exit
+>>> ls
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'ls' is not defined
+>>> quit()
+[root@Va2 ~]# 
+-------------------------------  ## 新建运行进入容器(交互式) --------------------------------
+
+[root@Va2 ~]# docker  run  -it  myos:python  /usr/bin/python
+
+Python 2.7.5 (default, Aug  4 2017, 00:39:18) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-16)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> exit()   ##退出并自动关闭容器
+
+[root@Va2 ~]# cat  dockerfile2/Dockerfile 
+
+FROM  mycentos:latest
+CMD   ["/usr/bin/python"]
+
+[root@Va2 ~]# ls  dockerfile2/
+Dockerfile  local.repo
+[root@Va2 ~]# cat  dockerfile2/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@Va2 ~]# 
+
+
+====================================
+============== [ 4 ] 制作镜像  myos:sshd ===========================
+
+
+[root@Va2 ~]# mkdir   dockerfile3
+
+[root@Va2 ~]# cp  dockerfile2/local.repo  dockerfile3/
+
+[root@Va2 ~]# cat  /usr/lib/systemd/system/sshd.service 
+[Unit]
+Description=OpenSSH server daemon
+Documentation=man:sshd(8) man:sshd_config(5)
+After=network.target sshd-keygen.service
+Wants=sshd-keygen.service
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/sysconfig/sshd
+ExecStart=/usr/sbin/sshd -D $OPTIONS  ## 启动服务
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=42s
+
+[Install]
+WantedBy=multi-user.target
+
+[root@Va2 ~]# 
+[root@Va2 ~]# cat  /etc/sysconfig/sshd  ##参数配置文件
+# Configuration file for the sshd service.
+.................
+SSH_USE_STRONG_RNG=0
+# SSH_USE_STRONG_RNG=1
+
+[root@Va2 ~]# 
+[root@Va2 ~]# ll  /etc/rc.d/init.d/functions
+-rw-r--r--. 1 root root 17500 5月   3 2017 /etc/rc.d/init.d/functions
+
+[root@Va2 ~]# yum  provides  /etc/rc.d/init.d/functions
+..................
+initscripts-9.49.39-1.el7.x86_64 : The inittab file and the /etc/init.d scripts
+...............
+[root@Va2 ~]# rpm  -qf   /etc/rc.d/init.d/functions
+initscripts-9.49.39-1.el7.x86_64
+
+
+[root@Va2 ~]# rpm  -qf   /usr/sbin/sshd
+openssh-server-7.4p1-11.el7.x86_64
+
+[root@Va2 ~]# rpm  -qa |grep  initscripts
+initscripts-9.49.39-1.el7.x86_64
+
+
+Dockerfile语法格式：
+FROM      基础镜像:标签
+MAINTAINER 镜像创建者信息(说明)
+EXPOSE 开放的端口
+ENV 设置环境变量
+ADD 复制文件到镜像
+RUN 制作镜像时执行的命令,可以有多个
+WORKDIR 定义容器默认工作目录
+CMD 容器启动时执行的命令,仅可以有一条CMD
+
+ ----------------- 注意 必须是文件名为 Dockerfile 且大小写都是固定的 ------
+/*******************
+[root@Va2 dockerFile]# cat   Dockerfile  ##制作镜像的文件
+
+FROM  centos:latest
+RUN   rm  -f  /etc/yum.repos.d/*.repo
+ADD   local.repo   /etc/yum.repos.d/local.repo ##把当前文件传到新镜像里的目录下
+RUN   yum  install -y vim-enhanced  net-tools psmisc iproute elinks bash-completion  &&  yum clean  all
+************************************/
+
+
+[root@Va2 ~]# vim  dockerfile3/Dockerfile
+
+[root@Va2 ~]# cat dockerfile3/Dockerfile
+
+FROM mycentos:latest
+RUN  yum  -y  install openssh-server  initscripts   
+RUN  echo  1 |passwd  --stdin  root
+RUN  sshd-keygen
+ENV  EnvironmentFile=/etc/sysconfig/sshd
+CMD  ["/usr/sbin/sshd","-D"]
+
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------------------  [ 4 ] 制作镜像  myos:sshd [制作中]----------------
+---------  # docker   build     [OPTIONS]           PATH 
+
+[root@Va2 ~]# docker build -t  myos:sshd  dockerfile3/  ##制作镜像myos:sshd
+
+
+Sending build context to Docker daemon 3.072 kB
+Step 1 : FROM mycentos:latest
+ ---> b717c768dc5f
+Step 2 : RUN yum  -y  install openssh-server  initscripts
+ ---> Running in 42d50072afab
+....................
+
+Complete!
+ ---> 549085442257
+Removing intermediate container 42d50072afab
+Step 3 : RUN echo  1 |passwd  --stdin  root
+ ---> Running in b8681e8275a1
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+ ---> 2d49bf2a643a
+Removing intermediate container b8681e8275a1
+Step 4 : RUN sshd-keygen
+ ---> Running in b089844398d3
+Generating SSH2 RSA host key: [  OK  ]
+Generating SSH2 ECDSA host key: [  OK  ]
+Generating SSH2 ED25519 host key: [  OK  ]
+ ---> e4c70ff2271d
+Removing intermediate container b089844398d3
+Step 5 : ENV EnvironmentFile /etc/sysconfig/sshd
+ ---> Running in 3b51921222dd
+ ---> fbe70d3bbc03
+Removing intermediate container 3b51921222dd
+Step 6 : CMD /usr/sbin/sshd -D
+ ---> Running in 6ad4abf1ef7e
+ ---> 153a8325e1b4
+Removing intermediate container 6ad4abf1ef7e
+Successfully built 153a8325e1b4
+
+[root@Va2 ~]# ls   dockerfile3/
+Dockerfile  local.repo
+
+[root@Va2 ~]# cat  dockerfile3/Dockerfile 
+FROM mycentos:latest
+RUN  yum  -y  install openssh-server  initscripts   
+RUN  echo  1 |passwd  --stdin  root
+RUN  sshd-keygen
+ENV  EnvironmentFile=/etc/sysconfig/sshd
+CMD  ["/usr/sbin/sshd","-D"]
+
+ ##查看自定义的镜像 myos:sshd 制作历史 镜像myos:sshd有 9层  最上 5层 是刚刚 自定义的---
+
+[root@Va2 ~]# docker  history  myos:sshd
+IMAGE        CREATED       CREATED BY                                     SIZE   COMMENT
+153a8325e1b4 7 minutes ago /bin/sh -c #(nop)  CMD ["/usr/sbin/sshd" "-D"  0 B 
+fbe70d3bbc03 7 minutes ago /bin/sh -c #(nop)  ENV EnvironmentFile=/etc/s  0 B 
+e4c70ff2271d 7 minutes ago /bin/sh -c sshd-keygen                         2.915 kB
+2d49bf2a643a 7 minutes ago /bin/sh -c echo  1 |passwd  --stdin  root      536 B  
+549085442257 8 minutes ago /bin/sh -c yum  -y  install openssh-server  i  59.3 MB 
+
+b717c768dc5f 4 hours ago   /bin/bash                                      121.2 MB 
+
+e934aafc2206 8 months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]           0 B 
+<missing>    8 months ago  /bin/sh -c #(nop)  LABEL org.label-schema.sch  0 B 
+<missing>    8 months ago  /bin/sh -c #(nop) ADD file:f755805244a649ecca  198.6 MB
+
+[root@Va2 ~]# 
+============= [ 4 ] 制作镜像  myos:sshd  已经完成 ==========================
+
+
+-----------  ##查看自定义的镜像 mycentos:latest 制作历史 镜像 centos 有 4 层  最上层是自定义的---
+
+[root@Va2 ~]# docker  history   mycentos:latest  
+
+IMAGE         CREATED       CREATED  BY                                  SIZE   COMMENT
+b717c768dc5f  3 minutes ago /bin/bash                                    121.2 MB
+e934aafc2206  8 months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]           0 B
+<missing>     8 months ago  /bin/sh -c #(nop)  LABEL org.label-schema.sch  0 B
+<missing>     8 months ago  /bin/sh -c #(nop)  ADD file:f755805244a649ecca 198.6 MB
+
+
+[root@Va2 ~]# docker  images  |column  -t
+REPOSITORY  TAG     IMAGE         ID  CREATED     SIZE
+myos        sshd    153a8325e1b4  20  minutes ago 379.2 MB
+myos        python  703e26a376c0  2   hours ago   319.9 MB
+centosimg   newtag  352c992437b4  3   hours ago   287.1 MB
+mycentos    latest  b717c768dc5f  4   hours ago   319.9 MB
+ubuntu      latest  452a96d81c30  8   months ago  79.62 MB
+centos      latest  e934aafc2206  8   months ago  198.6 MB
+registry    latest  d1fd7d86a825  11  months ago  33.26 MB
+nginx       latest  a5311a310510  2   years ago   181.4 MB
+redis       latest  1aa84b1b434e  2   years ago   182.8 MB
+
+[root@Va2 ~]# docker  ps   -a |awk '{print  $1,"\t",$2,"\t",$3,"\t",$NF}' |column  -t
+CONTAINER     ID                IMAGE              NAMES
+0f40cb03171b  myos:python       "/usr/bin/python"  gigantic_lichterman
+c8ef34b9b747  centosimg:newtag  "/bin/bash"        big_hawking
+1d02447d65a7  mycentos:latest   "/bin/bash"        boring_swirles
+
+[root@Va2 ~]# docker  run  -itd   myos:sshd  /usr/sbin/sshd -D ##守护进程必须后台执行注意
+
+d7f27395c1238f5a91027ff6c4aa7c77ff9ae0f1ed1d376d52eeeef715f06259
+
+[root@Va2 ~]# docker  ps  |awk '{print  $1,"\t",$2,"\t",$3,"\t",$NF}' |column  -t
+CONTAINER     ID         IMAGE            NAMES
+d7f27395c123  myos:sshd  "/usr/sbin/sshd  elegant_mestorf
+
+[root@Va2 ~]# docker  top  elegant_mestorf
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                10882               10867               0                   21:25               pts/1               00:00:00            /usr/sbin/sshd -D
+[root@Va2 ~]# docker  stop  elegant_mestorf
+elegant_mestorf
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+
+
+
+
+/**************************
+
+----------------------------------  查看容器pid  #方法一：-----------------
+
+[root@Va1 ~]# docker  top   gigantic_pike
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                8598                8585                0                   18:21               pts/1               00:00:00            /bin/bash
+
+----------------------------------  查看容器pid  #方法2：-----------------
+
+[root@Va1 ~]# ps  -ef  |grep  "/bin/bash"
+root       800     1  0 09:00 ?        00:00:00 /bin/bash /usr/sbin/ksmtuned
+root      8598  8585  0 18:21 pts/1    00:00:00 /bin/bash
+root      8937  2254  0 18:47 pts/0    00:00:00 grep --color=auto /bin/bash
+
+----------------------------------  查看容器pid  #方法3：-----------------
+docker  inspect {镜像名|容器名|网络} # 查看{镜像|容器|网络}底层详细信息和属性
+
+[root@Va1 ~]# docker  inspect  --format  "{{.State.Pid}}"   gigantic_pike
+8598
+
+----------------------------  查看容器pid  #方法4：-----------------
+
+[root@Va1 ~]# docker  inspect   gigantic_pike   |grep  "\"Pid\":"
+            "Pid": 8598,
+
+ ## Env 表示设置的环境变量 ,设置搜索命令路径
+                 ## Cmd 表示默认的容器启动的命令
+
+[root@Va1 ~]#  docker  inspect  75f8  |grep -A2  -n  "\"Env\": \["
+125:            "Env": [
+126-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+127-                "NGINX_VERSION=1.11.5-1~jessie"
+
+[root@Va1 ~]# docker  inspect   gigantic_pike  \
+> |egrep  "\"Path\":|Status|HostnamePath|\"Name\": \"/"
+
+        "Path": "/bin/bash",
+            "Status": "running",
+        "HostnamePath": "/var/lib/docker/containers/d1b04d35429696149f03b0543c3dee278e245d74a4782e3839437a797a862f43/hostname",
+        "Name": "/gigantic_pike",  ## 容器实际名称
+*******************************/
+

@@ -1208,13 +1208,9 @@ bash: vim: command not found
 [root@d1b04d354296 yum.repos.d]# vi   local.repo
 [root@d1b04d354296 yum.repos.d]# cat   local.repo
 [CentOS7-1708]
-
 name=CentOS7-1708
-
 baseurl=ftp://192.168.0.254/CentOS7-1708
-
 gpgcheck=0
-
 enabled=1
 [root@d1b04d354296 yum.repos.d]# yum  clean  all >/dev/null &&  yum repolist |tail -3
 repo id                              repo name                            status
