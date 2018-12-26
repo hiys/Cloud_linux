@@ -1,4 +1,139 @@
 
+
+
+==========================  TCP/IP三次握手四次断开  =================
+=================== TCP的三次握手(建立连接）和四次挥手(关闭连接）==========
+
+                                       Client                                   Server
+                             没有任何连接状态 CLOSED |                                   | CLOSED 没有任何连接状态
+                                            |                                   | LISTEN 侦听来自远方TCP端口的连接请求
+发送SYN,请求建立连接(seq=100,ctl=SYN) send SYN |--------------- SYN -------------->| receive SYN
+       在发送连接请求后等待匹配的连接请求 SYN_SENT |                                   | SYN_RECV 服务端收到建立连接的SYN没有收到ACK包的时候状态
+                 receive SYN+ACK |<-- SYN+ACK ---| SYN+ACK send 发送SYN，ACK(seq=300,ack=101,ctl=SYN,ACK)
+                                        |            | SYN-RECEIVED 在收到和发送一个连接请求后等待对连接请求的确认状态
+            发送ACK(seq=101  ack=301  ctl=ACK) |-------------- ACK --------------->| receive ACK
+ 代表一个打开的连接，数据可以传送给用户 ESTABLISHED|                                  | ESTABLISHED 代表一个打开的连接，数据可以传送给用户
+                                            | <=== TCP session established ===> |
+                                                         |                                              |
+      发送FIN 请求断开连接(FIN=1,ACK=1) send FIN |-------------- FIN --------------->| receive FIN
+等待远程TCP的连接中断请求，或先前的连接中断请求的确认 FIN_WAIT-1 |                       | CLOSE_WAIT 等待从本地用户发来的连接中断请求
+                                 receive ACK |<------------- ACK ----------------| send ACK 发送ACK(ACK=1)
+               从远程TCP等待连接中断请求 FIN_WAIT-2 |                                   |
+                     receive FIN |<------------- FIN ----------------| send FIN 发送FIN 请求断开连接(FIN=1,ACK=1)
+等待足够的时间以确保远程TCP接收到连接中断请求的确认 TIME_WAIT |                          | LAST_ACK 等待原来发向远程TCP的连接中断请求的确认
+                            发送ACK(ACK=1) send ACK |-------------- ACK --------------->| receive ACK
+                                     TimeOut |                                   | CLOSED 没有任何连接状态
+                               没有任何连接状态 CLOSED |                                   |
+
+位码即tcp标志位,有6种标示:
+
+SYN(synchronous建立联机)
+
+ACK(acknowledgement 确认)
+
+PSH(push传送)
+
+FIN(finish结束)
+
+RST(reset重置)
+
+URG(urgent紧急)
+
+Sequence number(顺序号码)[32位序列号 和 32 位确认号 举例,seq=100,]
+
+Acknowledge number(确认号码)
+established   已建立的; 已设立的; 已制定的; 确定的
+receive 收到; 接待; 接到; 接纳;
+          接收; 受理; 欢迎; 承受;
+TCP(Transmission Control Protocol)　传输控制协议
+===================================================
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]【网络服务与最终用户的一个接口】
+                HTTP  FTP  TFTP  SMTP【邮件协议】  SNMP【Simple Network Management Protocol 简单网络管理协议，SNMP就是为了让别人能够获得路由器上的统计数据而约定好的数据交流的规则】  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]【数据的表现形式，如加密、压缩】
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]【建立、管理、中止会话，例如断点续传】
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]【定义传输数据的协议端口号，以及流控和差错校验】
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包 【用抓包工具抓到的一条条记录就是包】【进行逻辑地址寻址，实现不同网络之间的通信】
+                ICMP【ping这个工具 使用的协议】  IGMP【Internet Group Manage Protocol ： Internet组管理协议，提供internet网际多点 传送的功能,即将一个ip包拷贝给多个host，是一个尚处于实验阶段的协议】    IP   ARP【地址解析协议 Address Resolution Protocol】   RARP【Reverse Address Resolution Protocol 反向地址转换协议，允许局域网的物理机 从网关服务器的 ARP 表 或者缓存上 请求转换 其 IP 地址】
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧 【数据链路层协议数据单元 以太网桢格式 】【链路层分组 称为 帧 】【建立逻辑连接、进行硬件地址寻址、差错校验等功能】
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流  【建立、维护、断开物理连接】
+
+          层            主机A                              主机B          数据单元
+-------------------------------------------------------------------------------------------------------------------------------------
+TCP/UDP常用端口号
+默认端口号　　　　　　服务　　　　　　　　　　说明
+
+21　　　　　　　　　　FTP　　　　　　　　　　文件传输协议（英文：File Transfer Protocol，缩写：FTP）
+                                                 是用于在网络上进行文件传输的一套标准协议，使用客户/服务器模式。
+                                                 它属于网络传输协议的应用层。
+
+22　　　　　　　　　　SSH　　　　　　　　　 Secure Shell（缩写为SSH），
+                                                 由IETF的网络工作小组（Network Working Group）所制定；
+                                      SSH为一项创建在应用层和传输层基础上的安全协议，
+                                                 为计算机上的Shell（壳层）提供安全的传输和使用环境。
+
+23　　　　　　　　　　Telnet　　　　　　　  Telnet协议是一种应用层协议，使用于互联网及局域网中，
+                                                 使用虚拟终端机的形式，提供双向、以文字字符串为主的交互功能。
+                                                 属于TCP/IP协议族的其中之一，
+                                                 是Internet远程登录服务的标准协议和主要方式，
+                                                 常用于网页服务器的远程控制，可供用户在本地主机运行远程主机上的工作。
+
+80　　　　　　　　　　HTTP　　　　　　　　  超文本传输协议（英文：HyperText Transfer Protocol，缩写：HTTP）
+                                                是互联网上应用最为广泛的一种网络协议。
+                                                设计HTTP最初的目的是为了提供一种发布和接收HTML页面的方法。
+
+443　　　　　　　　　  HTTPS　　　　　　　超文本传输安全协议（英语：Hypertext Transfer Protocol Secure，缩写：HTTPS，
+                                               常称为HTTP over TLS，HTTP over SSL或HTTP Secure）是一种网络安全传输协议。
+                                               在计算机网络上，HTTPS经由超文本传输协议进行通信，但利用SSL/TLS来加密数据包。
+                                     HTTPS开发的主要目的，是提供对网络服务器的身份认证，保护交换数据的隐私与完整性。
+
+TCP     协议名称          端口号     套接字        作用
+Telnet  专司终端模拟      23        Tcp 23      它为用户提供了在本地计算机上完成远程主机工作的能力
+SMTP    简单邮件传输协议  25        Tcp 25      它帮助每台计算机在发送或中转信件时找到下一个目的地
+HTTP    超文本传输协议    80        Tcp 80      超文本传输协议，是我们浏览网页、看在线视频、听在线音乐等必须遵循的规则
+FTP     文件传输协议      20、21    Tcp 20      文件传输协议 FTP [ File Transfer Protocol ]使得主机间可以共享文件
+                                        和Tcp21
+DNS     域名系统          53        Tcp 53      因特网上作为域名和IP地址相互映射的一个分布式数据库，
+                                                      能够使用户更方便的访问互联网，而不用去记住能够被机器直接读取的IP数串
+HTTPS   超文本传输安全协议 443     Tcp 443     HTTPS是以安全为目标的HTTP通道，简单讲是HTTP的安全版
+SSH     安全壳协议        22        Tcp 22	SSH  为建立在应用层和传输层基础上的安全协议
+POP3    邮局协议版本3    110        Tcp 110     本协议主要用于支持使用客户端远程管理在服务器上的电子邮件
+NTP     网络时间协议     123        Tcp 123     它是用来同步网络中各个计算机时间的协议
+IMAP4 第四版因特网信息存取协议 143  Tcp 143     IMAP4协议与POP3协议一样也是规定个人计算机如何访问互联网上的邮件服务器进行收发邮件的协议，
+                                                       但是IMAP4协议同POP3协议相比更高级
+--------------------------------------------------------------------------------------
+UDP         协议名称             端口号    套接字       作用
+SNMP        简单网络管理协议     161       UDP 161    该协议能够支持网络管理系统，用以监测连接到网络上的设备是否有任何引起管理上关注的情况
+TFTP        简单文件传输协议     69        UDP 69     TCP/IP协议族中的一个用来在客户机与服务器之间进行简单文件传输的协议，
+                                                              提供不复杂、开销不大的文件传输服务
+DNS         域名系统             53        UDP 53     因特网上作为域名和IP地址相互映射的一个分布式数据库，
+                                                             能够使用户更方便的访问互联网，而不用去记住能够被机器直接读取的IP数串
+BooTPS/DHCP 动态主机配置协议	67	UDP 67    主要有两个用途:给内部网络或网络服务供应商自动分配IP地址，
+                                                             给用户或者内部网络管理员作为对所有计算机作中央管理的手段
+
+
+
+A (126) 1  -126.0.0.0  [0000  0001] -[0111 1111]  私有地址A 10.0.0.1    ~ 10.255.255.254
+B (64 ) 128-191.0.0.0  [1000  0000] -[1011 1111]  私有地址B 172.16.0.1  ~ 172.31.255.254
+C (32 ) 192-223.0.0.0  [1100  0000] -[1101 1111]  私有地址C 192.168.0.1 ~ 192.168.255.254
+D (16 ) 224-239.0.0.0  [1110  0000] -[1110 1111]  组播地址
+E (15 ) 240-254.0.0.0  [1111  0000] -[1111 1110]
+        1 	 1 	 1 	 1 	 1 	 1 	 1 	 1 
+	0	0	0	0	0	0	0	0
+ 	128	64	32	16	8	4	2	1
 [root@room9pc01 ~]# ssh  -X  192.168.0.11
 ..........
 [root@Va1 ~]# echo "scale=2;1024*4"|bc
@@ -813,7 +948,7 @@ CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
 
 
 
-======= 1 制作自定义的镜像 mycentos:latest  开始 ==========
+=======[ 1 ] 制作自定义的镜像 mycentos:latest  开始 ==========
 
 ==== 在一个裸的centos上面安装新功能软件,保存，封装成一个新centos镜像 =====
 ### 拉去最新centos镜像：docker pull centos   ##下载镜像
@@ -963,9 +1098,8 @@ e934aafc2206  8 months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]           0 B
 [root@Va2 ~]# docker  ps  -a
 CONTAINER ID  IMAGE     COMMAND     CREATED         STATUS    PORTS   NAMES
 
-== 在一个裸的centos上面安装新功能软件,保存，封装成一个新centos镜像 已经全部完成=====
-======================================================
-
+== 在一个裸的centos上面安装新功能软件,保存，封装成一个新centos镜像 =====
+===== 自定义的镜像[ 1 ]  mycentos:latest  已经全部完成  ============ 
 
 
 ------------- IDC(Internet Data Center) 互联网数据中心 ----------
@@ -993,6 +1127,8 @@ redis               latest              1aa84b1b434e        2 years ago         
 --format :指定返回值的模板文件；
 --no-trunc :显示完整的镜像信息；
 -q :只显示镜像ID。
+
+-------------------------测试 自定义的镜像[ 1 ]  mycentos:latest  启动试验容器 运行 -------- -------
 
 [root@Va2 ~]# docker  run  -it   mycentos:latest  /bin/bash  ## 创建并且运行进入容器
 
@@ -1143,7 +1279,7 @@ sha256:b717c768dc5f 0d4f1680879a48dda994c75c4a825d9a5673e59b8850abb40f9e
 CONTAINER ID  IMAGE          COMMAND       CREATED         STATUS         PORTS     NAMES
 1d02447d65a7  mycentos:latest  "/bin/bash" 54 minutes ago Exited (0) 38 minutes ago  boring_swirles
 
--------------------------  ## 新建运行进入容器(交互式) --------------------------------
+-------------------------  ##测试  新建运行进入容器(交互式) --------------------------------
 
 [root@Va2 ~]# docker  run  -it   centosimg:newtag  /bin/bash  ## 新建运行进入容器(交互式)
 
@@ -1345,7 +1481,7 @@ Traceback (most recent call last):
 NameError: name 'ls' is not defined
 >>> quit()
 [root@Va2 ~]# 
--------------------------------  ## 新建运行进入容器(交互式) --------------------------------
+-------------------------------  ## 测试 新建运行进入容器(交互式) --------------------------------
 
 [root@Va2 ~]# docker  run  -it  myos:python  /usr/bin/python
 
@@ -1378,6 +1514,17 @@ enabled=1
 
 [root@Va2 ~]# cp  dockerfile2/local.repo  dockerfile3/
 
+[root@Va2 ~]# vim  dockerfile3/Dockerfile
+
+[root@Va2 ~]# cat dockerfile3/Dockerfile
+
+FROM mycentos:latest
+RUN  yum  -y  install openssh-server  initscripts   
+RUN  echo  1 |passwd  --stdin  root
+RUN  sshd-keygen
+ENV  EnvironmentFile=/etc/sysconfig/sshd
+CMD  ["/usr/sbin/sshd","-D"]
+
 [root@Va2 ~]# cat  /usr/lib/systemd/system/sshd.service 
 [Unit]
 Description=OpenSSH server daemon
@@ -1387,7 +1534,7 @@ Wants=sshd-keygen.service
 
 [Service]
 Type=notify
-EnvironmentFile=/etc/sysconfig/sshd
+EnvironmentFile=/etc/sysconfig/sshd  ####参数配置文件 Env
 ExecStart=/usr/sbin/sshd -D $OPTIONS  ## 启动服务
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
@@ -1398,7 +1545,7 @@ RestartSec=42s
 WantedBy=multi-user.target
 
 [root@Va2 ~]# 
-[root@Va2 ~]# cat  /etc/sysconfig/sshd  ##参数配置文件
+[root@Va2 ~]# cat  /etc/sysconfig/sshd  ##参数配置文件Env
 # Configuration file for the sshd service.
 .................
 SSH_USE_STRONG_RNG=0
@@ -1577,16 +1724,1053 @@ d7f27395c1238f5a91027ff6c4aa7c77ff9ae0f1ed1d376d52eeeef715f06259
 CONTAINER     ID         IMAGE            NAMES
 d7f27395c123  myos:sshd  "/usr/sbin/sshd  elegant_mestorf
 
-[root@Va2 ~]# docker  top  elegant_mestorf
-UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
-root                10882               10867               0                   21:25               pts/1               00:00:00            /usr/sbin/sshd -D
-[root@Va2 ~]# docker  stop  elegant_mestorf
+----------------------- ##查看容器pid 方法 1  ------------------------
+
+[root@Va2 ~]# docker  top  elegant_mestorf    ##查看容器pid 方法一
+
+UID   PID  PPID  C STIME TTY    TIME     CMD
+root 10882 10867 0 21:25 pts/1  00:00:00 /usr/sbin/sshd -D
+
+[root@Va2 ~]# docker  stop  elegant_mestorf  ## 关闭容器
 elegant_mestorf
 [root@Va2 ~]# docker  ps
-CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+CONTAINER ID   IMAGE    COMMAND    CREATED    STATUS    PORTS    NAMES
+
+[root@Va2 ~]# docker  start   elegant_mestorf  ## 开启容器后台运行(镜像名myos:sshd)
+elegant_mestorf
+
+[root@Va2 ~]# docker  ps
+CONTAINER ID IMAGE     COMMAND       CREATED            STATUS    PORTS    NAMES
+d7f27395c123 myos:sshd "/usr/sbin/sshd -D" 13 hours ago Up 7 seconds  elegant_mestorf
+
+-------------------------------- ##查看容器pid 方法2 ------------------
+
+[root@Va2 ~]# docker inspect   --format  "{{.State.Pid}}"  elegant_mestorf  
+2105
+------------------------- ##查看容器pid 方法3 ----------------------------
+
+[root@Va2 ~]# docker inspect  elegant_mestorf |grep  "\"Pid\":"
+            "Pid": 2105,
+
+----------------------- ##查看容器pid 方法4 ------------------------
+
+[root@Va2 ~]# ps  -ef  |grep  "/usr/sbin/sshd -D"
+root      1082     1  0 09:26 ?        00:00:00 /usr/sbin/sshd -D
+root      2105  2090  0 10:25 pts/1    00:00:00 /usr/sbin/sshd -D
+root      2341  1533  0 10:47 pts/0    00:00:00 grep --color=auto /usr/sbin/sshd -D
+
+
+[root@Va2 ~]# docker inspect  elegant_mestorf |grep  -En  \
+>  "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+
+16:            "Pid": 2105,    ##容器pid  
+27:        "Name": "/elegant_mestorf",  ## 容器名
+112:            "Hostname": "d7f27395c123", ## 容器主机名
+149:            "Gateway": "172.17.0.1",
+152:            "IPAddress": "172.17.0.2",
+163:                    "Gateway": "172.17.0.1",
+164:                    "IPAddress": "172.17.0.2",
+[root@Va2 ~]# 
+
+
+[root@Va2 ~]# docker inspect  elegant_mestorf |grep -B1 -A2 -E  \
+>  -n "\"Env\": \[|\"Cmd\": \["
+
+120-            "StdinOnce": false,
+121:            "Env": [     ## 设置 并且保存 环境变量Env
+122-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+123-                "EnvironmentFile=/etc/sysconfig/sshd"
+124-            ],
+125:            "Cmd": [   ## 容器启动时执行的命令,仅可以有一条CMD
+126-                "/usr/sbin/sshd",
+127-                "-D"
+[root@Va2 ~]# 
+
+[root@Va2 ~]# ls  /root/.ssh/
+known_hosts
+[root@Va2 ~]# cat /root/.ssh/known_hosts 
+192.168.0.254 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEXDB+j6fQjYGq0PLzjY9lXxpPaif83nPhwNVIZo0eEemJyt2ewtHwwjlmkzrtf3rF3eHaHo480u92J66GMN11Q=
+..................
+172.17.0.2 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIcw7fTeEqPcKt3Cqei8CFxis0tnEU8JIWDw1oKBLKZjuxonNItIRr9qBSVVRuQMKDkGkgWWw6UKqUmw6Dyc+t0=
+
+[root@Va2 ~]# ssh   172.17.0.2  ## 进入容器 elegant_mestorf
+
+The authenticity of host '172.17.0.2 (172.17.0.2)' can't be established.
+ECDSA key fingerprint is SHA256:CEAkzdDnfq0xOxiXVYJAia0SOuxqZL4lA09Gl4jDAg0.
+ECDSA key fingerprint is MD5:70:0e:f0:03:bd:9b:ac:63:86:c4:2c:ae:75:f1:7c:12.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@d7f27395c123 ~]# cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search    vbr
+search    vbr1
+[root@d7f27395c123 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+
+[root@d7f27395c123 ~]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@d7f27395c123 ~]# pstree  -p  
+sshd(1)---sshd(5)---bash(7)---pstree(32)
+
+[root@d7f27395c123 ~]# ps  -ef
+UID        PID  PPID  C STIME TTY          TIME CMD
+root         1     0  0 02:25 ?        00:00:00 /usr/sbin/sshd -D
+root         5     1  0 03:22 ?        00:00:00 sshd: root@pts/0
+root         7     5  0 03:23 pts/0    00:00:00 -bash
+root        33     7  0 03:28 pts/0    00:00:00 ps -ef
+[root@d7f27395c123 ~]# echo $$
+7
+[root@d7f27395c123 ~]# head  -9  anaconda-ks.cfg 
+#version=DEVEL
+# Install OS instead of upgrade
+install
+# Use network installation
+url --url="http://mirrors.kernel.org/centos/7/os/x86_64/"
+repo --name="CentOS" --baseurl=http://mirror.centos.org/centos/7/os/x86_64/ --cost=100
+repo --name="Updates" --baseurl=http://mirror.centos.org/centos/7/updates/x86_64/ --cost=100
+cmdline
+# Firewall configuration
+
+[root@d7f27395c123 ~]# ls
+anaconda-ks.cfg
+[root@d7f27395c123 ~]# shutdown  -h  now
+Failed to talk to init daemon.
+无法与初始化守护进程对话
+
+[root@d7f27395c123 ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+
+[root@Va2 ~]# docker ps |awk '{print $1,"\t",$2,"\t",$3,"\t",$NF}' |column -t
+CONTAINER     ID         IMAGE            NAMES
+d7f27395c123  myos:sshd  "/usr/sbin/sshd  elegant_mestorf
+
+[root@Va2 ~]# docker  ps  -q
+d7f27395c123
+[root@Va2 ~]# docker stop  $(docker ps -q)
+d7f27395c123
+[root@Va2 ~]# docker  ps |column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va2 ~]# docker  images  -a |column -t |grep none
+<none>      <none>  fbe70d3bbc03  16  hours    ago   379.2  MB
+<none>      <none>  e4c70ff2271d  16  hours    ago   379.2  MB
+<none>      <none>  2d49bf2a643a  16  hours    ago   379.2  MB
+<none>      <none>  549085442257  16  hours    ago   379.2  MB
+<none>      <none>  f673e6ef1104  19  hours    ago   198.6  MB
+<none>      <none>  3467d5da6273  19  hours    ago   198.6  MB
+
+[root@Va2 ~]# docker  images  -a |column -t |grep none |awk  '{print $3}'
+fbe70d3bbc03
+e4c70ff2271d
+2d49bf2a643a
+549085442257
+f673e6ef1104
+3467d5da6273
+
+[root@Va2 ~]# docker  ps -a |grep "myos:sshd" |awk '{print $1}'
+d7f27395c123
+
+[root@Va2 ~]# docker rm  $(docker ps -a |grep "myos:sshd" |awk '{print $1}')
+d7f27395c123
+
+[root@Va2 ~]# docker  rmi  myos:sshd  ##   #删除本地镜像 myos:sshd
+Untagged: myos:sshd
+Deleted: sha256:153a8325e1b4a0a26a2e6e952b2a1e68552b668a6738fc0e128ae04bf98ba7f7
+Deleted: sha256:fbe70d3bbc03e0813bb1f80aef77ed562bacc2a16e574e1b0d069e95b40a7295
+Deleted: sha256:e4c70ff2271dc7d69eb424cadcc46f43716538ea6a9e66142890d88a360b92c8
+Deleted: sha256:821924474dfc2a12df7f15f6f81bedb0f53c4a8ea44e1dde47918f05d98a444f
+Deleted: sha256:2d49bf2a643a644592296a7c9c17423c783b778c1e3539957e4b70d66500b8ff
+Deleted: sha256:fcccd34aab77a4f9e980907f3fdb083ea1343eb5c8fb2bca3390d41f5e5c76cf
+Deleted: sha256:549085442257c74fc8511a13f1628643c24277a93035b5e985cc5f00889e0a9b
+Deleted: sha256:85740b3f79121d8992d6a032cc011f6fa868ed9a9f31857db5f20cf10318f2e7
+
+[root@Va2 ~]# docker  ps  -aq
+0f40cb03171b
+c8ef34b9b747
+1d02447d65a7
+[root@Va2 ~]# docker rm  $(docker ps  -aq)  ## 删除容器
+0f40cb03171b
+c8ef34b9b747
+1d02447d65a7
+
+[root@Va2 ~]# docker  ps  -a |column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va2 ~]# docker  rmi  centosimg:newtag   #删除本地镜像 centosimg:newtag
+Untagged: centosimg:newtag
+Deleted: sha256:352c992437b4fcbcdf5b1c0874000b2583d353baf7e1fbedb70fa5bdebb66168
+Deleted: sha256:bdbbee935474b7ba8af9aa68daa7d052802d81bd799cbf47e39581011dc746a4
+Deleted: sha256:f673e6ef11048f57cc56d8aed1f95de4a61b0af980f478f65165e4d02e9afde5
+Deleted: sha256:d36cdc2f1775818b4a90583e25b8dded253417a955b9d0c06144d3f65630b152
+Deleted: sha256:3467d5da62734daaa6e47f4b6c9fc8e98538f0f252db35524bcfc3c90e84bab8
+Deleted: sha256:113a48bc3eb6d5099d6a832cba66a61a9c2ce6d1697add7aea22b3956df45e17
+
+[root@Va2 ~]# docker images  -a |column -t
+REPOSITORY  TAG     IMAGE ID      CREATED      SIZE
+myos        python  703e26a376c0  18 hours ago 319.9  MB
+mycentos    latest  b717c768dc5f  21 hours ago 319.9  MB
+ubuntu      latest  452a96d81c30  8 months ago 79.62  MB
+centos      latest  e934aafc2206  8 months ago 198.6  MB
+registry    latest  d1fd7d86a825  11 months ago 33.26  MB
+nginx       latest  a5311a310510  2 years ago   181.4  MB
+redis       latest  1aa84b1b434e  2 years ago   182.8  MB
 
 
 
+====================================
+
+TCP/UDP常用端口号
+默认端口号　　　　　　服务　　　　　　　　　　说明
+
+21　　　　　　　　　　FTP　　　　　　　　　　文件传输协议（英文：File Transfer Protocol，缩写：FTP）
+                                                 是用于在网络上进行文件传输的一套标准协议，使用客户/服务器模式。
+                                                 它属于网络传输协议的应用层。
+
+TCP     协议名称          端口号     套接字        作用
+Telnet  专司终端模拟      23        Tcp 23      它为用户提供了在本地计算机上完成远程主机工作的能力
+SMTP    简单邮件传输协议  25        Tcp 25      它帮助每台计算机在发送或中转信件时找到下一个目的地
+HTTP    超文本传输协议    80        Tcp 80      超文本传输协议，是我们浏览网页、看在线视频、听在线音乐等必须遵循的规则
+FTP     文件传输协议      20、21    Tcp 20      文件传输协议 FTP [ File Transfer Protocol ]使得主机间可以共享文件
+                                        和Tcp21
+DNS     域名系统          53        Tcp 53      因特网上作为域名和IP地址相互映射的一个分布式数据库，
+                                                      能够使用户更方便的访问互联网，而不用去记住能够被机器直接读取的IP数串
+
+============== [ 5 ] 制作镜像  myos5:sshd ===========================
+
+
+[root@Va2 ~]# mkdir   dockerfile4
+
+[root@Va2 ~]# cp  dockerfile3/local.repo  dockerfile4/
+
+[root@Va2 ~]# vim  dockerfile4/Dockerfile
+
+expose  揭露，揭发; 使暴露; 使遭受; 使曝光;
+
+Dockerfile语法格式：
+FROM      基础镜像:标签
+MAINTAINER 镜像创建者信息(说明)
+EXPOSE 开放的端口
+ENV 设置保存全局环境变量
+ADD 复制文件到镜像
+RUN 制作镜像时执行的命令,可以有多个
+WORKDIR 定义容器内部 默认工作目录(类似cd命令)
+CMD 容器启动时执行的命令,仅可以有一条CMD
+
+[root@Va2 ~]# ls   dockerfile4/
+local.repo
+[root@Va2 ~]# cat  dockerfile4/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va2 ~]# vim  dockerfile4/Dockerfile
+
+[root@Va2 ~]# cat  dockerfile4/Dockerfile  ##创建镜像的配置文件
+
+FROM  centos:latest
+RUN   rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD   local.repo  /etc/yum.repos.d/local.repo  ##把当前文件传到新镜像里的目录下
+RUN   yum  -y  install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  && yum clean  all
+RUN   sshd-keygen
+ENV   EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE  22
+CMD     ["/usr/sbin/sshd","-D"]
+
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------------------  [ 5 ] 制作镜像  myos5:sshd [制作中]----------------
+
+---------  # docker   build     [OPTIONS]           PATH 
+
+[root@Va2 ~]# docker  build  -t myos5:sshd  dockerfile4/
+
+Sending build context to Docker daemon 3.072 kB
+Step 1 : FROM centos:latest
+ ---> e934aafc2206
+Step 2 : RUN rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ ---> Running in af6e12aed6e8
+.................
+Step 3 : ADD local.repo /etc/yum.repos.d/local.repo
+ ---> 8edfd5f8fafc
+Removing intermediate container 31977a0ca4d0
+Step 4 : RUN yum  -y  install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  && yum clean  all
+ ---> Running in 69c3d878cb63
+..................
+Cleaning up list of fastest mirrors
+ ---> ba73d3ffe853
+Removing intermediate container 69c3d878cb63
+Step 5 : RUN sshd-keygen
+ ---> Running in 127d2dbd4f24
+Generating SSH2 RSA host key: [  OK  ]
+Generating SSH2 ECDSA host key: [  OK  ]
+Generating SSH2 ED25519 host key: [  OK  ]
+ ---> 2e817bc64fb8
+Removing intermediate container 127d2dbd4f24
+Step 6 : ENV EnvironmentFile /etc/sysconfig/sshd
+ ---> Running in fc09807e595e
+ ---> be3e0d182b3f
+Removing intermediate container fc09807e595e
+Step 7 : EXPOSE 22
+ ---> Running in 638e9bd51950
+ ---> ca50ead6d3d6
+Removing intermediate container 638e9bd51950
+Step 8 : CMD /usr/sbin/sshd -D
+ ---> Running in e83267da02e3
+ ---> 9b5141300189
+Removing intermediate container e83267da02e3
+Successfully built 9b5141300189
+[root@Va2 ~]# 
+[root@Va2 ~]# cat  dockerfile4/Dockerfile  ## 创建镜像的配置文件
+
+FROM  centos:latest
+RUN   rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD   local.repo  /etc/yum.repos.d/local.repo
+RUN   yum  -y  install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  && yum clean  all
+RUN   sshd-keygen
+ENV   EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE  22
+CMD     ["/usr/sbin/sshd","-D"]
+
+[root@Va2 ~]# docker  images  -a  |column  -t
+
+REPOSITORY  TAG     IMAGE ID      CREATED        SIZE
+myos5       sshd    9b5141300189  7  minutes ago 290.2 MB
+<none>      <none>  ca50ead6d3d6  7  minutes ago 290.2 MB
+<none>      <none>  be3e0d182b3f  7  minutes ago 290.2 MB
+<none>      <none>  2e817bc64fb8  8  minutes ago 290.2 MB
+<none>      <none>  ba73d3ffe853  8  minutes ago 290.2 MB
+<none>      <none>  8edfd5f8fafc  9  minutes ago 198.6 MB
+<none>      <none>  0a56b6ba55cc  9  minutes ago 198.6 MB
+myos        python  703e26a376c0  18 hours ago   319.9 MB
+mycentos    latest  b717c768dc5f  21 hours ago   319.9 MB
+ubuntu      latest  452a96d81c30  8  months ago  79.62 MB
+centos      latest  e934aafc2206  8  months ago  198.6 MB
+registry    latest  d1fd7d86a825  11 months ago  33.26 MB
+nginx       latest  a5311a310510  2  years ago   181.4 MB
+redis       latest  1aa84b1b434e  2  years ago   182.8 MB
+
+[root@Va2 ~]# 
+[root@Va2 ~]# docker history  myos5:sshd  |column  -t
+IMAGE         CREATED         CREATED  BY                                    SIZE  COMMENT
+9b5141300189  11 minutes ago  /bin/sh -c #(nop)  CMD ["/usr/sbin/sshd" "-D"   0 B
+ca50ead6d3d6  11 minutes ago  /bin/sh -c #(nop)  EXPOSE 22/tcp                0 B
+be3e0d182b3f  12 minutes ago  /bin/sh -c #(nop)  ENV EnvironmentFile=/etc/s   0 B
+2e817bc64fb8  12 minutes ago  /bin/sh -c sshd-keygen                         2.915 kB
+ba73d3ffe853  12 minutes ago  /bin/sh -c yum -y install vim-enhanced ne      91.57 MB
+8edfd5f8fafc  13 minutes ago  /bin/sh -c #(nop) ADD file:9ed46d0d0b959663e3   95 B
+0a56b6ba55cc  13 minutes ago  /bin/sh -c rm -f /etc/yum.repos.d/*.repo &&    494 B
+e934aafc2206  8  months ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]             0 B
+<missing>     8  months ago  /bin/sh -c #(nop)  LABEL org.label-schema.sch    0 B
+<missing>     8  months ago  /bin/sh -c #(nop)  ADD file:f755805244a649ecca  198.6 MB
+
+[root@Va2 ~]# 
+============= [ 5 ] 制作镜像  myos5:sshd  完成 ======================
+
+------------------------------------- 测试    myos5:sshd 镜像 ------------------------
+
+[root@Va2 ~]# docker  run  -td  myos5:sshd  /usr/sbin/sshd  -D  ## 创建启动后台运行容器
+
+1572a94d37d7ea7c7f006599bcbf805620abe18b0dba2f77ef84c54bf20f582e
+
+[root@Va2 ~]# docker  ps  |column  -t
+CONTAINER ID IMAGE     COMMAND              CREATED        STATUS        PORTS  NAMES
+1572a94d37d7 myos5:sshd "/usr/sbin/sshd -D" 14 seconds ago Up 12 seconds 22/tcp big_swanson
+
+[root@Va2 ~]# docker  top  1572a  |column -t
+
+UID   PID   PPID  C  STIME  TTY    TIME      CMD
+root  6071  6057  0  14:34  pts/1  00:00:00  /usr/sbin/sshd -D
+
+[root@Va2 ~]# docker  inspect  --format "{{.State.Pid}}"  1572a
+6071
+
+[root@Va2 ~]# docker  inspect  1572a |grep "\"Pid\":"
+            "Pid": 6071,
+
+[root@Va2 ~]# ps  -ef |grep  "/usr/sbin/sshd -D"
+root      1082     1  0 09:26 ?        00:00:00 /usr/sbin/sshd -D
+root      6071  6057  0 14:34 pts/1    00:00:00 /usr/sbin/sshd -D
+root      6195  1533  0 14:43 pts/0    00:00:00 grep --color=auto /usr/sbin/sshd -D
+
+[root@Va2 ~]# docker  inspect   big_swanson |grep  -En  \
+> "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+16:            "Pid": 6071,
+27:        "Name": "/big_swanson",
+112:            "Hostname": "1572a94d37d7",
+154:            "Gateway": "172.17.0.1",
+157:            "IPAddress": "172.17.0.2",
+168:                    "Gateway": "172.17.0.1",
+169:                    "IPAddress": "172.17.0.2",
+
+[root@Va2 ~]# docker  inspect   big_swanson |grep  -B1 -A2 -E  \
+> -n "\"Env\": \[|\"Cmd\": \["
+123-            "StdinOnce": false,
+124:            "Env": [
+125-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+126-                "EnvironmentFile=/etc/sysconfig/sshd"
+127-            ],
+128:            "Cmd": [
+129-                "/usr/sbin/sshd",
+130-                "-D"
+[root@Va2 ~]# 
+
+[root@Va2 ~]# ssh  172.17.0.2
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+...................
+[root@Va2 ~]# > /root/.ssh/known_hosts
+
+[root@Va2 ~]# ssh -o StrictHostKeyChecking=no  172.17.0.2
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@1572a94d37d7 ~]# ls
+anaconda-ks.cfg
+[root@1572a94d37d7 ~]# ip  -o  address
+1: lo    inet 127.0.0.1/8 scope host lo\  valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+16: eth0 inet 172.17.0.2/16 scope global eth0\   valid_lft forever preferred_lft forever
+16: eth0 inet6 fe80::42:acff:fe11:2/64 scope link \  valid_lft forever preferred_lft forever
+
+[root@1572a94d37d7 ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+[root@Va2 ~]# docker stop  1572a
+1572a
+[root@Va2 ~]# docker  ps  |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va2 ~]# 
+
+============== [ 6 ] 制作镜像  sshhttpimg:sshd-httpd ================
+
+============== [ 6 ] 制作镜像  sshhttpimg:sshd-httpd ==================
+
+[root@Va2 ~]# cat  /usr/lib/systemd/system/sshd.service 
+[Unit]
+Description=OpenSSH server daemon
+Documentation=man:sshd(8) man:sshd_config(5)
+After=network.target sshd-keygen.service
+Wants=sshd-keygen.service
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/sysconfig/sshd  ####参数配置文件 Env
+ExecStart=/usr/sbin/sshd -D $OPTIONS  ## 启动服务
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=42s
+
+[Install]
+WantedBy=multi-user.target
+
+[root@Va2 ~]# 
+[root@Va2 ~]# cat  /etc/sysconfig/sshd  ##参数配置文件Env
+# Configuration file for the sshd service.
+.................
+SSH_USE_STRONG_RNG=0
+# SSH_USE_STRONG_RNG=1
+[root@Va2 ~]# grep  -Ev "^$|^#" /etc/sysconfig/sshd
+SSH_USE_STRONG_RNG=0
+[root@Va2 ~]# grep  -v "^$\|^#" /etc/sysconfig/sshd
+SSH_USE_STRONG_RNG=0
+
+[root@Va2 ~]# ll  /usr/sbin/sshd
+-rwxr-xr-x. 1 root root 853024 5月  22 2017 /usr/sbin/sshd
+
+[root@Va2 ~]# ll  /usr/sbin/httpd
+-rwxr-xr-x 1 root root 519432 5月   9 2017 /usr/sbin/httpd
+
+[root@Va2 ~]# file   /usr/sbin/httpd
+/usr/sbin/httpd: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=a24602bea3706ab8231a48e99ed08391aa822921, stripped
+
+[root@Va2 ~]# stat  /usr/sbin/httpd
+  文件："/usr/sbin/httpd"
+  大小：519432    	块：1016       IO 块：4096   普通文件
+设备：fd00h/64768d	Inode：1338270     硬链接：1
+权限：(0755/-rwxr-xr-x)  Uid：(    0/    root)   Gid：(    0/    root)
+最近访问：2018-12-26 09:26:18.283712830 +0800
+最近更改：2017-05-09 23:22:43.000000000 +0800
+最近改动：2018-12-18 13:40:52.291846988 +0800
+创建时间：-
+
+[root@Va2 ~]# 
+foreground  前景; 突出的地方， 最显著的位置;
+
+[root@Va2 ~]# ls /usr/lib/systemd/system/httpd.service 
+/usr/lib/systemd/system/httpd.service
+
+[root@Va2 ~]# cat  /usr/lib/systemd/system/httpd.service
+[Unit]
+Description=The Apache HTTP Server
+After=network.target remote-fs.target nss-lookup.target
+Documentation=man:httpd(8)
+Documentation=man:apachectl(8)
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/sysconfig/httpd   ## 环境变量Env ##参数配置文件
+
+ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND  ##启动命令Cmd
+
+ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+ExecStop=/bin/kill -WINCH ${MAINPID}
+#...................
+#.........
+KillSignal=SIGCONT
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+[root@Va2 ~]# 
+[root@Va2 ~]# which   sshd-keygen
+/usr/sbin/sshd-keygen
+[root@Va2 ~]# ll /usr/sbin/sshd-keygen 
+-rwxr-xr-x. 1 root root 3613 5月  22 2017 /usr/sbin/sshd-keygen
+
+[root@Va2 ~]# grep  -B1 -A1 -in "options=" /etc/sysconfig/httpd ##参数配置文件
+16-#
+17:#OPTIONS=
+18-
+[root@Va2 ~]# grep  -v "^$\|^#" /etc/sysconfig/httpd 
+LANG=C
+
+[root@Va2 ~]# mkdir   dockerfile5
+
+[root@Va2 ~]# cp  dockerfile3/local.repo  dockerfile5/
+
+[root@Va2 ~]# vim  dockerfile5/Dockerfile  ## 创建镜像的配置文件
+
+expose  揭露，揭发; 使暴露; 使遭受; 使曝光;
+建议使用Debian Image，
+
+　　1. FROM必须是除了注释以外的第一行；
+　　2. 可以有多个FROM语句，来创建多个image；
+ RUN apt-get update && apt-get install -y \
+        package-bar \
+        package-baz \
+        package-foo
+管道使用
+
+　　很多RUN命令都需要使用到管道，如：
+
+RUN wget -O - https://some.site | wc -l > /number
+　　Docker使用/bin/sh -c解释器来执行这些命令，
+该解释器只评估管道最后一个操作的返回值来判断整个命令是否成功。
+在上面的例子中，只要wc -l命令成功了，
+即使wget命令失败了，也会创建一个新镜像。
+为了避免上述情况，
+可以在语句首部加上set -o pipefail &&。
+比如：
+
+RUN set -o pipefail && wget -O - https://some.site | wc -l > /number
+　　注意：并非所有的shell都支持-o pipefail选项，
+比如说基于Debian的镜像下的模式shell：dash shell。
+这种情况下，我们可以使用exec格式的RUN命令来显示地选择shell来支持pipefail选项。
+如：
+
+RUN ["/bin/bash", "-c", "set -o pipefail && wget -O - https://some.site | wc -l > /number"]
+
+ENV
+功能为设置环境变量
+语法有两种
+1. ENV <key> <value>
+2. ENV <key>=<value> ...
+两者的区别就是第一种是一次设置一个，第二种是一次设置多个
+
+
+Dockerfile语法格式：
+FROM      基础镜像:标签
+MAINTAINER 镜像创建者信息(说明)
+EXPOSE 开放的端口
+ENV 设置保存全局环境变量
+ADD 复制文件到镜像
+RUN 制作镜像时执行的命令,可以有多个
+WORKDIR 定义容器内部 默认工作目录(类似cd命令)
+CMD 容器启动时执行的命令,仅可以有一条CMD
+
+
+[root@Va2 ~]# ls   dockerfile5/
+Dockerfile  local.repo
+
+[root@Va2 ~]# vim  dockerfile5/Dockerfile 
+[root@Va2 ~]# cat  dockerfile5/Dockerfile  ## 创建镜像的配置文件
+
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "sshd-httpd /usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+ENV     EnvironmentFile=/etc/sysconfig/httpd
+EXPOSE  80
+EXPOSE  443
+ENV     EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE  22
+CMD     ["/usr/sbin/sshd","-D"]
+
+[root@Va2 ~]# cat   dockerfile5/local.repo ## yum 源仓库
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+------------------------------------------------------------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------------------  [ 6 ] 制作镜像  sshhttpimg:sshd-httpd [制作中]---------
+
+---------  # docker   build     [OPTIONS]           PATH 
+
+[root@Va2 ~]# docker  build  -t  sshhttpimg:sshd-httpd  dockerfile5/
+
+Sending build context to Docker daemon 3.584 kB
+Step 1 : FROM centos:latest
+ ---> e934aafc2206
+Step 2 : RUN rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ ---> Using cache
+ ---> 0a56b6ba55cc
+Step 3 : ADD local.repo /etc/yum.repos.d/local.repo
+ ---> Using cache
+ ---> 8edfd5f8fafc
+Step 4 : RUN yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+ ---> Running in 332cdb34f2b7
+.................
+Cleaning up list of fastest mirrors
+ ---> 6d1cd9101859
+Removing intermediate container 332cdb34f2b7
+Step 5 : RUN /usr/sbin/sshd-keygen
+ ---> Running in a7157a31672f
+Generating SSH2 RSA host key: [  OK  ]
+Generating SSH2 ECDSA host key: [  OK  ]
+Generating SSH2 ED25519 host key: [  OK  ]
+ ---> 09160e7fa0e1
+Removing intermediate container a7157a31672f
+Step 6 : WORKDIR /var/www/html
+ ---> Running in fbf8846e6d19
+ ---> d9974fb034c0
+Removing intermediate container fbf8846e6d19
+Step 7 : RUN echo "sshd-httpd /usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+ ---> Running in 46fd9c3d5b70
+ ---> 7501951045de
+Removing intermediate container 46fd9c3d5b70
+Step 8 : ENV EnvironmentFile /etc/sysconfig/httpd
+ ---> Running in 8d0eef0a5193
+ ---> 5bfa9c4d1732
+Removing intermediate container 8d0eef0a5193
+Step 9 : EXPOSE 80
+ ---> Running in 2c49bf81e551
+ ---> 69b54b38733d
+Removing intermediate container 2c49bf81e551
+Step 10 : EXPOSE 443
+ ---> Running in 86ff3fa29ffe
+ ---> af7439a6a980
+Removing intermediate container 86ff3fa29ffe
+Step 11 : ENV EnvironmentFile /etc/sysconfig/sshd
+ ---> Running in 5b7baaf51220
+ ---> 1631794b7905
+Removing intermediate container 5b7baaf51220
+Step 12 : EXPOSE 22
+ ---> Running in f888137e8239
+ ---> f2c886629b0f
+Removing intermediate container f888137e8239
+Step 13 : CMD /usr/sbin/sshd -D
+ ---> Running in e4a5961c7d7a
+ ---> 1e70c1931339
+Removing intermediate container e4a5961c7d7a
+Successfully built 1e70c1931339
+[root@Va2 ~]#  
+
+
+[root@Va2 ~]# docker  images  -a  |column  -t
+REPOSITORY  TAG         IMAGE  ID     CREATED            SIZE
+sshhttpimg  sshd-httpd  1e70c1931339  27  minutes  ago   322.9  MB
+<none>      <none>      f2c886629b0f  27  minutes  ago   322.9  MB
+<none>      <none>      1631794b7905  27  minutes  ago   322.9  MB
+<none>      <none>      af7439a6a980  27  minutes  ago   322.9  MB
+<none>      <none>      69b54b38733d  27  minutes  ago   322.9  MB
+<none>      <none>      5bfa9c4d1732  27  minutes  ago   322.9  MB
+<none>      <none>      7501951045de  28  minutes  ago   322.9  MB
+<none>      <none>      d9974fb034c0  28  minutes  ago   322.9  MB
+<none>      <none>      09160e7fa0e1  28  minutes  ago   322.9  MB
+<none>      <none>      6d1cd9101859  28  minutes  ago   322.9  MB
+myos5       sshd        9b5141300189  3   hours    ago   290.2  MB
+<none>      <none>      ca50ead6d3d6  3   hours    ago   290.2  MB
+<none>      <none>      be3e0d182b3f  3   hours    ago   290.2  MB
+<none>      <none>      2e817bc64fb8  3   hours    ago   290.2  MB
+<none>      <none>      ba73d3ffe853  3   hours    ago   290.2  MB
+<none>      <none>      8edfd5f8fafc  3   hours    ago   198.6  MB
+<none>      <none>      0a56b6ba55cc  3   hours    ago   198.6  MB
+myos        python      703e26a376c0  22  hours    ago   319.9  MB
+mycentos    latest      b717c768dc5f  25  hours    ago   319.9  MB
+ubuntu      latest      452a96d81c30  8   months   ago   79.62  MB
+centos      latest      e934aafc2206  8   months   ago   198.6  MB
+registry    latest      d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest      a5311a310510  2   years    ago   181.4  MB
+redis       latest      1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va2 ~]# docker  history  sshhttpimg:sshd-httpd |column  -t  ## 查看镜像制作记录
+
+IMAGE         CREATED         CREATED  BY                                    SIZE  COMMENT
+1e70c1931339  28 minutes ago  /bin/sh -c #(nop)  CMD ["/usr/sbin/sshd" "-D"  0 B
+f2c886629b0f  28 minutes ago  /bin/sh -c #(nop)  EXPOSE  22/tcp              0 B
+1631794b7905  29 minutes ago  /bin/sh -c #(nop)  ENV EnvironmentFile=/etc/s  0 B
+af7439a6a980  29 minutes ago  /bin/sh -c #(nop)  EXPOSE 443/tcp              0 B
+69b54b38733d  29 minutes ago  /bin/sh -c #(nop)  EXPOSE  80/tcp              0 B
+5bfa9c4d1732  29 minutes ago  /bin/sh -c #(nop)  ENV EnvironmentFile=/etc/s  0 B
+7501951045de  29 minutes ago  /bin/sh -c echo "sshd-httpd /usr/sbin/sshd -D  68B
+d9974fb034c0  29 minutes ago  /bin/sh -c #(nop)  WORKDIR  /var/www/html      0 B
+09160e7fa0e1  29 minutes ago  /bin/sh -c /usr/sbin/sshd-keygen               2.919 kB
+6d1cd9101859  29 minutes ago  /bin/sh -c yum -y install vim-enhanced net     124.3 MB
+8edfd5f8fafc  3  hours   ago  /bin/sh -c #(nop) ADD file:9ed46d0d0b959663e3  95 B
+0a56b6ba55cc  3  hours   ago  /bin/sh -c rm -f /etc/yum.repos.d/*.repo &&    494 B
+e934aafc2206  8  months  ago  /bin/sh -c #(nop) CMD ["/bin/bash"]            0 B
+<missing>     8  months  ago  /bin/sh -c #(nop) LABEL org.label-schema.sch   0 B
+<missing>     8  months  ago  /bin/sh -c #(nop) ADD file:f755805244a649ecca  198.6 MB
+
+[root@Va2 ~]# 
+----------------------  [ 6 ] 制作镜像  sshhttpimg:sshd-httpd [完成]---------
+=====================================================
+
+[root@Va2 ~]# docker ps
+CONTAINER   ID    IMAGE   COMMAND  CREATED  STATUS   PORTS  NAMES
+
+--------------------  测试镜像  sshhttpimg:sshd-httpd  创建后台运行 容器 -------------------
+-------------------  测试镜像  sshhttpimg:sshd-httpd  创建后台运行 容器 -------------------
+
+[root@Va2 ~]# docker  run  -td  sshhttpimg:sshd-httpd  /usr/sbin/sshd -D ##创建后台运行容器
+
+b53120c7f62eb40a4c8a23e1a50bd54278aecbe456e9b578acc878b0f7f8d64b
+
+[root@Va2 ~]# docker  ps  -q
+b53120c7f62e
+
+--------------------------------  查看容器pid  #方法一：-----------------
+
+[root@Va2 ~]# docker  top  b53  |column  -t
+
+UID   PID   PPID  C  STIME  TTY    TIME      CMD
+root  9519  9506  0  17:47  pts/1  00:00:00  /usr/sbin/sshd  -D
+
+--------------------------------  查看容器pid  #方法 2：-----------------
+
+[root@Va2 ~]# docker  inspect  --format  "{{.State.Pid}}"  b53
+9519
+--------------------------------  查看容器pid  #方法 3 ：-----------------
+
+[root@Va2 ~]# docker  inspect  b53 |grep  "\"Pid\":"
+            "Pid": 9519,
+
+--------------------------------  查看容器pid  #方法 4 ：-----------------
+
+[root@Va2 ~]# ps  -ef |grep  "/usr/sbin/sshd -D"
+root      1082     1  0 09:26 ?        00:00:00 /usr/sbin/sshd -D
+root      9519  9506  0 17:47 pts/1    00:00:00 /usr/sbin/sshd -D
+root      9610  1533  0 17:52 pts/0    00:00:00 grep --color=auto /usr/sbin/sshd -D
+
+[root@Va2 ~]# docker  inspect  b53 |grep -En \
+> "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+
+16:            "Pid": 9519,
+27:        "Name": "/high_heisenberg", ## 容器名
+112:            "Hostname": "b53120c7f62e", ## 容器主机名
+158:            "Gateway": "172.17.0.1",
+161:            "IPAddress": "172.17.0.2",  ## 容器主机 ip
+172:                    "Gateway": "172.17.0.1",
+173:                    "IPAddress": "172.17.0.2",
+
+[root@Va2 ~]# docker  inspect  b53 |grep  -B1 -A2 -En  \
+> "\"Env\": \[|\"Cmd\": \["
+125-            "StdinOnce": false,
+126:            "Env": [
+127-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+128-                "EnvironmentFile=/etc/sysconfig/sshd"
+129-            ],
+130:            "Cmd": [
+131-                "/usr/sbin/sshd",  ## 默认启动镜像内的命令
+132-                "-D"
+
+[root@Va2 ~]# cat /root/.ssh/known_hosts 
+172.17.0.2 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBOnUXEflXjRN3MlA8GDcDaoMo4b6JpiPSGHLF5c3/QD/1Pins6MpblaoQ8qf8o4PQ0DXVmHTfKpq0NHOjxCF8FI=
+
+[root@Va2 ~]# > /root/.ssh/known_hosts  ## 清空记录 防止ip 冲突
+
+[root@Va2 ~]# ssh -o StrictHostKeyChecking=no  172.17.0.2
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@b53120c7f62e ~]# cat /var/www/html/index.html 
+sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@b53120c7f62e ~]# elinks  -dump  172.17.0.2  ## 未开启apache 服务
+Connection refused
+
+[root@b53120c7f62e ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+
+[root@Va2 ~]# docker  ps |column  -t
+CONTAINER ID IMAGE     COMMAND             CREATED       STATUS      PORTS          NAMES
+b53120c7f62e sshhttpimg:sshd-httpd "/usr/sbin/sshd -D  "9 minutes ago  Up 9 minutes 22/tcp,80/tcp,443/tcp  high_heisenberg
+
+ ========= ## 进入容器 "Name": "/high_heisenberg" #注意必须有镜像的内部命令  ==========
+
+[root@Va2 ~]# docker  exec  -td  b53  /usr/sbin/httpd -DFOREGROUND  ##进入后台运行容器httpd服务
+[root@Va2 ~]# echo $?
+0
+[root@Va2 ~]# docker  ps |column  -t  ## 查看正在运行的容器
+CONTAINER  ID     IMAGE            COMMAND  CREATED  STATUS   PORTS  NAMES
+b53120c7f62e  sshhttpimg:sshd-httpd  "/usr/sbin/sshd -D"  14 minutes ago  Up 14 minutes  22/tcp,80/tcp,443/tcp  high_heisenberg
+
+[root@Va2 ~]# docker  top  b53  |column  -t 
+UID     PID   PPID  C  STIME  TTY    TIME      CMD
+root    9519  9506  0  17:47  pts/1  00:00:00  /usr/sbin/sshd   -D
+root    9787  9772  0  18:01  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  9791  9787  0  18:01  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  9792  9787  0  18:01  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  9793  9787  0  18:01  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  9794  9787  0  18:01  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  9795  9787  0  18:01  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+
+------------------------  查看容器pid  #方法 4 ：-----------------
+
+[root@Va2 ~]# ps  -ef  |egrep  "/usr/sbin/sshd -D|/usr/sbin/httpd -DFOREGROUND"
+root      1082     1  0 09:26 ?        00:00:00 /usr/sbin/sshd -D
+root      1098     1  0 09:26 ?        00:00:01 /usr/sbin/httpd -DFOREGROUND
+apache    1161  1098  0 09:26 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    1162  1098  0 09:26 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    1163  1098  0 09:26 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    1164  1098  0 09:26 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    1165  1098  0 09:26 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND
+root      9519  9506  0 17:47 pts/1    00:00:00 /usr/sbin/sshd -D
+root      9787  9772  0 18:01 pts/3    00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    9791  9787  0 18:01 pts/3    00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    9792  9787  0 18:01 pts/3    00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    9793  9787  0 18:01 pts/3    00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    9794  9787  0 18:01 pts/3    00:00:00 /usr/sbin/httpd -DFOREGROUND
+apache    9795  9787  0 18:01 pts/3    00:00:00 /usr/sbin/httpd -DFOREGROUND
+root      9843  1533  0 18:04 pts/0    00:00:00 grep -E --color=auto /usr/sbin/sshd -D|/usr/sbin/httpd -DFOREGROUND
+
+/************************ 前面 已经手动 开启了 apache 服务**************
+
+[root@Va2 ~]# docker  exec  -td  b53  /usr/sbin/httpd -DFOREGROUND  ##进入后台运行容器httpd服务
+************************************/
+
+[root@Va2 ~]# elinks  -dump  172.17.0.2  ## 现在可以访问 httpd 服务了
+
+   sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@Va2 ~]# ls  dockerfile5/
+Dockerfile  local.repo
+
+---------------------  ## 创建镜像 sshhttpimg:sshd-httpd 的配置文件 ---------------
+
+
+[root@Va2 ~]# cat  dockerfile5/Dockerfile  ## 创建镜像 sshhttpimg:sshd-httpd 的配置文件
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "sshd-httpd /usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+ENV     EnvironmentFile=/etc/sysconfig/httpd
+EXPOSE  80
+EXPOSE  443
+ENV     EnvironmentFile=/etc/sysconfig/sshd
+EXPOSE  22
+CMD     ["/usr/sbin/sshd","-D"]
+
+
+[root@Va2 ~]# ssh -o StrictHostKeyChecking=no  172.17.0.2
+root@172.17.0.2's password: 
+Last login: Wed Dec 26 09:55:22 2018 from 172.17.0.1
+[root@b53120c7f62e ~]# pstree  -p
+sshd(1)---sshd(45)---bash(47)---pstree(66)
+[root@b53120c7f62e ~]# pstree  -p  0
+?()-+-httpd(36)-+-httpd(40)
+    |           |-httpd(41)
+    |           |-httpd(42)
+    |           |-httpd(43)
+    |           `-httpd(44)
+    `-sshd(1)---sshd(45)---bash(47)---pstree(67)
+[root@b53120c7f62e ~]# pstree  -p  1
+sshd(1)---sshd(45)---bash(47)---pstree(68)
+[root@b53120c7f62e ~]# echo  $$
+47
+[root@b53120c7f62e ~]# netstat  -npult 
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1/sshd              
+tcp6       0      0 :::80                   :::*                    LISTEN      36/httpd            
+tcp6       0      0 :::22                   :::*                    LISTEN      1/sshd              
+[root@b53120c7f62e ~]# ps
+ps          psed        pstree      pstree.x11  pstruct     
+[root@b53120c7f62e ~]# ps  aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.0 105996  4076 ?        Ss+  09:47   0:00 /usr/sbin/sshd -D
+root        36  0.0  0.0 221948  4924 ?        Ss+  10:01   0:00 /usr/sbin/httpd -DFOREGRO
+apache      40  0.0  0.0 222084  3668 ?        S+   10:01   0:00 /usr/sbin/httpd -DFOREGRO
+apache      41  0.0  0.0 221948  2944 ?        S+   10:01   0:00 /usr/sbin/httpd -DFOREGRO
+apache      42  0.0  0.0 221948  2944 ?        S+   10:01   0:00 /usr/sbin/httpd -DFOREGRO
+apache      43  0.0  0.0 221948  2944 ?        S+   10:01   0:00 /usr/sbin/httpd -DFOREGRO
+apache      44  0.0  0.0 221948  2944 ?        S+   10:01   0:00 /usr/sbin/httpd -DFOREGRO
+root        45  0.0  0.1 142096  5660 ?        Ss   10:34   0:00 sshd: root@pts/0
+root        47  0.0  0.0  15704  2512 pts/0    Ss   10:34   0:00 -bash
+root        70  0.0  0.0  50852  1692 pts/0    R+   10:36   0:00 ps aux
+[root@b53120c7f62e ~]# ll  /var/www/html/index.html 
+-rw-r--r-- 1 root root 68 Dec 26 08:55 /var/www/html/index.html
+[root@b53120c7f62e ~]# cat  /var/www/html/index.html
+sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+[root@b53120c7f62e ~]# elinks  -dump  127.0.0.1
+   sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+[root@b53120c7f62e ~]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@b53120c7f62e ~]# elinks  -dump  172.17.0.2
+   sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+[root@b53120c7f62e ~]# echo  "localhost ok"  >> /var/www/html/index.html
+[root@b53120c7f62e ~]# elinks  -dump  172.17.0.2
+   sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+   localhost ok
+[root@b53120c7f62e ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+[root@Va2 ~]# elinks  -dump  172.17.0.2
+   sshd-httpd /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+   localhost ok
+[root@Va2 ~]# 
+[root@Va2 ~]# docker  ps  -aq
+b53120c7f62e
+1572a94d37d7
+[root@Va2 ~]# docker  ps  -q
+b53120c7f62e
+[root@Va2 ~]# docker  rm  $(docker  stop  $(docker ps -q))
+b53120c7f62e
+[root@Va2 ~]# docker  rm  $(docker  ps  -aq)
+1572a94d37d7
+[root@Va2 ~]# docker  ps  -a  |column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+[root@Va2 ~]# cat  /root/.ssh/known_hosts 
+172.17.0.2 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBHY2arrNLNxJxOO/nSnBnXE3ivMQ4UyPmsHfGvbHuwNwHlgn5JUJ2ymmP9+XdBUywgiZBbqG0C8KUcX+75mVTRY=
+[root@Va2 ~]# > /root/.ssh/known_hosts
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://blog.51cto.com/13740508/2134332
+Dockerfile基于最小化选择性安装服务的2种方法
+
+方法1mkdir ss
+cd ss/
+touch Dockerfile //名字必须是这个
+cp /etc/yum.repos.d/dvd.repo .
+
+vim 1.sh
+
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd -D &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd -DFOREGROUND
+chmod 755 1.sh
+vim Dockerfile 
+FROM centos
+RUN rm -rf /etc/yum.repos.d/*
+ADD dvd.repo /etc/yum.repos.d/
+ADD 1.sh /etc/init.d/1.sh
+RUN yum -y install httpd openssh-server net-tools vim-enhanced iproute bash-completion psmisc initscripts
+RUN echo 1 | passwd --stdin root
+RUN /usr/sbin/sshd-keygen
+EXPOSE 80
+EXPOSE 22
+CMD ["/etc/init.d/1.sh"]
+
+方法2mkdir ss
+cd ss/
+touch Dockerfile //名字必须是这个
+cp /etc/yum.repos.d/dvd.repo .
+
+vim 1.sh
+
+#!/bin/bash
+/usr/sbin/sshd -D &
+/usr/sbin/httpd -DFOREGROUND
+
+vim Dockerfile 
+
+FROM centos
+RUN rm -rf /etc/yum.repos.d/*
+ADD dvd.repo /etc/yum.repos.d/
+ADD 1.sh /etc/init.d/1.sh
+RUN yum -y install httpd openssh-server net-tools vim-enhanced iproute bash-completion psmisc initscripts
+RUN echo 1 | passwd --stdin root
+ENV EnvironmentFile=/etc/sysconfig/httpd
+EXPOSE 80
+ENV EnvironmentFile=/etc/sysconfig/sshd
+RUN /usr/sbin/sshd-keygen
+EXPOSE 22
+CMD [“/bin/bash”,"/etc/init.d/1.sh"]
+
+[root@docker1 ss]# docker build -t moo:last .
+
+
+---  -- ---- - ## 进入容器 3d8  #注意必须有镜像的内部命令 
+[root@Va2 ~]# docker  exec  -it   3d8  /bin/bash  ## 进入容器 #注意必须有镜像的内部命令
 
 /**************************
 
