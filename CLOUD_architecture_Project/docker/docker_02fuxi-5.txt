@@ -1,0 +1,2081 @@
+
+
+[root@Va1 ~]# docker exec  -it   gigantic_pike  /bin/bash  ## 进入容器(镜像名centos)
+
+[root@d1b04d354296 /]# hostname
+d1b04d354296
+[root@d1b04d354296 /]# ls  /etc/yum.repos.d/
+local.repo  repo
+[root@d1b04d354296 /]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+
+name=CentOS7-1708
+
+baseurl=ftp://192.168.0.254/CentOS7-1708
+
+gpgcheck=0
+
+enabled=1
+
+[root@d1b04d354296 /]# yum  -y  install  httpd  elinks |tail  -3
+.........
+[root@d1b04d354296 /]# rpm  -q   elinks  httpd
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.centos.x86_64
+
+[root@d1b04d354296 /]# ifconfig |head   -12
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.3  netmask 255.255.0.0  broadcast 0.0.0.0
+.........................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+
+[root@d1b04d354296 /]# ifconfig  |awk  '/inet /{print $2}'
+172.17.0.3
+127.0.0.1
+
+[root@d1b04d354296 /]# rpm  -q  net-tools  vim-enhanced
+net-tools-2.0-0.22.20131004git.el7.x86_64
+vim-enhanced-7.4.160-2.el7.x86_64
+[root@d1b04d354296 /]# which  apachectl
+/usr/sbin/apachectl
+
+[root@d1b04d354296 /]# /usr/sbin/apachectl   ## 启动 httpd 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.3. Set the 'ServerName' directive globally to suppress this message
+
+Could not reliably determine the server's fully qualified domain name 
+无法可靠地确定服务器的完全限定域名
+Set the 'ServerName' directive globally to suppress this message 
+设置“ServerName”指令全局以抑制此消息
+
+[root@d1b04d354296 /]# cat  /etc/resolv.conf 
+nameserver   192.168.0.254
+nameserver   192.168.1.254
+search vbr
+
+[root@d1b04d354296 /]# apachectl   ## 启动 httpd 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.3. Set the 'ServerName' directive globally to suppress this message
+httpd (pid 83) already running
+
+[root@d1b04d354296 /]# netstat  -npult |grep  httpd
+tcp6  0   0 :::80      :::*       LISTEN    83/httpd
+
+Linux中的ps命令
+是Process Status的缩写。
+ps命令用来列出系统中当前运行的进程的快照。
+
+动态的显示进程信息，
+使用top命令
+
+“ ps -ef ” 显示所有进程信息，连同命令行
+ps aux  ##查看所有进程的详细信息
+
+与 ps -aux 是不同的，
+例如 -u 参数表示打印进程的 uid，
+而参数 u 表示显示进程的详细信息。
+
+
+[root@d1b04d354296 /]# ps  -C  httpd #通过进程名 httpd 显示进程
+  PID TTY          TIME CMD
+   83 ?        00:00:00 httpd
+   84 ?        00:00:00 httpd
+   85 ?        00:00:00 httpd
+   86 ?        00:00:00 httpd
+   87 ?        00:00:00 httpd
+   88 ?        00:00:00 httpd
+
+[root@d1b04d354296 /]# ls  /var/www/html/
+[root@d1b04d354296 /]# echo  "d1b04d354296  centos:latest  gigantic_pike" 
+ >  /var/www/html/index.html
+
+[root@d1b04d354296 /]# cat  /var/www/html/index.html
+d1b04d354296  centos:latest  gigantic_pike
+
+[root@d1b04d354296 /]# elinks  -dump  http://172.17.0.3
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@d1b04d354296 /]# exit
+exit
+[root@Va1 ~]# elinks  -dump  http://172.17.0.3
+   d1b04d354296 centos:latest gigantic_pike
+
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2  ## 原因 没有开启 nginx 服务
+ELinks: 拒绝连接
+ - - - - - - - --   - - - -- - - - - --  --- -  --- -- - - - -- -- - - -- 
+ redhat    |   debian
+----------------------------------------------------------------------------------
+  rhel     |   debian
+  centos   |   ubuntu
+  selinux  |
+------------------------------------------------------------------------------
+yum Yellowdog Update Manager| apt-get   .deb
+rpm redhat package manager  | dpkg 是Debian package的简写
+-------------------------------------------------------------------------------------------
+  ----------------------------- ## 进入终端-t 后台-d 运行 -------------------
+------------------------------------------------- ## 注意 ubuntu ---------
+
+[root@Va1 ~]# docker  exec  -it   75f8af7d6f1d  /bin/bash  ## 进入容器(镜像名nginx)
+
+root@75f8af7d6f1d:/# ip  address show   ## 查看ip
+
+1: lo:..........
+    inet 127.0.0.1/8 scope host lo
+................
+9: eth0@if10:...............
+    inet 172.17.0.2/16 scope global eth0
+   ..............
+root@75f8af7d6f1d:/# echo  $$  ## 查看当前进程号
+5
+root@75f8af7d6f1d:/# dpkg  -l  |tail  -1
+ii  zlib1g:amd64     1:1.2.8.dfsg-2+b1   amd64    compression library - runtime
+
+root@75f8af7d6f1d:/# head  -4 /etc/nginx/conf.d/default.conf  ##从配置文件
+server {
+    listen       80;
+    server_name  localhost;
+
+root@75f8af7d6f1d:/# cat  /etc/nginx/conf.d/default.conf |grep  -A3 -n "location /"
+8:    location / {
+9-        root   /usr/share/nginx/html;  ## 注意 网页根目录
+10-        index  index.html index.htm;  ## 注意网页首页文件
+11-    }
+
+root@75f8af7d6f1d:/# ping  -c1  172.17.0.3
+PING 172.17.0.3 (172.17.0.3): 56 data bytes
+64 bytes from 172.17.0.3: icmp_seq=0 ttl=64 time=0.063 ms
+................
+
+root@75f8af7d6f1d:/# which  nginx
+/usr/sbin/nginx
+root@75f8af7d6f1d:/# /usr/sbin/nginx   ##开启服务执行文件
+
+root@75f8af7d6f1d:/# echo  "75f8af7d6f1d  nginx   80/tcp, 443/tcp  thirsty_wright /usr/share/nginx/html/index.html"  >
+ /usr/share/nginx/html/index.html     ## 注意网页首页文件
+
+root@75f8af7d6f1d:/# dpkg  -l  |grep  nginx
+ii  nginx                   1.11.5-1~jessie     amd64   high performance web server
+ii  nginx-module-geoip       1.11.5-1~jessie      amd64  nginx GeoIP dynamic modules
+ii  nginx-module-image-filter 1.11.5-1~jessie       amd64 nginx image filter dynamic module
+ii  nginx-module-njs          1.11.5.0.1.3-1~jessie amd64 nginx nginScript dynamic modules
+ii  nginx-module-perl        1.11.5-1~jessie      amd64  nginx Perl dynamic module
+ii  nginx-module-xslt       1.11.5-1~jessie     amd64   nginx xslt dynamic module
+
+root@75f8af7d6f1d:/# apt-get  install  elinks  ##装包
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+E: Unable to locate package elinks
+
+root@75f8af7d6f1d:/# dpkg  -L  nginx  |grep  nginx
+
+/etc/default/nginx
+..................
+/etc/nginx/scgi_params
+..............
+/etc/nginx/conf.d/default.conf  ##从配置文件
+.....................
+/etc/nginx/nginx.conf  ###主配置文件
+
+/etc/init.d/nginx
+...............
+/usr/share/nginx/html/index.html ## 注意网页首页文件
+
+..............
+/usr/sbin/nginx  ## ##开启服务执行文件
+
+/usr/sbin/nginx-debug
+/var/log/nginx
+/var/cache/nginx
+/etc/nginx/modules
+
+root@75f8af7d6f1d:/# ls  -l  /etc/default/nginx
+-rw-r--r-- 1 root root 125 Oct 11  2016 /etc/default/nginx
+
+root@75f8af7d6f1d:/# cat   /etc/default/nginx   ### default/nginx 
+
+# Defaults for nginx initscript
+# sourced by /etc/init.d/nginx
+
+# Additional options that are passed to nginx
+DAEMON_ARGS=""
+
+root@75f8af7d6f1d:/# 
+
+---------------------###主配置文件 nginx/nginx.conf ---------------------------
+
+root@75f8af7d6f1d:/# cat  /etc/nginx/nginx.conf ###主配置文件 nginx/nginx.conf
+
+user  nginx;         ## 注意 user
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;     ## 注意 pid
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf; ##注意这句最关键包含 从配置文件
+}
+
+root@75f8af7d6f1d:/# 
+------------------------- ##从配置文件 nginx/conf.d/default.conf --------------
+
+root@75f8af7d6f1d:/# cat   /etc/nginx/conf.d/default.conf  ##从配置文件 nginx/conf.d/default.conf
+
+server {
+    listen       80;
+    server_name  localhost;
+
+    #charset koi8-r;
+    #access_log  /var/log/nginx/log/host.access.log  main;
+
+    location / {
+        root   /usr/share/nginx/html;  ## 注意 网页根目录
+        index  index.html index.htm;   ## 注意网页首页文件
+    }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    #location ~ \.php$ {
+    #    root           html;
+    #    fastcgi_pass   127.0.0.1:9000;
+    #    fastcgi_index  index.php;
+    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+
+    #    include      fastcgi_params;  ## 注意 include  fastcgi.conf;区别
+    #}
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+
+root@75f8af7d6f1d:/# exit
+exit
+[root@Va1 ~]# elinks  -dump  http://172.17.0.2
+   75f8af7d6f1d nginx 80/tcp, 443/tcp thirsty_wright
+   /usr/share/nginx/html/index.html
+
+===============================================
+===============================================
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Wed Dec 26 09:37:11 2018 from 192.168.0.254
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           4959         153        4610           8         195        4573
+Swap:          2047           0        2047
+
+[root@Va1 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0                           11:0    1 1024M  0 rom  
+vda                          252:0    0   20G  0 disk 
+├─vda1                       252:1    0    1G  0 part /boot
+└─vda2                       252:2    0   19G  0 part 
+  ├─rhel-root                253:0    0   17G  0 lvm  /
+  └─rhel-swap                253:1    0    2G  0 lvm  [SWAP]
+vdb                          252:16   0   10G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:0-51405894-pool 253:2    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:0-51405894-pool 253:2    0  100G  0 dm   
+
+[root@Va1 ~]# docker  images   -a  ## 查看所有镜像
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@Va1 ~]# ifconfig  |awk '/inet /{print $2}'
+172.18.0.1
+172.17.0.1
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@Va1 ~]# docker  ps   -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                    PORTS               NAMES
+75f8af7d6f1d        nginx               "/bin/bash"         2 days ago          Exited (0) 24 hours ago   80/tcp, 443/tcp     thirsty_wright
+d1b04d354296        centos:latest       "/bin/bash"         2 days ago          Exited (0) 24 hours ago                       gigantic_pike
+[root@Va1 ~]# docker  ps   
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@Va1 ~]# docker  rm  $(docker  ps  -aq)
+75f8af7d6f1d
+d1b04d354296
+[root@Va1 ~]# docker  ps  -a |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+
+============== [ 7 ] 制作镜像  shimg:shtpd ================
+
+============== [ 7 ] 制作镜像  shimg:shtpd ==================
+
+
+[root@Va1 ~]# grep -A4 -n "\[Service\]" /usr/lib/systemd/system/sshd.service 
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/sshd  ##参数配置文件Env
+10-ExecStart=/usr/sbin/sshd -D $OPTIONS   ## 启动服务命令
+11-ExecReload=/bin/kill -HUP $MAINPID
+
+[root@Va1 ~]# grep  -Ev "^$|^#" /etc/sysconfig/sshd  ##参数配置文件Env
+SSH_USE_STRONG_RNG=0
+[root@Va1 ~]# grep  -v "^$\|^#" /etc/sysconfig/sshd ##参数配置文件Env
+SSH_USE_STRONG_RNG=0
+
+[root@Va1 ~]# which  ssh-keygen 
+/usr/bin/ssh-keygen
+
+[root@Va1 ~]# ll  /usr/bin/ssh-keygen 
+-rwxr-xr-x. 1 root root 419224 5月  22 2017 /usr/bin/ssh-keygen
+
+[root@Va1 ~]# which  bash
+/usr/bin/bash
+[root@Va1 ~]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+[root@Va1 ~]# cat  /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+/bin/tcsh
+/bin/csh
+[root@Va1 ~]# ll  /bin/bash
+-rwxr-xr-x. 1 root root 960472 3月   8 2017 /bin/bash
+
+[root@Va1 ~]# ll  /usr/sbin/sshd
+-rwxr-xr-x. 1 root root 853024 5月  22 2017 /usr/sbin/sshd  ### 启动服务文件
+
+[root@Va1 ~]# ll  /usr/sbin/httpd 
+-rwxr-xr-x 1 root root 519432 5月   9 2017 /usr/sbin/httpd ### 启动服务文件
+
+[root@Va1 ~]# grep -A4 -n "\[Service\]" /usr/lib/systemd/system/httpd.service 
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/httpd    ## 环境变量Env ##参数配置文件
+10-ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND  ##启动命令Cmd
+11-ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+
+[root@Va1 ~]# grep  -B1 -A1 -in "options=" /etc/sysconfig/httpd
+16-#
+17:#OPTIONS=
+18-
+[root@Va1 ~]# grep  -v "^$\|^#" /etc/sysconfig/httpd  ##参数配置文件
+LANG=C
+[root@Va1 ~]# ls  -ld  /etc/rc.d/init.d/
+drwxr-xr-x. 2 root root 83 1月  30 2018 /etc/rc.d/init.d/
+
+[root@Va1 ~]# ls  /etc/rc.d/init.d/
+functions  netconsole  network  README  rhnsd
+ 
+
+----------------------------------------------------------
+expose  揭露，揭发; 使暴露; 使遭受; 使曝光;
+建议使用Debian Image，
+
+　　1. FROM必须是除了注释以外的第一行；
+　　2. 可以有多个FROM语句，来创建多个image；
+ RUN apt-get update && apt-get install -y \
+        package-bar \
+        package-baz \
+        package-foo
+管道使用
+
+　　很多RUN命令都需要使用到管道，如：
+
+RUN wget -O - https://some.site | wc -l > /number
+　　Docker使用/bin/sh -c解释器来执行这些命令，
+该解释器只评估管道最后一个操作的返回值来判断整个命令是否成功。
+在上面的例子中，只要wc -l命令成功了，
+即使wget命令失败了，也会创建一个新镜像。
+为了避免上述情况，
+可以在语句首部加上set -o pipefail &&。
+比如：
+
+RUN set -o pipefail && wget -O - https://some.site | wc -l > /number
+　　注意：并非所有的shell都支持-o pipefail选项，
+比如说基于Debian的镜像下的模式shell：dash shell。
+这种情况下，我们可以使用exec格式的RUN命令来显示地选择shell来支持pipefail选项。
+如：
+
+RUN ["/bin/bash", "-c", "set -o pipefail && wget -O - https://some.site | wc -l > /number"]
+
+ENV
+功能为设置环境变量
+语法有两种
+1. ENV <key> <value>
+2. ENV <key>=<value> ...
+两者的区别就是第一种是一次设置一个，第二种是一次设置多个
+
+
+Dockerfile语法格式：
+FROM      基础镜像:标签
+MAINTAINER 镜像创建者信息(说明)
+EXPOSE 开放的端口
+ENV 设置保存全局环境变量
+ADD 复制文件到镜像
+RUN 制作镜像时执行的命令,可以有多个
+WORKDIR 定义容器内部 默认工作目录(类似cd命令)
+CMD 容器启动时执行的命令,仅可以有一条CMD
+---------------------------------------------
+
+[root@Va1 ~]# mkdir   dockerfile  ## 创建一个空文件夹
+
+ ----------------- 注意 必须是文件名为 Dockerfile 且大小写都是固定的 ------
+
+[root@Va1 ~]# vim  dockerfile/run.sh
+
+[root@Va1 ~]# cat  dockerfile/run.sh   ## Cmd 命令(默认的)
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND
+[root@Va1 ~]# ll  dockerfile/run.sh
+-rw-r--r-- 1 root root 64 12月 27 10:31 dockerfile/run.sh
+
+[root@Va1 ~]# vim  dockerfile/local.repo ## yum 源仓库
+
+[root@Va1 ~]# cat  dockerfile/local.repo  ## yum 源仓库
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va1 ~]# vim  dockerfile/Dockerfile   ##制作镜像的文件
+
+[root@Va1 ~]# cat  dockerfile/Dockerfile  ##制作镜像的文件
+FROM    centos:latest
+
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+
+ADD     local.repo  /etc/yum.repos.d/local.repo  ##把当前文件传到新镜像里的目录下
+
+ADD     run.sh   /etc/rc.d/init.d/run.sh  ##把当前文件传到新镜像里的目录下
+
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+
+RUN     /usr/sbin/sshd-keygen
+
+WORKDIR /var/www/html
+
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+                                      ##注意ENV httpd与sshd 顺序和run.sh中一致
+ENV     EnvironmentFile=/etc/sysconfig/httpd 
+
+EXPOSE  80
+
+EXPOSE  443
+                             ##注意ENV httpd与sshd 顺序和run.sh中一致
+ENV     EnvironmentFile=/etc/sysconfig/sshd
+
+EXPOSE  22
+
+CMD     ["/bin/bash","/etc/rc.d/init.d/run.sh"]
+[root@Va1 ~]# 
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------------------  [ 7 ] 制作镜像  shimg:shtpd  [制作中]---------
+
+----------  # docker   build     [OPTIONS]           PATH   
+
+[root@Va1 ~]# docker  build  -t  shimg:shtpd  /root/dockerfile/ |grep "Step [0-9]" ##创建镜像
+[root@Va1 ~]# docker  build  -t  shimg:shtpd  /root/dockerfile/ |grep "Step [0-9]"
+Step 1 : FROM centos:latest
+Step 2 : RUN rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+Step 3 : ADD local.repo /etc/yum.repos.d/local.repo
+Step 4 : ADD run.sh /etc/rc.d/init.d/run.sh
+Step 5 : RUN yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+Step 6 : RUN /usr/sbin/sshd-keygen
+Step 7 : WORKDIR /var/www/html
+Step 8 : RUN echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+Step 9 : ENV EnvironmentFile /etc/sysconfig/httpd
+Step 10 : EXPOSE 80
+Step 11 : EXPOSE 443
+Step 12 : ENV EnvironmentFile /etc/sysconfig/sshd
+Step 13 : EXPOSE 22
+Step 14 : CMD /bin/bash /etc/rc.d/init.d/run.sh
+[root@Va1 ~]# 
+
+[root@Va1 ~]# docker  images   -a  |column  -t
+
+REPOSITORY  TAG     IMAGE  ID     CREATED            SIZE
+shimg       shtpd   58c0da615635  2   minutes  ago   322.9  MB
+<none>      <none>  bb1a694ae1e3  2   minutes  ago   322.9  MB
+<none>      <none>  a123cf1ec270  2   minutes  ago   322.9  MB
+<none>      <none>  bc36a1b1e221  2   minutes  ago   322.9  MB
+<none>      <none>  b4d954eeb0bd  2   minutes  ago   322.9  MB
+<none>      <none>  361422f9020e  2   minutes  ago   322.9  MB
+<none>      <none>  284cbeda99bc  2   minutes  ago   322.9  MB
+<none>      <none>  6c046ed25c09  2   minutes  ago   322.9  MB
+<none>      <none>  3630d5305b24  2   minutes  ago   322.9  MB
+<none>      <none>  ba34d4ab60b8  2   minutes  ago   322.9  MB
+<none>      <none>  06d1b13c0a7b  4   minutes  ago   198.6  MB
+<none>      <none>  6c1fcb7c9288  4   minutes  ago   198.6  MB
+<none>      <none>  e27cc2e956c2  4   minutes  ago   198.6  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va1 ~]#  docker   history   shimg:shtpd   ## 查看镜像制作历史记录
+
+IMAGE         CREATED       CREATED   BY                                  SIZE   COMMENT
+58c0da615635  2 minutes ago /bin/sh -c #(nop) CMD ["/bin/bash" "/etc/rc.    0  B
+bb1a694ae1e3  2 minutes ago /bin/sh -c #(nop) EXPOSE 22/tcp                 0  B
+a123cf1ec270  2 minutes ago /bin/sh -c #(nop) ENV EnvironmentFile=/etc/s    0  B
+bc36a1b1e221  2 minutes ago /bin/sh -c #(nop) EXPOSE 443/tcp                0  B
+b4d954eeb0bd  2 minutes ago /bin/sh -c #(nop) EXPOSE 80/tcp                 0  B
+
+361422f9020e  2 minutes ago /bin/sh -c #(nop) ENV EnvironmentFile=/etc/s    0  B
+284cbeda99bc  2 minutes ago /bin/sh -c echo "/usr/sbin/sshd -D;CMD [\"/us   57 B
+6c046ed25c09  3 minutes ago /bin/sh -c #(nop) WORKDIR /var/www/html         0  B
+3630d5305b24  3 minutes ago /bin/sh -c /usr/sbin/sshd-keygen                2.919 kB
+ba34d4ab60b8  3 minutes ago /bin/sh -c yum -y install vim-enhanced net      124.3 MB
+06d1b13c0a7b  5 minutes ago /bin/sh -c #(nop) ADD file:6201d080addfcd09a3   64 B
+6c1fcb7c9288  5 minutes ago /bin/sh -c #(nop) ADD file:9ed46d0d0b959663e3   95 B
+e27cc2e956c2  5 minutes ago /bin/sh -c rm -f /etc/yum.repos.d/*.repo  &&    494B
+e934aafc2206  8 months ago /bin/sh -c #(nop)  CMD   ["/bin/bash"]           0  B
+<missing>     8 months ago /bin/sh -c #(nop)  LABEL org.label-schema.sch    0  B
+<missing>     8 months ago /bin/sh -c #(nop)  ADD   file:f755805244a649ecca 198.6 MB
+[root@Va1 ~]# 
+
+============== [ 7 ] 制作镜像   shimg:shtpd [ 完成 ] ================
+
+[root@Va1 ~]# cat  dockerfile/run.sh  ##默认 Cmd 运行命令脚本
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND
+[root@Va1 ~]# cat  dockerfile/Dockerfile   ## 创建镜像的配置文件
+FROM    centos:latest
+
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+
+ADD     local.repo  /etc/yum.repos.d/local.repo
+
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+
+RUN     /usr/sbin/sshd-keygen
+
+WORKDIR /var/www/html
+
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+
+ENV     EnvironmentFile=/etc/sysconfig/httpd ##注意docker inspect 3fb没发现httpd文件路径
+
+EXPOSE  80
+
+EXPOSE  443
+
+ENV     EnvironmentFile=/etc/sysconfig/sshd
+
+EXPOSE  22
+
+CMD     ["/bin/bash","/etc/rc.d/init.d/run.sh"]
+[root@Va1 ~]# 
+
+============== [ 7 ] 制作镜像   shimg:shtpd [ 完成 ] ==================
+
+Could not reliably determine the server's fully qualified domain name 
+无法可靠地确定服务器的完全限定域名
+Set the 'ServerName' directive globally to suppress this message 
+设置“ServNeNess”指令全局以抑制此消息
+
+
+[root@Va1 ~]# docker  ps  -a |column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va1 ~]# docker  images |column  -t
+REPOSITORY  TAG     IMAGE   ID    CREATED            SIZE
+shimg       shtpd   58c0da615635  34  minutes  ago   322.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+
+======== 开启容器 注意 必须后台运行{原因sshd httpd 都是 守护进程} 查看docker 官网 ====
+ ======== 开启容器 注意 必须后台运行{原因sshd httpd 都是 守护进程} 查看docker 官网 ====
+
+[root@Va1 ~]# docker  run  -td  shimg:shtpd  /bin/bash  /etc/rc.d/init.d/run.sh
+3fbe8a5d68e27255485233cf4eac831511a7e80244d965253daf14c0bea9e60c
+
+[root@Va1 ~]# docker  ps  |column  -t
+CONTAINER ID   IMAGE       COMMAND      CREATED  STATUS   PORTS  NAMES
+3fbe8a5d68e2  shimg:shtpd  "/bin/bash  /etc/rc.d/"  13 seconds ago    Up 11 seconds  22/tcp,  80/tcp,  443/tcp  dreamy_rosalind
+
+[root@Va1 ~]# vim /root/.ssh/known_hosts 
+[root@Va1 ~]# >  /root/.ssh/known_hosts
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  inspect  --format  "{{.State.Pid}}"  dreamy_rosalind
+4707
+
+[root@Va1 ~]# docker  inspect 3fbe |grep -En  \
+> "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+16:            "Pid": 4707,
+27:        "Name": "/dreamy_rosalind",
+112:            "Hostname": "3fbe8a5d68e2",
+158:            "Gateway": "172.17.0.1",
+161:            "IPAddress": "172.17.0.2",
+172:                    "Gateway": "172.17.0.1",
+173:                    "IPAddress": "172.17.0.2",
+
+[root@Va1 ~]# docker  inspect 3fbe |grep -B1 -A2 -En \
+> "\"Env\": \[|\"Cmd\": \["
+125-            "StdinOnce": false,
+126:            "Env": [
+127-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+128-                "EnvironmentFile=/etc/sysconfig/sshd"  ## 注意 没发现httpd文件路径
+129-            ],
+130:            "Cmd": [
+131-                "/bin/bash",
+132-                "/etc/rc.d/init.d/run.sh"
+[root@Va1 ~]# 
+
+[root@Va1 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@Va1 ~]# ssh -o StrictHostKeyChecking=no  172.17.0.2
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@3fbe8a5d68e2 ~]# grep -A4  -n "\[Service\]"  /usr/lib/systemd/system/sshd.service
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/sshd  ## 环境变量Env ##参数配置文件
+10-ExecStart=/usr/sbin/sshd -D $OPTIONS  ##启动命令
+11-ExecReload=/bin/kill -HUP $MAINPID
+
+[root@3fbe8a5d68e2 ~]#  grep  -Ev "^$|^#" /etc/sysconfig/sshd  ##参数配置文件
+SSH_USE_STRONG_RNG=0
+
+[root@3fbe8a5d68e2 ~]# ll /usr/sbin/sshd   ### 启动服务文件
+-rwxr-xr-x 1 root root 853024 Aug  7  2017 /usr/sbin/sshd
+
+[root@3fbe8a5d68e2 ~]# which ssh-keygen
+/usr/bin/ssh-keygen
+
+[root@3fbe8a5d68e2 ~]# pstree  -p
+bash(1)-+-httpd(6)-+-httpd(7)
+        |          |-httpd(8)
+        |          |-httpd(9)
+        |          |-httpd(10)
+        |          `-httpd(11)
+        `-sshd(5)---sshd(12)---bash(14)---pstree(54)
+
+[root@3fbe8a5d68e2 ~]# ps  -C httpd
+  PID TTY          TIME CMD
+    6 ?        00:00:00 httpd
+    7 ?        00:00:00 httpd
+    8 ?        00:00:00 httpd
+    9 ?        00:00:00 httpd
+   10 ?        00:00:00 httpd
+   11 ?        00:00:00 httpd
+[root@3fbe8a5d68e2 ~]# ps  -C  sshd
+  PID TTY          TIME CMD
+    5 ?        00:00:00 sshd
+   12 ?        00:00:00 sshd
+
+[root@3fbe8a5d68e2 ~]# cat /etc/rc.d/init.d/run.sh 
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@3fbe8a5d68e2 ~]# ls  /etc/rc.d/init.d/
+README  functions  netconsole  network  run.sh
+
+[root@3fbe8a5d68e2 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@3fbe8a5d68e2 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@3fbe8a5d68e2 ~]# ll /usr/sbin/sshd
+-rwxr-xr-x 1 root root 853024 Aug  7  2017 /usr/sbin/sshd
+
+[root@3fbe8a5d68e2 ~]# cat  /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+
+[root@3fbe8a5d68e2 ~]# ll /bin/bash
+-rwxr-xr-x 1 root root 960608 Sep  6  2017 /bin/bash
+
+[root@3fbe8a5d68e2 ~]# ll  /usr/sbin/httpd  ### 启动服务文件
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+
+[root@3fbe8a5d68e2 ~]# grep -A4 -n "\[Service\]" /usr/lib/systemd/system/httpd.service 
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/httpd  ## 环境变量Env ##参数配置文件
+10-ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND ##启动命令Cmd
+11-ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+[root@3fbe8a5d68e2 ~]# 
+
+[root@3fbe8a5d68e2 ~]# grep  -B1 -A1 -in "options=" /etc/sysconfig/httpd ##参数配置文件
+16-#
+17:#OPTIONS=
+18-
+[root@3fbe8a5d68e2 ~]# grep  -v "^$\|^#" /etc/sysconfig/httpd 
+LANG=C
+[root@3fbe8a5d68e2 ~]# 
+
+[root@3fbe8a5d68e2 ~]# ll  /usr/sbin/httpd  ### 启动 httpd 服务文件
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+
+[root@3fbe8a5d68e2 ~]# ll /usr/sbin/apachectl  ## 启动 apache 服务
+-rwxr-xr-x 1 root root 4290 Aug  4  2017 /usr/sbin/apachectl
+
+[root@3fbe8a5d68e2 ~]# cat  /var/www/html/index.html 
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@3fbe8a5d68e2 ~]# echo  "localhost add" >>  /var/www/html/index.html
+
+[root@3fbe8a5d68e2 ~]# cat  /var/www/html/index.html 
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+localhost add
+
+[root@3fbe8a5d68e2 ~]# elinks  -dump  127.0.0.1
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@3fbe8a5d68e2 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@3fbe8a5d68e2 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+
+[root@3fbe8a5d68e2 ~]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@3fbe8a5d68e2 ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+
+[root@Va1 ~]# elinks -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@Va1 ~]# docker  top  3fbe  |column  -t
+UID     PID   PPID  C  STIME  TTY    TIME      CMD
+root    4707  4693  0  11:31  pts/1  00:00:00  /bin/bash        /etc/rc.d/init.d/run.sh
+root    4722  4707  0  11:31  pts/1  00:00:00  /usr/sbin/sshd   -D
+root    4723  4707  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4724  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4725  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4726  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4727  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4728  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]#  docker  inspect  --format "{{.State.Pid}}"  3fbe
+4707
+
+[root@Va1 ~]# docker  inspect  3fbe |grep "\"Pid\":"
+            "Pid": 4707,
+
+[root@Va1 ~]# ps  -ef |grep  "/etc/rc.d/init.d/run.sh"
+root      4707  4693  0 11:31 pts/1    00:00:00 /bin/bash /etc/rc.d/init.d/run.sh
+root      5870  1576  0 13:05 pts/0    00:00:00 grep --color=auto /etc/rc.d/init.d/run.sh
+
+[root@Va1 ~]# 
+
+
+============== [ 8 ] 制作镜像   shdimg:shdtag [ 开始 ] =================
+
+[root@Va1 ~]# mkdir  dockerfile2
+
+[root@Va1 ~]# cp   dockerfile/local.repo   dockerfile2/
+[root@Va1 ~]# ls  dockerfile2/
+local.repo
+[root@Va1 ~]# cat  dockerfile2/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va1 ~]# vim  dockerfile2/run.sh
+[root@Va1 ~]# cat  dockerfile2/run.sh  ##创建镜像Cmd命令(方法2) 
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]# vim  dockerfile2/Dockerfile
+[root@Va1 ~]# cat  dockerfile2/Dockerfile
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+EXPOSE  80
+EXPOSE  443
+EXPOSE  22
+CMD     ["/etc/rc.d/init.d/run.sh"]
+
+[root@Va1 ~]# chmod a+x  dockerfile2/run.sh  ## 必须给执行权x
+
+[root@Va1 ~]# ll dockerfile2/run.sh
+-rwxr-xr-x 1 root root 137 12月 27 13:18 dockerfile2/run.sh
+
+[root@Va1 ~]# ls  dockerfile*
+dockerfile:
+Dockerfile  local.repo  run.sh
+
+dockerfile2:
+Dockerfile  local.repo  run.sh
+
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------  # docker   build     [OPTIONS]           PATH  
+ 
+[root@Va1 ~]# docker build  -t  shdimg:shdtag   /root/dockerfile2/ |grep "Step [0-9]"
+Step 1 : FROM centos:latest
+Step 2 : RUN rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+Step 3 : ADD local.repo /etc/yum.repos.d/local.repo
+Step 4 : ADD run.sh /etc/rc.d/init.d/run.sh
+Step 5 : RUN yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+Step 6 : RUN /usr/sbin/sshd-keygen
+Step 7 : WORKDIR /var/www/html
+Step 8 : RUN echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+Step 9 : EXPOSE 80
+Step 10 : EXPOSE 443
+Step 11 : EXPOSE 22
+Step 12 : CMD /etc/rc.d/init.d/run.sh
+
+[root@Va1 ~]# docker  images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED              SIZE
+shdimg              shdtag              8fadf76f4dd1        24 seconds ago       322.9 MB
+<none>              <none>              22bf194e1d9c        30 seconds ago       322.9 MB
+<none>              <none>              fefc0222b21d        36 seconds ago       322.9 MB
+<none>              <none>              c51d155feb25        41 seconds ago       322.9 MB
+<none>              <none>              2597a7de419d        47 seconds ago       322.9 MB
+<none>              <none>              c99e31205516        53 seconds ago       322.9 MB
+<none>              <none>              3830e53e5c6c        57 seconds ago       322.9 MB
+<none>              <none>              d5df8beb8170        About a minute ago   322.9 MB
+<none>              <none>              7261d647cd7a        2 minutes ago        198.6 MB
+shimg               shtpd               58c0da615635        2 hours ago          322.9 MB
+<none>              <none>              bb1a694ae1e3        2 hours ago          322.9 MB
+<none>              <none>              a123cf1ec270        2 hours ago          322.9 MB
+<none>              <none>              bc36a1b1e221        2 hours ago          322.9 MB
+<none>              <none>              b4d954eeb0bd        2 hours ago          322.9 MB
+<none>              <none>              361422f9020e        2 hours ago          322.9 MB
+<none>              <none>              284cbeda99bc        2 hours ago          322.9 MB
+<none>              <none>              6c046ed25c09        2 hours ago          322.9 MB
+<none>              <none>              3630d5305b24        2 hours ago          322.9 MB
+<none>              <none>              ba34d4ab60b8        2 hours ago          322.9 MB
+<none>              <none>              06d1b13c0a7b        2 hours ago          198.6 MB
+<none>              <none>              6c1fcb7c9288        2 hours ago          198.6 MB
+<none>              <none>              e27cc2e956c2        2 hours ago          198.6 MB
+ubuntu              latest              452a96d81c30        8 months ago         79.62 MB
+centos              latest              e934aafc2206        8 months ago         198.6 MB
+registry            latest              d1fd7d86a825        11 months ago        33.26 MB
+nginx               latest              a5311a310510        2 years ago          181.4 MB
+redis               latest              1aa84b1b434e        2 years ago          182.8 MB
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  history  shdimg:shdtag
+IMAGE               CREATED              CREATED BY                                      SIZE                COMMENT
+8fadf76f4dd1        About a minute ago   /bin/sh -c #(nop)  CMD ["/etc/rc.d/init.d/run   0 B                 
+22bf194e1d9c        About a minute ago   /bin/sh -c #(nop)  EXPOSE 22/tcp                0 B                 
+fefc0222b21d        About a minute ago   /bin/sh -c #(nop)  EXPOSE 443/tcp               0 B                 
+c51d155feb25        2 minutes ago        /bin/sh -c #(nop)  EXPOSE 80/tcp                0 B                 
+2597a7de419d        2 minutes ago        /bin/sh -c echo "/usr/sbin/sshd -D;CMD [\"/us   57 B                
+c99e31205516        2 minutes ago        /bin/sh -c #(nop)  WORKDIR /var/www/html        0 B                 
+3830e53e5c6c        2 minutes ago        /bin/sh -c /usr/sbin/sshd-keygen                2.915 kB            
+d5df8beb8170        2 minutes ago        /bin/sh -c yum  -y install  vim-enhanced  net   124.3 MB            
+7261d647cd7a        4 minutes ago        /bin/sh -c #(nop) ADD file:4dcfac043011a67777   137 B               
+6c1fcb7c9288        2 hours ago          /bin/sh -c #(nop) ADD file:9ed46d0d0b959663e3   95 B                
+e27cc2e956c2        2 hours ago          /bin/sh -c rm  -f  /etc/yum.repos.d/*.repo &&   494 B               
+e934aafc2206        8 months ago         /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+<missing>           8 months ago         /bin/sh -c #(nop)  LABEL org.label-schema.sch   0 B                 
+<missing>           8 months ago         /bin/sh -c #(nop) ADD file:f755805244a649ecca   198.6 MB            
+
+
+============== [ 8 ] 制作镜像   shdimg:shdtab [ 完成 ] =================
+               ----------------  注意 EnvironmentFile= -----------------
+
+[root@Va1 ~]# cat  dockerfile2/run.sh   ##创建镜像Cmd命令(方法2) 
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]# 
+[root@Va1 ~]# cat  dockerfile2/Dockerfile  ##创建镜像(方法2) 的配置文件
+
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+EXPOSE  80
+EXPOSE  443
+EXPOSE  22
+CMD     ["/etc/rc.d/init.d/run.sh"]
+
+
+[root@Va1 ~]# docker  ps  -a 
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+3fbe8a5d68e2        shimg:shtpd         "/bin/bash /etc/rc.d/"   2 hours ago         Up 2 hours          22/tcp, 80/tcp, 443/tcp   dreamy_rosalind
+
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  images  |column  -t
+REPOSITORY  TAG     IMAGE         ID  CREATED  SIZE
+shdimg      shdtag  8fadf76f4dd1  3   minutes  ago   322.9  MB
+shimg       shtpd   58c0da615635  2   hours    ago   322.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+
+[root@Va1 ~]# docker  run  -td  shdimg:shdtag   /etc/rc.d/init.d/run.sh
+302ea63d75b6e8714bad0a7d9d3ba36b04a90e611fc5c73c6ea4a0c36d624450
+
+[root@Va1 ~]# docker  ps  
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+302ea63d75b6        shdimg:shdtag       "/etc/rc.d/init.d/run"   14 seconds ago      Up 11 seconds       22/tcp, 80/tcp, 443/tcp   peaceful_boyd
+3fbe8a5d68e2        shimg:shtpd         "/bin/bash /etc/rc.d/"   2 hours ago         Up 2 hours          22/tcp, 80/tcp, 443/tcp   dreamy_rosalind
+
+[root@Va1 ~]# docker  ps  
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+302ea63d75b6        shdimg:shdtag       "/etc/rc.d/init.d/run"   8 minutes ago       Up 8 minutes        22/tcp, 80/tcp, 443/tcp   peaceful_boyd
+3fbe8a5d68e2        shimg:shtpd         "/bin/bash /etc/rc.d/"   2 hours ago         Up 2 hours          22/tcp, 80/tcp, 443/tcp   dreamy_rosalind
+
+
+[root@Va1 ~]# docker   inspect   302e |grep -En  \
+> "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+
+14:            "Pid": 7687,
+25:        "Name": "/peaceful_boyd",
+110:            "Hostname": "302ea63d75b6",
+154:            "Gateway": "172.17.0.1",
+157:            "IPAddress": "172.17.0.3",
+168:                    "Gateway": "172.17.0.1",
+169:                    "IPAddress": "172.17.0.3",
+
+
+[root@Va1 ~]# docker   inspect   302e |grep -B1  -A4  -En  "\"Env\": \["
+123-            "StdinOnce": false,
+124:            "Env": [
+125-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+                       ## 注意 没发现httpd文件路径,创建镜像方法一中 的 sshd文件路径也没发现
+126-            ],
+127-            "Cmd": [
+128-                "/etc/rc.d/init.d/run.sh"
+
+[root@Va1 ~]# docker   inspect   302e |grep -B1  -A4  -En  "\"Cmd\": \["
+126-            ],
+127:            "Cmd": [
+128-                "/etc/rc.d/init.d/run.sh"
+129-            ],
+130-            "Image": "shdimg:shdtag",
+131-            "Volumes": null,
+
+[root@Va1 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@Va1 ~]# elinks  -dump  172.17.0.3
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+[root@Va1 ~]# 
+
+[root@Va1 ~]# ssh  -o StrictHostKeyChecking=no  172.17.0.3
+Warning: Permanently added '172.17.0.3' (ECDSA) to the list of known hosts.
+root@172.17.0.3's password: 1
+
+[root@302ea63d75b6 ~]# ls /root/     
+anaconda-ks.cfg
+[root@302ea63d75b6 ~]# ls
+anaconda-ks.cfg
+[root@302ea63d75b6 ~]# ls  -a
+.  ..  .bash_logout  .bash_profile  .bashrc  .cshrc  .tcshrc  anaconda-ks.cfg
+[root@302ea63d75b6 ~]# grep -A4  -n "\[Service\]"  /usr/lib/systemd/system/sshd.service
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/sshd
+10-ExecStart=/usr/sbin/sshd -D $OPTIONS
+11-ExecReload=/bin/kill -HUP $MAINPID
+[root@302ea63d75b6 ~]# grep  -Ev "^$|^#" /etc/sysconfig/sshd
+SSH_USE_STRONG_RNG=0
+[root@302ea63d75b6 ~]# ll  /usr/sbin/sshd
+-rwxr-xr-x 1 root root 853024 Aug  7  2017 /usr/sbin/sshd
+[root@302ea63d75b6 ~]# ll  /usr/sbin/httpd
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+[root@302ea63d75b6 ~]# which ssh-keygen
+/usr/bin/ssh-keygen
+[root@302ea63d75b6 ~]# pstree  -p
+run.sh(1)-+-httpd(6)-+-httpd(7)
+          |          |-httpd(8)
+          |          |-httpd(9)
+          |          |-httpd(10)
+          |          `-httpd(11)
+          `-sshd(5)---sshd(12)---bash(14)---pstree(66)
+
+[root@302ea63d75b6 ~]# ls  /etc/rc.d/init.d/
+README  functions  netconsole  network  run.sh
+
+[root@302ea63d75b6 ~]# cat   /etc/rc.d/init.d/run.sh ##自定义的镜像内的Cmd命令
+
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@302ea63d75b6 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@302ea63d75b6 ~]# cat  /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+
+[root@302ea63d75b6 ~]# ll /bin/bash
+-rwxr-xr-x 1 root root 960608 Sep  6  2017 /bin/bash
+
+
+[root@302ea63d75b6 ~]# grep -A4 -n "\[Service\]" /usr/lib/systemd/system/httpd.service 
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/httpd
+10-ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND
+11-ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+
+[root@302ea63d75b6 ~]#  grep  -B1 -A1 -in "options=" /etc/sysconfig/httpd
+16-#
+17:#OPTIONS=
+18-
+
+[root@302ea63d75b6 ~]# grep  -v "^$\|^#" /etc/sysconfig/httpd 
+LANG=C
+
+[root@302ea63d75b6 ~]# ll  /usr/sbin/httpd 
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+
+
+[root@302ea63d75b6 ~]# ll  /usr/sbin/apachectl 
+-rwxr-xr-x 1 root root 4290 Aug  4  2017 /usr/sbin/apachectl
+
+[root@302ea63d75b6 ~]# vim  /var/www/html/index.html 
+
+[root@302ea63d75b6 ~]# cat /var/www/html/index.html
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+shdimg--shdtag
+
+
+[root@302ea63d75b6 ~]# elinks  -dump  127.0.0.1
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] shdimg--shdtag
+
+[root@302ea63d75b6 ~]# route -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+
+[root@302ea63d75b6 ~]# ifconfig |awk '/inet /{print $2}'
+172.17.0.3
+127.0.0.1
+
+[root@302ea63d75b6 ~]# elinks  -dump  172.17.0.3
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] shdimg--shdtag
+
+[root@302ea63d75b6 ~]# ssh 172.17.0.2  "elinks  -dump  127.0.0.1"
+-bash: ssh: command not found
+
+[root@302ea63d75b6 ~]# ping  172.17.0.2  -c2
+PING 172.17.0.2 (172.17.0.2) 56(84) bytes of data.
+64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.154 ms
+64 bytes from 172.17.0.2: icmp_seq=2 ttl=64 time=0.089 ms
+
+--- 172.17.0.2 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 999ms
+rtt min/avg/max/mdev = 0.089/0.121/0.154/0.034 ms
+
+
+[root@302ea63d75b6 ~]# ping  172.17.0.3  -c2
+PING 172.17.0.3 (172.17.0.3) 56(84) bytes of data.
+64 bytes from 172.17.0.3: icmp_seq=1 ttl=64 time=0.040 ms
+64 bytes from 172.17.0.3: icmp_seq=2 ttl=64 time=0.050 ms
+
+--- 172.17.0.3 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1000ms
+rtt min/avg/max/mdev = 0.040/0.045/0.050/0.005 ms
+
+
+[root@302ea63d75b6 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@302ea63d75b6 ~]# elinks  -dump  172.17.0.3
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] shdimg--shdtag
+
+[root@302ea63d75b6 ~]# ssh  172.17.0.2                            
+-bash: ssh: command not found
+
+[root@302ea63d75b6 ~]# exit
+logout
+Connection to 172.17.0.3 closed.
+
+[root@Va1 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@Va1 ~]# elinks  -dump  172.17.0.3
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] shdimg--shdtag
+
+
+[root@Va1 ~]# docker  inspect  --format "{{.State.Pid}}"   302e
+7687
+
+[root@Va1 ~]# docker  inspect  3fbe |grep "\"Pid\":"
+            "Pid": 4707,
+
+[root@Va1 ~]# docker  inspect  302e |grep "\"Pid\":"
+            "Pid": 7687,
+
+
+[root@Va1 ~]# docker  top  302e  |column  -t
+UID     PID   PPID  C  STIME  TTY    TIME      CMD
+root    7687  7673  0  13:41  pts/3  00:00:00  /bin/bash        /etc/rc.d/init.d/run.sh
+root    7701  7687  0  13:41  pts/3  00:00:00  /usr/sbin/sshd   -D
+root    7702  7687  0  13:41  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  7703  7702  0  13:41  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  7704  7702  0  13:41  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  7705  7702  0  13:41  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  7706  7702  0  13:41  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  7707  7702  0  13:41  pts/3  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]# ps  -ef |grep  "/etc/rc.d/init.d/run.sh"
+root      4707  4693  0 11:31 pts/1    00:00:00 /bin/bash /etc/rc.d/init.d/run.sh
+root      7687  7673  0 13:41 pts/3    00:00:00 /bin/bash /etc/rc.d/init.d/run.sh
+root      8191  1576  0 14:07 pts/0    00:00:00 grep --color=auto /etc/rc.d/init.d/run.sh
+
+[root@Va1 ~]# ssh 172.17.0.2  "elinks  -dump  127.0.0.1"
+root@172.17.0.2's password: 1
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@Va1 ~]# ssh 172.17.0.3  "elinks  -dump  127.0.0.1"
+root@172.17.0.3's password: 1
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] shdimg--shdtag
+
+
+[root@Va1 ~]# curl -I   172.17.0.2  ## 注意大小写I 
+HTTP/1.1 200 OK
+Date: Thu, 27 Dec 2018 06:43:16 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Thu, 27 Dec 2018 04:44:13 GMT
+ETag: "47-57df9992ad741"
+Accept-Ranges: bytes
+Content-Length: 71
+Content-Type: text/html; charset=UTF-8
+
+[root@Va1 ~]# curl -i   172.17.0.3  ## 注意大小写 i
+HTTP/1.1 200 OK
+Date: Thu, 27 Dec 2018 06:43:26 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Thu, 27 Dec 2018 05:59:32 GMT
+ETag: "48-57dfaa685af6c"
+Accept-Ranges: bytes
+Content-Length: 72
+Content-Type: text/html; charset=UTF-8
+
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+shdimg--shdtag
+
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  save   shimg:shtpd >shtpdimg.tar ## 镜像另存为tar包
+[root@Va1 ~]# ll shtpdimg.tar
+-rw-r--r-- 1 root root 335960576 12月 27 15:02 shtpdimg.tar
+[root@Va1 ~]# file   shtpdimg.tar
+shtpdimg.tar: POSIX tar archive
+[root@Va1 ~]# stat  shtpdimg.tar
+  文件："shtpdimg.tar"
+  大小：335960576 	块：656176     IO 块：4096   普通文件
+设备：fd00h/64768d	Inode：34986608    硬链接：1
+权限：(0644/-rw-r--r--)  Uid：(    0/    root)   Gid：(    0/    root)
+最近访问：2018-12-27 15:02:34.575893514 +0800
+最近更改：2018-12-27 15:02:10.080919937 +0800
+最近改动：2018-12-27 15:02:10.080919937 +0800
+创建时间：-
+[root@Va1 ~]# docker  save   shdimg:shdtag >shdimg.tar ## 镜像另存为tar包
+
+[root@Va1 ~]# file  shdimg.tar
+shdimg.tar: POSIX tar archive
+
+[root@Va1 ~]# ll  shdimg.tar
+-rw-r--r-- 1 root root 335960064 12月 27 15:04 shdimg.tar
+
+[root@Va1 ~]# scp  -o StrictHostKeyChecking=no  shdimg.tar  root@192.168.0.12:/root/
+Warning: Permanently added '192.168.0.12' (ECDSA) to the list of known hosts.
+root@192.168.0.12's password: 1
+shdimg.tar                                             100%  320MB 106.8MB/s   00:03    
+
+[root@Va1 ~]# 
+----------------  使用tar包导入镜像(恢复镜像)  -------------------
+
+[root@Va2 ~]# ll shdimg.tar 
+-rw-r--r-- 1 root root 335960064 12月 27 15:06 shdimg.tar
+[root@Va2 ~]# docker images 
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+shimg               shtpd               6961d99dd3bd        18 hours ago        322.9 MB
+myos                python              703e26a376c0        44 hours ago        319.9 MB
+mycentos            latest              b717c768dc5f        46 hours ago        319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+
+/*****[root@Va1 ~]# docker  save   shdimg:shdtag >shdimg.tar ## 镜像另存为tar包
+**************/
+      --------------  使用tar包导入镜像(恢复镜像) load -------------------
+
+[root@Va2 ~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+
+6edda1484132: Loading layer 6.656 kB/6.656 kB
+eec0646c1a9b: Loading layer 3.072 kB/3.072 kB
+77aad72aa4ec: Loading layer 3.584 kB/3.584 kB
+70991447c7a8: Loading layer 128.7 MB/128.7 MB
+a93f2dfd8476: Loading layer 9.728 kB/9.728 kB
+2991a1ecc1f4: Loading layer 3.584 kB/3.584 kB
+Loaded image: shdimg:shdtag
+
+/*************** 注意 用 另存为 再 导入的办法可以消除 docker images -a 中的 <none>信息
+~]# docker  save   shdimg:shdtag >shdimg.tar ## 镜像另存为tar包
+~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+**********/
+[root@Va2 ~]# docker images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+shdimg              shdtag              8fadf76f4dd1        About an hour ago   322.9 MB
+shimg               shtpd               6961d99dd3bd        18 hours ago        322.9 MB
+<none>              <none>              413299b75ba3        18 hours ago        322.9 MB
+<none>              <none>              bf43f557c359        18 hours ago        322.9 MB
+<none>              <none>              aec16889e02b        18 hours ago        322.9 MB
+<none>              <none>              839ef5d1b00f        18 hours ago        322.9 MB
+<none>              <none>              8daf136aeadf        18 hours ago        322.9 MB
+<none>              <none>              49e8b3016164        18 hours ago        322.9 MB
+<none>              <none>              b781422c5d37        18 hours ago        322.9 MB
+<none>              <none>              964e56fd87b3        18 hours ago        322.9 MB
+<none>              <none>              b24b6e75fdc0        18 hours ago        322.9 MB
+<none>              <none>              e284d9aeb38c        18 hours ago        198.6 MB
+<none>              <none>              deb1a761bfe1        18 hours ago        198.6 MB
+<none>              <none>              ed87d8dded65        18 hours ago        198.6 MB
+myos                python              703e26a376c0        44 hours ago        319.9 MB
+mycentos            latest              b717c768dc5f        46 hours ago        319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# 
+
+/*************** 注意 用 另存为 再 导入的办法可以消除 docker images -a 中的 <none>信息
+~]# docker  save   shdimg:shdtag >shdimg.tar ## 镜像另存为tar包
+~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+**********/
+/************
+
+[root@Va1 ~]# mkdir  /var/git
+
+[root@Va1 ~]# ls  /var/git/
+
+[root@Va1 ~]# cp  -f  docker*  /var/git/
+
+[root@Va1 ~]# ls  /var/git/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm
+
+[root@Va1 ~]# which  createrepo 
+/usr/bin/createrepo
+[root@Va1 ~]# rpm  -qf  /usr/bin/createrepo 
+createrepo-0.9.9-28.el7.noarch
+
+[root@Va1 ~]# createrepo  /var/git/   ## 创建 yum 仓库源
+
+[root@Va1 ~]# ls  /var/git/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+
+[root@Va1 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=file:///var/git/
+gpgckeck=0
+enabled=1
+
+[root@Va1 git]# yum  search  docker
+
+[root@Va1 ~]# yum  -y  install  docker-engine  --nogpgcheck
+
+[root@Va1 ~]# rpm  -qa  |grep  docker-engine
+docker-engine-selinux-1.12.1-1.el7.centos.noarch
+docker-engine-1.12.1-1.el7.centos.x86_64
+
+*********/
+[root@Va1 ~]# ls  /etc/docker/
+key.json
+
+============ 1）定义一个私有仓库 ============
+
+[root@Va1 ~]# vim  /etc/docker/daemon.json #定义一个私有仓库
+
+/***********
+insecure registries 
+不安全注册
+
+官方的配置地址：https://docs.docker.com/engine/reference/commandline/dockerd/#options
+
+配置文件的默认路径：/etc/docker/daemon.json
+
+{
+  "registry-mirrors": ["http://harbor.test.com"], #镜像加速地址
+  "insecure-registries": ["harbor.test.com","registry.cn-shenzhen.aliyuncs.com"], # Docker如果需要从非SSL源管理镜像，这里加上。
+  "max-concurrent-downloads": 10
+}
+-----------------------------------
+{
+    "insecure-registries": ["<ip>:5000"] 
+}
+
+部分参数（registry-mirrors、insecure-registries ...）修改，
+只要reconfigure(systemctl reload docker) 就生效：
+
+这部分参数详细列表：https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file
+
+其中为安装了Registry的机器ip地址。
+需要注意的是在安装registry的节点
+和客户端需要访问私有Registry的节点
+都需要执行此步操作。
+
+修改文之后执行以下命令重启节点docker。
+
+systemctl daemon-reload
+systemctl restart docker
+
+************/
+
+[root@Va1 ~]# cat /etc/docker/daemon.json ## 自定义私有仓库
+{
+  "insecure-registries" : ["192.168.0.11:5000"]
+}
+[root@Va1 ~]#### 使用私有仓库运行容器
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                     NAMES
+302ea63d75b6        shdimg:shdtag       "/etc/rc.d/init.d/run"   2 hours ago         Up 2 hours          22/tcp, 80/tcp, 443/tcp   peaceful_boyd
+3fbe8a5d68e2        shimg:shtpd         "/bin/bash /etc/rc.d/"   4 hours ago         Up 4 hours          22/tcp, 80/tcp, 443/tcp   dreamy_rosalind
+
+[root@Va1 ~]# docker stop $(docker ps -q)
+302ea63d75b6
+3fbe8a5d68e2
+[root@Va1 ~]# docker  ps |column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+[root@Va1 ~]# 
+[root@Va1 ~]# docker rm  $(docker ps -aq)
+302ea63d75b6
+3fbe8a5d68e2
+[root@Va1 ~]# docker  ps -a|column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+
+[root@Va1 ~]# systemctl  restart  docker.service  ## 重启服务,启动私有仓库
+
+
+[root@Va1 ~]# docker  run -itd  -p  5000:5000  registry
+
+942250eabc60c7100e3f033f3f53ca441fb56c82a3319d73f194756d9d8d9f5d
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+942250eabc60        registry            "/entrypoint.sh /etc/"   36 seconds ago      Up 33 seconds       0.0.0.0:5000->5000/tcp   tiny_kare
+
+http://192.168.0.11:5000/v2/
+{}
+[root@Va1 ~]# ls /var/www/html/
+index.html
+[root@Va1 ~]# cat  /var/www/html/index.html 
+<h1> Va1   192.168.0.11 </h1>
+
+[root@Va1 ~]# curl  http://192.168.0.11:5000/v2/  ## 查看私有仓库,查看里面有什么镜像
+{}[root@Va1 ~]elinks  -dump  http://192.168.0.11:5000/v2/
+   {}
+[root@Va1 ~]# 
+
+docker pull 下载镜像
+# docker  pull  busybox 下载镜像
+
+docker tag  旧的镜像名:旧标签  新镜像名称:新标签  ## 修改镜像名称和标签
+
+docker push 上传镜像
+docker rmi 删除本地镜像
+----------------------------------------------------------------- ## 修改镜像标签 ---------------
+
+[root@Va1 ~]# docker  tag  shimg:shtpd  192.168.0.11:5000/shimg:latest
+
+[root@Va1 ~]# docker  push  192.168.0.11:5000/shimg:latest  #上传镜像
+
+The push refers to a repository [192.168.0.11:5000/shimg]
+2b9d580aaacd: Pushed 
+976fa9b435c8: Pushed 
+1a77ae82139b: Pushed 
+e3018bbf8ea7: Pushed 
+eec0646c1a9b: Pushed 
+6edda1484132: Pushed 
+43e653f84b79: Pushed 
+latest: digest: sha256:392daffce70ded345f6f41b677dedfdf5bf5d97296d1603d95ae769733b78894 size: 1777
+[root@Va1 ~]# 
+
+/*************** 注意 用 另存为 再 导入的办法可以消除 docker images -a 中的 <none>信息
+~]# docker  save   shdimg:shdtag >shdimg.tar ## 镜像另存为tar包
+~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+**********/
+[root@Va1 ~]# file myos.tar 
+myos.tar: POSIX tar archive
+[root@Va1 ~]# docker  load  < myos.tar   ##使用tar包导入镜像(恢复镜像) 
+932cbe7bebfd: Loading layer 125.4 MB/125.4 MB
+Loaded image: myos:python
+
+[root@Va1 ~]# docker  images 
+REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+shdimg                    shdtag              8fadf76f4dd1        3 hours ago         322.9 MB
+192.168.0.11:5000/shimg   latest              58c0da615635        6 hours ago         322.9 MB
+shimg                     shtpd               58c0da615635        6 hours ago         322.9 MB
+myos                      python              703e26a376c0        46 hours ago        319.9 MB
+ubuntu                    latest              452a96d81c30        8 months ago        79.62 MB
+centos                    latest              e934aafc2206        8 months ago        198.6 MB
+registry                  latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                     latest              a5311a310510        2 years ago         181.4 MB
+redis                     latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va1 ~]# 
+
+[root@Va1 ~]# for  i  in  shdimg:shdtag  myos:python;do
+> docker tag  ${i}  192.168.0.11:5000/${i}  ##打标签(起到通知注册表的作用)
+> docker push   192.168.0.11:5000/${i}   #上传镜像
+> done
+The push refers to a repository [192.168.0.11:5000/shdimg]
+2991a1ecc1f4: Pushed 
+a93f2dfd8476: Pushed 
+70991447c7a8: Pushed 
+77aad72aa4ec: Pushed 
+eec0646c1a9b: Mounted from shimg 
+6edda1484132: Mounted from shimg 
+43e653f84b79: Mounted from shimg 
+shdtag: digest: sha256:227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3 size: 1777
+The push refers to a repository [192.168.0.11:5000/myos]
+932cbe7bebfd: Pushed 
+43e653f84b79: Mounted from shdimg 
+python: digest: sha256:3a05d8e3b870689da0ac723c9f14481eb96734c5246c8bcfcb00ba0495ef7ad2 size: 741
+
+[root@Va1 ~]# docker images 
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/shdimg   shdtag              8fadf76f4dd1        3 hours ago         322.9 MB
+shdimg                     shdtag              8fadf76f4dd1        3 hours ago         322.9 MB
+192.168.0.11:5000/shimg    latest              58c0da615635        6 hours ago         322.9 MB
+shimg                      shtpd               58c0da615635        6 hours ago         322.9 MB
+myos                       python              703e26a376c0        46 hours ago        319.9 MB
+192.168.0.11:5000/myos     python              703e26a376c0        46 hours ago        319.9 MB
+ubuntu                     latest              452a96d81c30        8 months ago        79.62 MB
+centos                     latest              e934aafc2206        8 months ago        198.6 MB
+registry                   latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                      latest              a5311a310510        2 years ago         181.4 MB
+redis                      latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va1 ~]# 
+[root@Va1 ~]# docker ps -q
+942250eabc60
+[root@Va1 ~]# docker  rm  $(docker stop  $(docker ps -q))
+942250eabc60
+[root@Va1 ~]# docker ps  -a |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Wed Dec 26 11:23:46 2018 from 192.168.0.254
+[root@Va2 ~]# free -m
+              total        used        free      shared  buff/cache   available
+Mem:           4959         154        4600           8         204        4567
+Swap:          2047           0        2047
+[root@Va2 ~]# docker   images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+shimg               shtpd               6961d99dd3bd        12 hours ago        322.9 MB
+<none>              <none>              413299b75ba3        12 hours ago        322.9 MB
+<none>              <none>              bf43f557c359        12 hours ago        322.9 MB
+<none>              <none>              aec16889e02b        12 hours ago        322.9 MB
+<none>              <none>              839ef5d1b00f        12 hours ago        322.9 MB
+<none>              <none>              8daf136aeadf        12 hours ago        322.9 MB
+<none>              <none>              49e8b3016164        12 hours ago        322.9 MB
+<none>              <none>              b781422c5d37        12 hours ago        322.9 MB
+<none>              <none>              964e56fd87b3        12 hours ago        322.9 MB
+<none>              <none>              b24b6e75fdc0        12 hours ago        322.9 MB
+<none>              <none>              e284d9aeb38c        12 hours ago        198.6 MB
+<none>              <none>              deb1a761bfe1        12 hours ago        198.6 MB
+<none>              <none>              ed87d8dded65        12 hours ago        198.6 MB
+myos                python              703e26a376c0        38 hours ago        319.9 MB
+mycentos            latest              b717c768dc5f        41 hours ago        319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.1
+192.168.0.12
+192.168.1.12
+192.168.2.12
+127.0.0.1
+192.168.122.1
+[root@Va2 ~]# 
+
+[root@Va2 ~]# docker ps -aq
+594c148f88ea
+[root@Va2 ~]# docker ps -q
+[root@Va2 ~]# docker  rm   $(docker ps  -aq)
+594c148f88ea
+
+/*************** 注意 用 另存为 再 导入的办法可以消除 docker images -a 中的 <none>信息
+~]# docker  save   shdimg:shdtag >shdimg.tar ## 镜像另存为tar包
+~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+**********/
+[root@Va2 ~]# file shdimg.tar 
+shdimg.tar: POSIX tar archive
+
+[root@Va2 ~]# docker  save  shimg:shtpd >shimg.tar  ## 镜像另存为tar包
+
+[root@Va2 ~]# file  shimg.tar 
+shimg.tar: POSIX tar archive
+
+[root@Va2 ~]# docker  rmi   shimg:shtpd  ## 删除镜像
+
+Untagged: shimg:shtpd
+Deleted: sha256:6961d99dd3bd311d8d2716007ec617f839cee56072171b3a4fdaa2aa58aebcaa
+.....................17个镜像层
+Deleted: sha256:ddb14ef685210eae1cf948798883e2949ee2072db68d8971bc29316d4ed79edc
+
+[root@Va2 ~]# docker images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+shdimg              shdtag              8fadf76f4dd1        2 hours ago         322.9 MB
+myos                python              703e26a376c0        45 hours ago        319.9 MB
+mycentos            latest              b717c768dc5f        47 hours ago        319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# 
+[root@Va2 ~]# docker   save  myos:python  > myos.tar   ## 镜像另存为tar包
+
+[root@Va2 ~]# scp  -o StrictHostKeyChecking=no  myos.tar  root@192.168.0.11:/root/
+Warning: Permanently added '192.168.0.11' (ECDSA) to the list of known hosts.
+root@192.168.0.11's password: 
+myos.tar                                       100%  317MB 105.7MB/s   00:03 
+
+[root@Va2 ~]# docker  ps   -a |column  -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va2 ~]# docker images  |head  -6
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+shdimg              shdtag              8fadf76f4dd1        3 hours ago         322.9 MB
+myos                python              703e26a376c0        46 hours ago        319.9 MB
+mycentos            latest              b717c768dc5f        2 days ago          319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+
+[root@Va2 ~]# docker  rmi   shdimg:shdtag  myos:python  ## 删除 2 个容器
+
+Untagged: shdimg:shdtag
+Deleted: sha256:8fadf76f4dd17475f9892752197bba9a8fc3b673016f29fe741fbb4aaf646c6d
+Deleted: sha256:b8482277c0e4c7f01a2ac0de2d697761c5430304a57431672a1f5a4dd3490fbe
+Deleted: sha256:3052d006fb0701911693a8f278601fa1dccbc0382274aa6397841fe9ecada5bd
+Deleted: sha256:16b33abf8df982bccea10a4ef3a7a78d64b78260864b1af52ca3fc7732c7c5c7
+Deleted: sha256:686635a56ccfed8633410c302e4189c38b82de2659fe130ec4de0a7c2110f806
+Deleted: sha256:7aeb30624b15602951e2d68c58110794bec3eba664f86134a7c3abf9ba98f858
+Deleted: sha256:23ed50948e531ff66f4bef10a836da7529f2c29ec9bfd751a4cde4077c180e2c
+
+Untagged: myos:python
+Deleted: sha256:703e26a376c05674f14395aa55d27fe1c7bb15cc2cf20401140c429f4ddbaabb
+
+[root@Va2 ~]# docker images  -a
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+mycentos            latest              b717c768dc5f        2 days ago          319.9 MB
+ubuntu              latest              452a96d81c30        8 months ago        79.62 MB
+centos              latest              e934aafc2206        8 months ago        198.6 MB
+registry            latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx               latest              a5311a310510        2 years ago         181.4 MB
+redis               latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# 
+
+
+[root@Va2 ~]# scp  -o StrictHostKeyChecking=no  Va1:/etc/docker/daemon.json ./
+Warning: Permanently added 'va1' (ECDSA) to the list of known hosts.
+root@va1's password: 1
+daemon.json                                        100%   52    46.7KB/s   00:00 
+   
+[root@Va2 ~]# mv  daemon.json   /etc/docker/
+[root@Va2 ~]# cat /etc/docker/daemon.json 
+{
+  "insecure-registries" : ["192.168.0.11:5000"]
+}
+=========== ##重启服务将共享Va1已经上传的镜像 -------------------
+
+[root@Va2 ~]# systemctl  restart  docker.service  ##重启服务将共享Va1已经上传的镜像
+
+--------------------------------------- ## 启动新容器 --------------------------------------
+
+[root@Va2 ~]# docker  run  -itd   192.168.0.11:5000/shdimg:shdtag  ## 启动新容器
+Unable to find image '192.168.0.11:5000/shdimg:shdtag' locally
+shdtag: Pulling from shdimg
+9770d73ca513: Pull complete 
+a70f37d804b3: Pull complete 
+0ba3655db876: Pull complete 
+08b5b612cf11: Pull complete 
+d4d203c2bb1c: Pull complete 
+2e0e5754f501: Pull complete 
+1aa2d17ca6b7: Pull complete 
+Digest: sha256:227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3
+Status: Downloaded newer image for 192.168.0.11:5000/shdimg:shdtag
+4d1094eb6c7fb462066cc0a2dd97071ea1a013ac8291f06aa8beaaac399e330f
+
+extract  提取; （费力地） 拔出; 选取; 获得;
+ 汁; 摘录; 提炼物; 浓缩物;
+
+[root@Va2 ~]# ll /root/.ssh/known_hosts 
+-rw-r--r-- 1 root root 511 12月 27 17:43 /root/.ssh/known_hosts
+[root@Va2 ~]# > /root/.ssh/known_hosts  ## 防止ip冲突
+
+[root@Va2 ~]# ll /root/.ssh/known_hosts 
+-rw-r--r-- 1 root root 0 12月 27 17:55 /root/.ssh/known_hosts
+
+[root@Va2 ~]# docker ps  -q
+4d1094eb6c7f
+
+[root@Va2 ~]# docker  inspect  4d1 |grep -n "\"IPAddress\":"
+157:            "IPAddress": "172.17.0.2",
+169:                    "IPAddress": "172.17.0.2",
+
+[root@Va2 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@Va2 ~]# 
+[root@Va2 ~]# docker images  -a
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/shdimg   shdtag              8fadf76f4dd1        4 hours ago         322.9 MB
+mycentos                   latest              b717c768dc5f        2 days ago          319.9 MB
+ubuntu                     latest              452a96d81c30        8 months ago        79.62 MB
+centos                     latest              e934aafc2206        8 months ago        198.6 MB
+registry                   latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                      latest              a5311a310510        2 years ago         181.4 MB
+redis                      latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS                     NAMES
+4d1094eb6c7f        192.168.0.11:5000/shdimg:shdtag   "/etc/rc.d/init.d/run"   About an hour ago   Up About an hour    22/tcp, 80/tcp, 443/tcp   reverent_easley
+
+[root@Va2 ~]# ps  -ef  |grep "/etc/rc.d/init.d/run.sh"
+root      7075  7061  0 17:51 pts/1    00:00:00 /bin/bash /etc/rc.d/init.d/run.sh
+root      8122  8075  0 19:30 pts/2    00:00:00 grep --color=auto /etc/rc.d/init.d/run.sh
+
+[root@Va2 ~]# docker  inspect  --format  "{{.State.Pid}}"  4d1  ##查看容器pid进程号
+7075
+
+[root@Va2 ~]# docker  top  4d1
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                7075                7061                0                   17:51               pts/1               00:00:00            /bin/bash /etc/rc.d/init.d/run.sh
+root                7091                7075                0                   17:51               pts/1               00:00:00            /usr/sbin/sshd -D
+root                7092                7075                0                   17:51               pts/1               00:00:00            /usr/sbin/httpd -DFOREGROUND
+apache              7093                7092                0                   17:51               pts/1               00:00:00            /usr/sbin/httpd -DFOREGROUND
+apache              7094                7092                0                   17:51               pts/1               00:00:00            /usr/sbin/httpd -DFOREGROUND
+apache              7095                7092                0                   17:51               pts/1               00:00:00            /usr/sbin/httpd -DFOREGROUND
+apache              7096                7092                0                   17:51               pts/1               00:00:00            /usr/sbin/httpd -DFOREGROUND
+apache              7097                7092                0                   17:51               pts/1               00:00:00            /usr/sbin/httpd -DFOREGROUND
+root                7998                7091                0                   19:24               ?                   00:00:00            sshd: root@pts/0
+root                8000                7998                0                   19:25               pts/0               00:00:00            -bash
+[root@Va2 ~]# 
+
+[root@Va2 ~]# ssh  172.17.0.2
+The authenticity of host '172.17.0.2 (172.17.0.2)' can't be established.
+ECDSA key fingerprint is SHA256:g9QEBUauojAKuSk30Y60La/QzqCvMmhvh1evIRgOuMM.
+ECDSA key fingerprint is MD5:87:95:8b:dc:9a:a1:a8:3f:43:4d:2f:07:7b:ce:f1:af.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@4d1094eb6c7f ~]# yum repolist 
+...................
+repo id                           repo name                          status
+CentOS7-1708                      CentOS7-1708                       9591
+repolist: 9591
+
+[root@4d1094eb6c7f ~]# ifconfig  |head  -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+
+[root@4d1094eb6c7f ~]# pstree  -p
+run.sh(1)-+-httpd(6)-+-httpd(7)
+          |          |-httpd(8)
+          |          |-httpd(9)
+          |          |-httpd(10)
+          |          `-httpd(11)
+          `-sshd(5)---sshd(12)---bash(14)---pstree(39)
+[root@4d1094eb6c7f ~]# echo $$
+14
+[root@4d1094eb6c7f ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+[root@Va2 ~]# 
+[root@Va2 ~]# docker ps |column  -t
+CONTAINER ID       IMAGE       COMMAND  CREATED  STATUS  PORTS  NAMES
+4d1094eb6c7f  192.168.0.11:5000/shdimg:shdtag  "/etc/rc.d/init.d/run"  About an hour ago    Up About an hour  22/tcp,80/tcp,443/tcp  reverent_easley
+[root@Va2 ~]# 
+
+[root@Va2 ~]# elinks -dump  192.168.0.11:5000/v2/
+   {}
+
+[root@Va2 ~]# elinks -dump  192.168.0.11:5000/v2/_catalog ## 查看镜像名称
+   {"repositories":["myos","shdimg","shimg"]}
+
+[root@Va2 ~]# elinks -dump  192.168.0.11:5000/v2/myos/tags/list ## 查看标签名称
+   {"name":"myos","tags":["python"]}
+
+[root@Va2 ~]# elinks -dump  192.168.0.11:5000/v2/shdimg/tags/list ## 查看标签名称
+   {"name":"shdimg","tags":["shdtag"]}
+
+[root@Va2 ~]# elinks -dump  192.168.0.11:5000/v2/shimg/tags/list ## 查看标签名称
+   {"name":"shimg","tags":["latest"]}
+
+
+[root@Va1 ~]# lsblk 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0                           11:0    1 1024M  0 rom  
+vda                          252:0    0   20G  0 disk 
+├─vda1                       252:1    0    1G  0 part /boot
+└─vda2                       252:2    0   19G  0 part 
+  ├─rhel-root                253:0    0   17G  0 lvm  /
+  └─rhel-swap                253:1    0    2G  0 lvm  [SWAP]
+
+vdb                          252:16   0   10G  0 disk 
+
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:0-51405894-pool 253:2    0  100G  0 dm   
+  └─docker-253:0-51405894-03c98f890b1f9778e8bac8d482e60d4781b3fc3828893dfa114f167e47a82bc0
+                             253:3    0   10G  0 dm   /var/lib/docker/devicemap
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:0-51405894-pool 253:2    0  100G  0 dm   
+  └─docker-253:0-51405894-03c98f890b1f9778e8bac8d482e60d4781b3fc3828893dfa114f167e47a82bc0
+                             253:3    0   10G  0 dm   /var/lib/docker/devicemap
+[root@Va1 ~]# docker  ps  -aq
+942250eabc60
+[root@Va1 ~]# docker  ps  -q
+942250eabc60
+
+
+[root@Va2 ~]# lsblk 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0                           11:0    1 1024M  0 rom  
+vda                          252:0    0   20G  0 disk 
+├─vda1                       252:1    0    1G  0 part /boot
+└─vda2                       252:2    0   19G  0 part 
+  ├─rhel-root                253:0    0   17G  0 lvm  /
+  └─rhel-swap                253:1    0    2G  0 lvm  [SWAP]
+
+vdb                          252:16   0   20G  0 disk 
+
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:0-50834749-pool 253:2    0  100G  0 dm   
+  └─docker-253:0-50834749-af11949581fcd75df5c3f0396d8191967cbd08a33f4a91a6dff53399bbac50b5
+                             253:3    0   10G  0 dm   /var/lib/docker/devicemap
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:0-50834749-pool 253:2    0  100G  0 dm   
+  └─docker-253:0-50834749-af11949581fcd75df5c3f0396d8191967cbd08a33f4a91a6dff53399bbac50b5
+                             253:3    0   10G  0 dm   /var/lib/docker/devicemap
+[root@Va2 ~]# docker  ps -aq
+4d1094eb6c7f
+[root@Va2 ~]# docker  ps -q
+4d1094eb6c7f
+[root@Va2 ~]# docker  rm  $(docker stop  $(docker ps -q))
+4d1094eb6c7f
+[root@Va2 ~]# docker ps  -a |column -t
+CONTAINER  ID  IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va2 ~]# echo  "Va2 test abc123" > /var/www/html/test.html ## 注意数据变化
+[root@Va2 ~]# ls  /var/www/html/
+index.html  test.html
+
+[root@Va2 ~]# docker  ps -aq
+[root@Va2 ~]# docker  ps -q
+
+------------------------------- 用 共享的镜像 192.168.0.11:5000/shdimg:shdtag 新建运行容器 -----------
+参数 -v 目录挂载，
+让容器内部目录和宿主主机目录关联起来，
+这样就可以直接操作宿主主机目录
+而不用再操作具体容器了
+-v 相当于建立了一个软链接
+
+注意容器中的目录
+必须原来不存在
+如果对应容器中的目录同名
+则容器中的目录原有内容被覆盖,
+看不到原有数据了
+# docker  run  -td  shdimg:shdtag   /etc/rc.d/init.d/run.sh
+
+           docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+[root@Va2 ~]# docker  run  -td  -v  /var/www/html/:/docker  192.168.0.11:5000/shdimg:shdtag
+0f4f3ec0695f045f20b5c87289967f01e864004ba3a6e86188e954883cd1912e
+
+[root@Va2 ~]# docker  ps  
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS                     NAMES
+0f4f3ec0695f        192.168.0.11:5000/shdimg:shdtag   "/etc/rc.d/init.d/run"   24 seconds ago      Up 22 seconds       22/tcp, 80/tcp, 443/tcp   pensive_mclean
+[root@Va2 ~]# 
+[root@Va2 ~]# ll  /root/.ssh/known_hosts 
+-rw-r--r-- 1 root root 172 12月 27 19:25 /root/.ssh/known_hosts
+[root@Va2 ~]# >  /root/.ssh/known_hosts
+[root@Va2 ~]# docker  inspect   --format "{{.State.Pid}}" 0f4f3
+8828
+[root@Va2 ~]# docker  inspect  0f4f3 |grep -n "\"IPAddress\":"
+167:            "IPAddress": "172.17.0.2",
+179:                    "IPAddress": "172.17.0.2",
+[root@Va2 ~]# ssh  -o StrictHostKeyChecking=no 172.17.0.2
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@0f4f3ec0695f ~]# ls /
+anaconda-post.log  boot  docker  home  lib64  mnt  proc  run   srv  tmp  var
+bin                dev   etc     lib   media  opt  root  sbin  sys  usr
+
+--------- ## 注意这里的 docker目录 是对应物理机器(虚拟机Va2)的目录 /var/www/html/------
+
+[root@0f4f3ec0695f ~]# ls  -ld  /docker/  ## 注意这里的docker目录是对应物理机器
+drwxr-xr-x 2 root root 41 Dec 27 12:16 /docker/
+
+[root@0f4f3ec0695f ~]# ls  /docker/  ##对应(虚拟机Va2)的目录/var/www/html/
+index.html  test.html
+[root@0f4f3ec0695f ~]# cat  /docker/test.html ## 注意数据变化
+Va2 test abc123
+[root@0f4f3ec0695f ~]# cat /docker/index.html 
+<h1> Va2   192.168.0.12 </h1>
+[root@0f4f3ec0695f ~]# 
+/****************
+
+           docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+[root@Va2 ~]# docker  run  -td  -v  /var/www/html/:/docker  192.168.0.11:5000/shdimg:shdtag
+0f4f3ec0695f045f20b5c87289967f01e864004ba3a6e86188e954883cd1912e
+****************/
+
+[root@0f4f3ec0695f ~]# cat /docker/index.html 
+<h1> Va2   192.168.0.12 </h1>
+[root@0f4f3ec0695f ~]# echo "docker test add" >> /docker/test.html ## 注意数据变化
+
+[root@0f4f3ec0695f ~]# mkdir  /dockerold/ ## 注意这是容器自己新建的文件夹
+
+[root@0f4f3ec0695f ~]# cp  -rf   /docker/  /dockerold/
+[root@0f4f3ec0695f ~]# ls /dockerold/
+docker
+[root@0f4f3ec0695f ~]# ls  /dockerold/docker/
+index.html  test.html
+
+[root@0f4f3ec0695f ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+
+[root@Va2 ~]# ls  /var/www/html/
+index.html  test.html
+
+------------------------- ##注意数据变化[ 容器中做了修改docker test add ]
+
+[root@Va2 ~]# cat  /var/www/html/test.html 
+Va2 test abc123
+docker test add
+
+------------------------- ##注意数据变化[ 容器中做了修改docker test add ]
+
+[root@Va2 ~]# elinks  -dump  192.168.0.12/test.html
+   Va2 test abc123 docker test add
+
+[root@Va2 ~]# echo "Va2 add  testVa2 into test2"> /var/www/html/test2.html
+
+[root@Va2 ~]# ls  /var/www/html/
+index.html  test2.html  test.html
+
+[root@Va2 ~]# docker ps -q
+0f4f3ec0695f
+
+------------------------------- 用 共享的镜像 192.168.0.11:5000/shdimg:shdtag 新建运行容器 -----------
+参数 -v 目录挂载，
+让容器内部目录和宿主主机目录关联起来，
+这样就可以直接操作宿主主机目录
+而不用再操作具体容器了
+-v 相当于建立了一个软链接
+
+注意容器中的目录
+必须原来不存在
+如果对应容器中的目录同名
+则容器中的目录原有内容被覆盖,
+看不到原有数据了
+         docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+[root@Va2 ~]# docker  run  -td  -v  /var/www/html/:/dockerold   192.168.0.11:5000/shdimg:shdtag   /etc/rc.d/init.d/run.sh
+
+52ac900018812e7791757da97f465d11e02a01b68d32281dd9a6b2b14a918768
+
+[root@Va2 ~]# docker ps  -q
+52ac90001881
+0f4f3ec0695f
+[root@Va2 ~]# docker  inspect  52ac |grep -n "\"IPAddress\":"
+167:            "IPAddress": "172.17.0.3",
+179:                    "IPAddress": "172.17.0.3",
+[root@Va2 ~]# ssh  -o StrictHostKeyChecking=no 172.17.0.3
+Warning: Permanently added '172.17.0.3' (ECDSA) to the list of known hosts.
+root@172.17.0.3's password: 
+[root@52ac90001881 ~]# ls /
+anaconda-post.log  boot  dockerold  home  lib64  mnt  proc  run   srv  tmp  var
+bin                dev   etc        lib   media  opt  root  sbin  sys  usr
+
+[root@52ac90001881 ~]# ls  /dockerold/
+index.html  test.html  test2.html
+
+[root@52ac90001881 ~]# 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
