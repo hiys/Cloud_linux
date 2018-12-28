@@ -1,0 +1,2092 @@
+
+======== 开启容器 注意 必须后台运行{原因sshd httpd 都是 守护进程} 查看docker 官网 ====
+ ======== 开启容器 注意 必须后台运行{原因sshd httpd 都是 守护进程} 查看docker 官网 ====
+
+[root@Va1 ~]# docker  run  -td  shimg:shtpd  /bin/bash  /etc/rc.d/init.d/run.sh
+3fbe8a5d68e27255485233cf4eac831511a7e80244d965253daf14c0bea9e60c
+
+[root@Va1 ~]# docker  ps  |column  -t
+CONTAINER ID   IMAGE       COMMAND      CREATED  STATUS   PORTS  NAMES
+3fbe8a5d68e2  shimg:shtpd  "/bin/bash  /etc/rc.d/"  13 seconds ago    Up 11 seconds  22/tcp,  80/tcp,  443/tcp  dreamy_rosalind
+
+[root@Va1 ~]# vim /root/.ssh/known_hosts 
+[root@Va1 ~]# >  /root/.ssh/known_hosts
+[root@Va1 ~]# 
+[root@Va1 ~]# docker  inspect  --format  "{{.State.Pid}}"  dreamy_rosalind
+4707
+
+[root@Va1 ~]# docker  inspect 3fbe |grep -En  \
+> "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+16:            "Pid": 4707,
+27:        "Name": "/dreamy_rosalind",
+112:            "Hostname": "3fbe8a5d68e2",
+158:            "Gateway": "172.17.0.1",
+161:            "IPAddress": "172.17.0.2",
+172:                    "Gateway": "172.17.0.1",
+173:                    "IPAddress": "172.17.0.2",
+
+[root@Va1 ~]# docker  inspect 3fbe |grep -B1 -A2 -En \
+> "\"Env\": \[|\"Cmd\": \["
+125-            "StdinOnce": false,
+126:            "Env": [
+127-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+128-                "EnvironmentFile=/etc/sysconfig/sshd"  ## 注意 没发现httpd文件路径
+129-            ],
+130:            "Cmd": [
+131-                "/bin/bash",
+132-                "/etc/rc.d/init.d/run.sh"
+[root@Va1 ~]# 
+
+[root@Va1 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@Va1 ~]# ssh -o StrictHostKeyChecking=no  172.17.0.2
+Warning: Permanently added '172.17.0.2' (ECDSA) to the list of known hosts.
+root@172.17.0.2's password: 1
+
+[root@3fbe8a5d68e2 ~]# grep -A4  -n "\[Service\]"  /usr/lib/systemd/system/sshd.service
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/sshd  ## 环境变量Env ##参数配置文件
+10-ExecStart=/usr/sbin/sshd -D $OPTIONS  ##启动命令
+11-ExecReload=/bin/kill -HUP $MAINPID
+
+[root@3fbe8a5d68e2 ~]#  grep  -Ev "^$|^#" /etc/sysconfig/sshd  ##参数配置文件
+SSH_USE_STRONG_RNG=0
+
+[root@3fbe8a5d68e2 ~]# ll /usr/sbin/sshd   ### 启动服务文件
+-rwxr-xr-x 1 root root 853024 Aug  7  2017 /usr/sbin/sshd
+
+[root@3fbe8a5d68e2 ~]# which ssh-keygen
+/usr/bin/ssh-keygen
+
+[root@3fbe8a5d68e2 ~]# pstree  -p
+bash(1)-+-httpd(6)-+-httpd(7)
+        |          |-httpd(8)
+        |          |-httpd(9)
+        |          |-httpd(10)
+        |          `-httpd(11)
+        `-sshd(5)---sshd(12)---bash(14)---pstree(54)
+
+[root@3fbe8a5d68e2 ~]# ps  -C httpd
+  PID TTY          TIME CMD
+    6 ?        00:00:00 httpd
+    7 ?        00:00:00 httpd
+    8 ?        00:00:00 httpd
+    9 ?        00:00:00 httpd
+   10 ?        00:00:00 httpd
+   11 ?        00:00:00 httpd
+[root@3fbe8a5d68e2 ~]# ps  -C  sshd
+  PID TTY          TIME CMD
+    5 ?        00:00:00 sshd
+   12 ?        00:00:00 sshd
+
+[root@3fbe8a5d68e2 ~]# cat /etc/rc.d/init.d/run.sh 
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@3fbe8a5d68e2 ~]# ls  /etc/rc.d/init.d/
+README  functions  netconsole  network  run.sh
+
+[root@3fbe8a5d68e2 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@3fbe8a5d68e2 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@3fbe8a5d68e2 ~]# ll /usr/sbin/sshd
+-rwxr-xr-x 1 root root 853024 Aug  7  2017 /usr/sbin/sshd
+
+[root@3fbe8a5d68e2 ~]# cat  /etc/shells 
+/bin/sh
+/bin/bash
+/sbin/nologin
+/usr/bin/sh
+/usr/bin/bash
+/usr/sbin/nologin
+
+[root@3fbe8a5d68e2 ~]# ll /bin/bash
+-rwxr-xr-x 1 root root 960608 Sep  6  2017 /bin/bash
+
+[root@3fbe8a5d68e2 ~]# ll  /usr/sbin/httpd  ### 启动服务文件
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+
+[root@3fbe8a5d68e2 ~]# grep -A4 -n "\[Service\]" /usr/lib/systemd/system/httpd.service 
+7:[Service]
+8-Type=notify
+9-EnvironmentFile=/etc/sysconfig/httpd  ## 环境变量Env ##参数配置文件
+10-ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND ##启动命令Cmd
+11-ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+[root@3fbe8a5d68e2 ~]# 
+
+[root@3fbe8a5d68e2 ~]# grep  -B1 -A1 -in "options=" /etc/sysconfig/httpd ##参数配置文件
+16-#
+17:#OPTIONS=
+18-
+[root@3fbe8a5d68e2 ~]# grep  -v "^$\|^#" /etc/sysconfig/httpd 
+LANG=C
+[root@3fbe8a5d68e2 ~]# 
+
+[root@3fbe8a5d68e2 ~]# ll  /usr/sbin/httpd  ### 启动 httpd 服务文件
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+
+[root@3fbe8a5d68e2 ~]# ll /usr/sbin/apachectl  ## 启动 apache 服务
+-rwxr-xr-x 1 root root 4290 Aug  4  2017 /usr/sbin/apachectl
+
+[root@3fbe8a5d68e2 ~]# cat  /var/www/html/index.html 
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@3fbe8a5d68e2 ~]# echo  "localhost add" >>  /var/www/html/index.html
+
+[root@3fbe8a5d68e2 ~]# cat  /var/www/html/index.html 
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+localhost add
+
+[root@3fbe8a5d68e2 ~]# elinks  -dump  127.0.0.1
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@3fbe8a5d68e2 ~]# elinks  -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@3fbe8a5d68e2 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+
+[root@3fbe8a5d68e2 ~]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@3fbe8a5d68e2 ~]# exit
+logout
+Connection to 172.17.0.2 closed.
+
+[root@Va1 ~]# elinks -dump  172.17.0.2
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"] localhost add
+
+[root@Va1 ~]# docker  top  3fbe  |column  -t
+UID     PID   PPID  C  STIME  TTY    TIME      CMD
+root    4707  4693  0  11:31  pts/1  00:00:00  /bin/bash        /etc/rc.d/init.d/run.sh
+root    4722  4707  0  11:31  pts/1  00:00:00  /usr/sbin/sshd   -D
+root    4723  4707  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4724  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4725  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4726  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4727  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+apache  4728  4723  0  11:31  pts/1  00:00:00  /usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]#  docker  inspect  --format "{{.State.Pid}}"  3fbe
+4707
+
+[root@Va1 ~]# docker  inspect  3fbe |grep "\"Pid\":"
+            "Pid": 4707,
+
+[root@Va1 ~]# ps  -ef |grep  "/etc/rc.d/init.d/run.sh"
+root      4707  4693  0 11:31 pts/1    00:00:00 /bin/bash /etc/rc.d/init.d/run.sh
+root      5870  1576  0 13:05 pts/0    00:00:00 grep --color=auto /etc/rc.d/init.d/run.sh
+
+[root@Va1 ~]# 
+
+
+============== [ 8 ] 制作镜像   shdimg:shdtag [ 开始 ] =================
+
+[root@Va1 ~]# mkdir  dockerfile2
+
+[root@Va1 ~]# cp   dockerfile/local.repo   dockerfile2/
+[root@Va1 ~]# ls  dockerfile2/
+local.repo
+[root@Va1 ~]# cat  dockerfile2/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va1 ~]# vim  dockerfile2/run.sh
+[root@Va1 ~]# cat  dockerfile2/run.sh  ##创建镜像Cmd命令(方法2) 
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]# vim  dockerfile2/Dockerfile
+[root@Va1 ~]# cat  dockerfile2/Dockerfile
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+EXPOSE  80
+EXPOSE  443
+EXPOSE  22
+CMD     ["/etc/rc.d/init.d/run.sh"]
+
+[root@Va1 ~]# chmod a+x  dockerfile2/run.sh  ## 必须给执行权x
+
+[root@Va1 ~]# ll dockerfile2/run.sh
+-rwxr-xr-x 1 root root 137 12月 27 13:18 dockerfile2/run.sh
+
+[root@Va1 ~]# ls  dockerfile*
+dockerfile:
+Dockerfile  local.repo  run.sh
+
+dockerfile2:
+Dockerfile  local.repo  run.sh
+
+
+ --------------- docker build 命令用于使用 Dockerfile 创建镜像。 ------------
+语法
+docker build [OPTIONS] PATH | URL | -
+
+-f :指定要使用的Dockerfile路径；
+也可以通过 -f Dockerfile 文件的位置：
+$ docker build -f /path/to/a/Dockerfile .
+
+--force-rm :设置镜像过程中删除中间容器；
+--quiet, -q :安静模式，成功后只输出镜像 ID；
+--rm :设置镜像成功后删除中间容器；
+--tag, -t: 镜像的名字及标签，通常 name:tag 或者 name 格式；可以在一次构建中为一个镜像设置多个标签。
+--network: 默认 default。在构建期间设置RUN指令的网络模式
+
+----------  # docker   build     [OPTIONS]           PATH  
+ 
+[root@Va1 ~]# docker build  -t  shdimg:shdtag   /root/dockerfile2/ |grep "Step [0-9]"
+Step 1 : FROM centos:latest
+Step 2 : RUN rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+Step 3 : ADD local.repo /etc/yum.repos.d/local.repo
+Step 4 : ADD run.sh /etc/rc.d/init.d/run.sh
+Step 5 : RUN yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+Step 6 : RUN /usr/sbin/sshd-keygen
+Step 7 : WORKDIR /var/www/html
+Step 8 : RUN echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+Step 9 : EXPOSE 80
+Step 10 : EXPOSE 443
+Step 11 : EXPOSE 22
+Step 12 : CMD /etc/rc.d/init.d/run.sh
+
+============== [ 8 ] 制作镜像   shdimg:shdtab [ 完成 ] =================
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Thu Dec 27 12:19:00 2018 from 192.168.0.254
+[root@Va1 ~]# docker  ps  -aq
+[root@Va1 ~]# docker images  -a
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/shdimg   shdtag              8fadf76f4dd1        19 hours ago        322.9 MB
+shdimg                     shdtag              8fadf76f4dd1        19 hours ago        322.9 MB
+<none>                     <none>              22bf194e1d9c        19 hours ago        322.9 MB
+<none>                     <none>              fefc0222b21d        19 hours ago        322.9 MB
+<none>                     <none>              c51d155feb25        19 hours ago        322.9 MB
+<none>                     <none>              2597a7de419d        19 hours ago        322.9 MB
+<none>                     <none>              c99e31205516        19 hours ago        322.9 MB
+<none>                     <none>              3830e53e5c6c        19 hours ago        322.9 MB
+<none>                     <none>              d5df8beb8170        19 hours ago        322.9 MB
+<none>                     <none>              7261d647cd7a        19 hours ago        198.6 MB
+192.168.0.11:5000/shimg    latest              58c0da615635        22 hours ago        322.9 MB
+shimg                      shtpd               58c0da615635        22 hours ago        322.9 MB
+<none>                     <none>              bb1a694ae1e3        22 hours ago        322.9 MB
+<none>                     <none>              a123cf1ec270        22 hours ago        322.9 MB
+<none>                     <none>              bc36a1b1e221        22 hours ago        322.9 MB
+<none>                     <none>              b4d954eeb0bd        22 hours ago        322.9 MB
+<none>                     <none>              361422f9020e        22 hours ago        322.9 MB
+<none>                     <none>              284cbeda99bc        22 hours ago        322.9 MB
+<none>                     <none>              6c046ed25c09        22 hours ago        322.9 MB
+<none>                     <none>              3630d5305b24        22 hours ago        322.9 MB
+<none>                     <none>              ba34d4ab60b8        22 hours ago        322.9 MB
+<none>                     <none>              06d1b13c0a7b        22 hours ago        198.6 MB
+<none>                     <none>              6c1fcb7c9288        22 hours ago        198.6 MB
+<none>                     <none>              e27cc2e956c2        22 hours ago        198.6 MB
+192.168.0.11:5000/myos     python              703e26a376c0        2 days ago          319.9 MB
+myos                       python              703e26a376c0        2 days ago          319.9 MB
+ubuntu                     latest              452a96d81c30        8 months ago        79.62 MB
+centos                     latest              e934aafc2206        8 months ago        198.6 MB
+registry                   latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                      latest              a5311a310510        2 years ago         181.4 MB
+redis                      latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va1 ~]# docker  ps  -a |column  -t
+CONTAINER ID   IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va1 ~]# rm  -f shdimg.tar  shtpdimg.tar 
+[root@Va1 ~]# ls
+anaconda-ks.cfg                                       docker_images         repositories  文档
+apache.html                                           docker_images.zip     test1.html    下载
+busybox.tar                                           initial-setup-ks.cfg  test2.html    音乐
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          ip.sh                 公共          桌面
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  manifest.json         模板
+dockerfile                                            myos.tar              视频
+dockerfile2                                           nginx.html            图片
+
+[root@Va1 ~]# ls  dockerfile*
+dockerfile:
+Dockerfile  local.repo  run.sh
+
+dockerfile2:
+Dockerfile  local.repo  run.sh
+
+[root@Va1 ~]# cat  dockerfile/Dockerfile 
+
+FROM    centos:latest
+
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+
+ADD     local.repo  /etc/yum.repos.d/local.repo
+
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+
+RUN     /usr/sbin/sshd-keygen
+
+WORKDIR /var/www/html
+
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+
+ENV     EnvironmentFile=/etc/sysconfig/httpd
+
+EXPOSE  80
+
+EXPOSE  443
+
+ENV     EnvironmentFile=/etc/sysconfig/sshd
+
+EXPOSE  22
+
+CMD     ["/bin/bash","/etc/rc.d/init.d/run.sh"]
+
+[root@Va1 ~]# cat  dockerfile/run.sh 
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND
+[root@Va1 ~]# cat  dockerfile/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@Va1 ~]# 
+[root@Va1 ~]# 
+
+[root@Va1 ~]# cat  dockerfile2/run.sh 
+
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@Va1 ~]# cat  dockerfile2/Dockerfile 
+
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+EXPOSE  80
+EXPOSE  443
+EXPOSE  22
+CMD     ["/etc/rc.d/init.d/run.sh"]
+
+[root@Va1 ~]# 
+untagged  未加标签的;
+
+[root@Va1 ~]# docker  save  shdimg:shdtag > shdimg.tar ## 镜像另存为tar包
+
+[root@Va1 ~]# docker  save  shimg:shtpd > shimg.tar ## 镜像另存为tar包
+
+[root@Va1 ~]# du -sh  shdimg.tar  shimg.tar 
+321M	shdimg.tar
+321M	shimg.tar
+
+[root@Va1 ~]# docker  rmi  shdimg:shdtag ## 删除本地镜像
+Untagged: shdimg:shdtag
+
+[root@Va1 ~]# docker rmi  shimg:shtpd   ## 删除本地镜像
+Untagged: shimg:shtpd
+
+[root@Va1 ~]# docker rmi  192.168.0.11:5000/shdimg:shdtag  ## 删除本地镜像
+
+Untagged: 192.168.0.11:5000/shdimg:shdtag
+Untagged: 192.168.0.11:5000/shdimg@sha256:227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3
+Deleted: sha256:8fadf76f4dd17475f9892752197bba9a8fc3b673016f29fe741fbb4aaf646c6d
+Deleted: sha256:22bf194e1d9c52e0a23b3b5efdfeda0182528da36e2ec3939e6fa8cf63ac9035
+................................................
+Deleted: sha256:7261d647cd7a6109b94da967f80ed46ac8f7d2f5895fce209a58bf85fed45040
+Deleted: sha256:686635a56ccfed8633410c302e4189c38b82de2659fe130ec4de0a7c2110f806
+
+[root@Va1 ~]# docker  rmi  192.168.0.11:5000/shimg:latest  ## 删除本地镜像
+
+Untagged: 192.168.0.11:5000/shimg:latest
+Untagged: 192.168.0.11:5000/shimg@sha256:392daffce70ded345f6f41b677dedfdf5bf5d97296d1603d95ae769733b78894
+Deleted: sha256:58c0da615635e3d25ad0a05376c7859f1b598ae3bc82be48a2c0088807cdeb9a
+.............................................
+Deleted: sha256:23ed50948e531ff66f4bef10a836da7529f2c29ec9bfd751a4cde4077c180e2c
+
+[root@Va1 ~]# ls  /etc/docker/
+daemon.json  key.json
+
+[root@Va1 ~]# cat  /etc/docker/daemon.json 
+
+{
+  "insecure-registries" : ["192.168.0.11:5000"]
+}
+
+[root@Va1 ~]# cat   /etc/docker/key.json   ##注意是一行一长串记录,不是多行
+{"crv":"P-256","d":"zC9LAYh74eUOWizMkt8w_lmgw3yHLc_9SCt1X1Z1KKY",
+"kid":"7PKI:XDBF:RM7S:HIEB:2MBH:DBG7:26MD:BHFT:OVR3:KHVA:33PB:FTOX",
+"kty":"EC","x":"a0mPneeQNENqsfx9YPyvuto_Y7VuM0JbKHhPhnR1mGM",
+"y":"f3vTGIdhfMJTVJzw9DycNqecDHaVWRPEdm_7XeBiZGg"}
+
+[root@Va1 ~]# docker  images  -a  |column  -t
+REPOSITORY              TAG     IMAGE ID      CREATED            SIZE
+myos                    python  703e26a376c0  2   days     ago   319.9  MB
+192.168.0.11:5000/myos  python  703e26a376c0  2   days     ago   319.9  MB
+ubuntu                  latest  452a96d81c30  8   months   ago   79.62  MB
+centos                  latest  e934aafc2206  8   months   ago   198.6  MB
+registry                latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx                   latest  a5311a310510  2   years    ago   181.4  MB
+redis                   latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va1 ~]# docker rmi  192.168.0.11:5000/myos:python  ## 删除本地镜像
+Untagged: 192.168.0.11:5000/myos:python
+Untagged: 192.168.0.11:5000/myos@sha256:3a05d8e3b870689da0ac723c9f14481eb96734c5246c8bcfcb00ba0495ef7ad2
+
+/*************** 注意 用 另存为 再 导入的办法可以消除 docker images -a 中的 <none>信息
+ ~]# docker  save  shdimg:shdtag > shdimg.tar ## 镜像另存为tar包
+~]# docker  save  shimg:shtpd > shimg.tar ## 镜像另存为tar包
+~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+**********/
+
+[root@Va1 ~]# docker  load  < shdimg.tar  ##使用tar包导入镜像(恢复镜像) 
+
+6edda1484132: Loading layer 6.656 kB/6.656 kB
+eec0646c1a9b: Loading layer 3.072 kB/3.072 kB
+77aad72aa4ec: Loading layer 3.584 kB/3.584 kB
+70991447c7a8: Loading layer 128.7 MB/128.7 MB
+a93f2dfd8476: Loading layer 9.728 kB/9.728 kB
+2991a1ecc1f4: Loading layer 3.584 kB/3.584 kB
+Loaded image: shdimg:shdtag
+
+[root@Va1 ~]# docker  load  < shimg.tar  ##使用tar包导入镜像(恢复镜像) 
+
+e3018bbf8ea7: Loading layer 3.584 kB/3.584 kB
+1a77ae82139b: Loading layer 128.7 MB/128.7 MB
+976fa9b435c8: Loading layer 9.728 kB/9.728 kB
+2b9d580aaacd: Loading layer 3.584 kB/3.584 kB
+Loaded image: shimg:shtpd
+
+[root@Va1 ~]# docker images  -a |column  -t
+
+REPOSITORY              TAG     IMAGE  ID     CREATED            SIZE
+shdimg                  shdtag  8fadf76f4dd1  21  hours    ago   322.9  MB
+shimg                   shtpd   58c0da615635  23  hours    ago   322.9  MB
+192.168.0.11:5000/myos  python  703e26a376c0  2   days     ago   319.9  MB
+myos                    python  703e26a376c0  2   days     ago   319.9  MB
+ubuntu                  latest  452a96d81c30  8   months   ago   79.62  MB
+centos                  latest  e934aafc2206  8   months   ago   198.6  MB
+registry                latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx                   latest  a5311a310510  2   years    ago   181.4  MB
+redis                   latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+
+[root@Va1 ~]# docker rmi  192.168.0.11:5000/myos:python  ## 删除本地镜像
+Untagged: 192.168.0.11:5000/myos:python
+Untagged: 192.168.0.11:5000/myos@sha256:3a05d8e3b870689da0ac723c9f14481eb96734c5246c8bcfcb00ba0495ef7ad2
+
+[root@Va1 ~]# docker images  -a |column  -t
+
+REPOSITORY  TAG     IMAGE         ID  CREATED  SIZE
+shdimg      shdtag  8fadf76f4dd1  21  hours    ago   322.9  MB
+shimg       shtpd   58c0da615635  24  hours    ago   322.9  MB
+myos        python  703e26a376c0  2   days     ago   319.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+
+
+============== [  ] 制作镜像  newcentos:latest  [  ] =================
+
+  ==== 在 基础镜像  centos:latest 上 通过 容器 编辑 新建 新的镜像 newcentos:latest  ============
+
+
+
+[root@Va1 ~]# docker  ps  -a |column  -t
+CONTAINER  ID   IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va1 ~]# docker  history  centos:latest
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+e934aafc2206        8 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+<missing>           8 months ago        /bin/sh -c #(nop)  LABEL org.label-schema.sch   0 B                 
+<missing>           8 months ago        /bin/sh -c #(nop) ADD file:f755805244a649ecca   198.6 MB   
+
+[root@Va1 ~]# docker  run  -td   centos:latest  /bin/bash  ## 新建运行容器
+c1078c9c47e47b7aa3a40ba2d08719549c7a32d64897825dacb780377617e26d
+
+[root@Va1 ~]# docker  top   c10 |column  -t
+UID   PID   PPID  C  STIME  TTY    TIME      CMD
+root  1668  1654  0  13:30  pts/2  00:00:00  /bin/bash
+
+[root@Va1 ~]# docker ps -aq
+c1078c9c47e4
+
+[root@Va1 ~]# docker  exec  -it  c10  /bin/bash  ## 进入容器
+
+[root@c1078c9c47e4 /]# rm  -f   /etc/yum.repos.d/*.repo
+
+[root@c1078c9c47e4 /]# vi  /etc/yum.repos.d/local.repo
+
+[root@c1078c9c47e4 /]# cat   /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[root@c1078c9c47e4 /]# yum  clean  all >/dev/null &&  yum repolist |tail -3
+repo id                              repo name                            status
+CentOS7-1708                         CentOS7-1708                         9591
+repolist: 9591
+
+[root@c1078c9c47e4 /]# yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  |tail  -4
+
+  vim-filesystem.x86_64 2:7.4.160-2.el7                                         
+  which.x86_64 0:2.20-7.el7                                                     
+
+Complete!
+
+[root@c1078c9c47e4 /]# rpm   -q  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd
+
+vim-enhanced-7.4.160-2.el7.x86_64
+net-tools-2.0-0.22.20131004git.el7.x86_64
+psmisc-22.20-15.el7.x86_64
+iproute-3.10.0-87.el7.x86_64
+elinks-0.12-0.36.pre6.el7.x86_64
+
+bash-completion-2.1-6.el7.noarch
+openssh-server-7.4p1-11.el7.x86_64
+initscripts-9.49.39-1.el7.x86_64
+httpd-2.4.6-67.el7.centos.x86_64
+
+[root@c1078c9c47e4 /]# echo  1 |passwd  --stdin root
+Changing password for user root.
+passwd: all authentication tokens updated successfully.
+
+
+[root@c1078c9c47e4 /]# mkdir  dockerfile
+[root@c1078c9c47e4 /]# ls
+anaconda-post.log  boot  dockerfile  home  lib64  mnt  proc  run   srv  tmp  var
+bin                dev   etc         lib   media  opt  root  sbin  sys  usr
+[root@c1078c9c47e4 /]# ls  /root/
+anaconda-ks.cfg
+[root@c1078c9c47e4 /]# vim  /dockerfile/local.repo
+[root@c1078c9c47e4 /]# cat  /dockerfile/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+[root@c1078c9c47e4 /]# vim  /dockerfile/run.sh
+[root@c1078c9c47e4 /]# cat /dockerfile/run.sh  ##创建镜像Cmd命令(方法2) 
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+[root@c1078c9c47e4 /]# vim  /dockerfile/Dockerfile
+[root@c1078c9c47e4 /]# cat  /dockerfile/Dockerfile
+FROM    centos:latest
+RUN     rm  -f  /etc/yum.repos.d/*.repo && echo 1|passwd  --stdin root
+ADD     local.repo  /etc/yum.repos.d/local.repo
+ADD     run.sh   /etc/rc.d/init.d/run.sh
+RUN     yum  -y install  vim-enhanced  net-tools  psmisc  iproute  elinks   bash-completion  openssh-server  initscripts  httpd  && yum clean  all
+RUN     /usr/sbin/sshd-keygen
+WORKDIR /var/www/html
+RUN     echo "/usr/sbin/sshd -D;CMD [\"/usr/sbin/httpd\",\"-DFOREGROUND\"]" > index.html
+EXPOSE  80
+EXPOSE  443
+EXPOSE  22
+CMD     ["/dockerfile/run.sh"]
+
+[root@c1078c9c47e4 /]# chmod  a+x  /dockerfile/run.sh
+
+[root@c1078c9c47e4 /]# ll /dockerfile/run.sh
+-rwxr-xr-x 1 root root 137 Dec 28 05:42 /dockerfile/run.sh
+
+[root@c1078c9c47e4 /]# /usr/sbin/sshd-keygen 
+
+Generating SSH2 RSA host key:                              [  OK  ]
+Generating SSH2 ECDSA host key:                            [  OK  ]
+Generating SSH2 ED25519 host key:                          [  OK  ]
+[root@c1078c9c47e4 /]# 
+/********
+功能说明：显示文字。
+　　语 法：echo [-ne][字符串]或 echo [--help][--version]
+　　补充说明：echo会将输入的字符串送往标准输出。输出的字符串间以空白字符隔开，并在最后加上换行号。
+　　参 数：-n 不要在最后自动换行
+　　-e 若字符串中出现以下字符，则特别加以处理，而不会将它当成一般文字输出：
+　　\a 发出警告声；
+　　\b 删除前一个字符；
+　　\c 最后不加上换行符号；
+　　\f 换行但光标仍旧停留在原来的位置；
+　　\n 换行且光标移至行首；
+　　\r 光标移至行首，但不换行；
+　　\t 插入tab；
+　　\v 与\f相同；
+　　\\ 插入\字符；
+　　\nnn 插入nnn（八进制）所代表的ASCII字符；
+　　--help 显示帮助
+　　--version 显示版本信息
+　　每一个shell支持的echo指令可能都不太相同。
+　　-n 不输出最后的\n
+　　-e解释转义字符
+　　-E不解释转义字符
+**************/
+[root@c1078c9c47e4 /]# cd  /var/www/html/
+
+[root@c1078c9c47e4 html]# echo  -e  "<h1>/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]</h1>\n<h1>docker  commit  c1078c9c47e4   newcentos:latest</h1>" > index.html
+
+[root@c1078c9c47e4 html]# cat index.html
+
+<h1>/usr/sbin/sshd -D;CMD [/usr/sbin/httpd,-DFOREGROUND]</h1>
+<h1>docker  commit  c1078c9c47e4   newcentos:latest</h1>
+
+[root@c1078c9c47e4 html]# ll  /usr/sbin/apachectl 
+-rwxr-xr-x 1 root root 4290 Aug  4  2017 /usr/sbin/apachectl
+
+[root@c1078c9c47e4 html]# /usr/sbin/apachectl  ## 开启 apache  httpd 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+
+[root@c1078c9c47e4 html]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@c1078c9c47e4 html]# elinks -dump  172.17.0.2
+
+              /usr/sbin/sshd -D;CMD [/usr/sbin/httpd,-DFOREGROUND]
+
+                  docker commit c1078c9c47e4 newcentos:latest
+[root@c1078c9c47e4 html]# elinks -dump  127.0.0.1 
+              /usr/sbin/sshd -D;CMD [/usr/sbin/httpd,-DFOREGROUND]
+
+                  docker commit c1078c9c47e4 newcentos:latest
+
+[root@c1078c9c47e4 html]# pstree  -p
+bash(1)
+
+[root@c1078c9c47e4 ~]# echo $$
+13
+[root@c1078c9c47e4 html]# ps  aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.0  11776  1664 ?        Ss+  05:30   0:00 /bin/bash
+root        13  0.0  0.0  11776  1932 ?        Ss   05:32   0:00 /bin/bash
+root       160  0.0  0.0 221948  3448 ?        Ss   05:57   0:00 /usr/sbin/httpd
+apache     161  0.0  0.0 222084  3676 ?        S    05:57   0:00 /usr/sbin/httpd
+apache     162  0.0  0.0 221948  2952 ?        S    05:57   0:00 /usr/sbin/httpd
+apache     163  0.0  0.0 222084  3676 ?        S    05:57   0:00 /usr/sbin/httpd
+apache     164  0.0  0.0 221948  2952 ?        S    05:57   0:00 /usr/sbin/httpd
+apache     165  0.0  0.0 221948  2952 ?        S    05:57   0:00 /usr/sbin/httpd
+root       175  0.0  0.0  47448  1672 ?        R+   05:58   0:00 ps aux
+
+[root@c1078c9c47e4 html]# netstat  -npult 
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp6       0      0 :::80                   :::*                    LISTEN      160/httpd           
+
+[root@c1078c9c47e4 html]# ll   /usr/sbin/sshd
+-rwxr-xr-x 1 root root 853024 Aug  7  2017 /usr/sbin/sshd
+
+[root@c1078c9c47e4 html]# ll    /usr/sbin/httpd 
+-rwxr-xr-x 1 root root 519432 Aug  4  2017 /usr/sbin/httpd
+
+[root@c1078c9c47e4 html]# cd
+[root@c1078c9c47e4 ~]# ls
+anaconda-ks.cfg
+
+[root@c1078c9c47e4 ~]# ls  /dockerfile/
+Dockerfile  local.repo  run.sh
+
+[root@c1078c9c47e4 ~]# cat  /dockerfile/run.sh 
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@c1078c9c47e4 ~]# vim  /root/run.sh
+
+[root@c1078c9c47e4 ~]# cat  /root/run.sh
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND  &
+
+[root@c1078c9c47e4 ~]# chmod  755  /root/run.sh
+
+[root@c1078c9c47e4 ~]# ll  /root/run.sh
+-rwxr-xr-x 1 root root 67 Dec 28 06:08 /root/run.sh
+
+[root@c1078c9c47e4 ~]# ls  /etc/init.d/
+README  functions  netconsole  network
+
+[root@c1078c9c47e4 ~]# cp  /root/run.sh   /etc/init.d/
+
+[root@c1078c9c47e4 ~]# chmod a+x  /etc/init.d/run.sh 
+
+[root@c1078c9c47e4 ~]# cat  /etc/init.d/run.sh
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND  &
+
+[root@c1078c9c47e4 ~]# ll  /etc/init.d/run.sh
+-rwxr-xr-x 1 root root 67 Dec 28 06:12 /etc/init.d/run.sh
+
+[root@c1078c9c47e4 ~]# history   -c
+[root@c1078c9c47e4 ~]# history  -w
+[root@c1078c9c47e4 ~]# exit
+exit
+
+[root@Va1 ~]# docker  ps  |column -t
+CONTAINER     ID             IMAGE        COMMAND  CREATED  STATUS  PORTS  NAMES
+c1078c9c47e4  centos:latest  "/bin/bash"  50       minutes  ago     Up     50     minutes  adoring_noyce
+
+[root@Va1 ~]# > /root/.ssh/known_hosts 
+
+[root@Va1 ~]# docker  inspect  c10  |grep -n "\"IPAddress\":"
+148:            "IPAddress": "172.17.0.2",
+160:                    "IPAddress": "172.17.0.2",
+
+[root@Va1 ~]# docker  top   c10  |column  -t
+UID     PID   PPID  C  STIME  TTY    TIME      CMD
+root    1668  1654  0  13:30  pts/2  00:00:00  /bin/bash
+root    2113  1     0  13:57  ?      00:00:00  /usr/sbin/httpd
+apache  2114  2113  0  13:57  ?      00:00:00  /usr/sbin/httpd
+apache  2115  2113  0  13:57  ?      00:00:00  /usr/sbin/httpd
+apache  2116  2113  0  13:57  ?      00:00:00  /usr/sbin/httpd
+apache  2117  2113  0  13:57  ?      00:00:00  /usr/sbin/httpd
+apache  2118  2113  0  13:57  ?      00:00:00  /usr/sbin/httpd
+
+[root@Va1 ~]# ssh -o  StrictHostKeyChecking=no  172.17.0.2  ## 注意现在没有开启sshd服务
+ssh: connect to host 172.17.0.2 port 22: Connection refused
+
+[root@Va1 ~]# elinks  -dump   172.17.0.2
+              /usr/sbin/sshd -D;CMD [/usr/sbin/httpd,-DFOREGROUND]
+
+                  docker commit c1078c9c47e4 newcentos:latest
+
+[root@Va1 ~]# docker  stop  $(docker ps -q)
+c1078c9c47e4
+[root@Va1 ~]# docker  ps  -aq
+c1078c9c47e4
+[root@Va1 ~]# docker  start  c10
+c10
+
+[root@Va1 ~]# docker  exec  -it   c10   /bin/bash  
+[root@c1078c9c47e4 /]# cp   /root/run.sh   /bin/
+[root@c1078c9c47e4 /]# cat /bin/run.sh 
+
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND  &
+
+[root@c1078c9c47e4 /]# ll /bin/run.sh
+-rwxr-xr-x 1 root root 67 Dec 28 06:54 /bin/run.sh
+[root@c1078c9c47e4 /]# history  -c
+[root@c1078c9c47e4 /]# history  -w
+[root@c1078c9c47e4 /]# exit
+exit
+
+[root@Va1 ~]# docker  inspect    c10 |grep -B1 -A3 -En  "\"Env\": \[|\"Cmd\": \["
+118-            "StdinOnce": false,
+119:            "Env": [
+120-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+121-            ],
+122:            "Cmd": [
+123-                "/bin/bash"
+124-            ],
+125-            "Image": "centos:latest",
+
+[root@Va1 ~]# docker  stop  $(docker  ps  -q)  ####必须先 关闭容器
+c1078c9c47e4
+
+~]# docker  commit  容器id号  新自定义镜像名:自定义标签(标签有相当于软链接的功能)
+
+[root@Va1 ~]# docker  commit   c1078  newcentos:latest  ## 再提交新镜像
+
+sha256:084bebfe00d3be43d44149e2f4118e8e0661b556d908f653f1b1348dab7661f3
+
+[root@Va1 ~]# docker  images   -a  |column  -t
+
+REPOSITORY  TAG     IMAGE  ID     CREATED            SIZE
+newcentos   latest  084bebfe00d3  23  seconds  ago   358.7  MB
+shdimg      shdtag  8fadf76f4dd1  25  hours    ago   322.9  MB
+shimg       shtpd   58c0da615635  28  hours    ago   322.9  MB
+myos        python  703e26a376c0  2   days     ago   319.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+============== [  ] 制作镜像  newcentos:latest  [ 完成 ] =================
+
+  ==== 在 基础镜像  centos:latest 上 通过 容器 编辑 新建 新的镜像 newcentos:latest  ============
+
+ ============== [  ] 制作镜像  newcentos:latest  [ 完成 ] =================
+
+
+[root@Va1 ~]# docker  rmi  registry:latest  ## 注意删除旧的 registry
+
+Untagged: registry:latest
+Deleted: sha256:d1fd7d86a8257f3404f92c4474fb3353076883062d64a09232d95d940627459d
+........
+Deleted: sha256:e53f74215d12318372e4412d0f0eb3908e17db25c6185f670db49aef5271f91f
+
+[root@Va1 ~]# docker  images  -a |column  -t
+
+REPOSITORY  TAG     IMAGE         ID  CREATED  SIZE
+newcentos   latest  084bebfe00d3  27  minutes  ago   358.7  MB
+shdimg      shdtag  8fadf76f4dd1  26  hours    ago   322.9  MB
+shimg       shtpd   58c0da615635  28  hours    ago   322.9  MB
+myos        python  703e26a376c0  2   days     ago   319.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va1 ~]# 
+
+
+============ 1）定义一个私有仓库 ============
+
+
+[root@Va1 ~]#  curl  http://192.168.0.11:5000/v2/
+curl: (7) Failed connect to 192.168.0.11:5000; 拒绝连接
+
+
+[root@Va1 ~]# vim  /etc/docker/daemon.json #定义一个私有仓库
+
+/***********
+insecure registries 
+不安全注册
+
+官方的配置地址：https://docs.docker.com/engine/reference/commandline/dockerd/#options
+
+配置文件的默认路径：/etc/docker/daemon.json
+
+{
+  "registry-mirrors": ["http://harbor.test.com"], #镜像加速地址
+  "insecure-registries": ["harbor.test.com","registry.cn-shenzhen.aliyuncs.com"], # Docker如果需要从非SSL源管理镜像，这里加上。
+  "max-concurrent-downloads": 10
+}
+-----------------------------------
+{
+    "insecure-registries": ["<ip>:5000"] 
+}
+
+部分参数（registry-mirrors、insecure-registries ...）修改，
+只要reconfigure(systemctl reload docker) 就生效：
+
+这部分参数详细列表：https://docs.docker.com/engine/reference/commandline/dockerd/#daemon-configuration-file
+
+其中为安装了Registry的机器ip地址。
+需要注意的是在安装registry的节点
+和客户端需要访问私有Registry的节点
+都需要执行此步操作。
+
+修改文之后执行以下命令重启节点docker。
+
+systemctl daemon-reload
+systemctl restart docker
+
+************/
+
+[root@Va1 ~]# cat /etc/docker/daemon.json ## 自定义私有仓库
+
+{
+  "insecure-registries" : ["192.168.0.11:5000"]
+}
+
+[root@Va1 ~]# docker  ps  -a |column  -t
+CONTAINER ID   IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va1 ~]#### 使用私有仓库运行容器
+   -------------------------------------## 重启服务,启动私有仓库  
+
+[root@Va1 ~]# systemctl  restart  docker.service  ## 重启服务,启动私有镜像仓库
+
+--------------------------## 启动私有仓库  注意后台 -d 运行 -----------------------
+
+[root@Va1 ~]# docker  run -td  -p  5000:5000  registry  ## 启动私有镜像仓库 
+
+Unable to find image 'registry:latest' locally
+latest: Pulling from library/registry
+
+456f9d0bf1d1: Pull complete 
+b7f3f37a05d2: Pull complete 
+d1b2fc1a6bc7: Pull complete 
+400c20544fd6: Pull complete 
+48473a72399c: Pull complete 
+Digest: sha256:2a5b47a613fd7e9d28120fa77016554c3dffa8913b6a314ede518447ddc68e2f
+Status: Downloaded newer image for registry:latest
+94f2bda6b9a45e06b7a8162a547719281bc324dfdfc1b84c4ce912f897d05d1c
+
+[root@Va1 ~]# curl  http://192.168.0.11:5000/v2/  ## 查看私有镜像仓库,查看里面有什么镜像
+{}
+[root@Va1 ~]# elinks  -dump   http://192.168.0.11:5000/v2/
+   {}
+
+[root@Va1 ~]# docker  images  -a |column  -t
+REPOSITORY  TAG     IMAGE         ID  CREATED  SIZE
+newcentos   latest  084bebfe00d3  41  minutes  ago   358.7  MB
+shdimg      shdtag  8fadf76f4dd1  26  hours    ago   322.9  MB
+shimg       shtpd   58c0da615635  29  hours    ago   322.9  MB
+myos        python  703e26a376c0  2   days     ago   319.9  MB
+registry    latest  9c1f09fe9a86  7   days     ago   33.29  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+94f2bda6b9a4        registry            "/entrypoint.sh /etc/"   4 minutes ago       Up 4 minutes        0.0.0.0:5000->5000/tcp   small_turing
+
+------------------------------------------ ## 修改镜像标签  通知 私有仓库 服务器 ---------------
+docker tag  旧的镜像名:旧标签  新镜像名称:新标签  ## 修改镜像名称和标签
+
+[root@Va1 ~]# docker tag myos:python 192.168.0.11:5000/myos:latest ##打标签(起到通知注册表的作用)
+
+[root@Va1 ~]# docker  tag   shimg:shtpd   192.168.0.11:5000/shimg:latest
+
+[root@Va1 ~]#  docker  tag   shdimg:shdtag   192.168.0.11:5000/shdimg:latest
+
+[root@Va1 ~]# docker  tag  newcentos:latest  192.168.0.11:5000/newcentos:latest
+
+
+
+[root@Va1 ~]# docker  push   192.168.0.11:5000/myos:latest #上传镜像
+
+The push refers to a repository [192.168.0.11:5000/myos]
+932cbe7bebfd: Pushed 
+43e653f84b79: Pushed 
+latest: digest: sha256:3a05d8e3b870689da0ac723c9f14481eb96734c5246c8bcfcb00ba0495ef7ad2 size: 741
+
+[root@Va1 ~]# docker  push   192.168.0.11:5000/shimg:latest  #上传镜像
+
+The push refers to a repository [192.168.0.11:5000/shimg]
+2b9d580aaacd: Pushed 
+............
+6edda1484132: Pushed 
+43e653f84b79: Mounted from myos 
+latest: digest: sha256:392daffce70ded345f6f41b677dedfdf5bf5d97296d1603d95ae769733b78894 size: 1777
+
+[root@Va1 ~]# docker  push   192.168.0.11:5000/newcentos:latest  #上传镜像
+
+The push refers to a repository [192.168.0.11:5000/newcentos]
+44701bf6215a: Pushed 
+43e653f84b79: Mounted from shimg 
+latest: digest: sha256:3ab6f679c53b15c73aecc4d286729198f9d4ccb22091e75bc878d893f206b3c4 size: 741
+
+[root@Va1 ~]# docker  push   192.168.0.11:5000/shdimg:latest  #上传镜像
+
+The push refers to a repository [192.168.0.11:5000/shdimg]
+2991a1ecc1f4: Pushed 
+..................
+43e653f84b79: Mounted from newcentos 
+latest: digest: sha256:227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3 size: 1777
+
+[root@Va1 ~]# docker  images  -a |column  -t
+REPOSITORY                   TAG     IMAGE   ID    CREATED             SIZE
+192.168.0.11:5000/newcentos  latest  084bebfe00d3  About  an hour  ago  358.7  MB
+newcentos                    latest  084bebfe00d3  About  an hour  ago  358.7  MB
+192.168.0.11:5000/shdimg     latest  8fadf76f4dd1  26     hours    ago   322.9  MB
+shdimg                       shdtag  8fadf76f4dd1  26     hours    ago   322.9  MB
+192.168.0.11:5000/shimg      latest  58c0da615635  29     hours    ago   322.9  MB
+shimg                        shtpd   58c0da615635  29     hours    ago   322.9  MB
+192.168.0.11:5000/myos       latest  703e26a376c0  2      days     ago   319.9  MB
+myos                         python  703e26a376c0  2      days     ago   319.9  MB
+registry                     latest  9c1f09fe9a86  7      days     ago   33.29  MB
+ubuntu                       latest  452a96d81c30  8      months   ago   79.62  MB
+centos                       latest  e934aafc2206  8      months   ago   198.6  MB
+nginx                        latest  a5311a310510  2      years    ago   181.4  MB
+redis                        latest  1aa84b1b434e  2      years    ago   182.8  MB
+
+
+[root@Va1 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0                           11:0    1 1024M  0 rom  
+vda                          252:0    0   20G  0 disk 
+├─vda1                       252:1    0    1G  0 part /boot
+└─vda2                       252:2    0   19G  0 part 
+  ├─rhel-root                253:0    0   17G  0 lvm  /
+  └─rhel-swap                253:1    0    2G  0 lvm  [SWAP]
+vdb                          252:16   0   10G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:0-51405894-pool 253:2    0  100G  0 dm   
+  └─docker-253:0-51405894-b42d5084014c8426e95e46403914d3b974104d159379ae958746ffeb5aa470ca
+                             253:3    0   10G  0 dm   /var/lib/docker/devicemapper/mn
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:0-51405894-pool 253:2    0  100G  0 dm   
+  └─docker-253:0-51405894-b42d5084014c8426e95e46403914d3b974104d159379ae958746ffeb5aa470ca
+                             253:3    0   10G  0 dm   /var/lib/docker/devicemapper/mn
+
+=================
+==============================================
+
+
+[root@Va1 ~]# rpm  -qa |grep nfs
+nfs-utils-1.3.0-0.48.el7.x86_64
+libnfsidmap-0.25-17.el7.x86_64
+
+
+[root@Va1 ~]# mkdir  /var/webroot_va1
+
+[root@Va1 ~]# mount  -t  nfs  192.168.0.13:/var/webroot/ /var/webroot_va1/
+
+[root@Va1 ~]# ls  /var/webroot_va1/
+Va3.txt
+
+[root@Va1 ~]# cat  /var/webroot_va1/Va3.txt 
+Va3  192.168.0.13 nfs-server
+
+[root@Va1 ~]# echo  "Va1 added" >> /var/webroot_va1/Va3.txt
+
+[root@Va1 ~]# cat  /var/webroot_va1/Va3.txt
+Va3  192.168.0.13 nfs-server
+Va1 added
+ 
+[root@Va1 ~]# umount  /var/webroot_va1/
+
+[root@Va1 ~]# ls  /var/webroot_va1/
+
+[root@Va1 ~]# vim  /etc/fstab 
+
+[root@Va1 ~]# tail  -n 1  /etc/fstab
+192.168.0.13:/var/webroot/  /var/webroot_va1/  nfs  defaults,_netdev  0 0
+
+[root@Va1 ~]# mount -a
+
+[root@Va1 ~]# ls  /var/webroot_va1/
+Va3.txt
+
+[root@Va1 ~]# cat  /var/webroot_va1/Va3.txt 
+Va3  192.168.0.13 nfs-server
+Va1 added
+Va2 add
+
+[root@Va1 ~]# docker  history  nginx:latest  |grep  -i cmd
+a5311a310510  2 years ago  /bin/sh -c #(nop)  CMD ["nginx" "-g" "daemon  0 B
+<missing>     2 years ago  /bin/sh -c #(nop)  CMD ["/bin/bash"]          0 B
+
+/**********************************************
+root@75f8af7d6f1d:/# which  nginx
+/usr/sbin/nginx
+root@75f8af7d6f1d:/# /usr/sbin/nginx   ##开启服务执行文件
+
+---------------------###主配置文件 nginx/nginx.conf ---------------------------
+
+root@75f8af7d6f1d:/# cat  /etc/nginx/nginx.conf ###主配置文件 nginx/nginx.conf
+
+user  nginx;         ## 注意 user
+worker_processes  1;
+.....................
+    include /etc/nginx/conf.d/*.conf; ##注意这句最关键包含 从配置文件
+}
+
+root@75f8af7d6f1d:/# 
+------------------------- ##从配置文件 nginx/conf.d/default.conf --------------
+
+root@75f8af7d6f1d:/# head  -4 /etc/nginx/conf.d/default.conf  ##从配置文件
+server {
+    listen       80;
+    server_name  localhost;
+
+root@75f8af7d6f1d:/# cat  /etc/nginx/conf.d/default.conf |grep  -A3 -n "location /"
+8:    location / {
+9-        root   /usr/share/nginx/html;  ## 注意 网页根目录
+10-        index  index.html index.htm;  ## 注意网页首页文件
+11-    }
+
+********************************************/
+[root@Va1 ~]# docker  ps  -aq
+94f2bda6b9a4
+
+/*************************************************************
+  docker容器不保持任何数据
+重要数据请使用外部卷存储（数据持久化）
+容器可以挂载真实机目录或共享存储为卷
+
+##  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录(可以有多层目录结构 :/filea/b/c/d )
+
+[root@Va2 ~]# docker  run  -td   -v  /var/www/html/:/filea/b/c/d  \ 
+>           192.168.0.11:5000/newcentos:latest  /bin/bash  ## 新建运行容器
+**************************/
+
+           docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+
+[root@Va1 ~]# docker  run  -td  -v  /var/webroot_va1/:/usr/share/nginx/html   nginx 
+
+434e7697b29c151024220f17b3783b4b4a2d8fe5d844a017dd0ba4837fe3a33d
+
+[root@Va1 ~]# ll /root/.ssh/known_hosts 
+-rw-r--r-- 1 root root 0 12月 28 14:22 /root/.ssh/known_hosts
+
+[root@Va1 ~]# docker  ps 
+CONTAINER ID  IMAGE    COMMAND        CREATED        STATUS              PORTS     NAMES
+434e7697b29c  nginx     "nginx -g 'daemon off"   About a minute ago   Up About a minute   80/tcp, 443/tcp       cocky_liskov
+94f2bda6b9a4  registry   "/entrypoint.sh /etc/"   4 hours ago    Up 4 hours   0.0.0.0:5000->5000/tcp   small_turing
+
+[root@Va1 ~]# docker  inspect  434e  |grep  -En \
+> "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+
+17:            "Pid": 7271,
+28:        "Name": "/cocky_liskov",
+123:            "Hostname": "434e7697b29c",
+166:            "Gateway": "172.17.0.1",
+169:            "IPAddress": "172.17.0.3",
+180:                    "Gateway": "172.17.0.1",
+181:                    "IPAddress": "172.17.0.3",
+[root@Va1 ~]# docker  inspect  94f2  |grep  -En "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+
+16:            "Pid": 4423,
+27:        "Name": "/small_turing",
+129:            "Hostname": "94f2bda6b9a4",
+176:            "Gateway": "172.17.0.1",
+179:            "IPAddress": "172.17.0.2",
+190:                    "Gateway": "172.17.0.1",
+191:                    "IPAddress": "172.17.0.2",
+
+[root@Va1 ~]# elinks -dump 172.17.0.3 ## 原因 nginx的网页目录被宿主机的目录/var/webroot_va1/ 覆盖了
+
+                                 403 Forbidden
+
+   --------------------------------------------------------------------------
+
+                                  nginx/1.11.5
+
+[root@Va1 ~]# ls   /var/webroot_va1/
+Va3.txt
+[root@Va1 ~]# echo  "<h1>Va1 first add</h1> " > /var/webroot_va1/index.html
+[root@Va1 ~]# elinks  -dump  172.17.0.3
+                                 Va1 first add
+
+[root@Va1 ~]# curl   -i   172.17.0.3
+
+HTTP/1.1 200 OK
+Server: nginx/1.11.5
+Date: Fri, 28 Dec 2018 12:38:01 GMT
+Content-Type: text/html
+Content-Length: 24
+Last-Modified: Fri, 28 Dec 2018 12:31:17 GMT
+Connection: keep-alive
+ETag: "5c261795-18"
+Accept-Ranges: bytes
+
+<h1>Va1 first add</h1> 
+
+                               Va3 thirdly added
+
+[root@Va1 ~]# curl  -I  172.17.0.3
+HTTP/1.1 200 OK
+Server: nginx/1.11.5
+Date: Fri, 28 Dec 2018 13:06:19 GMT
+Content-Type: text/html
+Content-Length: 71
+Last-Modified: Fri, 28 Dec 2018 13:04:33 GMT
+Connection: keep-alive
+ETag: "5c261f61-47"
+Accept-Ranges: bytes
+
+
+[root@Va1 ~]#  ifconfig |grep  -A1  "flags="
+br-36c303b8ab2d: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+docker0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.11  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+
+-- ## 注意veth2e9b2f7这是和容器通信的通道,每次产生的名字不一样
+
+veth2e9b2f7: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::a8de:9dff:fe68:bb34  prefixlen 64  scopeid 0x20<link>
+
+--- ## 注意vethd212105这是和容器通信的通道,每次产生的名字不一样
+
+vethd212105: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::58:ebff:fe6c:3a29  prefixlen 64  scopeid 0x20<link>
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@Va1 ~]# docker  ps  -q
+434e7697b29c
+94f2bda6b9a4
+[root@Va1 ~]# docker  ps  -aq
+434e7697b29c
+94f2bda6b9a4
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Thu Dec 27 19:30:43 2018 from 192.168.0.254
+[root@Va2 ~]# docker  ps  -aq
+52ac90001881
+0f4f3ec0695f
+[root@Va2 ~]# docker  images  -a
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/shdimg   shdtag              8fadf76f4dd1        19 hours ago        322.9 MB
+mycentos                   latest              b717c768dc5f        2 days ago          319.9 MB
+ubuntu                     latest              452a96d81c30        8 months ago        79.62 MB
+centos                     latest              e934aafc2206        8 months ago        198.6 MB
+registry                   latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                      latest              a5311a310510        2 years ago         181.4 MB
+redis                      latest              1aa84b1b434e        2 years ago         182.8 MB
+[root@Va2 ~]# docker rm  $(docker ps  -aq)
+52ac90001881
+0f4f3ec0695f
+[root@Va2 ~]# docker  ps  -a |column  -t
+CONTAINER ID   IMAGE  COMMAND  CREATED  STATUS  PORTS  NAMES
+
+[root@Va2 ~]# ls /var/lib/docker/
+containers  devicemapper  image  network  swarm  tmp  trust  volumes
+
+[root@Va2 ~]# ls /var/lib/docker/containers/
+
+[root@Va2 ~]# ls /var/lib/docker/image/
+devicemapper
+[root@Va2 ~]# ls /var/lib/docker/image/devicemapper/
+distribution  imagedb  layerdb  repositories.json
+
+  ----------------------------------------   ## ##注意是一行一长串记录,不是多行
+[root@Va2 ~]# cat /var/lib/docker/image/devicemapper/repositories.json ## ##注意是一行一长串记录,不是多行
+{"Repositories":
+  {
+   "192.168.0.11:5000/shdimg":
+   {"192.168.0.11:5000/shdimg:shdtag":
+   "sha256:8fadf76f4dd17475f9892752197bba9a8fc3b673016f29fe741fbb4aaf646c6d",
+   "192.168.0.11:5000/shdimg@sha256:
+   227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3":
+   "sha256:8fadf76f4dd17475f9892752197bba9a8fc3b673016f29fe741fbb4aaf646c6d"},
+
+  "centos":
+  {"centos:latest":"sha256:e934aafc22064b7322c0250f1e32e5ce93b2d19b356f4537f5864bd102e8531f"},
+  "mycentos":
+  {"mycentos:latest":"sha256:b717c768dc5f0d4f1680879a48dda994c75c4a825d9a5673e59b8850abb40f9e"},
+  "nginx":
+  {"nginx:latest":"sha256:a5311a310510e5eaff3cfbb22b65d9ce11ddc15e266833909551334d48491921"},
+  "redis":
+  {"redis:latest":"sha256:1aa84b1b434e43bbd5a5577e334050e9bc5984aec570c981c7357e6bb6a6df1f"},
+  "registry":
+  {"registry:latest":"sha256:d1fd7d86a8257f3404f92c4474fb3353076883062d64a09232d95d940627459d"},
+  "ubuntu":
+  {"ubuntu:latest":"sha256:452a96d81c30a1e426bc250428263ac9ca3f47c9bf086f876d11cb39cf57aeec"}
+ }
+}
+[root@Va2 ~]# docker rmi  192.168.0.11:5000/shdimg:shdtag  ## 删除本地镜像
+
+Untagged: 192.168.0.11:5000/shdimg:shdtag
+Untagged: 192.168.0.11:5000/shdimg@sha256:227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3
+Deleted: sha256:8fadf76f4dd17475f9892752197bba9a8fc3b673016f29fe741fbb4aaf646c6d
+...............................
+Deleted: sha256:23ed50948e531ff66f4bef10a836da7529f2c29ec9bfd751a4cde4077c180e2c
+
+[root@Va2 ~]# cat /var/lib/docker/image/devicemapper/repositories.json 
+{"Repositories":
+ {
+  "centos":
+  {"centos:latest":"sha256:e934aafc22064b7322c0250f1e32e5ce93b2d19b356f4537f5864bd102e8531f"},
+  "mycentos":
+  {"mycentos:latest":"sha256:b717c768dc5f0d4f1680879a48dda994c75c4a825d9a5673e59b8850abb40f9e"},
+  "nginx":
+  {"nginx:latest":"sha256:a5311a310510e5eaff3cfbb22b65d9ce11ddc15e266833909551334d48491921"},
+  "redis":
+  {"redis:latest":"sha256:1aa84b1b434e43bbd5a5577e334050e9bc5984aec570c981c7357e6bb6a6df1f"},
+  "registry":
+  {"registry:latest":"sha256:d1fd7d86a8257f3404f92c4474fb3353076883062d64a09232d95d940627459d"},
+  "ubuntu":
+  {"ubuntu:latest":"sha256:452a96d81c30a1e426bc250428263ac9ca3f47c9bf086f876d11cb39cf57aeec"}
+ }
+}
+[root@Va2 ~]# docker images  -a  |column  -t
+
+REPOSITORY  TAG     IMAGE  ID     CREATED            SIZE
+mycentos    latest  b717c768dc5f  2   days     ago   319.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+registry    latest  d1fd7d86a825  11  months   ago   33.26  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va2 ~]# docker  rmi  registry:latest  ## 注意删除旧的 registry
+
+Untagged: registry:latest
+Deleted: sha256:d1fd7d86a8257f3404f92c4474fb3353076883062d64a09232d95d940627459d
+Deleted: sha256:4d765aea84ce4f56bd623e4fd38dec996a259af3418e2466d0e2067ed0ae8aa6
+Deleted: sha256:5d385be69c9c4ce5538e12e6e677727ebf19ca0afaff6f035d8043b5e413003a
+Deleted: sha256:adb712878b60bd7ed8ce661c91eb3ac30f41b67bfafed321395863051596a8e9
+Deleted: sha256:55a50a618c1b76f784b0b68a0b3d70db93b353fb03227ea6bd87f794cad92917
+Deleted: sha256:e53f74215d12318372e4412d0f0eb3908e17db25c6185f670db49aef5271f91f
+
+[root@Va2 ~]# docker images  -a  |column -t
+REPOSITORY  TAG     IMAGE         ID  CREATED  SIZE
+mycentos    latest  b717c768dc5f  3   days     ago   319.9  MB
+ubuntu      latest  452a96d81c30  8   months   ago   79.62  MB
+centos      latest  e934aafc2206  8   months   ago   198.6  MB
+nginx       latest  a5311a310510  2   years    ago   181.4  MB
+redis       latest  1aa84b1b434e  2   years    ago   182.8  MB
+
+[root@Va2 ~]# ls  /etc/docker/
+daemon.json  key.json
+[root@Va2 ~]# cat  /etc/docker/daemon.json 
+{
+  "insecure-registries" : ["192.168.0.11:5000"]
+}
+
+=========== ##重启服务将共享Va1已经上传的镜像 -------------------
+
+[root@Va2 ~]# systemctl  restart  docker.service  ##重启服务将共享Va1已经上传的镜像
+
+--------------------------------------- ## 启动新容器 --------------------------------------
+
+[root@Va1 ~]# docker  history   192.168.0.11:5000/newcentos:latest  ## 查找cmd命令
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+084bebfe00d3        About an hour ago   /bin/bash                                       160.1 MB            
+e934aafc2206        8 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+<missing>           8 months ago        /bin/sh -c #(nop)  LABEL org.label-schema.sch   0 B                 
+<missing>           8 months ago        /bin/sh -c #(nop) ADD file:f755805244a649ecca   198.6 MB  
+
+          ---------------------------- 交互式 运行新建 容器 退出 自动关闭 ------------------------
+
+[root@Va2 ~]# docker  run  -it   192.168.0.11:5000/newcentos:latest  /bin/bash
+
+Unable to find image '192.168.0.11:5000/newcentos:latest' locally
+latest: Pulling from newcentos
+9770d73ca513: Already exists 
+4e84ade73afb: Pull complete 
+Digest: sha256:3ab6f679c53b15c73aecc4d286729198f9d4ccb22091e75bc878d893f206b3c4
+Status: Downloaded newer image for 192.168.0.11:5000/newcentos:latest
+[root@3f15ac3f779f /]# which apachectl 
+/usr/sbin/apachectl
+[root@3f15ac3f779f /]# /usr/sbin/apachectl  ##开启apache 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+
+[root@3f15ac3f779f /]# elinks   -dump  127.0.0.1
+              /usr/sbin/sshd -D;CMD [/usr/sbin/httpd,-DFOREGROUND]
+
+                  docker commit c1078c9c47e4 newcentos:latest
+
+[root@3f15ac3f779f /]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@3f15ac3f779f /]# exit
+exit
+
+[root@Va2 ~]# docker  ps  -q
+[root@Va2 ~]# docker  ps  -aq
+3f15ac3f779f
+
+[root@Va2 ~]# ll /root/.ssh/known_hosts 
+-rw-r--r-- 1 root root 344 12月 27 21:16 /root/.ssh/known_hosts
+[root@Va2 ~]# >  /root/.ssh/known_hosts
+
+[root@Va2 ~]# docker images  -a  |column -t
+REPOSITORY                   TAG     IMAGE         ID     CREATED  SIZE
+192.168.0.11:5000/newcentos  latest  084bebfe00d3  About  an       hour  ago    358.7  MB
+mycentos                     latest  b717c768dc5f  3      days     ago   319.9  MB
+ubuntu                       latest  452a96d81c30  8      months   ago   79.62  MB
+centos                       latest  e934aafc2206  8      months   ago   198.6  MB
+nginx                        latest  a5311a310510  2      years    ago   181.4  MB
+redis                        latest  1aa84b1b434e  2      years    ago   182.8  MB
+
+[root@Va2 ~]# elinks  -dump  192.168.0.11:5000/v2/
+   {}
+[root@Va2 ~]# elinks  -dump  192.168.0.11:5000/v2/_catalog  ## 查看镜像名称
+   {"repositories":["myos","newcentos","shdimg","shimg"]}
+
+[root@Va2 ~]# elinks  -dump  192.168.0.11:5000/v2/myos/tags/list ## 查看标签名称
+   {"name":"myos","tags":["latest"]}
+
+[root@Va2 ~]# elinks  -dump  192.168.0.11:5000/v2/newcentos/tags/list ## 查看标签名称
+   {"name":"newcentos","tags":["latest"]}
+
+[root@Va2 ~]# elinks  -dump  192.168.0.11:5000/v2/shdimg/tags/list ## 查看标签名称
+   {"name":"shdimg","tags":["latest"]}
+
+[root@Va2 ~]# elinks  -dump  192.168.0.11:5000/v2/shimg/tags/list ## 查看标签名称
+   {"name":"shimg","tags":["latest"]}
+[root@Va2 ~]# 
+
+[root@Va2 ~]# lsblk 
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0                           11:0    1 1024M  0 rom  
+vda                          252:0    0   20G  0 disk 
+├─vda1                       252:1    0    1G  0 part /boot
+└─vda2                       252:2    0   19G  0 part 
+  ├─rhel-root                253:0    0   17G  0 lvm  /
+  └─rhel-swap                253:1    0    2G  0 lvm  [SWAP]
+vdb                          252:16   0   20G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:0-50834749-pool 253:2    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:0-50834749-pool 253:2    0  100G  0 dm   
+
+[root@Va2 ~]# >   /root/.ssh/known_hosts  ## 防止ip冲突
+[root@Va2 ~]# >   /root/.ssh/known_hosts 
+[root@Va2 ~]# docker ps  -aq
+3f15ac3f779f
+
+[root@Va2 ~]# docker  start  3f15  ## 开启容器
+3f15
+
+[root@Va2 ~]# docker  exec  -it   3f15   /bin/bash  ##进入容器
+
+[root@3f15ac3f779f /]# ls /
+anaconda-post.log  boot  dockerfile  home  lib64  mnt  proc  run   srv  tmp  var
+bin                dev   etc         lib   media  opt  root  sbin  sys  usr
+
+[root@3f15ac3f779f /]# ls  /dockerfile/  ## 注意原有的文件,后面会有对比改变
+Dockerfile  local.repo  run.sh
+
+[root@3f15ac3f779f /]# ifconfig |awk '/inet /{print $2}'
+172.17.0.2
+127.0.0.1
+[root@3f15ac3f779f /]# cat  /bin/run.sh 
+#!/bin/bash
+/usr/sbin/sshd  -D  &
+/usr/sbin/httpd  -DFOREGROUND  &
+[root@3f15ac3f779f /]# ls  /etc/init.d/run.sh  -l
+-rwxr-xr-x 1 root root 67 Dec 28 06:12 /etc/init.d/run.sh
+[root@3f15ac3f779f /]# exit
+exit
+
+[root@Va2 ~]# docker  ps 
+CONTAINER ID        IMAGE                                COMMAND             CREATED             STATUS              PORTS               NAMES
+3f15ac3f779f        192.168.0.11:5000/newcentos:latest   "/bin/bash"         34 minutes ago      Up 8 minutes                            cocky_gates
+
+
+[root@Va2 ~]# ls  /var/www/html/
+index.html  test2.html  test.html
+
+------------------------------- 用 共享的镜像 192.168.0.11:5000/newcentos:latest 新建运行容器 -----------
+参数 -v 目录挂载，
+让容器内部目录和宿主主机目录关联起来，
+这样就可以直接操作宿主主机目录
+而不用再操作具体容器了
+-v 相当于建立了一个软链接
+
+注意容器中的目录
+必须原来不存在
+如果对应容器中的目录同名
+则容器中的目录原有内容被覆盖,
+看不到原有数据了
+# docker  run  -td  shdimg:shdtag   /etc/rc.d/init.d/run.sh ##注意对比
+
+
+           docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+
+[root@Va2 ~]# docker  run  -td   -v  /var/www/html/:/dockerfile  \ 
+>           192.168.0.11:5000/newcentos:latest  /bin/bash  ## 新建运行容器 
+
+599eb1e7c51d007c2dad376dcb0711028bb64f4c17e8c8763e6a561b48adbd65
+
+
+[root@Va2 ~]# docker  exec  -it   599    /bin/bash  ## 进入容器
+
+[root@599eb1e7c51d /]# ifconfig  |awk '/inet /{print $2}'
+172.17.0.3
+127.0.0.1
+
+[root@599eb1e7c51d /]# ls  /
+anaconda-post.log  boot  dockerfile  home  lib64  mnt  proc  run   srv  tmp  var
+bin                dev   etc         lib   media  opt  root  sbin  sys  usr
+
+/**************************************
+
+[root@3f15ac3f779f /]# ls  /dockerfile/  ## 注意原有的文件,后面会有对比改变
+Dockerfile  local.repo  run.sh
+
+         ###  注意原有的文件Dockerfile  local.repo  run.sh,
+        ##   被 宿主主机目录  /var/www/html/ 中的文件 覆盖了,
+      ##       只能看到 宿主主机目录  /var/www/html/下的文件
+   ##  index.html  test2.html  test.html
+*********/
+
+[root@599eb1e7c51d /]# ls  /dockerfile/  ## 对比前面的目录
+index.html  test2.html  test.html
+
+[root@599eb1e7c51d /]# cat  /dockerfile/index.html 
+<h1> Va2   192.168.0.12 </h1>
+
+[root@599eb1e7c51d /]# apachectl  ##开启apache 服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.3. Set the 'ServerName' directive globally to suppress this message
+
+[root@599eb1e7c51d /]# elinks  -dump  172.17.0.3
+              /usr/sbin/sshd -D;CMD [/usr/sbin/httpd,-DFOREGROUND]
+
+                  docker commit c1078c9c47e4 newcentos:latest
+
+/*************************************************************
+  docker容器不保持任何数据
+重要数据请使用外部卷存储（数据持久化）
+容器可以挂载真实机目录或共享存储为卷
+
+
+
+##  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录(可以有多层目录结构 :/filea/b/c/d )
+
+[root@Va2 ~]# docker  run  -td   -v  /var/www/html/:/filea/b/c/d  \ 
+>           192.168.0.11:5000/newcentos:latest  /bin/bash  ## 新建运行容器
+**************************/
+
+           docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+
+[root@Va2 ~]# docker  run  -td   -v  /var/www/html/:/dockerfile  \ 
+>           192.168.0.11:5000/newcentos:latest  /bin/bash  ## 新建运行容器 
+
+************/
+   ## 注意容器中修改挂载 宿主主机目录 : 容器对应目录下的文件,会直接改变宿主主机目录下 的文件内容
+
+[root@599eb1e7c51d /]# echo  "<h1>add localhost 172.17.0.3 599eb</h1>" >>/dockerfile/test.html 
+
+[root@599eb1e7c51d /]# elinks  -dump  172.17.0.2  ## 172.17.0.2容器主机未开启apache 服务
+ELinks: Connection refused
+
+[root@599eb1e7c51d /]# exit
+exit
+
+[root@Va2 ~]# ll /var/www/html/test.html 
+-rw-r--r-- 1 root root 72 12月 28 17:29 /var/www/html/test.html
+
+  ## 注意容器中修改挂载 宿主主机目录 : 容器对应目录下的文件,会直接改变宿主主机目录下 的文件内容
+
+[root@Va2 ~]# cat  /var/www/html/test.html  ## 宿主主机目录下 的文件内容改变了
+Va2 test abc123
+docker test add
+<h1>add localhost 172.17.0.3 599eb</h1>
+
+[root@Va2 ~]# stat   /var/www/html/test.html ## 宿主主机目录下 的文件内容改变了
+
+  文件："/var/www/html/test.html"
+  大小：72        	块：8          IO 块：4096   普通文件
+设备：fd00h/64768d	Inode：51125185    硬链接：1
+权限：(0644/-rw-r--r--)  Uid：(    0/    root)   Gid：(    0/    root)
+最近访问：2018-12-28 17:51:12.899242659 +0800
+最近更改：2018-12-28 17:29:32.800520262 +0800
+最近改动：2018-12-28 17:29:32.800520262 +0800
+创建时间：-
+
+[root@Va2 ~]# elinks   -dump  192.168.0.12
+                                Va2 192.168.0.12
+
+[root@Va2 ~]# elinks   -dump  192.168.0.12/test.html
+   Va2 test abc123 docker test add
+
+                         add localhost 172.17.0.3 599eb
+
+[root@Va2 ~]# tree    /root/dockerfile/
+/root/dockerfile/
+├── Dockerfile
+├── local.repo
+└── run.sh
+
+0 directories, 3 files
+[root@Va2 ~]# tree    /root/dockerfile2/
+/root/dockerfile2/
+├── Dockerfile
+└── local.repo
+
+0 directories, 2 files
+
+==================================
+
+[root@Va2 ~]# rpm  -qa |grep nfs
+nfs-utils-1.3.0-0.48.el7.x86_64
+libnfsidmap-0.25-17.el7.x86_64
+
+
+[root@Va2 ~]# mkdir  /var/webroot_va2
+
+[root@Va2 ~]# showmount  -e  Va3  
+Export list for Va3:
+/var/webroot 192.168.0.0/24
+
+[root@Va2 ~]# mount  -t  nfs   192.168.0.13:/var/webroot/  /var/webroot_va2/
+
+[root@Va2 ~]# ls   /var/webroot_va2/
+Va3.txt
+
+[root@Va2 ~]# echo "Va2 add" >> /var/webroot_va2/Va3.txt 
+
+[root@Va2 ~]# cat  /var/webroot_va2/Va3.txt
+Va3  192.168.0.13 nfs-server
+Va1 added
+Va2 add
+[root@Va2 ~]# df  -hT  /var/webroot_va2/
+文件系统                  类型  容量  已用  可用 已用% 挂载点
+192.168.0.13:/var/webroot nfs4   17G  3.1G   14G   18% /var/webroot_va2
+
+[root@Va2 ~]# umount  /var/webroot_va2/
+
+[root@Va2 ~]# ls  /var/webroot_va2/
+
+[root@Va2 ~]# vim  /etc/fstab 
+
+[root@Va2 ~]# tail -1   /etc/fstab
+192.168.0.13:/var/webroot/  /var/webroot_va2/  nfs   defaults,_netdev  0  0
+
+[root@Va2 ~]# mount  -a
+
+[root@Va2 ~]# ls  /var/webroot_va2/
+Va3.txt
+
+[root@Va2 ~]# cat  /var/webroot_va2/Va3.txt 
+Va3  192.168.0.13 nfs-server
+Va1 added
+Va2 add
+
+   Up 2 hours                              cocky_gates
+[root@Va2 ~]# docker  ps  -q
+599eb1e7c51d
+3f15ac3f779f
+[root@Va2 ~]# docker  stop  $(docker ps  -q)
+599eb1e7c51d
+3f15ac3f779f
+
+[root@Va2 ~]# docker  rm  $(docker ps -aq)
+599eb1e7c51d
+3f15ac3f779f
+
+------------------------------- 用 共享的镜像 192.168.0.11:5000/shdimg:latest 新建运行容器 -----------
+参数 -v 目录挂载，
+让容器内部目录和宿主主机目录关联起来，
+这样就可以直接操作宿主主机目录
+而不用再操作具体容器了
+-v 相当于建立了一个软链接
+
+注意容器中的目录
+必须原来不存在
+如果对应容器中的目录同名
+则容器中的目录原有内容被覆盖,
+看不到原有数据了
+         docker  run  -td  -v  冒号前为宿主主机目录 : 冒号后为容器对应目录
+
+[root@Va2 ~]# docker  run  -td  -v  /var/webroot_va2/:/var/www/html/ \
+>  192.168.0.11:5000/shdimg:latest  /etc/rc.d/init.d/run.sh
+
+Unable to find image '192.168.0.11:5000/shdimg:latest' locally
+latest: Pulling from shdimg
+9770d73ca513: Already exists 
+a70f37d804b3: Pull complete 
+0ba3655db876: Pull complete 
+08b5b612cf11: Pull complete 
+d4d203c2bb1c: Pull complete 
+2e0e5754f501: Pull complete 
+1aa2d17ca6b7: Pull complete 
+Digest: sha256:227b6e1d67e013355a518fc4787b681742cb16057c9dba8748abc4552aa106c3
+Status: Downloaded newer image for 192.168.0.11:5000/shdimg:latest
+35dc413ac61b83550635b05e0cd7ec5992c3e9bef22a3d43ba0a466594c80f76
+
+[root@Va2 ~]# docker  history  192.168.0.11:5000/shdimg:latest  |grep  -i  cmd
+
+8fadf76f4dd1        31 hours ago        /bin/sh -c #(nop)  CMD ["/etc/rc.d/init.d/run   0 B                 
+<missing>           31 hours ago        /bin/sh -c echo "/usr/sbin/sshd -D;CMD [\"/us   57 B                
+<missing>           8 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B  
+               
+[root@Va2 ~]# docker  images   |head  -4
+REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/newcentos   latest              084bebfe00d3        5 hours ago         358.7 MB
+192.168.0.11:5000/shdimg      latest              8fadf76f4dd1        31 hours ago        322.9 MB
+mycentos                      latest              b717c768dc5f        3 days ago          319.9 MB
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE                             COMMAND                  CREATED              STATUS              PORTS                     NAMES
+35dc413ac61b        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   About a minute ago   Up About a minute   22/tcp, 80/tcp, 443/tcp   tiny_minsky
+[root@Va2 ~]# docker  ps -a
+CONTAINER ID        IMAGE                             COMMAND                  CREATED              STATUS              PORTS                     NAMES
+35dc413ac61b        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   About a minute ago   Up About a minute   22/tcp, 80/tcp, 443/tcp   tiny_minsky
+
+[root@Va2 ~]# docker  inspect  35dc  |grep -B1 -A2 -En \
+>    "\"Env\": \[|\"Cmd\": \["
+133-            "StdinOnce": false,
+134:            "Env": [
+135-                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+136-            ],
+137:            "Cmd": [
+138-                "/etc/rc.d/init.d/run.sh"
+139-            ],
+[root@Va2 ~]# 
+
+[root@Va2 ~]# ll  /root/.ssh/known_hosts 
+-rw-r--r-- 1 root root 0 12月 28 17:10 /root/.ssh/known_hosts
+
+[root@Va2 ~]# docker  inspect  35dc |grep  -En "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+14:            "Pid": 10267,
+25:        "Name": "/tiny_minsky",
+120:            "Hostname": "35dc413ac61b",
+164:            "Gateway": "172.17.0.1",
+167:            "IPAddress": "172.17.0.2",
+178:                    "Gateway": "172.17.0.1",
+179:                    "IPAddress": "172.17.0.2",
+
+[root@Va2 ~]# curl  -i  172.17.0.2
+
+HTTP/1.1 200 OK
+Date: Fri, 28 Dec 2018 12:55:13 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Fri, 28 Dec 2018 12:31:17 GMT
+ETag: "18-57e143d5ac3bf"
+Accept-Ranges: bytes
+Content-Length: 24
+Content-Type: text/html; charset=UTF-8
+
+<h1>Va1 first add</h1> 
+
+[root@Va2 ~]# ls  /var/webroot_va2/
+index.html  Va3.txt
+
+[root@Va2 ~]# echo  "Va2 secondly  add" >> /var/webroot_va2/index.html 
+
+[root@Va2 ~]# elinks  -dump  172.17.0.2
+                                 Va1 first add
+
+   Va2 secondly add
+[root@Va2 ~]# 
+[root@Va2 ~]# ifconfig |grep  -A1  "flags="
+docker0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+ ## 注意veth6b1ba28 这是和容器通信的通道,每次产生的名字不一样
+
+veth6b1ba28: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::94fc:52ff:fe04:8706  prefixlen 64  scopeid 0x20<link>
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@Va2 ~]# 
+[root@Va2 ~]# docker  ps -aq
+35dc413ac61b
+[root@Va2 ~]# docker  ps -q
+35dc413ac61b
+
+[root@Va2 ~]# docker  stop  35dc  ## 关闭容器
+35dc
+
+[root@Va2 ~]# ifconfig |grep  -A1  "flags="  ## 注意关闭容器后 veth6b1ba28 网卡消失了
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@Va2 ~]# 
+
+
+
+Bridge模式
+
+
+当Docker进程启动时，会在主机上创建一个名为docker0的虚拟网桥，
+此主机上启动的Docker容器会连接到这个虚拟网桥上。
+虚拟网桥的工作方式和物理交换机类似，这样主机上的所有容器就通过交换机连在了一个二层网络中。
+
+从docker0子网中分配一个IP给容器使用，并设置docker0的IP地址为容器的默认网关。在主机上创建一对虚拟网卡veth pair设备，Docker将veth pair设备的一端放在新创建的容器中，并命名为eth0（容器的网卡），另一端放在主机中，以vethxxx这样类似的名字命名，并将这个网络设备加入到docker0网桥中。可以通过brctl show命令查看。
+
+bridge模式是docker的默认网络模式，不写--net参数，就是bridge模式。使用docker run -p时，docker实际是在iptables做了DNAT规则，实现端口转发功能。可以使用iptables -t nat -vnL查看。
+
+bridge模式如下图所示：
+
+https://www.cnblogs.com/yy-cxd/p/6553624.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.13
+
+[root@Va3 ~]# systemctl  is-active  httpd
+active
+[root@Va3 ~]# elinks -dump  192.168.0.13
+                                Va3 192.168.0.13
+
+[root@Va3 ~]# yum -y install  nfs-utils |tail -3
+.......................
+软件包 1:nfs-utils-1.3.0-0.48.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@Va3 ~]# rpm  -qa |grep nfs-utils
+nfs-utils-1.3.0-0.48.el7.x86_64
+
+[root@Va3 ~]# vim  /etc/exports
+
+[root@Va3 ~]# cat  /etc/exports
+
+/var/webroot   192.168.0.0/24(rw)
+
+[root@Va3 ~]# ll   /etc/exports
+-rw-r--r-- 1 root root 34 12月 28 18:42 /etc/exports
+
+[root@Va3 ~]# cat  /etc/passwd |grep nfs
+rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin
+nfsnobody:x:65534:65534:Anonymous NFS User:/var/lib/nfs:/sbin/nologin
+
+NFS配置项
+no_root_squash和root_squash的区别
+
+no_root_squash：
+ 登入 NFS 主机使用分享目录的使用者，
+如果是 root ，对于分享的目录来说，
+具有 root 的权限！这个选项『极不安全』，不建议使用
+ 
+Turn off root squashing 
+关闭根挤压
+squashing  挤进( squash的现在分词 ); 
+将（某人[某物]）压扁; 将（某人[某物]）向某方挤; 平定（叛乱等）;
+
+squash 挤进; 将（某人[某物]）压扁; 使沉默; 平定（叛乱等）;
+vi. 挤入; 受挤压; 发出挤压声;
+n. （软式） 墙网球; 
+南瓜小果（主要种类为笋瓜 winter squash 和西葫芦 summer squash）;
+ 果汁汽水; 拥挤的人群;
+
+root_squash：
+在登入 NFS 主机使用分享之目录的使用者如果是 root 时，
+这个使用者的权限将被压缩成为匿名使用者，
+通常他的 UID 与 GID 都会变成 nobody 那个系统账号的身份；
+
+[root@Va3 ~]# man exports  |grep -B1  -A2  -n  "rw,no_root_squash"
+
+364-       # sample /etc/exports file
+365:       /               master(rw) trusty(rw,no_root_squash)
+366-       /projects       proj*.local.domain(rw)
+367-       /usr            *.local.domain(ro) @trusted(rw)
+
+[root@Va3 ~]# vim   /etc/exports
+
+[root@Va3 ~]# cat /etc/exports
+/var/webroot   192.168.0.0/24(rw,no_root_squash)
+
+[root@Va3 ~]# mkdir  /var/webroot
+
+[root@Va3 ~]# chmod 777  /var/webroot
+
+[root@Va3 ~]# ls -ld  /var/webroot/
+drwxrwxrwx 2 root root 6 12月 28 19:04 /var/webroot/
+
+[root@Va3 ~]# systemctl  restart  nfs-server.service 
+[root@Va3 ~]# systemctl  is-enabled   nfs-server.service
+disabled
+[root@Va3 ~]# systemctl  enable  nfs-server.service
+Created symlink from /etc/systemd/system/multi-user.target.wants/nfs-server.service to /usr/lib/systemd/system/nfs-server.service.
+
+[root@Va3 ~]# which  exportfs 
+/usr/sbin/exportfs
+
+[root@Va3 ~]# exportfs   -avr  ##全部重新挂载并显示共享目录
+exporting 192.168.0.0/24:/var/webroot
+
+exportfs常用选项
+-a：表示全部挂载或者卸载
+-r：表示重新挂载
+-u：表示卸载某一个目录
+-v：表示显示共享的目录
+[root@Va3 ~]# ls /var/webroot/
+[root@Va3 ~]# ls  /mnt/
+[root@Va3 ~]# echo  "Va3  192.168.0.13 nfs-server" > /var/webroot/Va3.txt
+[root@Va3 ~]# ls /var/webroot/
+Va3.txt
+[root@Va3 ~]# mount  -t  nfs  192.168.0.13:/var/webroot/  /mnt/
+
+[root@Va3 ~]# ls  /mnt/
+Va3.txt
+[root@Va3 ~]# cat  /mnt/Va3.txt 
+Va3  192.168.0.13 nfs-server
+
+[root@Va3 ~]# df  -hT  /mnt/
+文件系统                         类型    容量  已用    可用   已用% 挂载点
+192.168.0.13:/var/webroot nfs4   17G  3.1G   14G   18% /mnt
+
+[root@Va3 ~]# umount  /mnt/
+[root@Va3 ~]# ls   /mnt/
+
+[root@Va3 ~]# ls  /var/webroot/
+index.html  Va3.txt
+
+[root@Va3 ~]# cat  /var/webroot/index.html 
+<h1>Va1 first add</h1> 
+Va2 secondly  add
+
+[root@Va3 ~]# echo "<h1>Va3  thirdly  added</h1>"  >> /var/webroot/index.html
+
+[root@Va2 ~]# elinks  -dump  172.17.0.2
+                                 Va1 first add
+
+   Va2 secondly add
+
+                               Va3 thirdly added
+[root@Va2 ~]# curl  -I  172.17.0.2
+HTTP/1.1 200 OK
+Date: Fri, 28 Dec 2018 13:05:37 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Fri, 28 Dec 2018 13:04:33 GMT
+ETag: "47-57e14b45002ff"
+Accept-Ranges: bytes
+Content-Length: 71
+Content-Type: text/html; charset=UTF-8
+
+[root@Va2 ~]# 
+
+[root@Va1 ~]# elinks  -dump  172.17.0.3
+                                 Va1 first add
+
+   Va2 secondly add
+
+                               Va3 thirdly added
+[root@Va1 ~]# curl  -I  172.17.0.3
+HTTP/1.1 200 OK
+Server: nginx/1.11.5
+Date: Fri, 28 Dec 2018 13:06:19 GMT
+Content-Type: text/html
+Content-Length: 71
+Last-Modified: Fri, 28 Dec 2018 13:04:33 GMT
+Connection: keep-alive
+ETag: "5c261f61-47"
+Accept-Ranges: bytes
+
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+使用共享存储的映射
+
+思路：将一台主机做为nfs主机， 创建相应的文件夹，并将其共享给docker的两台主机，两台docker主机将分享的文件夹映射到容器中，使得对应的容器可以共享到nfs主机的内容。可以将http等服务器的相应的页面文件夹使用这种形式，从而实现多个容器跑一个业务。
+nfs主机配置【192.168.6.77】
+[root@nfs ~]# yum -y install nfs-utils
+[root@nfs ~]# vim /etc/exports
+/public  *(rw)
+[root@nfs ~]# systemctl restart nfs-server
+Failed to restart nfs-serve.service: Unit not found
+[root@nfs ~]# mkdir /public
+[root@nfs ~]# cd /public/
+[root@nfs public]# touch nfs.txt
+[root@nfs public]# ls
+nfs.txt
+
+docker1主机配置
+[root@docker1 ~]# vim /etc/fstab 
+192.168.6.77:/public /mnt/nfs nfs defaults,_netdev 0 0
+[root@docker1 ~]# mkdir  /mnt/nfs 
+[root@docker1 ~]# systemctl restart nfs-server
+[root@docker1 ~]# mount -a
+[root@docker1 ~]# df -h
+192.168.6.77:/public   17G  3.2G   14G   19% /mnt/nfs
+
+[root@docker1 ~]# docker run -it -v /mnt/nfs/:/zhuhaiyan 192.168.6.153:5000/myos
+[root@c7c376e3755a /]# cd /zhuhaiyan 
+
+[root@c7c376e3755a zhuhaiyan]# ls
+nfs.txt
+
+docker2主机配置
+[root@docker2 ~]# vim /etc/fstab 
+192.168.6.77:/public /mnt/nfs nfs defaults,_netdev 0 0
+[root@docker2 ~]# mkdir  /mnt/nfs 
+[root@docker2 ~]# systemctl restart nfs-server
+[root@docker2 ~]# mount -a
+[root@docker2 ~]# df -h
+192.168.6.77:/public   17G  3.2G   14G   19% /mnt/nfs
+[root@docker2 ~]# docker run -it -v /mnt/nfs/:/zhuhaiyan 192.168.6.153:5000/myos
+[root@cdd805771d07 /]# cd /zhuhaiyan/
+[root@cdd805771d07 zhuhaiyan]# ls
+nfs.txt
+
+
+
+
+
+
