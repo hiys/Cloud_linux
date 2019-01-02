@@ -1,0 +1,1847 @@
+
+[root@hiys ~]# for i in 192.168.1.1{1..7}
+> do
+>  scp  -o  StrictHostKeyChecking=no  '/root/桌面/rpm-tar-zip-iso/elk.tar' '/root/桌面/rpm-tar-zip-iso/hadoop.tar' '/root/桌面/rpm-tar-zip-iso/hadoop.zip'    root@${i}:/root/
+> done
+
+[root@hiys ~]# for i in 192.168.1.1{1..7}; do  scp  -o  StrictHostKeyChecking=no   '/root/桌面/rpm-tar-zip-iso/nagios-4.2.4.tar.gz' '/root/桌面/rpm-tar-zip-iso/nagios-plugins-2.1.4.tar.gz' '/root/桌面/rpm-tar-zip-iso/nrpe-2.12.tar.gz' '/root/桌面/rpm-tar-zip-iso/nrpe-3.0.1.tar.gz'       root@${i}:/root/; done
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+
+[root@Va1 ~]# ifconfig |awk '/inet /{print $2}'                                                        ★ --虚拟机--★ 
+172.17.0.1
+192.168.1.11                                                                                           ★ --虚拟机--★ 
+192.168.4.11
+192.168.3.11
+127.0.0.1
+[root@Va1 ~]#  route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va1 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   16G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm                                                    ★ --虚拟机--★ 
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-14680134-pool 252:0    0  100G  0 dm   
+[root@Va1 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+                                                                                                       ★ --虚拟机--★ 
+[docker]
+name=docker                                                                                            ★ --虚拟机--★ 
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]                                                                                              ★ --虚拟机--★ 
+name=ansible                                                                                           ★ --虚拟机--★ 
+baseurl=ftp://192.168.1.254/ansible                                                                    ★ --虚拟机--★ 
+gpgcheck=0
+enabled=1
+[root@Va1 ~]# for i in  192.168.1.1{7..9}
+> do
+> scp  -o  StrictHostKeyChecking=no  /etc/yum.repos.d/local.repo   root@${i}:/etc/yum.repos.d/         ★ --虚拟机--★ 
+> done
+
+[root@Va1 ~]# ls /dev/pts/
+0  ptmx
+
+[root@Va1 ~]# echo a >f1
+[root@Va1 ~]# ls                                                                                       ★ --虚拟机--★ 
+aaa  eip  f1  index2.html  index.html  user.sh
+[root@Va1 ~]# >f1 
+[root@Va1 ~]# exec 1>f1 
+[root@Va1 ~]# ls
+[root@Va1 ~]# ls
+--------------------- 在第二个终端查看 ------------
+
+[root@Va1 ~]# cat f1 
+aaa
+eip
+f1
+index2.html
+index.html
+user.sh
+aaa
+eip
+f1
+index2.html
+index.html
+user.sh
+[root@Va1 ~]# ls
+aaa  eip  f1  index2.html  index.html  user.sh
+------------------------------------------------------------------------------------
+
+[root@Va1 ~]# logout 
+
+[root@hiys ~]# ssh -X 192.168.1.11                                                                     ★ --虚拟机--★ 
+。。。。。。。。。。。。。。。。。。。。。。。。。                                            ★ --虚拟机--★ 
+[root@Va1 ~]# ls                                                                                       ★ --虚拟机--★ 
+aaa  eip  f1  index2.html  index.html  user.sh                                                         ★ --虚拟机--★ 
+[root@Va1 ~]# cat f1
+aaa
+eip
+f1
+index2.html
+index.html
+user.sh
+aaa
+eip                                                                                                    ★ --虚拟机--★ 
+f1
+index2.html
+index.html
+user.sh
+[root@Va1 ~]# >f1 
+[root@Va1 ~]# cat  f1
+[root@Va1 ~]# exec 55>f1
+[root@Va1 ~]# ls
+aaa  eip  f1  index2.html  index.html  user.sh                                                         ★ --虚拟机--★ 
+[root@Va1 ~]# cat  f1 
+[root@Va1 ~]# vim ha.sh
+
+[root@Va1 ~]# cat ha.sh
+
+#!/bin/bash
+exec 9<>/dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: www.baidu.com\r\n" >&9
+echo  -ne  "User_agent: curl" >&9
+echo  -e  "\r\n"  >&9
+
+cat  <&9
+
+[root@Va1 ~]# . ha.sh  www.baidu.com |head  -24
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: no-cache
+Connection: Keep-Alive
+Content-Length: 14615
+Content-Type: text/html
+Date: Fri, 23 Nov 2018 02:05:54 GMT
+Etag: "5bf3770c-3917"
+Last-Modified: Tue, 20 Nov 2018 02:53:00 GMT
+P3p: CP=" OTI DSP COR IVA OUR IND COM "
+Pragma: no-cache
+Server: BWS/1.1
+Set-Cookie: BAIDUID=3C6B7B4C9DEAB7A916B3307DD6007C61:FG=1; expires=Thu, 31-Dec-37 23:55:55 GMT; max-age=2147483647; path=/; domain=.baidu.com
+Set-Cookie: BIDUPSID=3C6B7B4C9DEAB7A916B3307DD6007C61; expires=Thu, 31-Dec-37 23:55:55 GMT; max-age=2147483647; path=/; domain=.baidu.com
+Set-Cookie: PSTM=1542938754; expires=Thu, 31-Dec-37 23:55:55 GMT; max-age=2147483647; path=/; domain=.baidu.com
+Vary: Accept-Encoding
+X-Ua-Compatible: IE=Edge,chrome=1
+
+<!DOCTYPE html><!--STATUS OK-->
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+	<link rel="dns-prefetch" href="//s1.bdstatic.com"/>
+[root@Va1 ~]# 
+[root@Va1 ~]# yum provides  firefox
+..................................
+firefox-52.2.0-2.el7.centos.i686 : Mozilla Firefox Web browser
+源    ：CentOS7-1708
+
+firefox-52.2.0-2.el7.centos.x86_64 : Mozilla Firefox Web browser
+源    ：CentOS7-1708
+
+[root@Va1 ~]# yum -y install  firefox |tail -9
+  mesa-libgbm.x86_64 0:17.0.1-6.20170307.el7                                    
+  mesa-libglapi.x86_64 0:17.0.1-6.20170307.el7                                  
+  mozilla-filesystem.x86_64 0:1.9-11.el7                                        
+  pango.x86_64 0:1.40.4-1.el7                                                   
+  pixman.x86_64 0:0.34.0-1.el7                                                  
+  startup-notification.x86_64 0:0.12-8.el7                                      
+  xcb-util.x86_64 0:0.4.0-2.el7                                                 
+
+完毕！
+
+[root@Va1 ~]# rpm -q  firefox
+firefox-52.2.0-2.el7.centos.x86_64
+
+[root@Va1 ~]# firefox  www.baidu.com
+Error: GDK_BACKEND does not match available displays
+
+[root@Va1 ~]# which  firefox
+/usr/bin/firefox
+
+[root@Va1 ~]# yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+[root@Va1 ~]# vim  /etc/hosts
+[root@Va1 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4           ★ --虚拟机--★ 
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va1 ~]# for i in 192.168.1.1{2..7}                                                     ★ --虚拟机--★ 
+> do
+> scp  -o  StrictHostKeyChecking=no  /etc/hosts  root@${i}:/etc/
+> done
+hosts                                                                     100%  331   259.4KB★ --虚拟机--★ 
+hosts                                                                     100%  331   217.2KB/s   00:00    
+hosts                                                                     100%  331   233.5KB/s   00:00    
+hosts                                                                     100%  331   234.1KB/s   00:00    
+hosts                                                                     100%  331   238.0KB/s   00:00    
+root@192.168.1.17's password: 
+hosts                                                                     100%  331   724.4KB/s   00:00    
+[root@Va1 ~]# yum  -y install java-1.8.0-openjdk.x86_64  |tail  -9
+  lksctp-tools.x86_64 0:1.0.17-2.el7                                            
+  python-javapackages.noarch 0:3.4.1-11.el7                                     
+  python-lxml.x86_64 0:3.2.1-4.el7                                                           ★ --虚拟机--★ 
+  ttmkfdir.x86_64 0:3.0.9-42.el7                                                
+  tzdata-java.noarch 0:2017b-1.el7                                                           ★ --虚拟机--★ 
+  xorg-x11-font-utils.x86_64 1:7.5-20.el7                                       
+  xorg-x11-fonts-Type1.noarch 0:7.5-9.el7                                                    ★ --虚拟机--★ 
+                                                                                             ★ --虚拟机--★ 
+完毕！
+[root@Va1 ~]# java  -version                                                                 ★ --虚拟机--★ 
+openjdk version "1.8.0_131"                                                                  ★ --虚拟机--★ 
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)       ★ --虚拟机--★ 
+
+/**************
+   http://www.elasticsearch.org/overview/elkdownloads/下载对应系统的安装包（我下载的是tar的），下载解压以后运行es根目录下bin目录的elasticsearch命令（无需配置直接启动）
+***************************/
+
+[root@Va1 ~]# yum  -y install elasticsearch |tail -9   ★ --虚拟机--★ 
+
+ sudo systemctl enable elasticsearch.service
+### You can start elasticsearch service by executing
+ sudo systemctl start elasticsearch.service
+  验证中      : elasticsearch-2.3.4-1.noarch                                1/1 
+                                                                                             ★ --虚拟机--★ 
+已安装:
+  elasticsearch.noarch 0:2.3.4-1                                                             ★ --虚拟机--★ 
+                                                                                             ★ --虚拟机--★ 
+完毕！                         ★ --虚拟机--★ 
+/**************************************
+[root@Va1 ~]#  sed  -n 54p  /etc/elasticsearch/elasticsearch.yml
+# network.host: 192.168.0.1
+[root@Va1 ~]# sed -n  '54s/0.1/1.11/p' /etc/elasticsearch/elasticsearch.yml                  ★ --虚拟机--★ 
+# network.host: 192.168.1.11
+
+[root@Va1 ~]# sed -i  '54s/0.1/1.11/'  /etc/elasticsearch/elasticsearch.yml
+[root@Va1 ~]#  sed  -n 54p  /etc/elasticsearch/elasticsearch.yml
+# network.host: 192.168.1.11
+
+[root@Va1 ~]# sed  -i '54s/# //' /etc/elasticsearch/elasticsearch.yml                        ★ --虚拟机--★ 
+[root@Va1 ~]#  sed  -n 54p  /etc/elasticsearch/elasticsearch.yml
+network.host: 192.168.1.11 
+
+正则中有特殊含义的符号，如：
+\ $ * + ( )
+在正则匹配的时候，如果要去除其特殊含义，仅表示字面含义（字符串），就要在前面加转义符 \ 转义。写为 \\, \$, \*, \+, \(, \)。
+在sed命令中有许多的字符都被转义,比如\ , $, ^,单双引号还有 . 点号, [ , ] 中括号
+如果sed加了-r选项以支持扩展的正则，则某些符号可以不转义。    
+************/                                                              ★ --虚拟机--★ 
+
+[root@Va1 ~]# vim  /etc/elasticsearch/elasticsearch.yml
+
+ 17 cluster.name: nsd1807
+ 23 node.name: Va1
+ 54 network.host: 192.168.1.11
+ 68 discovery.zen.ping.unicast.hosts: ["Va1", "Va2","Va3"]
+
+[root@Va1 ~]# sed -n  '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml                ★ --虚拟机--★ 
+cluster.name: nsd1807
+node.name: Va1
+network.host: 192.168.1.11
+discovery.zen.ping.unicast.hosts: ["Va1", "Va2","Va3"]
+
+[root@Va1 ~]# which firefox
+/usr/bin/firefox
+
+[root@Va1 ~]# systemctl  restart elasticsearch
+[root@Va1 ~]# systemctl  enable  elasticsearch
+Created symlink from /etc/systemd/system/multi-user.target.wants/elasticsearch.service to /usr/lib/systemd/system/elasticsearch.service.
+
+[root@Va1 ~]# ss  -anpult |grep 92
+tcp    LISTEN     0      50      ::ffff:192.168.1.11:9200                 :::*                   users:(("java",pid=2132,fd=110))
+tcp    LISTEN     0      50      ::ffff:192.168.1.11:9300                 :::*                   users:(("java",pid=2132,fd=92))
+
+[root@Va1 ~]# firefox  http://192.168.1.11:9200/_cluser/health?pretty
+Error: GDK_BACKEND does not match available displays
+[root@Va1 ~]# firefox  http://192.168.1.11:9200
+Error: GDK_BACKEND does not match available displays
+[root@Va1 ~]# 
+ [root@Va1 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6           ★ --虚拟机--★ 
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va1 ~]# sed -n 54p  /etc/elasticsearch/elasticsearch.yml
+network.host: 192.168.1.11
+[root@Va1 ~]# sed -i  '54s/192.168.1.11/0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
+[root@Va1 ~]# sed -n 54p  /etc/elasticsearch/elasticsearch.yml
+network.host: 0.0.0.0
+[root@Va1 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: nsd1807
+node.name: Va1
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["Va1", "Va2","Va3"]
+[root@Va1 ~]# 
+
+curl -XPUT
+     -XPOST
+
+curl -A
+     -i
+[root@Va1 ~]# sed  -n '44,$p'  /etc/ansible/hosts
+[web]
+Va[2:3]                                                                                      ★ --虚拟机--★ 
+                                                                                             ★ --虚拟机--★ 
+#[web:vars]
+#ansible_ssh_user="root"                                                                     ★ --虚拟机--★ 
+#ansible_ssh_pass="a"
+
+[db]
+Va[4:5]
+
+[other]
+Va6 
+Va7
+# ansible_ssh_user="root" ansible_ssh_pass="a"
+
+[app:children]
+web
+db
+
+#[app:vars]
+#ansible_ssh_user="root"
+#ansible_ssh_pass="a"
+[root@Va1 ~]# cd  /root/.ssh/
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+[root@Va1 .ssh]# ansible  all  -m  authorized_key  -a  \
+> "user=root  exclusive=true  manage_dir=true  key='$(<  /root/.ssh/id_rsa.pub)'"  -k
+
+SSH password: a  # //输入root用户密码a
+
+Va6 | SUCCESS => {
+............................
+}
+Va7 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "failed": false, 
+    "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present", 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+[root@Va1 .ssh]# ansible  all  -m ping 
+Va5 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}                                                                                            ★ --虚拟机--★ 
+Va2 | SUCCESS => {
+    "changed": false,                                                                        ★ --虚拟机--★ 
+    "failed": false, 
+    "ping": "pong"
+}                                                                                            ★ --虚拟机--★ 
+Va6 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+Va7 | SUCCESS => {
+    "changed": false, 
+    "failed": false, 
+    "ping": "pong"
+}
+[root@Va1 .ssh]# ssh Va7
+Last login: Fri Nov 23 15:12:09 2018 from 192.168.1.11
+[root@Va7 ~]# exit
+登出
+Connection to va7 closed.
+[root@Va1 .ssh]# 
+[root@Va1 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: nsd1807
+#
+node.name: Va1
+#
+network.host: 0.0.0.0
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]                                        ★ --虚拟机--★ 
+#
+[root@Va1 ~]# mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/                ★ --虚拟机--★ 
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va1 ~]#  systemctl enable elasticsearch
+[root@Va1 ~]# systemctl restart  elasticsearch
+[root@Va1 ~]# systemctl stop elasticsearch
+[root@Va1 ~]# ss  -anpult |grep 92        
+[root@Va1 ~]# systemctl restart  elasticsearch
+[root@Va1 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=3206,fd=92))
+[root@Va1 ~]# curl   http://192.168.1.12:9200/_cluser/health?pretty                          ★ --虚拟机--★ 
+{
+  "error" : {
+    "root_cause" : [ {
+      "type" : "illegal_argument_exception",
+      "reason" : "No feature for name [health]"                                              ★ --虚拟机--★ 
+    } ],
+    "type" : "illegal_argument_exception",
+    "reason" : "No feature for name [health]"
+  },
+  "status" : 400                                                                             ★ --虚拟机--★ 
+}
+[root@Va1 ~]# ls /etc/hosts                                                                  ★ --虚拟机--★ 
+/etc/hosts
+[root@Va1 ~]# cat /etc/hosts                                                                 ★ --虚拟机--★ 
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va1 ~]#  sed -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml 
+cluster.name: nsd1807
+node.name: Va1
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va1 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("java",pid=3206,fd=110))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=3206,fd=92))
+[root@Va1 ~]# firefox   http://192.168.1.12:9200/_cluster/health?pretty
+Error: GDK_BACKEND does not match available displays
+[root@Va1 ~]# which firefox
+/usr/bin/firefox
+[root@Va1 ~]# 
+
+curl -X PUT "http://192.168.1.15:9200/index" -d '
+{
+     "settings":{
+     "index":{
+     "number_of_shards":5,
+     "number_of_replicas":1
+    }
+   }
+ }'
+
+
+curl  -XPOST  http://192.168.1.15:9200/tedu/  -d \
+'{ "settings":{  \
+   "index":{   \
+    "number_of_shards":5, \
+    "number_of_replicas":1 \
+   } \
+ } \
+}' 
+
+
+
+curl  -XPUT  http://192.168.1.11:9200/tedu/nsd1807/3/_up0date  -d '
+{
+ "xx":"ssss",
+ "vv":"vvvv"
+}'
+
+curl  -XPOST  http://192.168.1.14:9200/tedu/nds1807/3  -d'
+
+ http://192.168.1.15:9200/_plugin/head
+
+ http://192.168.1.15:9200/_plugin/kopf
+
+ http://192.168.1.15:9200/_plugin/bigdesk
+
+ http://192.168.1.12:9200/_cluster/health?pretty
+
+curl  -XDELETE  http://192.168.1.12:9200/tedu/
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+
+[root@Va2 ~]# ifconfig |awk '/inet /{print $2}'                                                        ★ --虚拟机--★ 
+172.17.0.1
+192.168.1.12
+192.168.4.12
+192.168.3.12
+127.0.0.1
+[root@Va2 ~]#  route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va2 ~]# lsblk
+NAME                         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                          253:0    0   18G  0 disk 
+└─vda1                       253:1    0   18G  0 part /
+vdb                          253:16   0   15G  0 disk 
+loop0                          7:0    0  100G  0 loop 
+└─docker-253:1-20971586-pool 252:0    0  100G  0 dm   
+loop1                          7:1    0    2G  0 loop 
+└─docker-253:1-20971586-pool 252:0    0  100G  0 dm   
+
+[root@Va2 ~]# yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态              ★ --虚拟机--★ 
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va2 ~]# ls                                                                             ★ --虚拟机--★ 
+eip  elk.tar  hadoop.tar  hadoop.zip  index.html  uptime.yml
+[root@Va2 ~]# yum  -y install java-1.8.0-openjdk.x86_64  |tail  -9
+  python-javapackages.noarch 0:3.4.1-11.el7                                     
+  python-lxml.x86_64 0:3.2.1-4.el7                                              
+  stix-fonts.noarch 0:1.1.0-5.el7                                               
+  ttmkfdir.x86_64 0:3.0.9-42.el7                                                             ★ --虚拟机--★ 
+  tzdata-java.noarch 0:2017b-1.el7                                              
+  xorg-x11-font-utils.x86_64 1:7.5-20.el7                                       
+  xorg-x11-fonts-Type1.noarch 0:7.5-9.el7                                       
+
+完毕！
+[root@Va2 ~]#  java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@Va2 ~]#  yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591             ★ --虚拟机--★ 
+ansible                              ansible                                  18
+docker                               docker                                    2             ★ --虚拟机--★ 
+repolist: 9,611                                                                              ★ --虚拟机--★ 
+[root@Va2 ~]# yum  -y install elasticsearch |tail -9
+ sudo systemctl enable elasticsearch.service
+### You can start elasticsearch service by executing
+ sudo systemctl start elasticsearch.service
+  验证中      : elasticsearch-2.3.4-1.noarch                                1/1              ★ --虚拟机--★ 
+                                                                                             ★ --虚拟机--★ 
+已安装:
+  elasticsearch.noarch 0:2.3.4-1                                                
+                                                                                             ★ --虚拟机--★ 
+完毕！
+                                                              ★ --虚拟机--★ 
+[root@Va2 ~]# sed -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml 
+# cluster.name: my-application
+# node.name: node-1                                                                          ★ --虚拟机--★ 
+# network.host: 192.168.0.1
+# discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+
+
+[root@Va2 ~]# sed  -n '17s/# //p;17s/my-.*/nsd1807/p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: my-application
+cluster.name: nsd1807
+
+[root@Va2 ~]# sed  -n  '23s/# //p;23s/node-1/Va2/p'  /etc/elasticsearch/elasticsearch.yml
+node.name: node-1
+node.name: Va2
+
+[root@Va2 ~]# sed  -n  '54s/# //p;54s/0.1/1.12/p'  /etc/elasticsearch/elasticsearch.yml
+network.host: 192.168.0.1
+network.host: 192.168.1.12
+
+[root@Va2 ~]# sed  -n  '68s/# //p;68s/\[.*\]/["Va1", "Va2","Va3"]/p'  /etc/elasticsearch/elasticsearch.yml
+discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+discovery.zen.ping.unicast.hosts: ["Va1", "Va2","Va3"]
+[root@Va2 ~]# 
+正则中有特殊含义的符号，如：
+\ $ * + ( )
+在正则匹配的时候，如果要去除其特殊含义，仅表示字面含义（字符串），就要在前面加转义符 \ 转义。写为 \\, \$, \*, \+, \(, \)。
+在sed命令中有许多的字符都被转义,比如\ , $, ^,单双引号还有 . 点号, [ , ] 中括号
+如果sed加了-r选项以支持扩展的正则，则某些符号可以不转义。    
+************/      
+
+[root@Va2 ~]# sed -n  -e '17s/# //p;23s/# //p;54s/# //p;68s/# //p'  \
+> -e  '17s/my-.*/nsd1807/p;23s/node-1/Va2/p;54s/0.1/1.12/p;68s/\[.*\]/["Va1","Va2","Va3"]/p' \
+> /etc/elasticsearch/elasticsearch.yml
+cluster.name: my-application
+cluster.name: nsd1807
+node.name: node-1
+node.name: Va2
+network.host: 192.168.0.1
+network.host: 192.168.1.12
+discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+
+[root@Va2 ~]# sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: my-application
+cluster.name: nsd1807
+#
+node.name: Va2
+#
+network.host: 192.168.1.12
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va2 ~]# vim  /etc/elasticsearch/elasticsearch.yml
+
+[root@Va2 ~]# sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: my-application
+cluster.name: nsd1807
+#
+node.name: Va2
+#
+network.host: 192.168.1.12
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va2 ~]# 
+[root@Va2 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: my-application
+cluster.name: nsd1807
+#                                                                                            ★ --虚拟机--★ 
+node.name: Va2
+#
+network.host: 0.0.0.0
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]                                        ★ --虚拟机--★ 
+[root@Va2 ~]# mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va2 ~]#  systemctl enable elasticsearch                                                ★ --虚拟机--★ 
+Created symlink from /etc/systemd/system/multi-user.target.wants/elasticsearch.service to /usr/lib/systemd/system/elasticsearch.service.
+[root@Va2 ~]# systemctl restart  elasticsearch
+[root@Va2 ~]# systemctl stop elasticsearch
+[root@Va2 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("httpd",pid=796,fd=3),("httpd",pid=795,fd=3),("httpd",pid=794,fd=3),("httpd",pid=793,fd=3),("httpd",pid=792,fd=3),("httpd",pid=777,fd=3))
+[root@Va2 ~]# systemctl restart  elasticsearch
+[root@Va2 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("httpd",pid=796,fd=3),("httpd",pid=795,fd=3),("httpd",pid=794,fd=3),("httpd",pid=793,fd=3),("httpd",pid=792,fd=3★ --虚拟机--★ =777,fd=3))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=2242,fd=92))
+[root@Va2 ~]# sed -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml 
+#cluster.name: my-application
+#
+#
+#                                                                                            ★ --虚拟机--★ 
+[root@Va2 ~]# sed -n '18p;24p;55p;69p'  /etc/elasticsearch/elasticsearch.yml 
+cluster.name: nsd1807
+node.name: Va2
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va2 ~]# cat  /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va2 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("httpd",pid=796,fd=3),("httpd",pid=795,fd=3),("httpd",pid=794,fd=3),("httpd",pid=793,fd=3),("httpd",pid=792,fd=3),("httpd",pid=777,fd=3))
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("java",pid=2242,fd=135))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=2242,fd=92))
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+
+[root@Va3 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.1.13
+192.168.4.13
+192.168.3.13
+127.0.0.1
+[root@Va3 ~]#  route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va3 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0  12G  0 disk 
+[root@Va3 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk                                                               ★ --虚拟机--★ 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0  12G  0 disk 
+[root@Va3 ~]# yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态              ★ --虚拟机--★ 
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va3 ~]# ls                                                                             ★ --虚拟机--★ 
+eip  elk.tar  hadoop.tar  hadoop.zip  index.html
+[root@Va3 ~]# yum  -y install java-1.8.0-openjdk.x86_64  |tail  -9
+  python-javapackages.noarch 0:3.4.1-11.el7                                     
+  python-lxml.x86_64 0:3.2.1-4.el7                                              
+  stix-fonts.noarch 0:1.1.0-5.el7                                               
+  ttmkfdir.x86_64 0:3.0.9-42.el7                                                             ★ --虚拟机--★ 
+  tzdata-java.noarch 0:2017b-1.el7                                              
+  xorg-x11-font-utils.x86_64 1:7.5-20.el7                                       
+  xorg-x11-fonts-Type1.noarch 0:7.5-9.el7                                       
+
+完毕！
+[root@Va3 ~]#  java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+[root@Va3 ~]# yum  -y install elasticsearch |tail -9                                         ★ --虚拟机--★ 
+错误：无须任何处理
+已加载插件：fastestmirror                                                                    ★ --虚拟机--★ 
+Loading mirror speeds from cached hostfile
+没有可用软件包 elasticsearch。
+[root@Va3 ~]#  yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18             ★ --虚拟机--★ 
+docker                               docker                                    2
+repolist: 9,611
+[root@Va3 ~]# yum  -y install elasticsearch |tail -9
+ sudo systemctl enable elasticsearch.service
+### You can start elasticsearch service by executing
+ sudo systemctl start elasticsearch.service
+  验证中      : elasticsearch-2.3.4-1.noarch                                1/1 
+
+已安装:                                                                                      ★ --虚拟机--★ 
+  elasticsearch.noarch 0:2.3.4-1                                                
+                                                                                             ★ --虚拟机--★ 
+完毕！
+[root@Va3 ~]#  sed  -n 54p  /etc/elasticsearch/elasticsearch.yml
+# network.host: 192.168.0.1
+                                    ★ --虚拟机--★ 
+[root@Va3 ~]# sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml    ★ --虚拟机--★ 
+# cluster.name: my-application
+#
+# node.name: node-1
+#
+# network.host: 192.168.0.1
+#
+# discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+#
+[root@Va3 ~]# sed  -i  '17s/# //p;23s/# //;54s/# //;68s/# //;17s/my-.*/nsd1807/;23s/node-1/Va★ --虚拟机--★ 3/;68s/\[.*\]/["Va1","Va2","Va3"]/'   /etc/elasticsearch/elasticsearch.yml
+[root@Va3 ~]# sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.ymlcluster.name: my-application
+cluster.name: nsd1807
+#
+node.name: Va2
+#
+network.host: 192.168.1.13
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va3 ~]# sed  -i  '17s/^/#/'  /etc/elasticsearch/elasticsearch.yml
+[root@Va3 ~]# sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: my-application
+cluster.name: nsd1807
+#
+node.name: Va2
+#
+network.host: 192.168.1.13
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va3 ~]# 
+[root@Va3 ~]# sed -n '24p'  /etc/elasticsearch/elasticsearch.yml
+node.name: Va2
+[root@Va3 ~]# sed -i '24s/2/3/'  /etc/elasticsearch/elasticsearch.yml
+[root@Va3 ~]# sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: my-application
+cluster.name: nsd1807
+#
+node.name: Va3
+#
+network.host: 192.168.1.13
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+
+
+sed  -i  -e '17s/# //;23s/# //;54s/# //;68s/# //'  -e  '17s/my-.*/nsd1807/;23s/node-1/Va6/;54s/0.1/1.16/;68s/\[.*\]/["Va1","Va2","Va3"]/'   /etc/elasticsearch/elasticsearch.yml
+
+[root@Va3 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: my-application
+cluster.name: nsd1807
+#                                                                                            ★ --虚拟机--★ 
+node.name: Va3
+#
+network.host: 0.0.0.0
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va3 ~]# mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.jso★ --虚拟机--★ 
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va3 ~]#  systemctl enable elasticsearch
+Created symlink from /etc/systemd/system/multi-user.target.wants/elasticsearch.service to /usr/lib/systemd/system/elasticsearch.service.
+[root@Va3 ~]# systemctl restart  elasticsearch
+[root@Va3 ~]# systemctl stop elasticsearch
+[root@Va3 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("httpd",pid=792,fd=3),("httpd",pid=791,fd=3),("httpd",pid=790,fd=3),("httpd",pid=789,fd=3),("httpd",pid=787,fd=3),("httpd",pid=780,fd=3))
+[root@Va3 ~]# systemctl restart  elasticsearch
+[root@Va3 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("httpd",pid=792,fd=3),("httpd",pid=791,fd=3),("httpd",pid=790,fd=3),("httpd",pid=789,fd=3),("httpd",pid=787,fd=3),("httpd",pid=780,fd=3))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=2021,fd=92))
+[root@Va3 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      128       *:80                    *:*                   users:(("httpd",pid=792,fd=3),("httpd",pid=791,fd=3),("httpd",pid=790,fd=3),("httpd",pid=789,fd=3),("httpd",pid=787,fd=3),("httpd",pid=780,fd=3))
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("java",pid=2021,fd=161))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=2021,fd=92))
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+ansible-playbook  file.yml
+
+
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+
+[root@Va4 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.1.14
+192.168.4.14
+192.168.3.14
+127.0.0.1
+[root@Va4 ~]#  route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va4 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0  12G  0 disk 
+[root@Va4 ~]# 
+[root@Va4 ~]# yum  -y install java-1.8.0-openjdk.x86_64  |tail  -9
+  python-javapackages.noarch 0:3.4.1-11.el7                                     
+  python-lxml.x86_64 0:3.2.1-4.el7                                              
+  stix-fonts.noarch 0:1.1.0-5.el7                                               
+  ttmkfdir.x86_64 0:3.0.9-42.el7                                                
+  tzdata-java.noarch 0:2017b-1.el7                                              
+  xorg-x11-font-utils.x86_64 1:7.5-20.el7                                       
+  xorg-x11-fonts-Type1.noarch 0:7.5-9.el7                                       
+
+完毕！                                                                                       ★ --虚拟机--★ 
+[root@Va4 ~]#  java  -version
+openjdk version "1.8.0_131"                                                                  ★ --虚拟机--★ 
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+[root@Va4 ~]#  yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2             ★ --虚拟机--★ 
+repolist: 9,611
+[root@Va4 ~]# yum  -y install elasticsearch |tail -9
+ sudo systemctl enable elasticsearch.service
+### You can start elasticsearch service by executing
+ sudo systemctl start elasticsearch.service                                                  ★ --虚拟机--★ 
+  验证中      : elasticsearch-2.3.4-1.noarch                                1/1 
+                                                                                             ★ --虚拟机--★ 
+已安装:
+  elasticsearch.noarch 0:2.3.4-1                                                
+
+完毕！
+[root@Va4 ~]#  sed  -n 54p  /etc/elasticsearch/elasticsearch.yml                             ★ --虚拟机--★ 
+# network.host: 192.168.0.1                                                                  ★ --虚拟机--★ 
+[root@Va4 ~]#  等待输入超时：自动登出
+Connection to 192.168.1.14 closed.
+[root@hiys ~]# 
+[root@hiys ~]# ssh -X 192.168.1.14
+root@192.168.1.14's password:                                                                ★ --虚拟机--★ 
+X11 forwarding request failed on channel 0                                                   ★ --虚拟机--★ 
+Last login: Fri Nov 23 09:37:33 2018 from 192.168.1.254
+[root@Va4 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml
+# cluster.name: my-application
+# node.name: node-1
+# network.host: 192.168.0.1                                                                  ★ --虚拟机--★ 
+# discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+[root@Va4 ~]# sed  -i  -e '17s/# //;23s/# //;54s/# //;68s/# //'  -e  '17s/my-.*/nsd1807/;23s/node-1/Va4/;54s/0.1/1.14/;68s/\[.*\]/["Va1","Va2","Va3"]/'   /etc/elasticsearch/elasticsearch.yml
+[root@Va4 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml                ★ --虚拟机--★ cluster.name: nsd1807
+node.name: Va4
+network.host: 192.168.1.14
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]                                        ★ --虚拟机--★ 
+[root@Va4 ~]# sed -i  '54s/192.168.1.14/0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
+[root@Va4 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: nsd1807
+node.name: Va4                                                                               ★ --虚拟机--★ 
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va4 ~]# systemctl  restart elasticsearch                                               ★ --虚拟机--★ 
+[root@Va4 ~]# ss  -anpult |grep 92                                                           ★ --虚拟机--★ 
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("jav★ --虚拟机--★ =187))                                                                                        ★ --虚拟机--★ 
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("jav★ --虚拟机--★ =92))                                                                                         ★ --虚拟机--★ 
+[root@Va4 ~]#   yum -y install httpd |tail -3                                                ★ --虚拟机--★ 
+  httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
+
+完毕！
+[root@Va4 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: nsd1807                                                                        ★ --虚拟机--★ 
+#
+node.name: Va4
+#
+network.host: 0.0.0.0
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+#
+[root@Va4 ~]# mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va4 ~]#  systemctl enable elasticsearch
+Created symlink from /etc/systemd/system/multi-user.target.wants/elasticsearch.service to /usr/lib/systemd/system/elasticsearch.service.
+[root@Va4 ~]# systemctl restart  elasticsearch
+[root@Va4 ~]# systemctl restart  elasticsearch
+[root@Va4 ~]# systemctl stop elasticsearch
+[root@Va4 ~]# ss  -anpult |grep 92        
+[root@Va4 ~]# ss  -anpult |grep 92        
+[root@Va4 ~]# systemctl restart  elasticsearch
+[root@Va4 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("java",pid=1816,fd=187))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=1816,fd=92))
+[root@Va4 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+[root@Va5 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.1.15
+192.168.4.15
+192.168.3.15
+127.0.0.1
+[root@Va5 ~]#  route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va5 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0  12G  0 disk 
+[root@Va5 ~]# 
+[root@Va5 ~]# yum  -y install java-1.8.0-openjdk.x86_64  |tail  -9
+  python-javapackages.noarch 0:3.4.1-11.el7                                     
+  python-lxml.x86_64 0:3.2.1-4.el7                                              
+  stix-fonts.noarch 0:1.1.0-5.el7                                               
+  ttmkfdir.x86_64 0:3.0.9-42.el7                                                
+  tzdata-java.noarch 0:2017b-1.el7                                              
+  xorg-x11-font-utils.x86_64 1:7.5-20.el7                                       
+  xorg-x11-fonts-Type1.noarch 0:7.5-9.el7                                       
+
+完毕！                                                                                       ★ --虚拟机--★ 
+[root@Va5 ~]#  java  -version
+openjdk version "1.8.0_131"                                                                  ★ --虚拟机--★ 
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+[root@Va5 ~]#  yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18             ★ --虚拟机--★ 
+docker                               docker                                    2
+repolist: 9,611
+[root@Va5 ~]# yum  -y install elasticsearch |tail -9
+ sudo systemctl enable elasticsearch.service
+### You can start elasticsearch service by executing                                         ★ --虚拟机--★ 
+ sudo systemctl start elasticsearch.service
+  验证中      : elasticsearch-2.3.4-1.noarch                                1/1              ★ --虚拟机--★ 
+
+已安装:
+  elasticsearch.noarch 0:2.3.4-1                                                
+
+完毕！                                                                                       ★ --虚拟机--★ 
+[root@Va5 ~]#  sed  -n 54p  /etc/elasticsearch/elasticsearch.yml                             ★ --虚拟机--★ 
+# network.host: 192.168.0.1
+[root@Va5 ~]#  等待输入超时：自动登出
+Connection to 192.168.1.15 closed.
+[root@hiys ~]# ssh -X 192.168.1.15
+root@192.168.1.15's password:                                                                ★ --虚拟机--★ 
+X11 forwarding request failed on channel 0                                                   ★ --虚拟机--★ 
+Last login: Fri Nov 23 09:40:15 2018 from 192.168.1.254
+[root@Va5 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml
+# cluster.name: my-application
+# node.name: node-1
+# network.host: 192.168.0.1                                                                  ★ --虚拟机--★ 
+# discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+[root@Va5 ~]# sed  -i  -e '17s/# //;23s/# //;54s/# //;68s/# //'  -e  '17s/my-.*/nsd1807/;23s/node-1/Va5/;54s/0.1/1.15/;68s/\[.*\]/["Va1","Va2","Va3"]/'   /etc/elasticsearch/elasticsearch.yml
+[root@Va5 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml                ★ --虚拟机--★ cluster.name: nsd1807
+node.name: Va5                                                                               ★ --虚拟机--★ 
+network.host: 192.168.1.15
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va5 ~]# sed -i  '54s/192.168.1.15/0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
+[root@Va5 ~]# sed  -n '17p;23p;54p;68p'  /etc/elasticsearch/elasticsearch.yml
+cluster.name: nsd1807
+node.name: Va5
+network.host: 0.0.0.0                                                                        ★ --虚拟机--★ 
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+[root@Va5 ~]# systemctl  restart elasticsearch
+[root@Va5 ~]#  ss  -anpult |grep 92                                                          ★ --虚拟机--★ 
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("jav★ --虚拟机--★ =213))                                                                                        ★ --虚拟机--★ 
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=1310,fd=92))
+[root@Va5 ~]#  yum -y install httpd |tail -3                                                 ★ --虚拟机--★ 
+  httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7                 ★ --虚拟机--★ 
+
+完毕！
+[root@Va5 ~]# ls /root/.ssh/
+authorized_keys  known_hosts                                                                 ★ --虚拟机--★ 
+[root@Va5 ~]# cat  /root/.ssh/known_hosts 
+192.168.1.254 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPaPxCXbd6vnjaSOyyPw8GCwISPel9dwAOk5lXwvlu/8hR/al2c7CcdihhkDynKmm7W0ownroNHIrD420VMJYr8=                           ★ --虚拟机--★ 
+
+[root@Va5 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml   ★ --虚拟机--★ 
+cluster.name: nsd1807                                                                        ★ --虚拟机--★ 
+#                                                                                            ★ --虚拟机--★ 
+node.name: Va5                                                                               ★ --虚拟机--★ 
+#                                                                                            ★ --虚拟机--★ 
+network.host: 0.0.0.0
+#
+discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]                                        ★ --虚拟机--★ 
+#
+[root@Va5 ~]# ls
+aaa  elk.tar     hadoop.zip  nagios-4.2.4.tar.gz          nrpe-2.12.tar.gz
+eip  hadoop.tar  my-copy.sh  nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.tar.gz
+[root@Va5 ~]# tar  -xf  elk.tar  -C elk^C                                                    ★ --虚拟机--★ 
+[root@Va5 ~]# mkdir   bigdesk
+[root@Va5 ~]# ls
+aaa      eip      hadoop.tar  my-copy.sh           nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.ta★ --虚拟机--★ 
+bigdesk  elk.tar  hadoop.zip  nagios-4.2.4.tar.gz  nrpe-2.12.tar.gz
+[root@Va5 ~]# tar  -xf   elk.tar  -C  bigdesk/
+[root@Va5 ~]# ls  bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-★ --虚拟机--★ 
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va5 ~]#  systemctl enable elasticsearch
+Created symlink from /etc/systemd/system/multi-user.target.wants/elasticsearch.service to /usr/lib/systemd/system/elasticsearch.service.
+[root@Va5 ~]# systemctl restart  elasticsearch
+[root@Va5 ~]# systemctl restart  elasticsearch
+[root@Va5 ~]# systemctl stop elasticsearch
+[root@Va5 ~]# ss  -anpult |grep 92        
+[root@Va5 ~]# systemctl restart  elasticsearch
+[root@Va5 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("jav★ --虚拟机--★ =92))
+[root@Va5 ~]# ss  -anpult |grep 92        
+tcp    LISTEN     0      50       :::9200                 :::*                   users:(("java",pid=1880,fd=213))
+tcp    LISTEN     0      50       :::9300                 :::*                   users:(("java",pid=1880,fd=92))
+[root@Va5 ~]# ls
+aaa      eip      hadoop.tar  my-copy.sh           nagios-plugins-2.1.4.tar.gz  nrpe-3.0.1.ta★ --虚拟机--★ 
+bigdesk  elk.tar  hadoop.zip  nagios-4.2.4.tar.gz  nrpe-2.12.tar.gz                          ★ --虚拟机--★ 
+[root@Va5 ~]# ls bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-★ --虚拟机--★ 
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va5 ~]# cat /etc/hosts
+# ::1		localhost localhost.localdomain localhost6 localhost6.localdomain6           ★ --虚拟机--★ 
+127.0.0.1	localhost localhost.localdomain localhost4 localhost4.localdomain4
+192.168.1.11    Va1
+192.168.1.12    Va2
+192.168.1.13    Va3
+192.168.1.14    Va4
+192.168.1.15    Va5
+192.168.1.16    Va6                                                                          ★ --虚拟机--★ 
+192.168.1.17    Va7
+192.168.1.18    Va8
+192.168.1.19    Va9
+[root@Va5 ~]# ping -c2 Va7
+PING Va7 (192.168.1.17) 56(84) bytes of data.
+64 bytes from Va7 (192.168.1.17): icmp_seq=1 ttl=255 time=0.813 ms
+64 bytes from Va7 (192.168.1.17): icmp_seq=2 ttl=255 time=0.591 ms                           ★ --虚拟机--★ 
+
+--- Va7 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 0.591/0.702/0.813/0.111 ms
+
+[root@Va5 ~]# cd  /usr/share/elasticsearch/bin/                                              ★ --虚拟机--★ 
+[root@Va5 bin]# ls
+elasticsearch  elasticsearch.in.sh  elasticsearch-systemd-pre-exec  plugin
+
+/**************
+bin]# ./plugin install  file:///root/bigdesk-mastyer.zip
+   # ./plugin install  ftp://192.168.1.254/bigdesk-mastyer.zip
+    #./plugin   list
+*****************************/
+
+[root@Va5 bin]# ./plugin  install  file:///root/bigdesk/elasticsearch-head-master.zip  
+
+Verifying file:/root/bigdesk/elasticsearch-head-master.zip checksums if available ...
+NOTE: Unable to verify checksum for downloaded plugin (unable to find .sha1 or .md5 file to verify)
+Installed head into /usr/share/elasticsearch/plugins/head
+
+[root@Va5 bin]# ./plugin  install  file:///root/bigdesk/elasticsearch-kopf-master.zip 
+
+-> Installing from file:/root/bigdesk/elasticsearch-kopf-master.zip...
+Trying file:/root/bigdesk/elasticsearch-kopf-master.zip ...
+Downloading ......................DONE
+Verifying file:/root/bigdesk/elasticsearch-kopf-master.zip checksums if available ...
+NOTE: Unable to verify checksum for downloaded plugin (unable to find .sha1 or .md5 file to verify)
+Installed kopf into /usr/share/elasticsearch/plugins/kopf
+
+[root@Va5 bin]# ./plugin  install  file:///root/bigdesk/bigdesk-master.zip 
+
+-> Installing from file:/root/bigdesk/bigdesk-master.zip...
+Trying file:/root/bigdesk/bigdesk-master.zip ...
+Downloading ...DONE
+Verifying file:/root/bigdesk/bigdesk-master.zip checksums if available ...
+NOTE: Unable to verify checksum for downloaded plugin (unable to find .sha1 or .md5 file to verify)
+Installed bigdesk into /usr/share/elasticsearch/plugins/bigdesk
+
+
+[root@Va5 bin]# ./plugin  list
+Installed plugins in /usr/share/elasticsearch/plugins:
+    - head
+    - kopf
+    - bigdesk
+[root@Va5 bin]# 
+
+
+curl -X PUT "http://192.168.1.15:9200/index" -d '
+{
+     "settings":{
+     "index":{
+     "number_of_shards":5,
+     "number_of_replicas":1
+    }
+   }
+ }'
+
+[root@Va5 bin]# curl -X PUT "http://192.168.1.15:9200/index" -d '
+> {
+>      "settings":{
+>      "index":{
+>      "number_of_shards":5,
+>      "number_of_replicas":1
+>     }
+>    }
+>  }'
+{"acknowledged":true}[root@Va5 bin]# 
+
+
+ http://192.168.1.15:9200/_plugin/head
+
+ http://192.168.1.15:9200/_plugin/kopf
+
+ http://192.168.1.15:9200/_plugin/bigdesk
+
+ http://192.168.1.12:9200/_cluster/health?pretty
+
+http://192.168.1.15:9200/_plugin/head
+
+http://192.168.1.15:9200/_plugin/kopf/#!/cluster
+
+
+
+
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+
+[root@Va6 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.1.16
+192.168.4.16
+192.168.3.16
+127.0.0.1
+[root@Va6 ~]#  route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va6 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0  12G  0 disk 
+[root@Va6 ~]# 
+[root@Va6 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyqgUb4jyBLkCVevHkNubRa1wZf41bEwlKwyzaGXXyNZb4asE87y0dTs9y54Up3n1z4YDz1kIb7Mx/7XKyuiStRNvMuez2uQRMOihInpb7nSkRBJi5ruUV+B2HQB97xI6RaNCVYpw3dOwk2aqsI6fTj4ZX5Nh/14r2oTBtFt9VLNhuss2BOXcaFFrAupPS00jk8WRFTtKApfo9w78b6RY+MCbKL+eK3Ld1BtmBLVTdzp2jVrFH3NdpO696hSzVQdxNLhTIdgyhKcv6DMD6HYyzjSgjm1v71iyqZBN2z3dANGcP09f2qHA/JUiEudQ2AgB1wpcs/dH7GoIIhJN6NcQL root@Va1
+[root@Va6 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: nsd1807
+#
+#node.name: Va6
+#
+#network.host: 192.168.1.16
+#
+#discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+#
+[root@Va6 ~]# mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va6 ~]# 
+
+[root@Va6 ~]# ls bigdesk/kibana-4.5.2-1.x86_64.rpm 
+bigdesk/kibana-4.5.2-1.x86_64.rpm
+[root@Va6 ~]# yum  -y install  bigdesk/kibana-4.5.2-1.x86_64.rpm |tail -5
+
+已安装:
+  kibana.x86_64 0:4.5.2-1                                                       
+
+完毕！
+[root@Va6 ~]# rpm -q  kibana
+kibana-4.5.2-1.x86_64
+[root@Va6 ~]# rpm  -qc  kibana
+/opt/kibana/config/kibana.yml
+[root@Va6 ~]# cd /opt/kibana/;ls
+bin  config  installedPlugins  LICENSE.txt  node  node_modules  optimize  package.json  README.txt  src  webpackShims
+[root@Va6 kibana]# ls  /opt/kibana/config/
+kibana.yml
+[root@Va6 kibana]# vim  /opt/kibana/config/kibana.yml 
+          //若把端口改为80，可以成功启动kibana，但ss时没有端口，没有监听80端口，服务里面写死了，不能用80端口，只能是5601这个端口
+ 2 # server.port: 5601
+ 5 # server.host: "0.0.0.0"  //服务器监听地址
+                                    //声明地址，从哪里查，集群里面随便选一个
+ 15 # elasticsearch.url: "http://localhost:9200"  ###
+ 23 # kibana.index: ".kibana"     //kibana自己创建的索引
+
+ 26 # kibana.defaultAppId: "discover"     //打开kibana页面时，默认打开的页面discover
+
+ 53 # elasticsearch.pingTimeout: 1500  //ping检测超时时间
+
+ 57 # elasticsearch.requestTimeout: 30000   //请求超时
+
+ 64 # elasticsearch.startupTimeout: 5000   //启动超时
+
+[root@Va6 kibana]# sed -i  '2s/# //;5s/# //;15s/# //;23s/# //;53s/# //;57s/# //;64s/# //;15s/localhost/192.168.1.11/' /opt/kibana/config/kibana.yml
+[root@Va6 kibana]# cat -n /opt/kibana/config/kibana.yml |sed -n '2p;5p;15p;23p;26p;53p;57p;64p'
+     2	server.port: 5601
+     5	server.host: "0.0.0.0"                         ★ --虚拟机--★ 
+    15	elasticsearch.url: "http://192.168.1.11:9200"
+    23	kibana.index: ".kibana"
+    26	# kibana.defaultAppId: "discover"
+    53	elasticsearch.pingTimeout: 1500
+    57	elasticsearch.requestTimeout: 30000
+    64	elasticsearch.startupTimeout: 5000
+[root@Va6 kibana]# sed -i  '26s/# //'   /opt/kibana/config/kibana.yml
+
+[root@Va6 kibana]# cat -n /opt/kibana/config/kibana.yml |sed -n '2p;5p;15p;23p;26p;53p;57p;64p'
+     2	server.port: 5601
+     5	server.host: "0.0.0.0"
+    15	elasticsearch.url: "http://192.168.1.11:9200"
+    23	kibana.index: ".kibana"
+    26	kibana.defaultAppId: "discover"
+    53	elasticsearch.pingTimeout: 1500
+    57	elasticsearch.requestTimeout: 30000
+    64	elasticsearch.startupTimeout: 5000
+[root@Va6 kibana]# 
+[root@Va6 kibana]# systemctl  restart kibana
+[root@Va6 kibana]# systemctl  enable  kibana
+Created symlink from /etc/systemd/system/multi-user.target.wants/kibana.service to /usr/lib/systemd/system/kibana.service.
+[root@Va6 kibana]# netstat   -npult |grep  5601
+tcp        0      0 0.0.0.0:5601            0.0.0.0:*               LISTEN      1847/node           
+[root@Va6 kibana]# rpm  -q  elinks 
+未安装软件包 elinks 
+[root@Va6 kibana]# yum  -y install elinks |tail -3
+  js.x86_64 1:1.8.5-19.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7        
+
+完毕！                                                                                                    ★ --虚拟机--★ 
+[root@Va6 kibana]# elinks  -dump  192.168.1.16:5601
+[root@Va6 kibana]# echo  $?
+0
+[root@Va6 kibana]# yum provides  firefox
+已加载插件：fastestmirror                                                                                 ★ --虚拟机--★ 
+Loading mirror speeds from cached hostfile
+firefox-52.2.0-2.el7.centos.i686 : Mozilla Firefox Web browser                                            ★ --虚拟机--★ 
+源    ：CentOS7-1708
+
+firefox-52.2.0-2.el7.centos.x86_64 : Mozilla Firefox Web browser                                          ★ --虚拟机--★ 
+源    ：CentOS7-1708
+
+[root@Va6 kibana]# yum  -y install  firefox |tail -4                                                      ★ --虚拟机--★ 
+  startup-notification.x86_64 0:0.12-8.el7                                                                ★ --虚拟机--★ 
+  xcb-util.x86_64 0:0.4.0-2.el7                                                 
+                                                                                                          ★ --虚拟机--★ 
+完毕！                                                                                                    ★ --虚拟机--★ 
+[root@Va6 kibana]# rpm  -q  firefox
+firefox-52.2.0-2.el7.centos.x86_64                                                                        ★ --虚拟机--★ 
+[root@Va6 kibana]# which  firefox
+/usr/bin/firefox
+
+[root@Va6 ~]# rpm  -qf  /usr/bin/firefox
+firefox-52.2.0-2.el7.centos.x86_64
+
+[root@Va6 kibana]# pwd
+/opt/kibana
+
+[root@Va6 kibana]# cd
+
+[root@Va6 ~]# rpm  -qc  firefox
+[root@Va6 ~]# echo $?
+0
+[root@Va6 ~]# 
+http://192.168.1.16:5601
+
+http://192.168.1.15:9200/_plugin/head/
+
+[root@Va6 ~]# yum list |grep kibana
+kibana.x86_64                            4.5.2-1                   installed    
+[root@Va6 ~]# rpm  -q  kibana
+kibana-4.5.2-1.x86_64
+[root@Va6 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+Va1   sed1        192.168.1.11
+Va2   sed2        192.168.1.12
+Va3   sed3        192.168.1.13
+Va4   sed4        192.168.1.14
+Va5   sed5        192.168.1.15
+Va6   kibana      192.168.1.16
+Va7   logstash    192.168.1.17
+******/
+[root@Va7 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.1.17
+192.168.4.17
+192.168.3.17
+127.0.0.1
+[root@Va7 ~]# route -n 
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth0
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.3.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.4.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+[root@Va7 ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vda    253:0    0  16G  0 disk                                                                         ★ --虚拟机--★ 
+└─vda1 253:1    0  16G  0 part /
+vdb    253:16   0  12G  0 disk                                                                         ★ --虚拟机--★ 
+[root@Va7 ~]# ls /etc/yum.repos.d/
+local.repo
+[root@Va7 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.1.254/CentOS7-1708/
+enabled=1
+
+[docker]
+name=docker
+baseurl="ftp://192.168.1.254/docker"
+enabled=1
+gpgcheck=0
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.1.254/ansible
+gpgcheck=0
+enabled=1
+[root@Va7 ~]# ls /dev/pts/
+0  ptmx
+
+[root@Va7 ~]#   yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  14
+docker                               docker                                    2
+repolist: 9,607
+[root@Va7 ~]# 
+
+[root@Va7 ~]#  yum -y install java-1.8.0-openjdk |tail -8                                    ★ --虚拟机--★ 
+  python-lxml.x86_64 0:3.2.1-4.el7                                              
+  stix-fonts.noarch 0:1.1.0-5.el7                                                            ★ --虚拟机--★ 
+  ttmkfdir.x86_64 0:3.0.9-42.el7                                                
+  tzdata-java.noarch 0:2017b-1.el7                                              
+  xorg-x11-font-utils.x86_64 1:7.5-20.el7                                       
+  xorg-x11-fonts-Type1.noarch 0:7.5-9.el7                                                    ★ --虚拟机--★ 
+
+完毕！
+                                                                         ★ --虚拟机--★ 
+[root@Va7 ~]# rpm  -q  java-1.8.0-openjdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+
+
+[root@hiys ~]# ls /var/ftp/
+ansible  CentOS7-1708  docker  pub  rhel7  RHEL7-extras  RHEL7OSP  share
+
+[root@hiys ~]# cd  /var/ftp/ansible/
+[root@hiys ansible]# ls
+ansible-2.4.1.0-1.el7.noarch.rpm         python-httplib2-0.9.2-1.el7.noarch.rpm  repodata
+ansible-devel                            python-paramiko-2.1.1-2.el7.noarch.rpm  sshpass-1.06-2.el7.x86_64.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+[root@hiys ansible]# tar  -xf  /root/桌面/rpm-tar-zip-iso/elk.tar
+[root@hiys ansible]# ls
+accounts.json.gz                  elasticsearch-kopf-master.zip            python-paramiko-2.1.1-2.el7.noarch.rpm
+alog.gz                           filebeat-1.2.3-x86_64.rpm                python-passlib-1.6.5-2.el7.noarch.rpm
+ansible-2.4.1.0-1.el7.noarch.rpm  kibana-4.5.2-1.x86_64.rpm                repodata
+ansible-devel                     logs.jsonl.gz                            shakespeare.json.gz
+bigdesk-master.zip                logstash-2.3.4-1.noarch.rpm              sshpass-1.06-2.el7.x86_64.rpm
+elasticsearch-2.3.4.rpm           python2-jmespath-0.9.0-3.el7.noarch.rpm
+elasticsearch-head-master.zip     python-httplib2-0.9.2-1.el7.noarch.rpm
+
+[root@hiys ansible]# createrepo  --update  .  ## 更新 yum 仓库
+
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Spawning worker 2 with 1 pkgs
+Spawning worker 3 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+[root@hiys ansible]# yum  clean  all >/dev/null && yum repolist |tail -16
+源标识                           源名称                                    状态
+CentOS7-1708                     CentOS7-1708                              9,591
+RHEL7-extras                     RHEL7-extras                                 76
+RHEL7OSP-devtools-rpms           RHEL7OSP/rhel-7-server-openstack-10-devto     3
+RHEL7OSP-optools-rpms            RHEL7OSP/rhel-7-server-openstack-10-optoo    99
+RHEL7OSP-rhceph-2-mon-rpms       RHEL7OSP/rhel-7-server-rhceph-2-mon-rpms     41
+RHEL7OSP-rhceph-2-osd-rpms       RHEL7OSP/rhel-7-server-rhceph-2-osd-rpms     28
+RHEL7OSP-rhceph-2-tools-rpms     RHEL7OSP/rhel-7-server-rhceph-2-tools-rpm    35
+RHEL7OSP-rhscon-2-agent-rpms     RHEL7OSP/rhel-7-server-rhscon-2-agent-rpm    19
+RHEL7OSP-rhscon-2-installer-rpms RHEL7OSP/rhel-7-server-rhscon-2-installer    46
+RHEL7OSP-rhscon-2-main-rpms      RHEL7OSP/rhel-7-server-rhscon-2-main-rpms    29
+RHEL7OSP-rpms                    RHEL7OSP/rhel-7-server-openstack-10-rpms    680
+RHEL7OSP-tools-rpms              RHEL7OSP/rhel-7-server-openstack-10-tools    84
+ansible                          ansible                                      18
+rhel7                            rhel7.4                                   4,986
+repolist: 15,735
+[root@hiys ansible]# 
+
+[root@Va7 ~]# yum clean all >/dev/null && yum repolist |tail -5
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  18
+docker                               docker                                    2
+repolist: 9,611
+                                                                        ★ --虚拟机--★ 
+[root@Va7 ~]# which  sestatus
+/usr/sbin/sestatus
+
+[root@Va7 ~]# sestatus                                                                       ★ --虚拟机--★ 
+SELinux status:                 disabled
+
+[root@Va7 ~]# yum list |grep elasticsearch
+elasticsearch.noarch                     2.3.4-1                    ansible                  ★ --虚拟机--★ 
+pcp-pmda-elasticsearch.x86_64            3.11.8-7.el7               CentOS7-1708
+rsyslog-elasticsearch.x86_64             8.24.0-12.el7              CentOS7-1708
+
+[root@Va7 ~]# yum -y install  elasticsearch |tail -4
+已安装:
+  elasticsearch.noarch 0:2.3.4-1                                                
+
+完毕！
+
+[root@Va7 ~]# rpm -q elasticsearch
+elasticsearch-2.3.4-1.noarch
+
+[root@Va7 ~]# ls  /etc/elasticsearch/
+elasticsearch.yml  logging.yml  scripts
+
+[root@Va7 ~]# vim  /etc/elasticsearch/elasticsearch.yml 
+
+[root@Va7 ~]# sed  -n 54p  /etc/elasticsearch/elasticsearch.yml
+network.host: 192.168.1.17
+
+[root@Va7 ~]# systemctl restart elasticsearch
+
+[root@Va7 ~]# systemctl  enable  elasticsearch
+Created symlink from /etc/systemd/system/multi-user.target.wants/elasticsearch.service to /usr/lib/systemd/system/elasticsearch.service.
+
+[root@Va7 ~]# 
+
+sed  -i  -e '17s/# //;23s/# //;68s/# //'  -e  '17s/my-.*/nsd1807/;23s/node-1/Va7/;68s/\[.*\]/["Va1","Va2","Va3"]/'   /etc/elasticsearch/elasticsearch.yml
+
+[root@Va7 ~]# ls /root/.ssh/
+authorized_keys
+[root@Va7 ~]#  sed  -n '17,18p;23,24p;54,55p;68,69p'  /etc/elasticsearch/elasticsearch.yml
+#cluster.name: nsd1807
+#
+#node.name: Va7
+#
+#network.host: 192.168.1.17
+#
+#discovery.zen.ping.unicast.hosts: ["Va1","Va2","Va3"]
+#
+[root@Va7 ~]# mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/
+accounts.json.gz    elasticsearch-2.3.4.rpm        filebeat-1.2.3-x86_64.rpm  logstash-2.3.4-1.noarch.rpm
+alog.gz             elasticsearch-head-master.zip  kibana-4.5.2-1.x86_64.rpm  shakespeare.json.gz
+bigdesk-master.zip  elasticsearch-kopf-master.zip  logs.jsonl.gz
+[root@Va7 ~]# 
+[root@Va7 ~]# yum reinstall kibana-4.5.2-1.x86_64.rpm 
+......................................
+  正在安装    : kibana-4.5.2-1.x86_64                                                                                       1/1 
+  验证中      : kibana-4.5.2-1.x86_64                                                                                       1/1 
+
+已安装:
+  kibana.x86_64 0:4.5.2-1                                                                                                       
+
+完毕！
+[root@Va7 ~]# ls
+accounts.json.gz    elasticsearch-2.3.4.rpm        hadoop.tar                   nagios-4.2.4.tar.gz
+alog.gz             elasticsearch-head-master.zip  hadoop.zip                   nagios-plugins-2.1.4.tar.gz
+bigdesk             elasticsearch-kopf-master.zip  kibana-4.5.2-1.x86_64.rpm    nrpe-2.12.tar.gz
+bigdesk-master.zip  elk.tar                        logs.jsonl.gz                nrpe-3.0.1.tar.gz
+eip                 filebeat-1.2.3-x86_64.rpm      logstash-2.3.4-1.noarch.rpm  shakespeare.json.gz
+[root@Va7 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+/*************
+vim  host.yml
+---
+ hosts: ex
+ remote_user: root
+ tasks:
+    
+vim  hosts
+[ex]
+ex[1:5]  ansible_
+
+ansible-playbook  host.yml
+
+vim setup.yml
+
+---
+ hosts: ex
+ remote_user: root
+ tasks:
+   - name: install teh latest version of Apache
+     yum:
+       name: java-1.8.0
+       state: latest
+
+
+sed  -i  's,^(# node.name:):.*,\1  Va1,' elasticsearch.yml
+
+ansible  ex  -m shell   
+
+bin]# ./plugin install  file:///root/bigdesk-mastyer.zip
+   # ./plugin install  ftp://192.168.1.254/bigdesk-mastyer.zip
+    #./plugin   list
+
+192.168.1.15:9200/_plugin/head/
+
+192.168.1.15:9200/_plugin/bigdesk/#node
+
+192.168.1.15:9200/_plugin/
+
+http://192.168.1.12:9200/_cluster/health?pretty
+{
+  "error" : {
+    "root_cause" : [ {
+      "type" : "illegal_argument_exception",
+      "reason" : "No feature for name [health]"
+    } ],
+    "type" : "illegal_argument_exception",
+    "reason" : "No feature for name [health]"
+  },
+  "status" : 400
+}
+
+mkdir   bigdesk ;tar  -xf   elk.tar  -C  bigdesk/ ;ls  bigdesk/
+
+[root@hiys ansible]# firefox  http://192.168.1.15:9200/_plugin/head
+[root@hiys ansible]# firefox  http://192.168.1.15:9200/_plugin/kopf
+[root@hiys ansible]# firefox  http://192.168.1.15:9200/_plugin/bigdesk
+[root@hiys ansible]# firefox   http://192.168.1.12:9200/_cluster/health?pretty
+[root@hiys ansible]# pwd
+/var/ftp/ansible
+
+
+
+
+
+
+windows server 服务器安装JDK、Tomcat
+
+本文要介绍的是如何在服务器上安装JDK，Tomcat以及环境的配置，安装方式不仅是在服务器，在本地调用也是可以用此方法安装。
+
+一.JDK安装
+
+从官网上下载最新的JDK：http://java.sun.com/javase/downloads/index.jsp ，下载后安装，选择想把JDK安装到的目录。
+JRE是包含在JDK中的，所以不需要再另外安装JRE了。 
+1.打开官网后，点击download 
+2.勾选 Accept License Agreement ，点击download，下载
+
+exe文件下载好之后，点击运行安装。 
+3.配置JDK环境变量： 
+右键点击我的电脑，属性，高级设置，环境变量。 
+a) 配置windows的path环境变量。将安装的J2SDK（注意：必须安装J2SDK）的bin文件夹的完整路径添加到path系统变量中，用英文分号与前面的分开
+
+b) 配置CLASSPATH系统变量。如果系统变量中不存在classpath，则“新建”之。将J2SDK的lib文件夹的完整路径写入
+
+4.测试是否安装成功 
+一种简单的方式的就是用记事本编辑一个hello，然后用命令行运行，看能够执行。 
+第二种： 
+打开cmd，分别输入java， javac，java -version
+
+二：Tomcat安装和环境配置
+
+1.下载安装Tomcat 
+从官网上下载Tomcat服务器。官网上下载的文件都是绿色免安装的。 
+下载地址为：http://tomcat.apache.org/download-70.cgi。 
+下载后解压缩，如E:\apache-tomcat-7.0.26。建议放在英文目录下。 
+如果这时打开bin文件的startup.bat，是没有反应的，所以需要配置Tomcat环境变量。配置一个JAVA_HOME，即jdk安装的根目录。 
+
+再打开打开bin文件的startup.bat，在浏览器运行localhost/8080，会出现Apache的官网。
+==============================================================
+
+ABRT 已检测到 '1' 个问题。预了解详细信息请执行：abrt-cli list --since 1542939432
+[root@hiys ~]# 
+[root@hiys ~]# abrt-cli list --since 1542939432
+id 9c899c4cf46756ce2bcade3d35824feeeef3c942
+reason:         plugin-container killed by SIGSEGV
+time:           2018年11月23日 星期五 14时34分56秒
+cmdline:        /usr/lib64/firefox/plugin-container -greomni /usr/lib64/firefox/omni.ja -appomni /usr/lib64/firefox/browser/omni.ja -appdir /usr/lib64/firefox/browser 16563 tab
+package:        firefox-52.2.0-2.el7.centos
+uid:            0 (root)
+count:          1
+Directory:      /var/spool/abrt/ccpp-2018-11-23-14:34:56-16719
+
+=============================================
+已禁用自动报告功能。请考虑启用该功能，方法是
+作为有 root 特权的用户使用命令 'abrt-auto-reporting enabled'
+[root@hiys ~]# 
+
+[root@hiys ~]# virsh console Va9
+连接到域 Va9
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# 
+
+[root@localhost ~]# ps  -ef  |grep  virsh
+root      1387  1369  0 20:39 ttyS0    00:00:00 grep --color=auto virsh
+
+[root@hiys ~]# cat   /etc/libvirt/qemu/nova01.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh edit nova01
+or other application using the libvirt API.
+-->
+
+<domain type='kvm'>
+  <name>nova01</name>
+  <uuid>5eec837f-9049-44bb-b643-d531734c6fab</uuid>
+  <memory unit='KiB'>4882813</memory>
+  <currentMemory unit='KiB'>4882813</currentMemory>
+  <vcpu placement='static'>2</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-i440fx-rhel7.0.0'>hvm</type>
+    <boot dev='hd'/>
+    <bootmenu enable='yes'/>
+    <bios useserial='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough' check='none'/>
+  <clock offset='localtime'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/nova01.img'/>
+      <target dev='vda' bus='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </disk>
+    <controller type='usb' index='0' model='piix3-uhci'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pci-root'/>
+    <controller type='virtio-serial' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </controller>
+    <interface type='bridge'>
+      <mac address='52:54:00:3d:dc:00'/>
+      <source bridge='vbr'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='bridge'>
+      <mac address='52:54:00:60:bf:58'/>
+      <source bridge='private1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </interface>
+
+    <serial type='pty'>  ##
+      <target port='0'/>  ##
+    </serial>
+
+    <console type='pty'>  ##
+      <target type='serial' port='0'/>
+    </console>
+
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+      <address type='virtio-serial' controller='0' bus='0' port='1'/>
+    </channel>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+[root@hiys ~]# who
+root     :0           2018-11-24 08:25 (:0)
+root     pts/9        2018-11-24 08:30 (:0)
+root     pts/10       2018-11-24 08:30 (:0)
+root     pts/11       2018-11-24 08:30 (:0)
+root     pts/12       2018-11-24 08:30 (:0)
+root     pts/13       2018-11-24 08:30 (:0)
+root     pts/14       2018-11-24 08:30 (:0)
+root     pts/15       2018-11-24 08:30 (:0)
+root     pts/16       2018-11-24 08:30 (:0)
+root     pts/17       2018-11-24 08:30 (:0)
+root     pts/18       2018-11-24 08:30 (:0)
+root     pts/19       2018-11-24 08:30 (:0)
+[root@hiys ~]# 
+
+
+
+
+
+
