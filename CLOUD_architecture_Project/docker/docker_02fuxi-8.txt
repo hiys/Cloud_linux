@@ -1,0 +1,1466 @@
+
+https://hub.docker.com/ 官网
+======================================================
+IaaS(Infrastructure as a Service)      | PaaS：Platform-as-a-Service
+         基础设施即服务                           |           平台即服务
+- - - 虚拟机 面向架构 ,构建IAAS平台 - - - - - - - -|- - - - - Docker面向应用, 构建PAAS平台 - - - - - - 
+                                                   |            用户空间实例=容器
+                                                   |  基于进程容器(Process container)的轻量级VM
+ 纯软件的虚拟化Guest OS允许运行多个操作系统   |       容器 docker 相互之间不会有任何接口
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -| - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Hypervisor即VMM(virtual machine monitor)|  (Host Operating System)
+    中间软件层  即  虚拟机监视器                  |           主操作系统
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                                    基础设施(Infrastructure)
+======================================================
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]
+                HTTP  FTP  TFTP  SMTP  SNMP  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包
+                ICMP  IGMP    IP   ARP   RARP
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流
+
+          层            主机A                              主机B          数据单元
+-----------------------------------------------------------------------------------------------------------------------------------------------
+私有 ip 地址的范围：
+A类地址范围：10.0.0.0—10.255.255.255
+B类地址范围：172.16.0.0---172.31.255.555
+C类地址范围：192.168.0.0---192.168.255.255
+
+====================
+dpdk是 intel 公司发布的一款数据包转发处理套件. 
+它运行于linux userspace。
+这组套件包括了linux 进程所需要的大部分组件。
+
+但缺少一个传统的tcp/ip 协议栈。
+其他应用程序没办法方便的通过dpdk对外通信。
+可以移植一个TCP/IP协议栈到dpdk。
+
+DPDK(因特尔intel内核,tcp/ip协议栈重写) +  LVS  +  FULLNAT  +  OSPF
+--------------------------------------------------------------
+DPVS(开源,小米公司)= DPDK  +  LVS  +  FULLNAT
+DPVS + OSPF  主流大型架构
+---------------------------------------------------------------------------------
+
+常用的名词
+VS：Virtual Server，虚拟服务器，也称为Director
+RS：Real Server(lvs)，真正的服务器，集群中各节点
+
+OS ：【操作系统 Operating System 】
+
+CIP：客户端IP,用户的IP
+
+VIP：Director 虚拟服务器 向 外部 提供服务的IP
+VIP: LVS虚拟的IP，用于用户访问
+
+RIP：集群节点 真正的服务器 的 IP
+RIP: Real Server 的IP
+
+DIP：Director 虚拟服务器 与 RS真正的服务器 通信的IP
+DIP: LVS Director调度器自已的IP
+
+LIP: LVS Director调度器指定的local address 【内网ip地址】，FULLNAT模式下专用的
+
+LB  ：负载调度器（Load Balancer）
+
+IDC（Internet Data Center）
+TTL Time To Live
+  该字段指定IP包 被 路由器 丢弃之前 允许通过的 最大网段数量
+STP 生成树
+STP spanning tree
+ -----------------------------------------
+
+============================
+  - - -- LVS-NAT  - -- cip vip(dip) (rip) - -- -
+src-ip  -->   dst-ip
+cip     -1->   vip(dip内)
+dip(内) -2->   rip(内)
+(rip内) -3->  (dip内)vip
+vip     -4->  cip
+-------------------------------------------------------------------------
+
+--------------------------------------------------
+ FULLNAT工作流程 cip vip(lip) (dip)[伪装公网vip] (rip) ---
+
+    src-ip    -->     dst-ip
+
+  cip(客户端IP) --1-> vip(公网)[lip(内网)，FULLNAT模式]
+
+               OSPF
+  注意 这一步可以进行路由转发, 链接多个子服务器 lvs-nat模式
+
+lip(内网ip地址) --2-> dip(内网兼伪装公网vip)
+dip(内网兼伪装公网vip) -3->  rip(内)
+ (rip内)       --4->  (dip内)伪装公网vip
+伪装公网vip     --5->  cip
+
+=============================
+-----------------------------------------使用 端口映射 可以 实现 外网 访问容器内的 服务 ---------------------
+
+[root@Va1 ~]# docker  run  -td  -p  80:80  -v  /var/webroot_va1/:/var/www/html  newcentos:latest
+
+932aaf3e76255008ed83e227955fcf37f6584bc89a74d578afdf077e6c85d63f
+
+[root@Va1 ~]# curl  -i  192.168.0.11
+curl: (7) Failed connect to 192.168.0.11:80; 拒绝连接
+
+[root@Va1 ~]# docker  exec  -it  932aa  /bin/bash
+
+[root@932aaf3e7625 /]# apachectl  ## 开启http服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+
+[root@932aaf3e7625 /]# elinks   -dump  127.0.0.1
+   Va2 addded
+==============================================
+
+
+[root@room9pc01 ~]# ssh   -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Tue Jan  1 13:46:49 2019 from 192.168.0.254
+[root@Va1 ~]# free  -m 
+              total        used        free      shared  buff/cache   available
+Mem:           4959         152        4611           8         195        4573
+Swap:          2047           0        2047
+
+[root@Va1 ~]# ifconfig  |grep  -A1  flags=
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.11  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@Va1 ~]# docker  ps  -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                    PORTS               NAMES
+5c1d5419e6a9        nginx:latest        "nginx -g 'daemon off"   24 hours ago        Exited (0) 23 hours ago                       awesome_darwin
+bc684cc0b016        registry            "/entrypoint.sh /etc/"   25 hours ago        Exited (0) 23 hours ago                       determined_euler
+[root@Va1 ~]# docker   network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+025e48a5f65f        bridge              bridge              local               
+0584bc3a047b        host                host                local               
+39984b5f3b6d        none                null                local               
+[root@Va1 ~]# ifconfig   docker0
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+        ether 02:42:de:4d:e9:93  txqueuelen 0  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va1 ~]# docker   images 
+REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/newcentos   latest              d706dbf66fd4        25 hours ago        358.7 MB
+newcentos                     latest              d706dbf66fd4        25 hours ago        358.7 MB
+192.168.0.11:5000/shdimg      latest              eb2e3f5be55c        26 hours ago        322.9 MB
+shdimg                        shdtag              eb2e3f5be55c        26 hours ago        322.9 MB
+busybox                       latest              3a093384ac30        32 hours ago        1.199 MB
+ubuntu                        latest              452a96d81c30        8 months ago        79.62 MB
+centos                        latest              e934aafc2206        9 months ago        198.6 MB
+registry                      latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                         latest              a5311a310510        2 years ago         181.4 MB
+redis                         latest              1aa84b1b434e        2 years ago         182.8 MB
+
+
+[root@Va1 ~]# docker  run  -td  -p  80:80  -v  /var/webroot_va1/:/var/www/html  newcentos:latest2883dd854d193b6512ab42ef699e2734908c474753cea00c29835838a59f1c6c
+docker: Error response from daemon: driver failed programming external connectivity on endpoint cranky_shockley (a6691f24ed92f2a23d5b7b26e9da7ec8ab1de9c73ce56075a47f195f56c5a252): Error starting userland proxy: listen tcp 0.0.0.0:80: bind: address already in use.
+
+[root@Va1 ~]# docker  rm   $(docker  ps -aq)
+2883dd854d19
+5c1d5419e6a9
+bc684cc0b016
+[root@Va1 ~]# ls  /var/webroot_va1/
+index.html  Va3.txt
+[root@Va1 ~]# docker  run  -td  -p  80:80  -v  /var/webroot_va1/:/var/www/html  newcentos:latest
+
+5a45e514340a6c57acdca10eaef08d32aab55e9248a9c640ec36cd5eea280378
+docker: Error response from daemon: driver failed programming external connectivity on endpoint gloomy_poincare (1c80c43a0699843a3cd5ba250e96f6a560b40289e2848525a34f157256d8cfb1): Error starting userland proxy: listen tcp 0.0.0.0:80: bind: address already in use.
+
+[root@Va1 ~]# systemctl  is-active  httpd
+active
+
+[root@Va1 ~]# netstat   -npult  |grep httpd
+tcp6       0      0 :::80                   :::*                    LISTEN      1186/httpd  
+        
+[root@Va1 ~]# systemctl  stop  httpd
+
+[root@Va1 ~]# systemctl  disable  httpd
+Removed symlink /etc/systemd/system/multi-user.target.wants/httpd.service.
+
+[root@Va1 ~]# docker  ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+
+[root@Va1 ~]# docker  rm   $(docker  ps  -aq)
+5a45e514340a
+-----------------------------------------使用 端口映射 可以 实现 外网 访问容器内的 服务 ---------------------
+
+[root@Va1 ~]# docker  run  -td  -p  80:80  -v  /var/webroot_va1/:/var/www/html  newcentos:latest
+
+932aaf3e76255008ed83e227955fcf37f6584bc89a74d578afdf077e6c85d63f
+
+[root@Va1 ~]# curl  -i  192.168.0.11
+curl: (7) Failed connect to 192.168.0.11:80; 拒绝连接
+
+[root@Va1 ~]# docker  exec  -it  932aa  /bin/bash
+
+[root@932aaf3e7625 /]# apachectl  ## 开启http服务
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.17.0.2. Set the 'ServerName' directive globally to suppress this message
+
+[root@932aaf3e7625 /]# elinks   -dump  127.0.0.1
+   Va2 addded
+[root@932aaf3e7625 /]# ifconfig  |head  -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 0.0.0.0
+
+[root@932aaf3e7625 /]# exit
+exit
+
+[root@Va1 ~]# curl  -i  192.168.0.11
+HTTP/1.1 200 OK
+Date: Wed, 02 Jan 2019 09:40:41 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Tue, 01 Jan 2019 08:58:23 GMT
+ETag: "c-57e61bb5c5615"
+Accept-Ranges: bytes
+Content-Length: 12
+Content-Type: text/html; charset=UTF-8
+
+Va2  addded
+
+[root@Va1 ~]# netstat   -npult  |grep httpd
+[root@Va1 ~]# 
+/************  使用 端口映射 可以 实现 外网 访问主机Va1的容器内的 服务 
+
+[root@Va2 ~]# curl  -i   192.168.0.11
+HTTP/1.1 200 OK
+Date: Wed, 02 Jan 2019 10:28:31 GMT
+Server: Apache/2.4.6 (CentOS)
+Last-Modified: Tue, 01 Jan 2019 08:58:23 GMT
+ETag: "c-57e61bb5c5615"
+Accept-Ranges: bytes
+Content-Length: 12
+Content-Type: text/html; charset=UTF-8
+
+Va2  addded
+[root@Va2 ~]# elinks  -dump  192.168.0.11
+   Va2 addded
+[root@Va2 ~]# 
+******************/
+
+[root@Va1 ~]# docker  ps  -q
+932aaf3e7625
+[root@Va1 ~]# docker   top  932
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                4165                4151                0                   17:37               pts/1               00:00:00            /bin/bash
+root                4268                1                   0                   17:39               ?                   00:00:00            /usr/sbin/httpd
+apache              4269                4268                0                   17:39               ?                   00:00:00            /usr/sbin/httpd
+apache              4270                4268                0                   17:39               ?                   00:00:00            /usr/sbin/httpd
+apache              4271                4268                0                   17:39               ?                   00:00:00            /usr/sbin/httpd
+apache              4272                4268                0                   17:39               ?                   00:00:00            /usr/sbin/httpd
+apache              4273                4268                0                   17:39               ?                   00:00:00            /usr/sbin/httpd
+[root@Va1 ~]# 
+[root@Va1 ~]# brctl   show  docker0
+bridge name	bridge id		STP enabled	interfaces
+docker0		8000.0242de4de993	no		veth946c682
+
+[root@Va1 ~]# ip  address  show  docker0
+7: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP 
+    link/ether 02:42:de:4d:e9:93 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:deff:fe4d:e993/64 scope link 
+       valid_lft forever preferred_lft forever
+[root@Va1 ~]# 
+
+
+
+k8s基本概念
+Kubernetes 是Google开源的容器集群管理系统，
+基于Docker构建一个容器的调度服务，
+提供资源调度、均衡容灾、服务注册、动态扩缩容等功能套件，目前最新版本为1.0.6;
+
+几个重要概念：
+ Pod : 
+在Kubernetes系统中，调度的最小颗粒不是单纯的容器，
+而是抽象成一个Pod，
+Pod是一个可以被创建、销毁、调度、管理的最小的部署单元。
+比如一个或一组容器。
+
+ Service :
+Services是真实应用服务的抽象，
+每一个服务后面都有很多对应的容器来支持，
+通过Proxy的port和服务selector决定服务请求传递给后端提供服务的容器，
+对外表现为一个单一访问接口，
+外部不需要了解后端如何运行，
+这给扩展或维护后端带来很大的好处。
+使用nat作为端口转发；
+
+ Replication Controllers:
+Replication Controller确保任何时候Kubernetes集群中
+有指定数量的pod副本(replicas)在运行， 
+如果少于指定数量的pod副本(replicas)，
+Replication Controller会启动新的Container，反之会杀死多余的以保证数量不变。
+
+ Labels:
+Labels是用于区分Pod、Service、Replication Controller的key/value键值对，
+Pod、Service、 Replication Controller可以有多个label，
+但是每个label的key只能对应一个value。
+Labels是Service和Replication Controller运行的基础，
+他们正是通过labels来选择正确的容器。 
+
+Cluster : 
+Cluster是安装在物理机或者是虚拟机上用来运行应用的应用的组件； 
+
+Node : 
+运行了Kubernetes的Cluster机器被成为节点； 
+
+安装使用 master上安装kubernetes
+
+vim /etc/yum.repos.d/virt7-testing.repo 
+[virt7-testing] 
+name=virt7-testing 
+baseurl=http://cbs.centos.org/repos/virt7-testing/x86_64/os/ 
+gpgcheck=0 
+
+#注意；这里etcd使用的是yum中的版本；版本号为2.1.1； @使用最新版本时测试不通过；
+
+ yum -y install etcd kubernetes 
+
+#修改如下文件 
+cat vim /etc/kubernetes/config 
+
+[root@h0022062 bin]# cat /etc/kubernetes/config 
+
+### # kubernetes system config 
+# # The following values are used to configure various aspects of all 
+# kubernetes services, including 
+# # kube-apiserver.service 
+# kube-controller-manager.service 
+# kube-scheduler.service 
+# kubelet.service # kube-proxy.service 
+# logging to stderr means we get it in the systemd journal KUBE_LOGTOSTDERR="--logtostderr=true" 
+# journal message level, 0 is debug KUBE_LOG_LEVEL="--v=0" 
+# Should this cluster be allowed to run privileged docker containers KUBE_ALLOW_PRIV="--allow_privileged=false" 
+# How the controller-manager, scheduler, and proxy find the apiserver 
+#KUBE_MASTER="--master=http://127.0.0.1:8080" KUBE_ETCD_SERVERS="--etcd_servers=http://locate:2379" 
+
+[root@h0022062 bin]# cat /etc/kubernetes/apiserver 
+
+### # kubernetes system config 
+# # The following values are used to configure the kube-apiserver 
+# # The address on the local server to listen to. KUBE_API_ADDRESS="--address=0.0.0.0" 
+# The port on the local server to listen on. KUBE_API_PORT="--port=8080" 
+# Port minions listen on KUBELET_PORT="--kubelet_port=10250" 
+# How the replication controller and scheduler find the kube-apiserver KUBE_MASTER="--master=http://centos-master:8080" 
+# Comma separated list of nodes in the etcd cluster KUBE_ETCD_SERVERS="--etcd_servers=http://localhost:2379"
+ # Address range to use for services KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16" 
+# default admission control policies #KUBE_ADMISSION_CONTROL="--admission_control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota" 
+# Add your own! KUBE_API_ARGS=""
+
+ #启动服务； service etcd start 
+service kube-apiserver start 
+service kube-controller-manager start 
+service kube-scheduler start
+
+master上启动节点；
+#修改配置文件
+ [root@h0022062 server]# cat /etc/kubernetes/kubelet 
+### # kubernetes kubelet (minion) config 
+# The address for the info server to serve on (set to 0.0.0.0 or "" for all interfaces) KUBELET_ADDRESS="--address=127.0.0.1" 
+# The port for the info server to serve on KUBELET_PORT="--port=10250" 
+# You may leave this blank to use the actual hostname KUBELET_HOSTNAME="--hostname_override=127.0.0.1" 
+# location of the api-server KUBELET_API_SERVER="--api_servers=http://127.0.0.1:8080" 
+# Add your own! KUBELET_ARGS="" 
+
+#启动各个节点； service kube-proxy start 
+service kubelet start 
+service docker start
+
+Offline
+在Kubernetes启动pod的时候；会尝试下载一些镜像；由于网络问题；这些镜像一般下载不了； 需要事先下载好；以便测试；
+
+docker pull gcr.io/google_containers/pause 
+docker pull gcr.io/google_containers/pause:0.8.0 docker tag gcr.io/google_containers/pause docker.io/kubernetes/pause
+HelloWord
+#创建pod；
+ [root@h0022062 server]# kubectl run my-nginx --image=127.0.0.1:5010/centos-nginx --replicas=2 --port=80 CONTROLLER CONTAINER(S) IMAGE(S) SELECTOR REPLICAS my-nginx my-nginx 127.0.0.1:5010/centos-nginx run=my-nginx 2 [root@h0022062 server]#
+ [root@h0022062 server]# 
+#查看已经存在的pod 
+[root@h0022062 server]# kubectl get pods NAME READY STATUS RESTARTS AGE my-nginx-bnmhj 1/1 Running 0 11s my-nginx-lqkny 1/1 Running 0 11s 
+#查看replicationcontroller 
+[root@h0022062 bin]# kubectl get replicationcontroller CONTROLLER CONTAINER(S) IMAGE(S) SELECTOR REPLICAS my-nginx my-nginx nginx run=my-nginx 2 
+#停止pods 
+[root@h0022062 server]# kubectl stop replicationcontroller my-nginx replicationcontrollers/my-nginx 
+#确认是否停止成功 
+[root@h0022062 server]# kubectl get pods NAME READY STATUS RESTARTS AGE
+
+HelloWord-实际可以访问的service
+
+[root@h0022062 server]# kubectl get pods 
+NAME READY STATUS RESTARTS AGE 
+[root@h0022062 server]# kubectl get services 
+NAME LABELS SELECTOR IP(S) PORT(S) kubernetes component=apiserver,provider=kubernetes <none> 192.168.0.1 443/TCP 
+[root@h0022062 server]# cat pod.yaml 
+apiVersion: v1 kind: ReplicationController metadata: name: mynginx labels: name: mynginx spec: replicas: 2 template: metadata: labels: app: nginx spec: containers: - name: mynginx image: 127.0.0.1:5010/centos-nginx ports: - containerPort: 80 
+[root@h0022062 server]# kubectl create -f pod.yaml replicationcontrollers/mynginx 
+
+[root@h0022062 server]# kubectl get pods 
+NAME READY STATUS RESTARTS AGE 
+mynginx-3sz2i 1/1 Running 0 1m mynginx-m821h 1/1 Running 0 1m 
+
+#添加服务 [root@h0022062 server]# cat service.json 
+
+{ "kind": "Service", "apiVersion": "v1", "metadata": { "name": "my-service" }, "spec": { "selector": { "app": "nginx" }, "ports": [ { "protocol": "TCP", "port": 80, "targetPort": 80 } ] } } 
+#启动服务 
+[root@h0022062 server]# kubectl create -f service.json 
+#iptables查看nat的映射表 
+[root@h0022062 server]# iptables -nvL -t nat 7 420 DNAT tcp -- * * 0.0.0.0/0 10.254.79.222 /* default/my-service: */ tcp dpt:80 to:192.168.77.114:13412 
+#访问测试；
+
+# [root@h0022062 server]# kubectl stop -f pod.yaml pods/mynginx 
+
+#有一个pending；
+可以使用describe命令查看详情 
+[root@h0022062 server]# kubectl describe pods/mynginx-3sz2i
+常用命令 kubectl create
+作用：通过文件创建资源（pod、Replication Controllers、Service）等；
+支持YAML和JSON格式； 示例：
+
+kubectl create -f ./pod.json
+kubectl get
+作用：列出资源列表； 示例：
+
+// 显示所有的pods $ kubectl get pods 
+//显示replicationcontroller $ kubectl get replicationcontroller $ kubectl get rc 
+//显示service $ kubectl get service 
+//显示所有节点 $ kubectl get node 
+// 显示pod web-pod-13je7 的json $ kubectl get -o json pod web-pod-13je7 
+// List one or more resources by their type and names. $ kubectl get rc/web service/frontend pods/web-pod-13je7
+kubectl delete
+作用：删除资源；可以使用文件或者是标签来标记删除的资源； 示例：
+
+// Delete a pod using the type and name specified in pod.json. $ kubectl delete -f ./pod.json 
+// Delete pods and services with label name=myLabel. $ kubectl delete pods,services -l name=myLabel 
+// Delete all pods $ kubectl delete pods --all
+kubectl describe
+作用：显示资源的详情；可以用于显示pending状态
+
+示例：
+
+// 显示nodes名称为kubernetes-minion-emt8.c.myproject.internal的详情 
+$ kubectl describe nodes kubernetes-minion-emt8.c.myproject.internal 
+
+//显示pods名称为nginx的详情 
+$ kubectl describe pods/nginx 
+
+// 显示标签为 name=myLabel 的pods $ kubectl describe po -l name=myLabel
+kubectl logs
+作用：显示pod内容器的日志；
+
+示例：
+
+#如果是pod内只有一个容器；容器名称可选 kubectl logs mynginx-24aw5 kubectl logs mynginx-24aw5 mynginx
+kubectl stop
+作用：停止一个资源；
+
+示例：
+
+// Shut down foo. 
+$ kubectl stop replicationcontroller foo 
+// Stop pods and services with label name=myLabel. 
+$ kubectl stop pods,services -l name=myLabel 
+// Shut down the service defined in service.json 
+$ kubectl stop -f service.json 
+// Shut down all resources in the path/to/resources directory 
+$ kubectl stop -f path/to/resources
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh   -X  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Tue Jan  1 13:46:36 2019 from 192.168.0.254
+[root@Va2 ~]# free  -m 
+              total        used        free      shared  buff/cache   available
+Mem:           4959         154        4607           8         197        4571
+Swap:          2047           0        2047
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS                    PORTS               NAMES
+31ad17b26ee1        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   21 hours ago        Exited (0) 21 hours ago                       fervent_gates
+ 
+ 
+[root@Va2 ~]# ifconfig  |grep  -A1  flags=
+
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.120  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@Va2 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0    ifdown-ib      ifdown-Team      ifup-ippp    ifup-sit
+ifcfg-eth0:1  ifdown-ippp    ifdown-TeamPort  ifup-ipv6    ifup-Team
+ifcfg-eth1    ifdown-ipv6    ifdown-tunnel    ifup-isdn    ifup-TeamPort
+ifcfg-eth2    ifdown-isdn    ifup             ifup-plip    ifup-tunnel
+ifcfg-lo      ifdown-post    ifup-aliases     ifup-plusb   ifup-wireless
+ifdown        ifdown-ppp     ifup-bnep        ifup-post    init.ipv6-global
+ifdown-bnep   ifdown-routes  ifup-eth         ifup-ppp     network-functions
+ifdown-eth    ifdown-sit     ifup-ib          ifup-routes  network-functions-ipv6
+
+
+[root@Va2 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0:1
+DEVICE="eth0:1"
+ONBOOT=yes
+NM_CONTROLLED="no"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL="no"
+BOOTPROTO="static"
+IPADDR="192.168.0.120"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.0.254"
+
+[root@Va2 ~]# ifconfig  eth0:0  192.168.0.220  ## 在一个网卡上面设置多个 IP 虚拟网卡
+
+[root@Va2 ~]# ifconfig  eth0:0  
+
+eth0:0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.220  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifconfig  eth0:1
+
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.120  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0    ifdown-ib      ifdown-Team      ifup-ippp    ifup-sit
+ifcfg-eth0:1  ifdown-ippp    ifdown-TeamPort  ifup-ipv6    ifup-Team
+ifcfg-eth1    ifdown-ipv6    ifdown-tunnel    ifup-isdn    ifup-TeamPort
+ifcfg-eth2    ifdown-isdn    ifup             ifup-plip    ifup-tunnel
+ifcfg-lo      ifdown-post    ifup-aliases     ifup-plusb   ifup-wireless
+ifdown        ifdown-ppp     ifup-bnep        ifup-post    init.ipv6-global
+ifdown-bnep   ifdown-routes  ifup-eth         ifup-ppp     network-functions
+ifdown-eth    ifdown-sit     ifup-ib          ifup-routes  network-functions-ipv6
+
+[root@Va2 ~]# ifconfig  eth0:0  down  ## 关闭虚拟网卡
+[root@Va2 ~]# ifconfig  eth0:0
+eth0:0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifconfig  eth0:0  up  ##启动 eth0:1 ，并且不设置任何网络参数
+SIOCSIFFLAGS: 无法指定被请求的地址
+
+[root@Va2 ~]# ifconfig  eth0:0  192.168.0.220
+
+[root@Va2 ~]# ifconfig  eth0:0  
+eth0:0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.220  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifconfig  eth0:1
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.120  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifdown   eth0:1  ## 关闭虚拟网卡
+
+[root@Va2 ~]# ifconfig  eth0:1
+
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifup    eth0:1   ##找出ifcfg-eth0:1这个文件的内容，进行设置
+[root@Va2 ~]# ifconfig  eth0:1
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.120  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# cat  /etc/sysconfig/network-scripts/ifdown
+#!/bin/bash
+unset WINDOW # defined by screen, conflicts with our usage
+. /etc/init.d/functions
+cd /etc/sysconfig/network-scripts
+. ./network-functions
+[ -f ../network ] && . ../network
+CONFIG=$1
+[ -z "$CONFIG" ] && {
+    echo $"usage: ifdown <configuration>" >&2
+    exit 1
+}
+need_config "${CONFIG}"
+[ -f "$CONFIG" ] || {
+    echo $"usage: ifdown <configuration>" >&2
+    exit 1
+}
+if [ $UID != 0 ]; then
+    if [ -x /usr/sbin/usernetctl ]; then
+        source_config
+        if /usr/sbin/usernetctl ${CONFIG} report ; then
+            exec /usr/sbin/usernetctl ${CONFIG} down
+        fi
+    fi
+    echo $"Users cannot control this device." >&2
+    exit 1
+fi
+source_config
+if [ -n "$IN_HOTPLUG" ] && [ "${HOTPLUG}" = "no" -o "${HOTPLUG}" = "NO" ]
+then
+    exit 0
+fi
+if [ "$_use_nm" = "true" ]; then
+    if [ -n "$UUID" -a -z "$DEVICE" ]; then
+        DEVICE=$(nmcli -t --fields uuid,device con show --active | awk -F ':' "\$1 == \"$UUID\" { print \$2 }")
+    fi
+    if [ -n "$DEVICE" ] && ! is_nm_device_unmanaged "$DEVICE" ; then
+        if ! LC_ALL=C nmcli -t -f STATE,DEVICE dev status | egrep -q "^(failed|disconnected|unmanaged|unavailable):$DEVICE$"; then
+            nmcli dev disconnect "$DEVICE"
+            exit $?
+        fi
+        exit 0
+    fi
+fi
+if [ -x /sbin/ifdown-pre-local ]; then
+    /sbin/ifdown-pre-local ${DEVICE}
+fi
+OTHERSCRIPT="/etc/sysconfig/network-scripts/ifdown-${DEVICETYPE}"
+if [ ! -x ${OTHERSCRIPT} ]; then
+    OTHERSCRIPT="/etc/sysconfig/network-scripts/ifdown-${TYPE}"
+fi
+if [ ! -x ${OTHERSCRIPT} ]; then
+    OTHERSCRIPT="/etc/sysconfig/network-scripts/ifdown-eth"
+fi
+exec ${OTHERSCRIPT} ${CONFIG} $2
+[root@Va2 ~]# 
+
+siocsifflags
+SIOCGIFFLAGS 读取 或 设置 设备的 活动标志字.
+ ifr_flags 包含 下列值 的 屏蔽位:
+设备标志IFF_UP 接口正在运行.
+IFF_BROADCAST 有效的广播地址集.
+IFF_DEBUG 内部调试标志.
+IFF_LOOPBACK 这是自环接口.
+IFF_POINTOPOINT 这是点到点的链路接口.
+IFF_RUNNING 资源已分配.
+IFF_NOARP 无arp协议, 没有设置第二层目的地址.
+IFF_PROMISC 接口为杂凑(promiscuous)模式.
+IFF_NOTRAILERS 避免使用trailer .
+IFF_ALLMULTI 接收所有组播(multicast)报文.
+IFF_MASTER 主负载平衡群(bundle).
+IFF_SLAVE 从负载平衡群(bundle).
+IFF_MULTICAST 支持组播(multicast).
+IFF_PORTSEL 可以通过ifmap选择介质(media)类型.
+IFF_AUTOMEDIA 自动选择介质.
+IFF_DYNAMIC 接口关闭时丢弃地址.
+
+
+Bridge模式
+
+
+当Docker进程启动时，会在主机上创建一个名为docker0的虚拟网桥，
+此主机上启动的Docker容器会连接到这个虚拟网桥上。
+虚拟网桥的工作方式和物理交换机类似，这样主机上的所有容器就通过交换机连在了一个二层网络中。
+
+从docker0子网中分配一个IP给容器使用，并设置docker0的IP地址为容器的默认网关。在主机上创建一对虚拟网卡veth pair设备，Docker将veth pair设备的一端放在新创建的容器中，并命名为eth0（容器的网卡），另一端放在主机中，以vethxxx这样类似的名字命名，并将这个网络设备加入到docker0网桥中。可以通过brctl show命令查看。
+
+bridge模式是docker的默认网络模式，不写--net参数，就是bridge模式。使用docker run -p时，docker实际是在iptables做了DNAT规则，实现端口转发功能。可以使用iptables -t nat -vnL查看。
+
+bridge模式如下图所示：
+
+https://www.cnblogs.com/yy-cxd/p/6553624.html
+================================================
+
+[root@Va2 ~]# ifconfig   eth0:1
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.120  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifconfig   eth0:0
+eth0:0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.220  netmask 255.255.255.0  broadcast 192.168.0.255
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ifconfig   eth0:1  down  ##关闭虚拟网卡
+[root@Va2 ~]# ifconfig   eth0:1
+eth0:1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        ether 52:54:00:66:2a:04  txqueuelen 1000  (Ethernet)
+
+[root@Va2 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0    ifdown-ib      ifdown-Team      ifup-ippp    ifup-sit
+ifcfg-eth0:1  ifdown-ippp    ifdown-TeamPort  ifup-ipv6    ifup-Team
+ifcfg-eth1    ifdown-ipv6    ifdown-tunnel    ifup-isdn    ifup-TeamPort
+ifcfg-eth2    ifdown-isdn    ifup             ifup-plip    ifup-tunnel
+ifcfg-lo      ifdown-post    ifup-aliases     ifup-plusb   ifup-wireless
+ifdown        ifdown-ppp     ifup-bnep        ifup-post    init.ipv6-global
+ifdown-bnep   ifdown-routes  ifup-eth         ifup-ppp     network-functions
+ifdown-eth    ifdown-sit     ifup-ib          ifup-routes  network-functions-ipv6
+
+[root@Va2 ~]# rm  -f  /etc/sysconfig/network-scripts/ifcfg-eth0:1
+
+[root@Va2 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0   ifdown-ippp    ifdown-TeamPort  ifup-ipv6    ifup-Team
+ifcfg-eth1   ifdown-ipv6    ifdown-tunnel    ifup-isdn    ifup-TeamPort
+ifcfg-eth2   ifdown-isdn    ifup             ifup-plip    ifup-tunnel
+ifcfg-lo     ifdown-post    ifup-aliases     ifup-plusb   ifup-wireless
+ifdown       ifdown-ppp     ifup-bnep        ifup-post    init.ipv6-global
+ifdown-bnep  ifdown-routes  ifup-eth         ifup-ppp     network-functions
+ifdown-eth   ifdown-sit     ifup-ib          ifup-routes  network-functions-ipv6
+ifdown-ib    ifdown-Team    ifup-ippp        ifup-sit
+
+[root@Va2 ~]# cp  /etc/sysconfig/network-scripts/ifcfg-eth0   /etc/sysconfig/network-scripts/ifcfg-br0
+
+[root@Va2 ~]# vim  /etc/sysconfig/network-scripts/ifcfg-br0  ##设置虚拟交换机
+
+[root@Va2 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-br0
+NAME="br0"
+DEVICE="br0"
+ONBOOT=yes
+NM_CONTROLLED="no"
+TYPE="Bridge"     ##网桥类型
+IPV6INIT=no
+IPV4_FAILURE_FATAL="no"
+BOOTPROTO="static"  
+IPADDR="192.168.0.120"
+NETMASK="255.255.255.0"
+
+[root@Va2 ~]# yum  -y  install   bridge-utils  |tail   -3
+.............
+软件包 bridge-utils-1.5-9.el7.x86_64 已安装并且是最新版本
+无须任何处理
+
+[root@Va2 ~]# rpm  -qa  |grep  bridge
+bridge-utils-1.5-9.el7.x86_64
+
+[root@Va2 ~]# yum  list  |grep  bridge
+bridge-utils.x86_64                      1.5-9.el7                 @anaconda/7.4
+cockpit-bridge.x86_64                    138-9.el7                 CentOS7-1708 
+
+[root@Va2 ~]# systemctl  restart   network
+
+[root@Va2 ~]# ifconfig  |grep  -A1  flags=  ## 注意虚拟交换机 br0已经开启
+
+br0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.120  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@Va2 ~]# ifdown   br0   ## 关闭虚拟网桥
+
+[root@Va2 ~]# ifconfig   br0
+br0: flags=4098<BROADCAST,MULTICAST>  mtu 1500
+        ether ea:09:e9:90:f0:f1  txqueuelen 1000  (Ethernet)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 25  bytes 3591 (3.5 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@Va2 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-br0 ##虚拟交换机br0
+NAME="br0"
+DEVICE="br0"
+ONBOOT=yes
+NM_CONTROLLED="no"
+TYPE="Bridge"   ##网桥类型
+IPV6INIT=no
+IPV4_FAILURE_FATAL="no"
+BOOTPROTO="static"
+IPADDR="192.168.0.120"
+NETMASK="255.255.255.0"
+
+[root@Va2 ~]# rm   -f  /etc/sysconfig/network-scripts/ifcfg-br0
+
+[root@Va2 ~]# ifconfig  |grep  -A1  flags=
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@Va2 ~]# docker  network   list
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+e957b8b92094        host                host                local               
+dee03025f613        none                null                local  
+             
+[root@Va2 ~]# docker  network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+e957b8b92094        host                host                local               
+dee03025f613        none                null                local               
+
+[root@Va2 ~]# docker  network   --help  |grep  -A8  Commands:
+Commands:
+  connect     Connect a container to a network
+  create      Create a network
+  disconnect  Disconnect a container from a network
+  inspect     Display detailed information on one or more networks
+  ls          List networks
+  rm          Remove one or more networks
+
+Run 'docker network COMMAND --help' for more information on a command.
+
+[root@Va2 ~]# docker  network   create  --help  
+
+Usage:	docker network create [OPTIONS] NETWORK
+
+Create a network
+
+Options:
+      --aux-address value    Auxiliary IPv4 or IPv6 addresses used by Network driver (default map[])
+  -d, --driver string        Driver to manage the Network (default "bridge")
+      --gateway value        IPv4 or IPv6 Gateway for the master subnet (default [])
+      --help                 Print usage
+      --internal             Restrict external access to the network
+      --ip-range value       Allocate container ip from a sub-range (default [])
+      --ipam-driver string   IP Address Management Driver (default "default")
+      --ipam-opt value       Set IPAM driver specific options (default map[])
+      --ipv6                 Enable IPv6 networking
+      --label value          Set metadata on a network (default [])
+  -o, --opt value            Set driver specific options (default map[])
+      --subnet value         Subnet in CIDR format that represents a network segment (default [])
+
+
+
+[root@Va2 ~]# docker  network   create  --help  |grep  "\--subnet "
+      --subnet value         Subnet in CIDR format that represents a network segment (default [])
+
+[root@Va2 ~]# 
+
+/******
+创建网络
+
+在安装docker Engine时会自动创建一个默认的bridge网络docker0。 
+此外，还可以创建自己的bridge网络或overlay网络。
+
+bridge网络依附于运行Docker Engine的单台主机上，而overlay网络能够覆盖运行各自Docker Engine的多主机环境中。
+
+创建bridge网络比较简单如下：
+
+ # 不指定网络驱动时默认创建的bridge网络
+docker  network  create  --subnet=172.18.0.1/16  docker1
+
+docker network create  -d bridge --subnet=172.18.0.1/16   simple-network
+
+ # 查看网络内部信息
+ docker network inspect simple-network
+
+ # 应用到容器时，可进入容器内部使用ifconfig查看容器的网络详情
+
+但是创建一个overlay网络就需要一些前提条件（具体操作请参考Docker容器网络相关内容）： 
+- key-value store（Engine支持Consul、Etcd和ZooKeeper等分布式存储的key-value store）
+ 
+- 集群中所有主机已经连接到key-value store 
+- swarm集群中每个主机都配置了下面的daemon参数 
+- –cluster-store 
+- –cluster-store-opt 
+- –cluster-advertise 
+
+然后创建overlay网络：
+
+# 创建网络时，使用参数`-d`指定驱动类型为overlay
+docker network create -d overlay my-multihost-network
+
+就使用--subnet选项创建子网而言，bridge网络只能指定一个子网，而overlay网络支持多个子网。
+
+在bridge和overlay网络驱动下创建的网络可以指定不同的参数，
+具体请参考：https://docs.docker.com/engine/userguide/networking/work-with-networks/
+
+创建三个容器，分别前两个使用默认网络启动容器，第三个使用自定义bridge网络启动。 
+然后再将第二个容器添加到自定义网络。这三个容器的网络情况如下
+
+第一个容器：只有默认的docker0
+第二个容器：属于两个网络——docker0、自定义网络
+第三个容器：只属于自定义网络
+说明：通过容器启动指定的网络会覆盖默认bridge网络docker0。
+
+# 创建三个容器 conTainer1,container2,container3
+docker run -itd --name=container1 busybox
+docker run -itd --name=container2 busybox
+# 创建网络mynet
+docker network create -d bridge --subnet 172.25.0.0/16 mynet
+# 将容器containerr2连接到新建网络mynet
+docker network connect mynet container2
+# 使用mynet网络来容器container3
+docker run --net=mynet --ip=172.25.3.3 -itd --name=container3 busybox
+
+移除网络要求网络中所有的容器关闭或断开与此网络的连接时，才能够使用移除命令：
+
+# 断开最后一个连接到mynet网络的容器
+docker network disconnet mynet container3
+# 移除网络
+docker network rm mynet
+
+https://blog.csdn.net/u012891504/article/details/77367140
+
+
+
+创建一个docker网络my-docker
+
+docker network create -d bridge \
+--subnet=192.168.0.0/24 \
+--gateway=192.168.0.100 \
+--ip-range=192.168.0.0/24 \
+my-docker
+利用刚才创建的网络启动一个容器
+
+#docker run --network=my-docker --ip=192.168.0.5 -itd --name=con_name -h lb01 image_name
+--network   #指定容器网络
+--ip        #设定容器ip地址
+-h          #给容器设置主机名
+
+创建一个网络
+docker network create --driver bridge --subnet 172.22.16.0/24 --gateway 172.22.16.1 my_net2
+
+将容器添加到my_net2网络 connect
+docker network connect my_net2 oldboy1
+
+
+
+第一步：创建自定义网络
+备注：这里选取了172.172.0.0网段，也可以指定其他任意空闲的网段
+备注1：这里是固定IP地址的一个应用场景的延续，仅作记录用，可忽略不看。
+
+docker network create --subnet=172.172.0.0/16 docker-ice
+注：docker-ice为自定义网桥的名字，可自己任意取名。
+
+第二步：在你自定义的网段选取任意IP地址作为你要启动的container的静态IP地址
+备注：这里在第二步中创建的网段中选取了172.172.0.10作为静态IP地址。这里以启动docker-ice为例。
+docker run -d --net docker-ice --ip 172.172.0.10 ubuntu:16.04
+
+备注2：如果需要将指定IP地址的容器出去的请求的源地址改为宿主机上的其他可路由IP地址，
+可用iptables来实现。
+比如将静态IP地址 172.18.0.10出去的请求的源地址改成公网IP104.232.36.109(前提是本机存在这个IP地址)，
+可执行如下命令：
+iptables -t nat -I POSTROUTING -o eth0 -d  0.0.0.0/0 -s 172.18.0.10  -j SNAT --to-source 104.232.36.109
+
+
+---------------------------- 创建自定义 网络  docker1 -------------------------
+
+[root@Va1 ~]# docker  network  create  --driver  bridge  \
+> --subnet=172.18.0.0/16    --gateway=172.18.0.1     \
+> --ip-range=172.18.0.0/16   docker1
+
+36c303b8ab2d419634b159a5da51c871cba495c7906cbe48f7e49069ebdb1238
+
+[root@Va1 ~]# docker  network  inspect   docker1   ##  查看网络内部信息
+
+[root@Va1 ~]# docker  network  inspect   bridge  ##  查看网络内部信息
+
+           ---------- 利用 默认创建的 网络 docker0 启动一个容器        --------------------
+
+[root@Va1 ~]# docker  run  --network=bridge  --ip=172.17.0.11  -td  centos:latest
+
+64afbfe0c3aaf1711c2bfebc0224631e80a66897d5c7e31a02e8c0ef31d5df12
+docker: Error response from daemon: User specified IP address is supported on user defined networks only.
+  守护进程的错误响应 : 仅在用户定义的网络上支持用户指定的IP地址
+
+私有 ip 地址的范围：
+A类地址范围：10.0.0.0—10.255.255.255
+B类地址范围：172.16.0.0---172.31.255.555
+C类地址范围：192.168.0.0---192.168.255.255
+
+[root@Va2 ~]# docker  network  create   --subnet  10.10.10.0/24  jiaohuanji  ##创建自定义网络
+
+c5c2511b3433900a2103aadfa43c42d4672dced21fe704576f00c647b28c9998
+
+[root@Va2 ~]# docker  network   ls
+
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+e957b8b92094        host                host                local               
+c5c2511b3433        jiaohuanji          bridge              local               
+dee03025f613        none                null                local  
+             
+[root@Va2 ~]# ifconfig   |head   -3
+
+br-c5c2511b3433: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 10.10.10.1  netmask 255.255.255.0  broadcast 0.0.0.0
+        ether 02:42:17:f0:39:29  txqueuelen 0  (Ethernet)
+
+[root@Va2 ~]# docker  load  < shdimg.tar  ##导入本地镜像
+Loaded image: shdimg:shdtag
+
+[root@Va2 ~]# docker  images   -a
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+192.168.0.11:5000/shdimg   latest              eb2e3f5be55c        24 hours ago        322.9 MB
+shdimg                     shdtag              eb2e3f5be55c        24 hours ago        322.9 MB
+busybox                    latest              3a093384ac30        30 hours ago        1.199 MB
+ubuntu                     latest              452a96d81c30        8 months ago        79.62 MB
+centos                     latest              e934aafc2206        9 months ago        198.6 MB
+registry                   latest              d1fd7d86a825        11 months ago       33.26 MB
+nginx                      latest              a5311a310510        2 years ago         181.4 MB
+redis                      latest              1aa84b1b434e        2 years ago         182.8 MB
+
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS                    PORTS               NAMES
+31ad17b26ee1        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   23 hours ago        Exited (0) 23 hours ago                       fervent_gates
+
+[root@Va2 ~]# docker  history   192.168.0.11:5000/shdimg:latest  |grep  -i cmd
+eb2e3f5be55c        25 hours ago        /bin/sh -c #(nop)  CMD ["/etc/rc.d/init.d/run   0 B                 
+<missing>           25 hours ago        /bin/sh -c echo "/usr/sbin/sshd -D;CMD [\"/us   57 B                
+<missing>           9 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+
+/************************
+
+[root@Va2 ~]# docker  network  create   --subnet  10.10.10.0/24  jiaohuanji  ##创建自定义网络
+
+c5c2511b3433900a2103aadfa43c42d4672dced21fe704576f00c647b28c9998
+
+[root@Va2 ~]# docker  network   ls
+
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+e957b8b92094        host                host                local               
+c5c2511b3433        jiaohuanji          bridge              local               
+dee03025f613        none                null                local  
+             
+[root@Va2 ~]# ifconfig   |head   -3
+
+br-c5c2511b3433: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 10.10.10.1  netmask 255.255.255.0  broadcast 0.0.0.0
+        ether 02:42:17:f0:39:29  txqueuelen 0  (Ethernet)
+
+------------------------------    ## 新建运行容器  ----------------
+
+[root@Va2 ~]# docker  run  -td  --network  jiaohuanji  --ip=10.10.10.12  192.168.0.11:5000/shdimg:latest     ## 新建运行容器 
+
+WARNING: IPv4 forwarding is disabled. Networking will not work.
+00ad3758b7311f447f7e16720e0d863a77aef5d2018b47373381f63989444d13
+
+[root@Va2 ~]# 
+IPv4 forwarding is disabled 
+禁用IPv4转发
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/ip_forward
+0
+
+[root@Va2 ~]# vim   /etc/sysctl.conf 
+
+[root@Va2 ~]# tail   -1  /etc/sysctl.conf
+net.ipv4.ip_forward=1
+
+[root@Va2 ~]# sysctl   -p
+net.ipv4.ip_forward = 1
+
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+
+[root@Va2 ~]# sysctl   -w  net.ipv4.ip_forward=0
+net.ipv4.ip_forward = 0
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/ip_forward
+0
+[root@Va2 ~]# sysctl  -p  ## 重新加载默认配置文件/etc/sysctl.conf 
+net.ipv4.ip_forward = 1
+
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+[root@Va2 ~]# docker  history   192.168.0.11:5000/shdimg:latest  |grep  -i cmd
+
+eb2e3f5be55c        25 hours ago        /bin/sh -c #(nop)  CMD ["/etc/rc.d/init.d/run   0 B                 
+<missing>           25 hours ago        /bin/sh -c echo "/usr/sbin/sshd -D;CMD [\"/us   57 B                
+<missing>           9 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B   
+              
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS                     NAMES
+00ad3758b731        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   20 minutes ago      Up 20 minutes       22/tcp, 80/tcp, 443/tcp   peaceful_keller
+
+[root@Va2 ~]# docker  inspect   00ad  |grep  -En "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+14:            "Pid": 4598,
+25:        "Name": "/peaceful_keller",
+110:            "Hostname": "00ad3758b731",
+154:            "Gateway": "",
+157:            "IPAddress": "",
+172:                    "Gateway": "10.10.10.1",
+173:                    "IPAddress": "10.10.10.12",
+
+[root@Va2 ~]# elinks   -dump   10.10.10.12
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@Va2 ~]# ssh   -o  StrictHostKeyChecking=no  10.10.10.12
+Warning: Permanently added '10.10.10.12' (ECDSA) to the list of known hosts.
+root@10.10.10.12's password: 1
+
+[root@00ad3758b731 ~]# cat  /var/www/html/index.html 
+/usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@00ad3758b731 ~]# elinks   -dump   127.0.0.1
+
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@00ad3758b731 ~]# ifconfig  |grep  -A1  flags=
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.10.12  netmask 255.255.255.0  broadcast 0.0.0.0
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+
+[root@00ad3758b731 ~]# cat  /etc/rc.d/init.d/run.sh 
+#!/bin/bash
+EnvironmentFile=/etc/sysconfig/sshd
+/usr/sbin/sshd  -D  &
+EnvironmentFile=/etc/sysconfig/httpd
+/usr/sbin/httpd  -DFOREGROUND
+
+[root@00ad3758b731 ~]# ls  /
+anaconda-post.log  boot  etc   lib    media  opt   root  sbin  sys  usr
+bin                dev   home  lib64  mnt    proc  run   srv   tmp  var
+
+[root@00ad3758b731 ~]# route  -n
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         10.10.10.1      0.0.0.0         UG    0      0        0 eth0
+10.10.10.0      0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@00ad3758b731 ~]# cat  /etc/resolv.conf 
+search vbr
+nameserver 127.0.0.11
+options ndots:0
+[root@00ad3758b731 ~]#  exit 
+logout
+Connection to 10.10.10.12 closed.
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS                     NAMES
+00ad3758b731        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   44 minutes ago      Up 44 minutes       22/tcp, 80/tcp, 443/tcp   peaceful_keller
+[root@Va2 ~]# docker  ps  -a
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS                    PORTS                     NAMES
+00ad3758b731        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   44 minutes ago      Up 44 minutes             22/tcp, 80/tcp, 443/tcp   peaceful_keller
+31ad17b26ee1        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   24 hours ago        Exited (0) 23 hours ago                             fervent_gates
+[root@Va2 ~]# docker network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+e957b8b92094        host                host                local               
+c5c2511b3433        jiaohuanji          bridge              local               
+dee03025f613        none                null                local  
+             
+---------------------------- 创建自定义 网络  docker2 -------------------------
+
+[root@Va2 ~]# docker  network  create  --driver  bridge \
+>     --subnet=10.10.11.0/24     --gateway=10.10.11.254  \
+>     --ip-range=10.10.11.0/24    docker2
+
+dd21cc10b973071fe44b3ef02a57e41faea4e0f062178984f7aeee8c2a8a95c7
+
+[root@Va2 ~]# docker network  ls
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+dd21cc10b973        docker2             bridge              local               
+e957b8b92094        host                host                local               
+c5c2511b3433        jiaohuanji          bridge              local               
+dee03025f613        none                null                local  
+             
+[root@Va2 ~]# ifconfig  |grep  -A1  flags=
+br-c5c2511b3433: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.10.1  netmask 255.255.255.0  broadcast 0.0.0.0
+--
+br-dd21cc10b973: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 10.10.11.254  netmask 255.255.255.0  broadcast 0.0.0.0
+--
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+--
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+veth8377efd: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet6 fe80::cc55:e0ff:feeb:d66a  prefixlen 64  scopeid 0x20<link>
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+
+[root@Va2 ~]#  docker  run  -td  --network=docker2   --ip=10.10.11.12  shdimg:shdtag
+
+7afef04abe744627bbde33736be4eb334dadb017c8c43259b8c6bc94e308b331
+
+[root@Va2 ~]# docker  ps
+CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS                     NAMES
+7afef04abe74        shdimg:shdtag                     "/etc/rc.d/init.d/run"   7 seconds ago       Up 5 seconds        22/tcp, 80/tcp, 443/tcp   mad_brown
+00ad3758b731        192.168.0.11:5000/shdimg:latest   "/etc/rc.d/init.d/run"   55 minutes ago      Up 55 minutes       22/tcp, 80/tcp, 443/tcp   peaceful_keller
+
+
+[root@Va2 ~]# docker  inspect   7afe  |grep  -En "\"Pid\":|\"Name\": \"/|\"Hostname\":|\"Gateway\":|\"IPAddress\":"
+14:            "Pid": 5459,
+25:        "Name": "/mad_brown",
+110:            "Hostname": "7afef04abe74",
+154:            "Gateway": "",
+157:            "IPAddress": "",
+172:                    "Gateway": "10.10.11.254",
+173:                    "IPAddress": "10.10.11.12",
+
+[root@Va2 ~]# elinks   -dump  10.10.11.12
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+[root@Va2 ~]# elinks   -dump  10.10.10.12
+   /usr/sbin/sshd -D;CMD ["/usr/sbin/httpd","-DFOREGROUND"]
+
+--
+[root@Va2 ~]# ifconfig  |grep  -A1  flags=  |head  -8
+br-c5c2511b3433: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.10.1  netmask 255.255.255.0  broadcast 0.0.0.0
+--
+br-dd21cc10b973: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.10.11.254  netmask 255.255.255.0  broadcast 0.0.0.0
+--
+docker0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0
+
+[root@Va2 ~]# docker  network   ls
+NETWORK ID          NAME                DRIVER              SCOPE
+d990b942f602        bridge              bridge              local               
+dd21cc10b973        docker2             bridge              local               
+e957b8b92094        host                host                local               
+c5c2511b3433        jiaohuanji          bridge              local               
+dee03025f613        none                null                local   
+            
+[root@Va2 ~]# brctl   show  br-dd21cc10b973    ##启动容器会绑定该网桥
+bridge name       bridge id          STP enabled  interfaces
+br-dd21cc10b973   8000.0242061443a7	no           vethb64deb0
+
+[root@Va2 ~]# brctl   show  br-c5c2511b3433     ##启动容器会绑定该网桥
+bridge name       bridge id          STP enabled  interfaces
+br-c5c2511b3433   8000.024217f03929  no           veth8377efd
+
+[root@Va2 ~]# brctl   show  docker0        ##启动容器会绑定该网桥
+bridge name          bridge id       STP enabled  interfaces
+docker0      8000.0242808b2e85       no	
+	
+[root@Va2 ~]# ssh  -o  StrictHostKeyChecking=no  10.10.10.12
+
+root@10.10.10.12's password: 1
+Last login: Wed Jan  2 08:39:11 2019 from 10.10.10.1
+
+[root@00ad3758b731 ~]# ping -c2  10.10.10.12
+PING 10.10.10.12 (10.10.10.12) 56(84) bytes of data.
+64 bytes from 10.10.10.12: icmp_seq=1 ttl=64 time=0.038 ms
+64 bytes from 10.10.10.12: icmp_seq=2 ttl=64 time=0.056 ms
+.............
+
+[root@00ad3758b731 ~]# ping -c2  10.10.11.12
+PING 10.10.11.12 (10.10.11.12) 56(84) bytes of data.
+^C
+--- 10.10.11.12 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time 1000ms
+
+[root@00ad3758b731 ~]# exit
+logout
+Connection to 10.10.10.12 closed.
+[root@Va2 ~]# 
+
+/**************** 再开启 第二个终端 开启 路由转发和iptables 服务 此实验 涉及更多的docker技术 ,留待今后再 研究 ***********8
+
+[root@room9pc01 ~]# ssh  -o  StrictHostKeyChecking=no  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Wed Jan  2 14:21:44 2019 from 192.168.0.254
+[root@Va2 ~]# iptables  -t  nat   -nL
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+DOCKER     all  --  0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+DOCKER     all  --  0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  10.10.11.0/24        0.0.0.0/0           
+MASQUERADE  all  --  10.10.10.0/24        0.0.0.0/0           
+MASQUERADE  all  --  172.17.0.0/16        0.0.0.0/0           
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24    
+
+Chain DOCKER (2 references)
+target     prot opt source               destination         
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+RETURN     all  --  0.0.0.0/0            0.0.0.0/0           
+[root@Va2 ~]# rpm  -qa  |grep  iptables
+iptables-1.4.21-18.el7.x86_64
+[root@Va2 ~]# yum  -y  install  iptables-services  |tail  -3
+  iptables.x86_64 0:1.4.21-18.0.1.el7.centos                                    
+
+完毕！
+[root@Va2 ~]# sysctl  -p
+net.ipv4.ip_forward = 1
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+[root@Va2 ~]# service  iptables   start  &&  chkconfig   iptables  on
+
+Redirecting to /bin/systemctl start iptables.service
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+
+[root@Va2 ~]# iptables  -t  nat  -A  POSTROUTING  -s  10.10.10.0/24  -p tcp  --dport  80  -j  MASQUERADE
+
+[root@Va2 ~]# iptables  -t  nat  -A  POSTROUTING  -s  10.10.11.0/24  -p tcp  --dport  80  -j  MASQUERADE
+
+[root@Va2 ~]# iptables  -t  nat  -nL  POSTROUTING
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  10.10.11.0/24        0.0.0.0/0           
+MASQUERADE  all  --  10.10.10.0/24        0.0.0.0/0           
+MASQUERADE  all  --  172.17.0.0/16        0.0.0.0/0           
+RETURN     all  --  192.168.122.0/24     224.0.0.0/24        
+RETURN     all  --  192.168.122.0/24     255.255.255.255     
+MASQUERADE  tcp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  udp  --  192.168.122.0/24    !192.168.122.0/24     masq ports: 1024-65535
+MASQUERADE  all  --  192.168.122.0/24    !192.168.122.0/24    
+MASQUERADE  tcp  --  10.10.10.0/24        0.0.0.0/0            tcp dpt:80
+MASQUERADE  tcp  --  10.10.11.0/24        0.0.0.0/0            tcp dpt:80
+
+[root@Va2 ~]# docker  stop  $(docker  ps  -q)
+7afef04abe74
+00ad3758b731
+[root@Va2 ~]# docker  rm  $(docker  ps  -aq)
+7afef04abe74
+00ad3758b731
+31ad17b26ee1
+[root@Va2 ~]# echo  $$
+1533
+[root@Va2 ~]# ll  /proc/1533/ns
+总用量 0
+lrwxrwxrwx 1 root root 0 1月   2 19:22 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 1月   2 19:22 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 1月   2 19:22 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 1月   2 19:22 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 1月   2 19:22 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 1月   2 19:22 uts -> uts:[4026531838]
+[root@Va2 ~]# systemctl  is-active  docker
+active
+[root@Va2 ~]# systemctl  stop  docker  &&  systemctl  disable  docker  ## 关闭docker服务并禁止自启动
+Removed symlink /etc/systemd/system/multi-user.target.wants/docker.service.
+[root@Va2 ~]# docker
+docker                  docker-containerd-ctr   dockerd                 docker-runc
+docker-containerd       docker-containerd-shim  docker-proxy            
+[root@Va2 ~]# docker   images
+Cannot connect to the Docker daemon. Is the docker daemon running on this host?
+[root@Va2 ~]#  
+
+
+
+
+
+[root@Va1 ~]# docker  stop  $(docker  ps  -q)
+932aaf3e7625
+[root@Va1 ~]# docker  rm   $(docker  ps  -aq)
+932aaf3e7625
+[root@Va1 ~]# echo  $$
+1521
+[root@Va1 ~]# ll   /proc/1521/ns
+总用量 0
+lrwxrwxrwx 1 root root 0 1月   2 19:29 ipc -> ipc:[4026531839]
+lrwxrwxrwx 1 root root 0 1月   2 19:29 mnt -> mnt:[4026531840]
+lrwxrwxrwx 1 root root 0 1月   2 19:29 net -> net:[4026531956]
+lrwxrwxrwx 1 root root 0 1月   2 19:29 pid -> pid:[4026531836]
+lrwxrwxrwx 1 root root 0 1月   2 19:29 user -> user:[4026531837]
+lrwxrwxrwx 1 root root 0 1月   2 19:29 uts -> uts:[4026531838]
+
+[root@Va1 ~]#  systemctl  stop  docker  &&  systemctl  disable  docker 
+
+Removed symlink /etc/systemd/system/multi-user.target.wants/docker.service.
+[root@Va1 ~]# echo  $$
+1521
+
+
+
+
+
