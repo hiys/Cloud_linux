@@ -1,0 +1,792 @@
+
+https://github.com/ansible/ansible
+
+https://www.centos.org/download/
+
+http://isoredirect.centos.org/centos/7/isos/x86_64/
+
+http://mirrors.huaweicloud.com/centos/7/cloud/x86_64/openstack-newton/
+http://mirrors.huaweicloud.com/centos/7/cloud/x86_64/openstack-ocata/
+http://mirrors.huaweicloud.com/centos/7/cloud/x86_64/openstack-ocata/ansible-pacemaker-1.0.0-1.el7.noarch.rpm
+http://mirrors.huaweicloud.com/centos/7/extras/x86_64/Packages/ansible-2.4.2.0-2.el7.noarch.rpm
+
+http://mirrors.huaweicloud.com/centos/7/extras/x86_64/Packages/kubernetes-client-1.5.2-0.7.git269f928.el7.x86_64.rpm
+http://mirrors.huaweicloud.com/centos/7/virt/x86_64/kubernetes110/  ##docker 技术k8s
+
+http://mirrors.huaweicloud.com/centos/7/virt/x86_64/kvm-common/
+
+http://mirrors.huaweicloud.com/centos/7/storage/x86_64/ceph-jewel/
+http://mirrors.huaweicloud.com/centos/7/storage/x86_64/ceph-luminous/
+
+
+[root@room9pc01 ~]# tar  -xvf  /var/ftp/ansible_soft.tar.xz  -C  /var/ftp/
+ansible_soft/
+ansible_soft/ansible-2.4.2.0-2.el7.noarch.rpm
+ansible_soft/python-httplib2-0.9.2-1.el7.noarch.rpm
+ansible_soft/python-paramiko-2.1.1-4.el7.noarch.rpm
+ansible_soft/python-passlib-1.6.5-2.el7.noarch.rpm
+ansible_soft/python2-jmespath-0.9.0-3.el7.noarch.rpm
+ansible_soft/sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc01 ~]# ls   /var/ftp/
+ansible_soft  ansible_soft.tar.xz  CentOS7-1708  docker  pub  rhel7  share
+
+[root@room9pc01 ~]# ls  /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@room9pc01 ~]# ls   /var/ftp/ansible_soft
+
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc01 ~]# cp  -f   /var/ftp/ansible_soft/*.rpm   /var/ftp/docker/
+
+[root@room9pc01 ~]# ls  /var/ftp/docker/
+
+ansible-2.4.2.0-2.el7.noarch.rpm                      python-httplib2-0.9.2-1.el7.noarch.rpm
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          python-paramiko-2.1.1-4.el7.noarch.rpm
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+docker_images.zip                                     repodata
+python2-jmespath-0.9.0-3.el7.noarch.rpm               sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc01 ~]# createrepo   --update  /var/ftp/docker/  ##更新yum源
+
+Spawning worker 0 with 2 pkgs
+Spawning worker 1 with 2 pkgs
+Spawning worker 2 with 1 pkgs
+Spawning worker 3 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Wed Jan  2 14:21:19 2019 from 192.168.0.254
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1903         120        1633           8         149        1579
+Swap:          2047           0        2047
+
+[root@Va1 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va1 ~]# which   rsync 
+/usr/bin/rsync
+
+[root@Va1 ~]# rsync   -av  /etc/hosts  '-e  ssh  -p  22 '  root@Va2:/etc/
+......................
+Are you sure you want to continue connecting (yes/no)? yes
+.....................
+root@va2's password: 1
+.....................
+[root@Va1 ~]# rsync   -av  /etc/hosts  '-e  ssh   -p22'  root@Va3:/etc/
+.............
+Are you sure you want to continue connecting (yes/no)? yes
+..................................
+root@va3's password: 1
+........................
+
+[root@Va1 ~]#  rsync   -av  /etc/hosts   root@Va4:/etc/
+.............................
+Are you sure you want to continue connecting (yes/no)? yes
+...............................
+root@va4's password: 1
+.................
+
+[root@Va1 ~]# for  i  in  Va{5,6};do  rsync  -av  /etc/hosts  ${i}:/etc/;done
+...............................................
+Are you sure you want to continue connecting (yes/no)? yes
+......................
+root@va5's password: 1
+sending incremental file list
+hosts
+
+sent 555 bytes  received 37 bytes  107.64 bytes/sec
+total size is 482  speedup is 0.81
+............................
+Are you sure you want to continue connecting (yes/no)? yes
+.....................
+root@va6's password: 1
+sending incremental file list
+hosts
+
+sent 555 bytes  received 37 bytes  169.14 bytes/sec
+total size is 482  speedup is 0.81
+
+[root@Va1 ~]# ls  /root/.ssh/
+known_hosts
+[root@Va1 ~]# cat  /root/.ssh/known_hosts 
+..................
+[root@Va1 ~]# vim  /etc/fstab 
+[root@Va1 ~]# tail   -2   /etc/fstab
+..............
+#192.168.0.13:/var/webroot   /var/webroot_va1  nfs   defaults,_netdev  0  0
+
+[root@Va1 ~]# rpm  -q  nfs-utils
+nfs-utils-1.3.0-0.48.el7.x86_64
+
+[root@Va1 ~]# scp  root@192.168.0.254:'/var/git/ansible_soft.tar.xz'  ./
+.......................
+Are you sure you want to continue connecting (yes/no)? yes
+.........................
+
+[root@Va1 ~]# ls
+anaconda-ks.cfg      dockerfile2    docker_images.zip     shdimg.tar  公共  视频  文档  音乐
+ansible_soft.tar.xz  docker_images  initial-setup-ks.cfg  Vaxip.sh    模板  图片  下载  桌面
+
+[root@Va1 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va1 ~]# cat   /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=ftp://192.168.0.254/docker
+gpgckeck=0
+enabled=1
+
+[root@Va1 ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -4
+CentOS7-1708                CentOS7-1708                                   9,591
+docker                      docker-engine                                      8
+rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
+repolist: 14,585
+
+[root@room9pc01 ~]# ls   /var/ftp/ansible_soft
+
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@Va1 ~]# yum  search   ansible
+
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. 
+该系统没有向授权服务器注册。
+You can use subscription-manager to register. 
+您可以使用订阅管理器进行注册
+========================================= N/S matched: ansible ==========================================
+ansible.noarch : SSH-based configuration management, deployment, and task execution system
+                      基于SSH的配置管理,部署与任务执行系统
+
+  名称和简介匹配 only，使用“search all”试试。
+
+[root@Va1 ~]# yum  -y  install  ansible  |tail  -3
+  sshpass.x86_64 0:1.06-2.el7                                                   
+
+完毕！
+[root@Va1 ~]# ansible  --version
+
+ansible 2.4.2.0    ## 显示版本说明安装成功
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, May  3 2017, 07:55:04) [GCC 4.8.5 20150623 (Red Hat 4.8.5-14)]
+
+Ansible工作原理：
+
+管理端支持local 、ssh、zeromq 三种方式连接被管理端，
+默认使用基于ssh的连接 
+
+可以按应用类型等方式进行Host Inventory（主机群）分类，
+管理节点通过各类模块实现相应的操作－－－单个模块，单条命令的批量执行，我们可以称之为ad-hoc；
+
+管理节点可以通过playbooks 实现多个task的集合实现一类功能，
+如web服务的安装部署、数据库服务器的批量备份等。
+
+playbooks我们可以简单的理解为，系统通过组合多条ad-hoc操作的配置文件 。
+
+
+Ansible配置文件查找顺序
+
+– 首先检测 ANSIBLE_CONFIG 变量定义的配置文件
+– 其次检查当前目彔下的 ./ansible.cfg 文件　　　（常用方式）
+– 再次检查当前用户家目彔下 ~/ansible.cfg 文件
+– 最后检查 /etc/ansible/ansible.cfg 文件
+
+• /etc/ansible/ansible.cfg 默认配置文件路径
+
+• ansible.cfg 配置文件（就两个主要配置文件）
+
+– inventory 是定义托管主机地址配置文件
+– 首先编辑 /etc/ansible/hosts 文件,写入一些进程主机的地址。
+• 格式
+– # 表示注释
+[组名称]
+主机名称或ip地址,登彔用户名,密码、端口等信息
+• 测试
+– ansible [组名称] --list-hosts
+***/
+
+ansible命令基础
+• ansible <host-pattern> [options]
+– host-pattern 主机戒定义的分组
+– -M 指定模块路径
+– -m 使用模块,默认 command 模块
+– -a or --args 模块参数
+– -i inventory 文件路径,戒可执行脚本
+– -k 使用交亏式登彔密码
+– -e 定义变量
+
+– -v 详绅信息,-vvvv 开启 debug 模式
+
+[root@Va1 ~]# cd  /etc/ansible/
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# grep  -Evn  "^#|^$"   /etc/ansible/ansible.cfg
+10:[defaults]
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+[root@Va1 ansible]# vim  /etc/ansible/ansible.cfg
+inventory 
+n.	清查; 存货清单; 财产目录，财产目录的编制; 存货总值;
+vt.	盘存; 编制…的目录; 开列…的清单; 总结;
+
+ 10 [defaults]
+
+ 13   ## 该参数表示资源清单inventory文件的位置，资源清单就是一些Ansible需要连接管理的主机列表
+ 14 inventory      = /etc/ansible/hosts  ## 指定组机分组列表的路径
+
+  ## Ansible的操作动作，无论是本地或远程，都使用一小段代码来执行，这小段代码称为模块，
+   ## 这个library参数就是指向存放Ansible模块的目录
+ 15 #library        = /usr/share/my_modules/
+
+ 16 #module_utils   = /usr/share/my_module_utils/
+ 17 #remote_tmp     = ~/.ansible/tmp
+ 18 #local_tmp      = ~/.ansible/tmp
+
+ ## 设置默认情况下Ansible最多能有多少个进程同时工作，默认设置最多5个进程并行处理。
+ ## 具体需要设置多少个，可以根据控制主机的性能和被管理节点的数量来确定。
+ 19 #forks          = 5
+
+ 20 #poll_interval  = 15
+
+  ## 这是设置默认执行命令的用户，也可以在playbook中重新设置这个参数
+ 21 sudo_user      = root   \\远程sudo用户
+
+ 22 #ask_sudo_pass = True  \\每次执行ansible命令是否询问ssh密码
+ 23 #ask_pass      = True   \\每次执行ansible命令时是否询问sudo密码
+
+ ## 这是指定连接被关节点的管理端口，默认是22，除非设置了特殊的SSH端口，不然这个参数一般是不需要修改的
+ 25 remote_port    = 22
+
+ 58 roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+
+   ## 设置是否检查SSH主机的密钥
+ 61 host_key_checking = False  \\关闭第一次使用ansible连接客户端 yes|no[输入命令提示]
+
+ 92 # SSH timeout
+ 93 #timeout = 10  ##设置SSH连接的超时间隔，单位是秒
+
+      ### 所有的命令执行后，都会将日志输出到/var/log/ansible.log文件。
+ ## Ansible系统默认是不记录日志的，
+ ## 需要设置log_path来指定一个存储Ansible日志的文件
+  101 #log_path = /var/log/ansible.log  \\需要时可以自行添加。chown -R root:root ansible.log
+
+165 #system_warnings = True   \\ False 关闭运行ansible时系统的提示信息，一般为提示升级
+
+352 [ssh_connection]
+                     ## 使用ssh连接时 避免 首次 连接时 让输入yes/no 部分的提示
+357 ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s  -o StrictHostKeyChecking=no
+
+--------------------------------------------------
+
+[root@Va1 ansible]# grep  -Evn  "^(#|$)" /etc/ansible/ansible.cfg
+
+10:[defaults]   //组名称
+14:inventory      = /etc/ansible/hosts  ## 指定组机分组列表的路径
+
+## 这是设置默认执行命令的用户，也可以在playbook中重新设置这个参数
+21:sudo_user      = root
+
+ ## 这是指定连接被关节点的管理端口，默认是22，除非设置了特殊的SSH端口，不然这个参数一般是不需要修改的
+25:remote_port    = 22
+
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+
+  ##  #开启ssh不验证yes，不检测主机的sshkey，在第一次连接的时候不用输入yes
+61:host_key_checking = False     ## 设置是否检查SSH主机的密钥
+
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+    ## 使用ssh连接时 避免 首次 连接时 让输入yes/no 部分的提示
+357:ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s  -o StrictHostKeyChecking=no
+
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+[root@Va1 ansible]# cd
+[root@Va1 ~]# ll /root/.ssh/known_hosts 
+-rw-r--r--. 1 root root 1065 1月   3 15:10 /root/.ssh/known_hosts
+
+[root@Va1 ~]# >  /root/.ssh/known_hosts
+[root@Va1 ~]# ls  /root/.ssh/
+known_hosts
+[root@Va1 ~]# ll /root/.ssh/known_hosts 
+-rw-r--r--. 1 root root 0 1月   3 18:21 /root/.ssh/known_hosts
+
+[root@Va1 ~]# grep  -Evn  "^(#|$)" /etc/ansible/hosts 
+
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+
+[root@Va1 ~]# vim  /etc/ansible/hosts
+
+[root@Va1 ~]# grep  -Evn  "^(#|$)" /etc/ansible/hosts 
+组名称]
+主机名称戒ip地址,登彔用户名,密码、端口等信息
+
+44:[web]
+45:Va2
+46:Va4
+
+48:[db]
+49:Va3
+50:Va5
+
+52:[other]
+53:Va6
+
+[root@Va1 ~]# 
+/************
+[web]
+web[1:50] 表示一个连续的web主机地址范围
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+************/
+
+[root@Va1 ~]# ansible   web  --list-hosts
+[DEPRECATION WARNING]: DEFAULT_SUDO_USER option, In favor of become which is a generic 
+framework . This feature will be removed in version 2.8. Deprecation warnings can be 
+disabled by setting deprecation_warnings=False in ansible.cfg.
+
+deprecation
+英[deprɪ'keɪʃən]
+美[deprɪ'keɪʃən]
+n.	强烈不赞成，祈免，反对;
+
+https://fanyi.baidu.com/
+
+[拒绝警告]：默认的“sudo”用户选项，有利于成为通用的
+框架。此功能将在版本2.8中删除。折旧警告可以是
+通过在ansible.cfg中设置deprecation_warnings=false禁用。
+  hosts (2):
+    Va2
+    Va4
+[root@Va1 ~]# ansible  db  --list-hosts
+[DEPRECATION WARNING]: DEFAULT_SUDO_USER option, In favor of become which is a generic 
+framework . This feature will be removed in version 2.8. Deprecation warnings can be 
+disabled by setting deprecation_warnings=False in ansible.cfg.
+  hosts (2):
+    Va3
+    Va5
+[root@Va1 ~]# vim  /etc/ansible/ansible.cfg 
+
+[root@Va1 ~]# grep  -Evn  '^(#|$)'  /etc/ansible/ansible.cfg
+10:[defaults]
+14:inventory      = /etc/ansible/hosts
+21:sudo_user      = root
+25:remote_port    = 22
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+61:host_key_checking = False
+
+170:deprecation_warnings = False  ##把True 该成False 去除警告提示
+
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+357:ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s  -o StrictHostKeyChecking=no
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+/*************
+deprecation
+英[deprɪ'keɪʃən]
+美[deprɪ'keɪʃən]
+n.	强烈不赞成，祈免，反对;
+
+[root@Va1 ~]# ansible  db  --list-hosts  ## 现在没有[DEPRECATION WARNING]: 警告了
+  hosts (2):
+    Va3
+    Va5
+[root@Va1 ~]# ansible  other  --list-hosts
+  hosts (1):
+    Va6
+
+[root@Va1 ~]# ansible  all  --list-hosts
+  hosts (5):
+    Va2
+    Va4
+    Va6
+    Va3
+    Va5
+[root@Va1 ~]# ansible  Va2  --list-hosts
+  hosts (1):
+    Va2
+
+   ## //测试是否可以连接，若成功颜色为 淡绿 色SUCCESS 
+   ## 若 不能连接 显示 为红色  UNREACHABLE
+[root@Va1 ~]# ansible  Va6   -m   ping  //测试是否可以连接
+Va6 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+
+[root@Va1 ~]# ansible  Va6   -m   ping  -k  ##交互式 测试是否可以连接
+SSH password: 1 输入密码
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+[root@Va1 ~]# ls  /proc/sys/net/ipv4/icmp_echo_ignore_all 
+/proc/sys/net/ipv4/icmp_echo_ignore_all
+
+[root@Va1 ~]# ls  /proc/sys/net/ipv4/ip_forward
+/proc/sys/net/ipv4/ip_forward
+
+[root@Va1 ~]# sysctl  -a  |grep  ip_forward
+net.ipv4.ip_forward = 1
+..............
+[root@Va1 ~]# cat  /proc/sys/net/ipv4/ip_forward   ## 临时性 开启 IP 转发
+1
+[root@Va1 ~]# cat  /proc/sys/net/ipv4/icmp_echo_ignore_all
+0
+[root@Va1 ~]# grep  -Evn  '^#|^$'   /etc/sysctl.conf 
+/****
+允许其他主机 PING 本机 设置
+临时允许PING操作的命令为：#echo 0 >/proc/sys/net/ipv4/icmp_echo_ignore_all
+.永久允许PING配置方法。
+  /etc/sysctl.conf 中增加一行
+  net.ipv4.icmp_echo_ignore_all=0
+
+  如果已经有net.ipv4.icmp_echo_ignore_all这一行了，直接修改=号后面的值即可的（0表示允许，1表示禁止）。
+  修改完成后执行sysctl -p使新配置生效。
+
+[root@Va1 ~]# sysctl  -w   net.ipv4.icmp_echo_ignore_all=0
+net.ipv4.icmp_echo_ignore_all = 0
+
+[root@Va1 ~]# cat  /proc/sys/net/ipv4/icmp_echo_ignore_all 
+0
+[root@Va2 ~]# ping  -c1  Va1
+PING Va1 (192.168.0.11) 56(84) bytes of data.
+64 bytes from Va1 (192.168.0.11): icmp_seq=1 ttl=64 time=0.442 ms
+...................
+
+[root@Va1 ~]# sysctl  -w   net.ipv4.icmp_echo_ignore_all=1
+net.ipv4.icmp_echo_ignore_all = 1
+
+   ##其他主机ping不通本主机  但是 本主机 可以ping 通 其他主机
+  ## 相当与本机 接收 了 其他 主机的 响应包,但是拒绝了其他主机的 请求包
+
+[root@Va1 ~]# cat  /proc/sys/net/ipv4/icmp_echo_ignore_all  ##其他主机平不通本主机
+1
+
+[root@Va2 ~]# ping  -c1  Va1  ##其他主机平不通本主机
+PING Va1 (192.168.0.11) 56(84) bytes of data.
+
+--- Va1 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+[root@Va1 ~]# ping -c1 Va2  #但是 本主机 可以ping 通 其他主机
+
+PING Va2 (192.168.0.12) 56(84) bytes of data.
+64 bytes from Va2 (192.168.0.12): icmp_seq=1 ttl=64 time=0.351 ms
+...................
+[root@Va1 ~]# ping -c1 Va6  但是 本主机 可以ping 通 其他主机
+PING Va6 (192.168.0.16) 56(84) bytes of data.
+64 bytes from Va6 (192.168.0.16): icmp_seq=1 ttl=64 time=0.416 ms
+............................
+
+[root@Va6 ~]# ping  -c1  Va1  ##其他主机Va6 ping不通本主机Va1
+PING Va1 (192.168.0.11) 56(84) bytes of data.
+
+--- Va1 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+   ## //测试是否可以连接，若成功颜色为 淡绿 色SUCCESS 
+   ## 若 不能连接 显示 为红色  UNREACHABLE
+
+[root@Va1 ~]# ansible  Va2  -m  ping  -k  ##检测ssh的连接,不是ping,与ping无关
+SSH password: 1 输入密码
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# sysctl  -w   net.ipv4.icmp_echo_ignore_all=0  ##允许其他主机ping本机
+net.ipv4.icmp_echo_ignore_all = 0
+
+[root@Va1 ~]# cat  /proc/sys/net/ipv4/icmp_echo_ignore_all 
+0
+/*************   ##其他主机ping不通本主机  但是 本主机 可以ping 通 其他主机
+  ## 相当与本机 接收 了 其他 主机的 响应包,但是拒绝了其他主机的 请求包
+
+[root@Va2 ~]# sysctl  -w   net.ipv4.icmp_echo_ignore_all=1
+net.ipv4.icmp_echo_ignore_all = 1
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/icmp_echo_ignore_all 
+1
+[root@Va2 ~]# ping  -c1  Va1
+PING Va1 (192.168.0.11) 56(84) bytes of data.
+64 bytes from Va1 (192.168.0.11): icmp_seq=1 ttl=64 time=0.546 ms
+................
+******************/
+
+[root@Va1 ~]# ping  -c1  Va2
+PING Va2 (192.168.0.12) 56(84) bytes of data.
+
+--- Va2 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+   ## //测试是否可以连接，若成功颜色为 淡绿 色SUCCESS 
+   ## 若 不能连接 显示 为红色  UNREACHABLE
+
+[root@Va1 ~]# ansible  Va2  -m  ping  -k  ##检测ssh的连接,不是ping,与ping无关
+SSH password: 1
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+[root@Va2 ~]# sysctl  -w   net.ipv4.icmp_echo_ignore_all=0  # 0 代表 同意其他主机的请求包进入
+net.ipv4.icmp_echo_ignore_all = 0
+
+[root@Va2 ~]# cat  /proc/sys/net/ipv4/icmp_echo_ignore_all 
+0
+ [root@Va1 ~]# ping  -c1  Va2
+PING Va2 (192.168.0.12) 56(84) bytes of data.
+64 bytes from Va2 (192.168.0.12): icmp_seq=1 ttl=64 time=0.455 ms
+.............
+[root@Va1 ~]# ls /root/.ansible/cp/
+
+   ##即使 Va2 的ssh服务关闭,在未断开ssh连接前依然有效
+[root@Va1 ~]# ansible  Va2  -m  ping  -k  ##即使 Va2 的ssh服务关闭,在未断开ssh连接前依然有效
+SSH password: 1 
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# ls /root/.ansible/cp/  ##注意本文件0f03850c62 有时间有效期
+0f03850c62
+
+[root@Va1 ~]# cat  /root/.ansible/cp/0f03850c62 
+cat: /root/.ansible/cp/0f03850c62: 没有那个设备或地址
+
+[root@Va1 ~]# ll  /root/.ansible/cp/0f03850c62
+srw------- 1 root root 0 1月   3 20:18 /root/.ansible/cp/0f03850c62
+
+[root@Va1 ~]# file  /root/.ansible/cp/0f03850c62
+/root/.ansible/cp/0f03850c62: socket
+
+[root@Va1 ~]# stat  /root/.ansible/cp/0f03850c62
+  文件："/root/.ansible/cp/0f03850c62"
+  大小：0         	块：0          IO 块：4096   套接字
+设备：fd00h/64768d	Inode：17559510    硬链接：1
+权限：(0600/srw-------)  Uid：(    0/    root)   Gid：(    0/    root)
+最近访问：2019-01-03 20:18:21.351271487 +0800
+最近更改：2019-01-03 20:18:21.350271489 +0800
+最近改动：2019-01-03 20:18:21.350271489 +0800
+创建时间：-
+[root@Va1 ~]# ls /root/.ansible/cp/
+0f03850c62
+[root@Va1 ~]# ls /root/.ansible/cp/  ##过了时间期限约3分钟,临时文件 0f03850c62 消失了
+[root@Va1 ~]# ls /root/.ansible/
+cp  tmp
+
+
+ansible_sudo	定义sudo用户	ansible_sudo=cxpadmin
+
+注：从ansible2.0开始，
+     ansible_ssh_user, ansible_ssh_host, ansible_ssh_port
+已经改变为ansible_user, ansible_host, ansible_port。
+
+具体参考官网http://docs.ansible.com/ansible/latest/intro_inventory.html
+
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+[root@Va1 ~]# ls  /etc/ansible/roles/
+
+[root@Va1 ~]# vim /etc/ansible/hosts 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Wed Jan  2 18:38:40 2019 from 192.168.0.254
+[root@Va2 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1903         126        1622           8         154        1570
+Swap:          2047           0        2047
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.13
+root@192.168.0.13's password: 
+Last login: Wed Jan  2 14:21:38 2019 from 192.168.0.254
+[root@Va3 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         116         717           8         142         702
+Swap:             0           0           0
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.14
+root@192.168.0.14's password: 
+Last login: Mon Dec 31 17:32:47 2018
+[root@Va4 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         103         733           8         139         717
+Swap:          2047           0        2047
+[root@Va4 ~]# 
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.15
+root@192.168.0.15's password: 
+Last login: Mon Dec 31 17:33:04 2018
+[root@Va5 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         105         734           8         135         717
+Swap:          2047           0        2047
+[root@Va5 ~]# 
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.16
+root@192.168.0.16's password: 
+Last login: Mon Dec 31 17:33:24 2018
+[root@Va6 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         104         735           8         136         718
+Swap:          2047           0        2047
+[root@Va6 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+

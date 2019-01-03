@@ -18,6 +18,1740 @@ http://mirrors.huaweicloud.com/centos/7/virt/x86_64/kvm-common/
 http://mirrors.huaweicloud.com/centos/7/storage/x86_64/ceph-jewel/
 http://mirrors.huaweicloud.com/centos/7/storage/x86_64/ceph-luminous/
 
+rsync同步工具的使用
+
+rsync -avz --process ./A  /B/
+注：
+1.同步目录A时 A后面不需要'/'
+2.同步目录A下的文件时 A/  后面需要'/'
+
+把A目录下的文件同步到B目录，并把B目录多余的文件删除掉
+rsync -avz --delete ./A/ /B/
+
+不同机器之间传输文件
+rsync -avz ./test.log '-e ssh -p 22' root@www.oursai.com:/usr/local/
+--------------------- 
+
+[root@room9pc01 ~]# cp  -f  '/var/git/ansible_soft.tar.xz'  /var/ftp/
+
+[root@room9pc01 ~]# tar  -xvf  /var/ftp/ansible_soft.tar.xz  -C  /var/ftp/
+ansible_soft/
+ansible_soft/ansible-2.4.2.0-2.el7.noarch.rpm
+ansible_soft/python-httplib2-0.9.2-1.el7.noarch.rpm
+ansible_soft/python-paramiko-2.1.1-4.el7.noarch.rpm
+ansible_soft/python-passlib-1.6.5-2.el7.noarch.rpm
+ansible_soft/python2-jmespath-0.9.0-3.el7.noarch.rpm
+ansible_soft/sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc01 ~]# ls   /var/ftp/
+ansible_soft  ansible_soft.tar.xz  CentOS7-1708  docker  pub  rhel7  share
+
+[root@room9pc01 ~]# ls  /var/ftp/docker/
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          docker_images.zip
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  repodata
+
+[root@room9pc01 ~]# ls   /var/ftp/ansible_soft
+
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc01 ~]# cp  -f   /var/ftp/ansible_soft/*.rpm   /var/ftp/docker/
+
+[root@room9pc01 ~]# ls  /var/ftp/docker/
+
+ansible-2.4.2.0-2.el7.noarch.rpm                      python-httplib2-0.9.2-1.el7.noarch.rpm
+docker-engine-1.12.1-1.el7.centos.x86_64.rpm          python-paramiko-2.1.1-4.el7.noarch.rpm
+docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+docker_images.zip                                     repodata
+python2-jmespath-0.9.0-3.el7.noarch.rpm               sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc01 ~]# createrepo   --update  /var/ftp/docker/  ##更新yum源
+
+Spawning worker 0 with 2 pkgs
+Spawning worker 1 with 2 pkgs
+Spawning worker 2 with 1 pkgs
+Spawning worker 3 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Wed Jan  2 14:21:19 2019 from 192.168.0.254
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1903         120        1633           8         149        1579
+Swap:          2047           0        2047
+
+[root@Va1 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va1 ~]# which   rsync 
+/usr/bin/rsync
+
+[root@Va1 ~]# rsync   -av  /etc/hosts  '-e  ssh  -p  22 '  root@Va2:/etc/
+......................
+Are you sure you want to continue connecting (yes/no)? yes
+.....................
+root@va2's password: 1
+sending incremental file list
+hosts
+
+sent 73 bytes  received 37 bytes  12.94 bytes/sec
+total size is 482  speedup is 4.38
+
+[root@Va1 ~]# rsync   -av  /etc/hosts  '-e  ssh   -p22'  root@Va3:/etc/
+.............
+Are you sure you want to continue connecting (yes/no)? yes
+..................................
+root@va3's password: 1
+sending incremental file list
+hosts
+
+sent 555 bytes  received 37 bytes  107.64 bytes/sec
+total size is 482  speedup is 0.81
+
+[root@Va1 ~]#  rsync   -av  /etc/hosts   root@Va4:/etc/
+.............................
+Are you sure you want to continue connecting (yes/no)? yes
+...............................
+root@va4's password: 
+sending incremental file list
+hosts
+
+sent 555 bytes  received 37 bytes  91.08 bytes/sec
+total size is 482  speedup is 0.81
+
+[root@Va1 ~]# for  i  in  Va{5,6};do  rsync  -av  /etc/hosts  ${i}:/etc/;done
+...............................................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'va5,192.168.0.15' (ECDSA) to the list of known hosts.
+root@va5's password: 
+sending incremental file list
+hosts
+
+sent 555 bytes  received 37 bytes  107.64 bytes/sec
+total size is 482  speedup is 0.81
+............................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'va6,192.168.0.16' (ECDSA) to the list of known hosts.
+root@va6's password: 1
+sending incremental file list
+hosts
+
+sent 555 bytes  received 37 bytes  169.14 bytes/sec
+total size is 482  speedup is 0.81
+
+[root@Va1 ~]# ls  /root/.ssh/
+known_hosts
+[root@Va1 ~]# cat  /root/.ssh/known_hosts 
+va2,192.168.0.12 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+va3,192.168.0.13 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+va4,192.168.0.14 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+va5,192.168.0.15 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+va6,192.168.0.16 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+
+[root@Va1 ~]# vim  /etc/fstab 
+[root@Va1 ~]# tail   -2   /etc/fstab
+/dev/mapper/rhel-swap   swap                    swap    defaults        0 0
+#192.168.0.13:/var/webroot   /var/webroot_va1  nfs   defaults,_netdev  0  0
+
+[root@Va1 ~]# rpm  -q  nfs-utils
+nfs-utils-1.3.0-0.48.el7.x86_64
+
+[root@Va1 ~]# scp  root@192.168.0.254:'/var/git/ansible_soft.tar.xz'  ./
+.......................
+Are you sure you want to continue connecting (yes/no)? yes
+.........................
+root@192.168.0.254's password: 1
+ansible_soft.tar.xz                                                    100% 7895KB  52.0MB/s   00:00    
+
+[root@Va1 ~]# ls
+anaconda-ks.cfg      dockerfile2    docker_images.zip     shdimg.tar  公共  视频  文档  音乐
+ansible_soft.tar.xz  docker_images  initial-setup-ks.cfg  Vaxip.sh    模板  图片  下载  桌面
+
+[root@Va1 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va1 ~]# cat   /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[CentOS7-1708]
+name=CentOS7-1708
+baseurl=ftp://192.168.0.254/CentOS7-1708
+gpgcheck=0
+enabled=1
+
+[docker]
+name=docker-engine
+baseurl=ftp://192.168.0.254/docker
+gpgckeck=0
+enabled=1
+
+[root@Va1 ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -4
+CentOS7-1708                CentOS7-1708                                   9,591
+docker                      docker-engine                                      8
+rhel7                       rhel-server-7.4-x86_64-dvd.iso                 4,986
+repolist: 14,585
+
+[root@room9pc01 ~]# ls   /var/ftp/ansible_soft
+
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@Va1 ~]# yum  search   ansible
+
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. 
+该系统没有向授权服务器注册。
+You can use subscription-manager to register. 
+您可以使用订阅管理器进行注册
+========================================= N/S matched: ansible ==========================================
+ansible.noarch : SSH-based configuration management, deployment, and task execution system
+                      基于SSH的配置管理,部署与任务执行系统
+
+  名称和简介匹配 only，使用“search all”试试。
+
+[root@Va1 ~]# yum  -y  install  ansible  |tail  -3
+  sshpass.x86_64 0:1.06-2.el7                                                   
+
+完毕！
+[root@Va1 ~]# ansible  --version
+
+ansible 2.4.2.0    ## 显示版本说明安装成功
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, May  3 2017, 07:55:04) [GCC 4.8.5 20150623 (Red Hat 4.8.5-14)]
+
+ansible是新出现的自动化运维工具，基于Python开发，
+集合了众多运维工具（puppet、cfengine、chef、func、fabric）的优点，
+实现了批量系统配置、批量程序部署、批量运行命令等功能。
+
+ansible是基于模块工作的，
+本身没有批量部署的能力。
+真正具有批量部署的是ansible所运行的模块，
+ansible只是提供一种框架。
+主要包括：
+(1)、连接插件connection plugins：负责和被监控端实现通信；
+(2)、host inventory：指定操作的主机，是一个配置文件里面定义监控的主机；
+(3)、各种模块核心模块、command模块、自定义模块；
+(4)、借助于插件完成记录日志邮件等功能；
+(5)、playbook：剧本执行多个任务时，非必需可以让节点一次性运行多个任务。
+
+由以下几个核心组件构成：
+
+ansible（主体）：ansible的核心程序，
+提供一个命令行接口给用户对ansible进行管理操作；
+
+Host Inventory（主机清单）：
+为Ansible定义了管理主机的策略。
+一般小型环境下 我们只需要在host文件中写入主机的IP地址即可，
+但是到了中大型环境我们有可能需要使用静态inventory
+或者动态主机清单来生成我们所需要执行的目标主机。
+
+Core Modules（核心模块）：
+Ansible执行命令的功能模块，多数为内置的核心模块。
+
+Custom Modules（拓展模块）：
+如何ansible自带的模块无法满足我么你的需求，
+用户可自定义相应的模块来满足自己的需求。
+
+Connection Plugins（连接插件）：
+模块功能的补充，
+如连接类型插件、循环插件、变量插件、过滤插件等，该功能不常用
+
+Playbook（任务剧本）：
+编排定义ansible任务集的配置文件，
+由ansible顺序依次执行，
+通常是JSON格式的* YML文件
+
+API：
+供第三方程序调用的应用程序编程接口
+--------------------- 
+
+
+ansible特性：
+
+模块化：调用特定的模块，完成特定任务
+有Paramiko，PyYAML，Jinja2（模板语言）三个关键模块
+
+支持自定义模块
+
+基于Python语言实现
+
+部署简单，基于python和SSH(默认已安装)，agentless
+
+安全，基于OpenSSH
+
+支持playbook编排任务
+
+幂等性：一个任务执行1遍和执行n遍效果一样，不因重复执行带来意外情况
+
+无需代理不依赖PKI（无需ssl）
+
+可使用任何编程语言写模块
+
+YAML格式，编排任务，支持丰富的数据结构
+较强大的多层解决方案
+
+
+Ansible工作原理：
+
+管理端支持local 、ssh、zeromq 三种方式连接被管理端，
+默认使用基于ssh的连接 
+
+可以按应用类型等方式进行Host Inventory（主机群）分类，
+管理节点通过各类模块实现相应的操作－－－单个模块，单条命令的批量执行，我们可以称之为ad-hoc；
+
+管理节点可以通过playbooks 实现多个task的集合实现一类功能，
+如web服务的安装部署、数据库服务器的批量备份等。
+
+playbooks我们可以简单的理解为，系统通过组合多条ad-hoc操作的配置文件 。
+--------------------- 
+
+ansible的配置文件：
+
+/etc/ansible/ansible.cfg 主配置文件，配置ansible工作特性
+
+/etc/ansible/hosts 主机清单
+
+/etc/ansible/roles/ 存放角色的目录
+
+ansible的命令工具
+
+ansible 主程序，临时命令执行工具
+
+ansible-doc 查看配置文档，模块功能查看工具
+
+例：ansible-doc  ping         查看ping模块帮助
+    ansible-doc -s ping       查看ping模块的简单说明
+
+ansible-galaxy 下载/上传优秀代码或Roles模块的官网平台
+
+列出所有已安装的galaxy：
+
+ansible-galaxy list
+
+安装galaxy：
+
+ansible-galaxy install geerlingguy.redis
+
+删除galaxy：
+
+ansible-galaxy remove geerlingguy.redis
+
+ansible-playbook 定制自动化任务，编排剧本工具
+
+ansible-pull 远程执行命令的工具
+
+ansible-vault 文件加密工具
+
+ansible-vault encrypt hello.yml     加密yml文件
+
+ansible-vault decrypt hello.yml     解密yml文件
+
+ansible-vault view hello.yml        查看yml加密文件
+
+ansible-vault edit hello.yml        编辑加密文件
+
+ansible-vault rekey hello.yml       重新修改加密口令
+
+ansible-vault create new.yml        创建新文件
+
+ansible-console 基于Console界面与用户交互的执行工具 
+格式：
+
+执行用户@当前操作的主机组 (当前组的主机数量)[f:并发数]$
+root   @ test      (2)   [f:10]    $  
+
+列出主机列表中所有主机：
+    root@all (2)[f:5]$ list
+
+切换至appsrvs组：
+    root@all (2)[f:5]$ cd appsrvs
+
+列出appsrvs组下所有主机：
+    root@appsrvs (2)[f:5]$ list
+
+安装httpd：
+    root@appsrvs (2)[f:5]$ yum name=httpd state=present
+
+开启httpd服务：
+    root@appsrvs (2)[f:5]$ service name=httpd state=started
+
+ansible命令
+
+功能：通过ssh实现配置管理、应用部署、任务执行等功能
+
+建议：配置ansible端能基于密钥认证的方式联系各被管理节点
+
+格式：ansible < host-pattern>　 [-m module_name]　 [-a args]
+
+常用选项：
+
+–version               显示版本
+
+-m module              指定模块，默认为command
+
+-v 详细过程             –vv -vvv更详细
+
+–list-hosts            显示主机列表，可简写—list
+
+-k, –ask-pass          提示连接密码，默认Key验证
+
+-K, –ask-become-pass   提示输入sudo
+
+-C, –check             检查，并不执行
+
+-T, –timeout=TIMEOUT   执行命令的超时时间，默认10s
+
+-u, –user=REMOTE_USER  执行远程执行的用户
+
+-b, –become            代替旧版的sudo 切换
+
+< host-pattern> 　 匹配主机的列表
+ALL   表示列表中的所有主机
+例：ansible all -m  ping   #匹配所有主机
+
+*   支持通配符
+
+    例： ansible "*" -m ping  #匹配所有主机
+        ansible 192.168.1.* -m ping  #匹配IP地址以192.168.1开头的主机
+        ansible “*srvs” -m ping  # 匹配分组名 以 srvs结尾的主机
+
+逻辑或：只要存在websrvs或appsrvs组中的主机
+  例：ansible “websrvs:appsrvs”  -m ping 
+     ansible “192.168.1.10:192.168.1.20” -m ping
+
+逻辑与：同时在websrvs组和dbsrvs组中的主机
+    ansible “websrvs:&dbsrvs”  -m ping
+
+逻辑非： 在websrvs组，但不在dbsrvs组中的主机
+    ansible ‘websrvs:!dbsrvs’  -m ping
+
+综合逻辑：
+    ansible ‘websrvs:dbsrvs:&appsrvs:!ftpsrvs’ -m -ping
+
+正则表达式：
+    ansible “websrvs:&dbsrvs”  -m ping
+
+    ansible “~(web|db).*\.magedu\.com” -m ping
+
+ansible命令执行过程
+
+加载自己的配置文件 默认/etc/ansible/ansible.cfg
+加载自己对应的模块文件，如command
+通过ansible将模块或命令生成对应的临时py文件，并将该文件传输至远程服务器的对应执行用户 
+$HOME/.ansible/tmp/ansible-tmp-数字/XXX.PY文件
+给文件+x执行
+执行并返回结果
+删除临时py文件，sleep 0退出
+
+ansible 执行状态：
+
+绿色：执行成功并且不需要做改变的操作
+黄色：执行成功并且对目标主机做变更
+红色：执行失败
+ansible的常用模块功能：
+
+查看模块帮助：
+
+ansible-doc module
+显示模块简要说明：
+
+ansible-doc -s module
+
+command：在远程主机执行命令，默认模块，可忽略-m选项
+
+ansible srvs -m command -a ‘service vsftpd start’
+　注意：
+
+使用Command模块执行脚本时，要注意规范，shebang机制，否则将执行失败
+不支持管道“|”，变量“$”,以及重定向，需使用shell模块
+shell：和command相似，用shell执行命令
+
+ansible srv -m shell -a ‘echo magedu |passwd –stdin wang’
+　注意：
+
+调用bash执行命令 类似 cat /tmp/stanley.md | awk -F‘|’ ‘{print 1,1,2}’ &> /tmp/example.txt 
+这些复杂命令，即使使用shell也可能会失败。 
+解决办法：写到脚本，copy到远程，执行，再把需要的结果拉回执行命令的机器
+
+可将默认模块替换为shell：
+
+vim ansible.conf
+
+module_name = shell
+
+Script：运行脚本,不需要将脚本复制到被控端
+
+ -a “/PATH/TO/SCRIPT_FILE”
+
+ ansible  websrvs  -m  script  -a  f1.sh
+
+copy：从服务器复制文件到客户端
+
+ansible srv -m copy -a “src=/root/f1.sh dest=/tmp/f2.sh mode=600 backup=yes”
+
+如目标存在，默认覆盖，此处指定先备份
+
+ansible srv -m copy -a “content=‘test content\n’ dest=/tmp/f1.txt” 
+
+利用内容，直接生成目标文件
+Fetch:从客户端取文件至服务器端，copy相反，目录可先tar
+
+ ansible srv -m fetch -a ‘src=/root/a.sh dest=/data/scripts’
+例： 打包 /var/log 下所有日志文件并远程抓取
+
+ ansible all -m shell -a 'tar Jcf log.tar.xz /var/log/*.log'
+
+ ansible all -m fetch -a 'src=/root/log.tar.xz dest=/data'
+
+File：设置文件属性
+
+创建新文件：
+
+ansible all -m file -a ‘name=/data/f3 state=touch’
+删除文件：
+
+ansible all -m file -a ‘name=/data/f3 state=absent’
+创建目录：
+ansible all -m file -a ‘name=/data/dir1 state=directory’
+删除目录：
+
+ansible all -m file -a ‘name=/data/dir1 state=absent’
+创建软连接
+
+ansible all -m file -a ‘src=/etc/fstab dest /data/fstab.link state=link’
+删除软连接：
+
+ansible all -m file -a ‘dest /data/fstab.link state=absent’
+创建文件指定所有者，权限：
+
+ansible srv -m file -a “path=/root/a.sh owner=wang mode=755”
+
+ansible web -m file -a  'src=/app/testfile dest=/app/testfile-link state=link'
+
+Hostname：管理主机名 .生效同时更改文件永久生效
+
+例：更改一个主机的主机名：
+
+ ansible node1 -m hostname -a “name=websrv”
+
+注意：
+
+Host模块不会修改/etc/hosts文件中的主机名解析，注意修改
+批量修改主机名时最好加变量，防止所有主机名一致
+Cron：计划任务
+
+支持时间：minute，hour，day，month，weekday 
+示例：
+
+创建计划任务：每周1,3,5，每分钟打印，任务名称：warningcron
+
+    ansible all -m cron -a ‘minute=* weekday=1,3,5 
+        job=”/usr/bin/wall FBI warning” name=warningcron’
+
+注释cronname=waringcron的计划任务：
+
+    ansible all -m cron -a ‘disabled=true 
+        job=”/usr/bin/wall FBI warning” name=warningcron’
+
+给cronname=waringcron的计划任务去掉注释：
+
+    ansible all -m cron -a ‘disabled=true 
+        job=”/usr/bin/wall FBI warning” name=warningcron’
+
+创建计划任务：每五分钟同步一次服务器时间，任务名称：syntime
+
+    ansible srv -m cron -a “minute=*/5
+         job=’/usr/sbin/ntpdate 172.16.0.1 &>/dev/null’ name=Synctime”
+
+删除计划任务：Synctime
+
+    ansible srv -m cron -a ‘state=absent name=Synctime’ 
+
+Yum:管理程序包 
+示例：
+yum安装vsftpd包：（默认state=installd）
+
+    ansible all -m yum -a ‘name=vsftpd’
+
+安装多个包用逗号隔开：
+
+    ansible all -m yum -a ‘name=vsftpd，httpd’
+
+显示所有已安装的包：
+
+    ansible all -m yum -a ‘name=vsftpd  list=installd’
+
+卸载vsftpd包：
+
+    ansible all -m yum -a ‘name=vsftpd  state=removed’
+
+安装从互联网下载的包：
+
+    ansible srv -m copy -a ‘src=/root/package.rpm dest=/data/package’
+
+    ansible srv -m yum -a ‘name=/data/package.rpm’
+
+更新缓存：
+
+    ansible srv -m yum -a ‘update_cache=yes’
+
+更新缓存同时安装dstat包
+
+    ansible srv -m yum -a ‘name=dstat update_cache=yes’
+
+Service：管理服务 
+示例：
+停止httpd服务：
+
+    ansible srv -m service -a ‘name=httpd state=stopped’
+
+开启httpd服务：
+
+    ansible srv -m service -a ‘name=httpd state=started’
+
+重新加载httod服务：
+
+    ansible srv -m service -a ‘name=httpd state=reloaded’
+
+重启httpd服务：
+
+    ansible srv -m service -a ‘name=httpd state=restarted’
+
+开启ftp服务，同时设置开机自动启动：
+
+    ansible srv -m service -a ‘name=vsftpd state=started enabled=yes’
+
+重启ftp服务：
+
+    ansible srv -m service -a ‘name=vsftpd state=restarted’
+
+User：管理用户
+示例：
+
+添加用户，指定uid、家目录、主组及注释：
+
+ ansible srv -m user -a ‘name=user1 comment=”test user” uid=2048 
+        home=/app/user1 group=root’
+
+添加一个系统用户：
+
+    ansible srv -m user -a ‘name=sysuser1 system=yes home=/app/sysuser1’
+
+删除用户：
+
+    ansible srv -m user -a ‘name=user1 state=absent’
+
+添加一个nginx用户：
+
+    ansible srv -m user -a ‘name=nginx shell=/sbin/nologin system=yes
+      home=/var/nginx groups=root,bin uid=80 comment=”nginx service”
+
+删除nginx用户同时删除家目录：
+
+    ansible srv -m user -a ‘name=nginx state=absent remove=yes’
+
+Group：管理组
+示例：
+
+创建一个系统组：
+
+    ansible srv -m group -a “name=testgroup system=yes”
+
+删除一个组：
+
+    ansible srv -m group -a “name=testgroup state=absent”
+
+创建nginx组：
+
+    ansible srv -m group -a ‘name=nginx system=yes gid=80’
+
+删除nginx组：
+
+    ansible srv -m group -a ‘name=nginx state=absent’
+
+ad-hoc 命令是一种可以快速输入的命令，而且不需要保存起来的命令。就相当于bash中的一句话shell。
+ansible中有两种模式，分别是ad-hoc模式和playbook模式
+ad-hoc简而言之，就是"临时命令"
+
+ad-hoc模式的命令使用
+
+ansible <host-parttern> [options]
+
+host-pattern:匹配主机名或者主机组名
+示例：
+ansible 192.168.1.* -a 'ls /tmp'
+ansible group1 -a 'ls /tmp'
+
+更多参数说明：
+-v, --verbose：输出更详细的执行过程信息，-vvv可得到所有执行过程信息。
+-i PATH, --inventory=PATH：指定inventory信息，默认/etc/ansible/hosts。
+-f NUM, --forks=NUM：并发线程数，默认5个线程。
+--private-key=PRIVATE_KEY_FILE：指定密钥文件。
+-m NAME, --module-name=NAME：指定执行使用的模块。
+-M DIRECTORY, --module-path=DIRECTORY：指定模块存放路径，默认/usr/share/ansible，也可以通过ANSIBLE_LIBRARY设定默认路径。
+-a 'ARGUMENTS', --args='ARGUMENTS'：模块参数。
+-k, --ask-pass SSH：认证密码。
+-K, --ask-sudo-pass sudo：用户的密码（—sudo时使用）。
+-o, --one-line：标准输出至一行。
+-s, --sudo：相当于Linux系统下的sudo命令。
+-t DIRECTORY, --tree=DIRECTORY：输出信息至DIRECTORY目录下，结果文件以远程主机名命名。
+-T SECONDS, --timeout=SECONDS：指定连接远程主机的最大超时，单位是：秒。
+-B NUM, --background=NUM：后台执行命令，超NUM秒后kill正在执行的任务。
+-P NUM, --poll=NUM：定期返回后台任务进度。
+-u USERNAME, --user=USERNAME：指定远程主机以USERNAME运行命令。
+-U SUDO_USERNAME, --sudo-user=SUDO_USERNAM：E使用sudo，相当于Linux下的sudo命令。
+-c CONNECTION, --connection=CONNECTION：指定连接方式，可用选项paramiko (SSH), ssh, local。Local方式常用于crontab 和 kickstarts。
+-l SUBSET, --limit=SUBSET：指定运行主机。
+-l ~REGEX, --limit=~REGEX：指定运行主机（正则）。
+--list-hosts：列出符合条件的主机列表，不执行任何其他命令
+
+Ansible配置文件查找顺序
+
+– 首先检测 ANSIBLE_CONFIG 变量定义的配置文件
+– 其次检查当前目彔下的 ./ansible.cfg 文件　　　（常用方式）
+– 再次检查当前用户家目彔下 ~/ansible.cfg 文件
+– 最后检查 /etc/ansible/ansible.cfg 文件
+
+• /etc/ansible/ansible.cfg 默认配置文件路径
+
+• ansible.cfg 配置文件（就两个主要配置文件）
+
+– inventory 是定义托管主机地址配置文件
+
+
+• 格式
+
+– # 表示注释
+[组名称]
+主机名称戒ip地址,登彔用户名,密码、端口等信息
+• 测试
+– ansible [组名称] --list-hosts
+
+
+– 首先编辑 /etc/ansible/hosts 文件,写入一些进程主机的地址。
+
+[root@localhost ~]# vi /etc/ansible/ansible.cfg
+
+inventory      = /etc/ansible/hosts    　／／指定hosts文件位置，名字可以自定义，一般和ansible.cfg主在同一目录
+
+host_key_checking = False       　／／指定ssh登陆时是否跳出询问yes/no  False为不询问
+
+／／上面的文件完成了，引用上面记得把后面／／和内容去掉
+
+[root@ansible /]# vi /etc/ansible/hosts 
+
+[web:vars]　　　／／可以统一设置登陆账号密码等
+
+ansible_ssh_user="root"　　　　　　　
+ansible_ssh_pass="1"
+[web]
+web[1:2]　　　　　　　　　　　　　　　　
+[db]
+
+Inventory目录
+组成部分
+ansible tupb -a 'ls'
+ansible tupb01 -a 'ls'
+ansible 192.168.1.2 -a 'ls'
+
+Ansible可同时操作属于一个组的多台主机，
+组和主机之间的关系通过Inventory文件配置（vim /etc/ansible/ansible.cfg
+）默认的文件路径为 /etc/ansible/hosts。
+
+组成部分
+
+例：
+one.example.com
+[tupb]
+two.example.com
+three.example.com
+方括号[ ] 是组名，一个主机可以属于不同的组，
+比如一台服务器可以属于tupb组和tupb01组。这时可以指定tupb组和tupb02组，都可以操作这台主机。
+
+ansible tupb -a ‘ls’
+
+ansible tupb01 -a ‘ls’
+
+ansible 192.168.1.2 -a ‘ls’
+
+如何自定义链接端口
+编辑host文件，在域名或者ip后，加上冒号和端口号
+192.168.1.2:8080
+one.example.com:8080
+
+IP域名太长，起别名
+jumper ansible_ssh_port=8080 ansible_ssh_host=192.168.1.2
+
+不以root用户登录
+jumper ansible_ssh_port=8080 ansible_ssh_host=192.168.1.2 ansible_ssh_user=tupb
+
+机器太多，但是连续的，写起来比较麻烦
+[tupb02]
+tupb[1:20].example.com
+tupb[a-h].example.com
+
+Inventory 参数选项
+ansible_ssh_host
+ansible_ssh_port
+ansible_ssh_user
+ansible_ssh_pass	ssh 密码
+ansible_sudo_pass	sudo 密码
+ansible_sudo_exe
+ansible_connection	与主机的连接类型。eg:ssh;local;paramiko
+ansible_ssh_pravate_key_file
+ansible_shell_type	目标系统的shell类型
+ansible_python_interpreter
+--------------------- 
+
+#ansible 组名/分机域名/分机IP　--list-hosts  ／／查看主机分组信息
+
+#ansible  组名/分机域名/分机IP  -m  模块名　-a  “相关指令“　　　// 有一千三百多个模块
+
+ansible all -m 'command' -a 'uptime' -k //交互式输入密码
+
+ansible all --list-hosts  //列出要执行的主机,不执行任何操作
+ansible all -m ping   //批量检测主机
+ansible all -m 'command' -a 'id' -k   //批量执行命令
+ansible all -m 'command' -a 'uptime' //查看CPU负载
+
+ansible all -m 'command' -a 'free'  //查看内存使用情况
+
+[root@ansible /]# ansible all -m shell -a "uptime"
+
+批量部署证书文件
+• 每次交亏输入密码比较麻烦
+• 密码写入配置文件安全性很差
+• 丌同主机丌同密码,配置文件要上天
+• 使用 key 方式认证,是一个丌错的选择
+• 给所有主机部署公钥
+– ansible all -m authorized_key -a "user=root
+exclusive=true manage_dir=true key='$(</root/.ssh/authorized_keys)'" -k -v
+
+[root@ansible .ssh]# ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(</root/.ssh/id_rsa.pub)'" -k -v
+Using /etc/ansible/ansible.cfg as config file
+
+SSH password:                         ／／这里输入集群主机的登陆密码
+db1 | SUCCESS => {
+    "changed": true, 
+.......
+／／$(</root/.ssh/id_rsa.pub)可以直接换成密匙内容
+
+－－常用的批量配置管理模块
+模块• ansible-doc
+
+– 模块的手册,相当不 shell 的 man
+– 非常重要,非常重要,非常重要
+– ansible-doc -l 列出所有模块
+– ansible-doc modulename 查看帮劣
+
+• ping 模块
+
+– 测试网络连通性, ping模块没有参数
+– 注:测试 ssh 的连通性
+– ansible host-pattern -m ping
+
+• command模块
+
+– 默认模块,进程执行命令
+– 用法
+– ansible host-pattern -m command -a '[args]'
+– 查看所有机器负载
+ansible all -m command -a 'uptime'
+– 查看日期和时间
+ansible all -m command -a 'date +%F_%T'
+
+• command模块注意事项:
+– 该模块通过-a跟上要执行的命令可以直接执行,丌过命令里如果有带有如下字符部分则执行丌成功
+– "<", ">", "|", "&"
+– 该模块丌吭劢 shell 直接在 ssh 迚程中执行,所有使用到 shell 特性的命令执行都会失败
+– 下列命令执行会失败
+ansible all -m command -a 'ps aux|grep ssh'
+
+ansible all -m command -a 'set'
+
+• shell | raw 模块
+
+– shell 模块用法基本和command一样,区别是 shell模块是通过/bin/sh迚行执行命令,可以执行任意命令
+– raw模块,用法和shell 模块一样 ,可以执行任意命令
+– 区别是 raw 没有chdir、creates、removes参数
+– 执行以下命令查看结果
+ansible t1 -m command -a 'chdir=/tmp touch f1'
+ansible t1 -m shell -a 'chdir=/tmp touch f2'
+ansible t1 -m raw -a 'chdir=/tmp touch f3'
+
+• script模块
+
+– 复杂命令怎么办?
+– ansible 要上天
+– 直接在本地写脚本,然后使用 script 模块批量执行
+– ansible t1 -m script -a 'urscript'　　　／／urscript自己写的脚本
+– 友情提示: 该脚本包含但丌限亍 shell 脚本,只要指定 Sha-bang 解释器的脚本都可运行
+
+模块
+
+• copy 模块
+
+– 复制文件到进程主机
+– src:要复制到进程主机的文件在本地的地址,可以是绝对路径,也可以是相对路径。如果路径是一个目彔,
+
+它将递归复制。在这种情况下,如果路径使用"/"来结尾,则只复制目彔里的内容,如果没有使用"/"来结尾,
+
+则包含目彔在内的整个内容全部复制,类似亍rsync
+
+– dest:必选项。进程主机的绝对路径,如果源文件是一个目彔,那么该路径也必须是个目彔
+
+– backup:在覆盖乊前将原文件备份,备份文件包含时间信息。有两个选项:yes|no
+– force:如果目标主机包含该文件,但内容丌同,如果
+
+设置为yes,则强制覆盖,如果为no,则只有当目标主
+
+机的目标位置丌存在该文件时,才复制。默认为yes
+– 复制文件
+ansible t1 -m copy -a 'src=/root/alog dest=/root/a.log'
+
+– 复制目彔
+
+ansible t1 -m copy -a 'src=urdir dest=/root/'
+
+• lineinfile | replace 模块
+
+– 类似 sed 的一种行编辑替换模块
+– path 目的文件
+– regexp 正则表达式
+– line 替换后的结果
+ansible t1 -m lineinfile -a 'path="/etc/selinux/config"　regexp="^SELINUX=" line="SELINUX=disabled"'
+– 替换指定字符
+ansible t1 -m replace -a 'path="/etc/selinux/config"　regexp="^(SELINUX=).*" replace="\1disabled"'
+
+• yum模块
+
+– 使用yum包管理器来管理软件包
+– config_file:yum的配置文件
+– disable_gpg_check:关闭gpg_check
+– disablerepo:禁用某个源
+– enablerepo:启用某个源
+– name:要进行操作的软件包的名字,也可以传递一个url或者一个本地的rpm包的路径
+– state:状态(present,absent,latest)
+
+ yum模块示例
+
+– 删除软件包
+ansible web1 -m yum -a 'name="lrzsz" state=absent'
+– 删除多个软件包
+ansible web1 -m yum -a 'name="lrzsz,lftp" state=absent'
+– 安装软件包
+ansible web1 -m yum -a 'name="lrzsz"'
+– 安装多个软件包
+ansible web1 -m yum -a 'name="lrzsz,lftp"'
+
+• service模块
+
+– name:必选项,服务名称
+– enabled:是否开机吭劢 yes|no
+– sleep:如果执行了restarted,在则stop和start间沉睡几秒钟
+– state:对当前服务执行启动,停止、重启、重新加载等操作(started,stopped,restarted,reloaded)
+ansible t1 -m service -a 'name="sshd" enabled="yes"　state="started"'
+
+setup模块
+
+– 主要用亍获取主机信息,在playbooks里经常会用到的
+一个参数gather_facts就不该模块相关。setup模块下经常使用的一个参数是filter参数
+– filter 可以过滤到我们需要的信息
+
+ansible t1 -m setup -a 'filter=ansible_distribution'
+
+
+[root@Va1 ~]# cd  /etc/ansible/
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# grep  -Evn  "^#|^$"   /etc/ansible/ansible.cfg
+10:[defaults]
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+[root@Va1 ansible]# vim  /etc/ansible/ansible.cfg
+inventory 
+n.	清查; 存货清单; 财产目录，财产目录的编制; 存货总值;
+vt.	盘存; 编制…的目录; 开列…的清单; 总结;
+
+ 10 [defaults]
+
+ 13   ## 该参数表示资源清单inventory文件的位置，资源清单就是一些Ansible需要连接管理的主机列表
+ 14 inventory      = /etc/ansible/hosts  ## 指定组机分组列表的路径
+
+  ## Ansible的操作动作，无论是本地或远程，都使用一小段代码来执行，这小段代码称为模块，
+   ## 这个library参数就是指向存放Ansible模块的目录
+ 15 #library        = /usr/share/my_modules/
+
+
+ 16 #module_utils   = /usr/share/my_module_utils/
+ 17 #remote_tmp     = ~/.ansible/tmp
+ 18 #local_tmp      = ~/.ansible/tmp
+
+ ## 设置默认情况下Ansible最多能有多少个进程同时工作，默认设置最多5个进程并行处理。
+ ## 具体需要设置多少个，可以根据控制主机的性能和被管理节点的数量来确定。
+ 19 #forks          = 5
+
+ 20 #poll_interval  = 15
+
+  ## 这是设置默认执行命令的用户，也可以在playbook中重新设置这个参数
+ 21 sudo_user      = root   \\远程sudo用户
+
+ 22 #ask_sudo_pass = True  \\每次执行ansible命令是否询问ssh密码
+ 23 #ask_pass      = True   \\每次执行ansible命令时是否询问sudo密码
+
+ ## 这是指定连接被关节点的管理端口，默认是22，除非设置了特殊的SSH端口，不然这个参数一般是不需要修改的
+ 25 remote_port    = 22
+
+
+ 58 roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+
+   ## 设置是否检查SSH主机的密钥
+ 61 host_key_checking = False  \\关闭第一次使用ansible连接客户端 yes|no[输入命令提示]
+
+ 92 # SSH timeout
+ 93 #timeout = 10  ##设置SSH连接的超时间隔，单位是秒
+
+      ### 所有的命令执行后，都会将日志输出到/var/log/ansible.log文件。
+ ## Ansible系统默认是不记录日志的，
+ ## 需要设置log_path来指定一个存储Ansible日志的文件
+  101 #log_path = /var/log/ansible.log  \\需要时可以自行添加。chown -R root:root ansible.log
+
+165 #system_warnings = True   \\ False 关闭运行ansible时系统的提示信息，一般为提示升级
+
+352 [ssh_connection]
+                     ## 使用ssh连接时 避免 首次 连接时 让输入yes/no 部分的提示
+357 ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s  -o StrictHostKeyChecking=no
+
+
+    ansible是基于模块工作的，本身没有批量部署的能力。真正具有批量部署的是ansible所运行的模块，ansible只是提供一种框架。主要包括：
+(1)、连接插件connection plugins：负责和被监控端实现通信；
+(2)、host inventory：指定操作的主机，是一个配置文件里面定义监控的主机；
+(3)、各种模块核心模块、command模块、自定义模块；
+(4)、借助于插件完成记录日志邮件等功能；
+(5)、playbook：剧本执行多个任务时，非必需可以让节点一次性运行多个任务。
+ 
+github地址：https://github.com/ansible/ansible/
+官网地址：https://docs.ansible.com
+在线playbook分享平台：https://galaxy.ansible.com
+ 
+2. 特性
+(1)、no agents：不需要在被管控主机上安装任何客户端；
+(2)、no server：无服务器端，使用时直接运行命令即可；
+(3)、modules in any languages：基于模块工作，可使用任意语言开发模块；
+(4)、yaml，not code：使用yaml语言定制剧本playbook；
+(5)、ssh by default：基于SSH工作；
+(6)、strong multi-tier solution：可实现多级指挥。
+ 
+3. 优点
+(1)、轻量级，无需在客户端安装agent，更新时，只需在操作机上进行一次更新即可；
+(2)、批量任务执行可以写成脚本，而且不用分发到远程就可以执行；
+(3)、使用python编写，维护更简单，ruby语法过于复杂；
+(4)、支持sudo。
+ 
+                                                  ansible基本架构
+· 核心引擎：即ansible
+· 核心模块（core modules）：
+这些都是ansible自带的模块，
+ansible模块资源分发到远程节点使其执行特定任务或匹配一个特定的状态。
+
+· 自定义模块（custom modules）：如果核心模块不足以完成某种功能，可以添加自定义模块。
+
+· 插件（plugins）：完成模块功能的补充，借助于插件完成记录日志、邮件等功能
+
+· 剧本（playbook）：定义ansible任务的配置文件，可以将多个任务定义在一个剧本中，
+由ansible自动执行，剧本执行支持多个任务，可以由控制主机运行多个任务，同时对多台远程主机进行管理。
+
+· playbook是ansible的配置、部署和编排语言，
+可以描述一个你想要的远程系统执行策略，或一组步骤的一般过程。
+如果ansible模块作为你的工作室工具，playbook就是设计方案。
+在基本层面上，剧本可以用于管理配置和部署远程机器。
+在更高级的应用中，可以序列多层应用及滚动更新，
+并可以把动作委托给其他主机，
+与监控服务器和负载平衡器交互。
+
+· 连接插件（connection plugins）：
+ansible基于连接插件连接到各个主机上，负责和被管理节点实现通信。
+虽然ansible是使用ssh连接到各被管理节点，但它还支持其他的连接方法，所以需要有连接插件。
+
+· 主机清单（host inventory）：
+定义ansible管理的主机策略，默认是在ansible的hosts配置文件中定义被管节点，
+同时也支持自定义动态主机清单和指定配置文件路径。
+ 
+    ansible采用paramiko协议库（Fabric也使用这个），通过ssh或者ZeroMQ等连接主机。
+ansible在控制主机主机将ansible模块通过ssh协议（或者Kerberos、LDAP）推送到被管节点执行，
+执行完之后自动删除。
+控制主机与被管理节点之间支持local、SSH、ZeroMQ三种连接方式，默认使用基于SSH的连接。
+在规模较大的情况下使用ZeroMQ连接方式会明显改善执行速度。
+ 
+5. 任务执行模式
+    ansible系统由控制主机对被管节点的操作方式可分为两类，即ad-hoc和playbook。
+    ad-hoc模式使用单个模块，支持批量执行单条命令。
+    playbook模式是ansible的主要管理方式，
+     通过多个task集合完成一类功能，可以简单的理解为通过组合多条ad-hoc操作的配置文件。
+                                                        ansible内部执行过程
+6. ansible与其他配置管理软件的对比
+                                                                                                           技术特性比较：
+项目	        Puppet	Saltstack	Ansible
+开发语言	Ruby	Python	Python
+是否有客户端	是	是	否
+是否支持二次开发	不支持	支持	支持
+服务器与远程机器是否相互验证	是	是	是
+服务器与远程机器通信是否加密	是，标准SSL协议	是，使用AES加密	是，使用OpenSSH
+是否提供WEB UI	提供	提供	提供，但是商业版本
+配置文件格式	Ruby语法	YAML	YAML
+命令行执行	不支持，但可以通过配置模块实现	支持	支持
+
+二、ansible组件介绍
+ 
+1. ansible inventory
+    在大规模的配置管理工作中我们需要管理不同业务的机器，
+这些机器的信息都存放在ansible的inventory组件里。
+在我们工作中配置部署针对的主机必须先存放在inventory里，
+这样才能使用ansible对它进行操作。
+默认ansible的inventory是一个静态的ini文件/etc/ansible/hosts。
+亦可通过ANSIBLE_HOSTS环境变量指定或者命令运行时用-i参数临时设置。
+
+参考示例：
+定义主机和主机组
+1、100.0.0.1 ansible_ssh_pass='123456'
+2、100.0.0.2 ansible_ssh_pass='123456'
+3、[docker]
+4、100.0.0.1[1:3]
+5、[docker:vars]
+6、ansible_ssh_pass='123456'
+7、[ansible:children]
+8、docker
+第一、二行定义一个主机，指定ssh登录密码
+第三行定义了一个叫docker的组
+第四行定义了docker组下面四个主机从100.0.0.11-100.0.0.13
+第五、六行定义了docker组的ssh登录密码
+第七、八行定义了ansible组，ansible组包含docker组
+ 
+2.inventory内置参数
+ 
+参考	解释	例子
+ansible_ssh_host	将要连接的远程主机名.与你想要设定的主机的别名不同的话,可通过此变量设置.	ansible_ssh_host=192.169.1.123
+ansible_ssh_port	ssh端口号.如果不是默认的端口号,通过此变量设置.	ansible_ssh_port=5000
+ansible_ssh_user	默认的 ssh 用户名	ansible_ssh_user=cxpadmin
+ansible_ssh_pass	ssh 密码(这种方式并不安全,我们强烈建议使用 --ask-pass 或 SSH 密钥)	ansible_ssh_pass=’123456’
+ansible_sudo_pass	sudo 密码(这种方式并不安全,我们强烈建议使用 --ask-sudo-pass)	ansible_sudo_pass=’123456’
+ansible_sudo_exe	sudo 命令路径(适用于1.8及以上版本)	ansible_sudo_exe=/usr/bin/sudo
+ansible_connection	与主机的连接类型.比如:local, ssh 或者 paramiko. Ansible 1.2 以前默认使用 paramiko.1.2 以后默认使用 'smart','smart' 方式会根据是否支持 ControlPersist, 来判断'ssh' 方式是否可行.	ansible_connection=local
+ansible_ssh_private_key_file	ssh 使用的私钥文件.适用于有多个密钥,而你不想使用 SSH 代理的情况.	ansible_ssh_private_key_file=/root/key
+ansible_shell_type	目标系统的shell类型.默认情况下,命令的执行使用 'sh' 语法,可设置为 'csh' 或 'fish'.	ansible_shell_type=zsh
+
+ansible_python_interpreter	目标主机的 python 路径.适用于的情况: 
+          系统中有多个 Python, 或者命令路径不是"/usr/bin/python",比如 \*BSD, 或者 /usr/bin/python
+不是 2.X 版本的 Python.我们不使用 "/usr/bin/env" 机制,
+因为这要求远程用户的路径设置正确,
+且要求 "python" 可执行程序名不可为 python以外的名字(实际有可能名为python26).	
+
+ansible_python_interpreter=/usr/bin/python2.6
+
+ansible_*_interpreter	定义其他语言解释器	ansible_*_interpreter=/usr/bin/ruby
+
+ansible_sudo	定义sudo用户	ansible_sudo=cxpadmin
+
+注：从ansible2.0开始，
+     ansible_ssh_user, ansible_ssh_host, ansible_ssh_port
+已经改变为ansible_user, ansible_host, ansible_port。
+
+具体参考官网http://docs.ansible.com/ansible/latest/intro_inventory.html
+ 
+3. ansible ad-hoc命令
+    我们经常会通过命令行的形式使用ansible模块，
+ansible自带很多模块，可以直接使用这些模块。
+目前ansible已经自带了200+个模块，
+我们可以使用ansible-doc -l显示所有自带模块，
+还可以使用ansible-doc 模块名，查看模块的介绍以及案例。
+
+需要注意的是，如果使用ad-hoc命令，
+ansible的一些插件功能就无法使用，比如loop facts功能等。
+
+命令用法：ansible <host-pattern> [options]
+ 
+常用模块介绍
+
+① ping模块
+ping模块的作用与其名相同，即判断远程主机的网络是否畅通
+示例：ansible cluster_hosts -m ping
+ 
+② copy模块
+copy模块在ansible里的角色就是把ansible执行机器上的文件拷贝到远程节点上。与fetch模块相反的操作。
+常用模块参数
+参数名	是否必须	默认值	选项	说明
+src	no	 	 	用于定位ansible执行的机器上的文件，需要绝对路径。如果拷贝的是文件夹，那么文件夹会整体拷贝，如果结尾是”/”,那么只有文件夹内的东西被考过去。一切的感觉很像rsync
+content	no	 	 	用来替代src，用于将指定文件的内容，拷贝到远程文件内
+dest	yes	 	 	用于定位远程节点上的文件，需要绝对路径。如果src指向的是文件夹，这个参数也必须是指向文件夹
+backup	no	no	yes/no	备份远程节点上的原始文件，在拷贝之前。如果发生什么意外，原始文件还能使用。
+directory_mode	no	 	 	这个参数只能用于拷贝文件夹时候，这个设定后，文件夹内新建的文件会被拷贝。而老旧的不会被拷贝
+follow	no	no	yes/no	当拷贝的文件夹内有link存在的时候，那么拷贝过去的也会有link
+force	no	yes	yes/no	默认为yes,会覆盖远程的内容不一样的文件（可能文件名一样）。如果是no，就不会拷贝文件，如果远程有这个文件
+group	no	 	 	设定一个群组拥有拷贝到远程节点的文件权限
+mode	no	 	 	等同于chmod，参数可以为“u+rwx or u=rw,g=r,o=r”
+owner	no	 	 	设定一个用户拥有拷贝到远程节点的文件权限
+ 
+示例：将文件copy到测试主机
+ [root@node1 ansible]# ansible testservers -m copy -a 'src=/root/install.log dest=/tmp/install.log owner=testuser group=testgroup'
+
+192.168.100.131 | success >> {
+"changed": true, 
+"checksum": "7b3626c84bb02d12472c03d2ece878fdc4756c94", 
+"dest": "/tmp/install.log", 
+"gid": 1100, 
+"group": "testgroup", 
+"md5sum": "c7d8a01a077940859e773b7770d2e07e", 
+"mode": "0644", 
+"owner": "testuser", 
+"size": 9458, 
+"src": "/root/.ansible/tmp/ansible-tmp-1456387213.94-229503410500766/source", 
+"state": "file", 
+"uid": 1000
+}
+
+192.168.100.132 | success >> {
+"changed": true, 
+"checksum": "7b3626c84bb02d12472c03d2ece878fdc4756c94", 
+"dest": "/tmp/install.log", 
+"gid": 1100, 
+"group": "testgroup", 
+"md5sum": "c7d8a01a077940859e773b7770d2e07e", 
+"mode": "0644", 
+"owner": "testuser", 
+"size": 9458, 
+"src": "/root/.ansible/tmp/ansible-tmp-1456387213.94-186055595812050/source", 
+"state": "file", 
+"uid": 1000
+}
+示例：copy 前先备份
+
+ [root@node1 ansible]# echo "test " >> /root/install.log
+[root@node1 ansible]# ansible testservers -m copy -a 'src=/root/install.log dest=/tmp/install.log owner=testuser group=testgroup backup=yes'
+
+192.168.100.132 | success >> {
+"backup_file": "/tmp/install.log.2016-02-25@16:01:26~", 
+"changed": true, 
+"checksum": "b5da7af32ad02eb98f77395b28f281a965b4c1f5", 
+"dest": "/tmp/install.log", 
+"gid": 1100, 
+"group": "testgroup", 
+"md5sum": "d39956add30a18019cb5ad2381a0cd43", 
+"mode": "0644", 
+"owner": "testuser", 
+"size": 9464, 
+"src": "/root/.ansible/tmp/ansible-tmp-1456387285.87-128685659798967/source", 
+"state": "file", 
+"uid": 1000
+}
+
+192.168.100.131 | success >> {
+"backup_file": "/tmp/install.log.2016-02-25@16:01:26~", 
+"changed": true, 
+"checksum": "b5da7af32ad02eb98f77395b28f281a965b4c1f5", 
+"dest": "/tmp/install.log", 
+"gid": 1100, 
+"group": "testgroup", 
+"md5sum": "d39956add30a18019cb5ad2381a0cd43", 
+"mode": "0644", 
+"owner": "testuser", 
+"size": 9464, 
+"src": "/root/.ansible/tmp/ansible-tmp-1456387285.86-134452201968647/source", 
+"state": "file", 
+"uid": 1000
+}
+
+[root@node1 ansible]# ansible testservers -m raw -a 'ls -lrth /tmp/install*'
+192.168.100.131 | success | rc=0 >>
+-rw-r--r-- 1 root root 9.3K 2 25 16:00 /tmp/install.log.2016-02-25@16:01:26~
+-rw-r--r-- 1 testuser testgroup 9.3K 2 25 16:01 /tmp/install.log
+
+
+192.168.100.132 | success | rc=0 >>
+-rw-r--r-- 1 root root 9.3K 2 25 16:00 /tmp/install.log.2016-02-25@16:01:26~
+-rw-r--r-- 1 testuser testgroup 9.3K 2 25 16:01 /tmp/install.log
+示例：将目录copy过去
+[root@node1 ansible]# tree testdir
+testdir
+├── a
+│ ├── e
+│ │ └── ansible.cfg
+│ ├── f
+│ └── g
+├── b
+│ ├── e
+│ ├── f
+│ └── g
+└── c
+├── ansible.cfg
+├── e
+├── f
+└── g
+
+
+[root@node1 ansible]# ansible testservers -m copy -a 'src=/etc/ansible/testdir dest=/tmp/ owner=testuser group=testgroup backup=yes'
+
+192.168.100.131 | success >> {
+"changed": true, 
+"dest": "/tmp/", 
+"src": "/etc/ansible/testdir"
+}
+
+192.168.100.132 | success >> {
+"changed": true, 
+"dest": "/tmp/", 
+"src": "/etc/ansible/testdir"
+}
+
+[root@node1 ansible]# ansible testservers -m command -a 'tree /tmp/testdir'
+
+192.168.100.131 | success | rc=0 >>
+/tmp/testdir
+|-- a
+| `-- e
+| `-- ansible.cfg
+|-- b
+| `-- e
+| `-- hosts
+`-- c
+`-- ansible.cfg
+
+5 directories, 3 files
+
+192.168.100.132 | success | rc=0 >>
+/tmp/testdir
+|-- a
+| `-- e
+| `-- ansible.cfg
+|-- b
+| `-- e
+| `-- hosts
+`-- c
+`-- ansible.cfg
+
+5 directories, 3 files
+注意：发现有文件的目录copy成功，空的目录没有copy过去
+ 
+常用参数返回值
+参数名	参数说明	返回值	返回值类型	样例
+src	位于ansible执行机上的位置	changed	string	/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
+backup_file	将原文件备份	changed and if backup=yes	string	/path/to/file.txt.2015-02-12@22:09~
+uid	在执行后，拥有者的ID	success	int	100
+dest	远程节点的目标目录或文件	success	string	/path/to/file.txt
+checksum	拷贝文件后的checksum值	success	string	6e642bb8dd5c2e027bf21dd923337cbb4214f827
+md5sum	拷贝文件后的md5 checksum值	when supported	string	2a5aeecc61dc98c4d780b14b330e3282
+state	执行后的状态	success	string	file
+gid	执行后拥有文件夹、文件的群组ID	success	int	100
+mode	执行后文件的权限	success	string	0644
+owner	执行后文件所有者的名字	success	string	httpd
+group	执行后文件所有群组的名字	success	string	httpd
+size	执行后文件大小	success	int	1220
+ 
+③ shell模块
+它负责在被ansible控制的节点（服务器）执行命令行。shell 模块是通过/bin/sh进行执行，所以shell 模块可以执行任何命令，就像在本机执行一样。
+常用参数
+参数	是否必须	默认值	选项	说明
+chdir	no	 	 	跟command一样的，运行shell之前cd到某个目录
+creates	no	 	 	跟command一样的，如果某个文件存在则不运行shell
+removes	no	 	 	跟command一样的，如果某个文件不存在则不运行shell
+ 
+示例1: 
+让所有节点运行somescript.sh并把log输出到somelog.txt。
+$ ansible -i hosts all -m shell -a "sh somescript.sh >> somelog.txt"
+示例2: 
+先进入somedir/ ，再在somedir/目录下让所有节点运行somescript.sh并把log输出到somelog.txt。
+$ ansible -i hosts all -m shell -a "somescript.sh >> somelog.txt" chdir=somedir/
+示例3: 
+先cd到某个需要编译的目录，执行condifgure然后,编译，然后安装。
+$ ansible -i hosts all -m shell -a "./configure && make && make insatll" chdir=/xxx/yyy/
+ 
+④ command模块
+command 模块用于运行系统命令。不支持管道符和变量等（"<", ">", "|", and "&"等），如果要使用这些，那么可以使用shell模块。在使用ansible中的时候，默认的模块是-m command，从而模块的参数不需要填写，直接使用即可。
+常用参数
+参数	是否必须	默认值	选项	说明
+chdir	no	 	 	运行command命令前先cd到这个目录
+creates	no	 	 	如果这个参数对应的文件存在，就不运行command
+executable	no	 	 	将shell切换为command执行，这里的所有命令需要使用绝对路径
+removes	no	 	 	如果这个参数对应的文件不存在，就不运行command
+示例1：
+#ansible 命令调用command: ansible -i hosts all -m command -a "/sbin/shutdown -t now"
+ansible命令行调用-m command模块 -a表示使用参数 “”内的为执行的command命令，该命令为关机。 
+那么对应的节点(192.168.10.12,127.152.112.13)都会执行关机。
+示例2：
+# Run the command if the specified file does not exist. ansible -i hosts all -m command -a "/usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
+利用creates参数，判断/path/to/database这个文件是否存在，存在就跳过command命令，不存在就执行command命令。
+ 
+⑤ raw模块
+raw模块的功能与shell和command类似。但raw模块运行时不需要在远程主机上配置python环境。
+示例：
+在10.1.1.113节点上运行hostname命令
+ansible 10.1.1.113 -m raw-a 'hostname|tee'
+ 
+⑥ fetch模块
+文件拉取模块主要是将远程主机中的文件拷贝到本机中，和copy模块的作用刚刚相反，并且在保存的时候使用hostname来进行保存，当文件不存在的时候，会出现错误，除非设置了选项fail_on_missing为yes
+ 
+常用参数
+参数	必填	默认值	选项	说明
+Dest	Yes	 	 	用来存放文件的目录，例如存放目录为backup，源文件名称为/etc/profile在主机pythonserver中，那么保存为/backup/pythonserver/etc/profile
+Fail_on_missing	No	No	Yes/no	当源文件不存在的时候，标识为失败
+Flat	No	 	 	允许覆盖默认行为从hostname/path到/file的，如果dest以/结尾，它将使用源文件的基础名称
+Src	Yes	 	 	在远程拉取的文件，并且必须是一个file，不能是目录
+Validate_checksum	No	Yes	Yes/no	当文件fetch之后进行md5检查
+示例1：
+fetch一个文件保存，src表示为远程主机上需要传送的文件路径，dest表示为本机上的路径，在传送过来的文件，是按照IP地址进行分类，然后路径是源文件的路径。在拉取文件的时候，必须拉取的是文件，不能拉取文件夹。
+[root@ansibleserver ~]# ansible pythonserver -m fetch -a "src=/root/123 dest=/root"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "dest": "/root/192.168.1.60/root/123",
+    "md5sum": "31be5a34915d52fe0a433d9278e99cac",
+    "remote_md5sum": "31be5a34915d52fe0a433d9278e99cac"
+}
+示例2：
+指定路径目录进行保存。在使用参数为flat的时候，如果dest的后缀名为/，那么就会保存在目录中，然后直接保存为文件名；当dest后缀不为/的时候，那么就会直接保存为kel的文件。主要是在于dest是否已/结尾，从而来区分这是个目录还是路径。
+[root@ansibleserver ~]# ansible pythonserver -m fetch -a "src=/root/Ssh.py dest=/root/kel/ flat=yes"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "dest": "/root/kel/Ssh.py",
+    "md5sum": "63f8a200d1d52d41f6258b41d7f8432c",
+    "remote_md5sum": "63f8a200d1d52d41f6258b41d7f8432c"
+}
+ 
+⑦ file模块
+主要用来设置文件、链接、目录的属性，或者移除文件、链接、目录，很多其他的模块也会包含这种作用，例如copy，assemble和template。
+常用参数
+参数	必填	默认	选项	说明
+Follow	No	No	Yes/no	这个标识说明这是系统链接文件，如果存在，应该遵循
+Force	No	No	Yes/no	强制创建链接在两种情况下：源文件不存在（过会会存在）；目标存在但是是文件（创建链接文件替代）
+Group	No	 	 	文件所属用户组
+Mode	No	 	 	文件所属权限
+Owner	No	 	 	文件所属用户
+Path	Yes	 	 	要控制文件的路径
+Recurse	No	No	Yes/no	当文件为目录时，是否进行递归设置权限
+Src	No	 	 	文件链接路径，只有状态为link的时候，才会设置，可以是绝对相对不存在的路径
+State	No	File	File/link
+Directory
+Hard/touch
+Absent	如果是目录不存在，那么会创建目录；如果是文件不存在，那么不会创建文件；如果是link，那么软链接会被创建或者修改；如果是absent，那么目录下的所有文件都会被删除，如果是touch，会创建不存在的目录和文件
+示例1：
+设置文件属性。文件路径为path，表示文件路径，设定所属用户和所属用户组，权限为0644。文件路径为path，使用文件夹进行递归修改权限，使用的参数为recurse表示为递归。
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/root/123 owner=kel group=kel mode=0644"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 500,
+    "group": "kel",
+    "mode": "0644",
+    "owner": "kel",
+    "path": "/root/123",
+    "size": 294,
+    "state": "file",
+    "uid": 500
+}
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/tmp/kel/ owner=kel group=kel mode=0644 recurse=yes"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 500,
+    "group": "kel",
+    "mode": "0644",
+    "owner": "kel",
+    "path": "/tmp/kel/",
+    "size": 4096,
+    "state": "directory",
+    "uid": 500
+}
+示例2：
+创建目录。创建目录，使用的参数主要是state为directory。
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/tmp/kel state=directory mode=0755"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 0,
+    "group": "root",
+    "mode": "0755",
+    "owner": "root",
+    "path": "/tmp/kel",
+    "size": 4096,
+    "state": "directory",
+    "uid": 0
+}
+示例3：
+修改权限。直接使用mode来进行修改权限。
+[root@ansibleserver ~]# ansible pythonserver -m file -a "path=/tmp/kel mode=0444"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "gid": 0,
+    "group": "root",
+    "mode": "0444",
+    "owner": "root",
+    "path": "/tmp/kel",
+    "size": 4096,
+    "state": "directory",
+    "uid": 0
+}
+示例4：
+创建软连接。 src表示已经存在的文件，dest表示创建的软连接的文件名，最后的state状态为link。
+root@ansibleserver tmp]# ansible pythonserver -m file -a "src=/tmp/1 dest=/tmp/2 owner=kel state=link"
+SSH password:
+192.168.1.60 | success >> {
+    "changed": true,
+    "dest": "/tmp/2",
+    "gid": 0,
+    "group": "root",
+    "mode": "0777",
+    "owner": "kel",
+    "size": 6,
+    "src": "/tmp/1",
+    "state": "link",
+    "uid": 500
+}
+ 
+⑧ yum模块
+Yum（全称为 Yellow dog Updater, Modified）是一个在Fedora和RedHat以及CentOS中的Shell前端软件包管理器。即安装包管理模块。
+常用参数
+参数名	是否必须	默认值	选项值	参数说明
+conf_file	no	 	 	设定远程yum执行时所依赖的yum配置文件
+disable_gpg_check	no	No	Yes/No	在安装包前检查包，只会影响state参数为present或者latest的时候
+list	No	 	 	只能由ansible调用，不支持playbook，这个干啥的大家都懂
+name	Yes	 	 	你需要安装的包的名字，也能如此使用name=python=2.7安装python2.7
+state	no	present	present/latest/absent	用于描述安装包最终状态，present/latest用于安装包，absent用于remove安装包
+update_cache	no	no	yes/no	用于安装包前执行更新list,只会影响state参数为present/latest的时候
+示例1：
+安装httpd包
+ansible host31 -m yum -a “name=httpd” 
+host31 | SUCCESS => { 
+“changed”: true, 
+“msg”: “”, 
+“rc”: 0, 
+“results”: [ xxxxx ]
+示例2：
+删除httpd包
+ansible host31 -m yum -a "name=httpd state=absent" host31 | SUCCESS => { "changed": true, "msg": "", "rc": 0, "results": [ xxxx ]
+ 
+⑨ service模块
+service模块其实就是linux下的service命令。用于service服务管理。
+常用参数
+参数名	是否必须	默认值	选项	说明
+enabled	no	 	yes/no	启动os后启动对应service的选项。使用service模块的时候，enabled和state至少要有一个被定义
+name	yes	 	 	需要进行操作的service名字
+state	no	 	stared/stoped/restarted/reloaded	service最终操作后的状态。
+示例1：
+启动服务。
+ansible host31 -m service -a "name=httpd state=started" host31 | SUCCESS => { "changed": true, "name": "httpd", "state": "started" }
+示例2：
+停止服务。
+ansible host31 -m service -a "name=httpd state=stopped" host31 | SUCCESS => { "changed": true, "name": "httpd", "state": "stopped" }
+示例3：
+设置服务开机自启动。
+[root@host31 ~]# ansible host31 -m service -a "name=httpd enabled=yes state=restarted" host31 | SUCCESS => { "changed": true, "enabled": true, "name": "httpd", "state": "started" }
+ 
+⑩ cron模块
+cron模块用于管理计划任务。
+参数名	是否必须	默认值	选项	说明
+backup	 	 	 	对远程主机上的原任务计划内容修改之前做备份
+cron_file	 	 	 	如果指定该选项，则用该文件替换远程主机上的cron.d目录下的用户的任务计划
+day	 	 	 	日（1-31，*，*/2,……）
+hour	 	 	 	小时（0-23，*，*/2，……）
+minute	 	 	 	分钟（0-59，*，*/2，……）
+month	 	 	 	月（1-12，*，*/2，……）
+weekday	 	 	 	周（0-7，*，……）
+job	 	 	 	要执行的任务，依赖于state=present
+name	 	 	 	该任务的描述
+special_time	 	 	 	指定什么时候执行，参数：reboot,yearly,annually,monthly,weekly,daily,hourly
+state	 	 	 	确认该任务计划是创建还是删除
+user	 	 	 	以哪个用户的身份执行
+示例：
+ansible test -m cron -a 'name="a job for reboot" special_time=reboot job="/some/job.sh"'
+ansible test -m cron -a 'name="yum autoupdate" weekday="2" minute=0 hour=12 user="root
+ansible test -m cron  -a 'backup="True" name="test" minute="0" hour="5,2" job="ls -alh > /dev/null"'
+ansilbe test -m cron -a 'cron_file=ansible_yum-autoupdate state=absent'
+ 
+①① user模块
+user模块是请求的是useradd, userdel, usermod三个指令。
+常用参数
+参数名	是否必须	默认值	选项	说明
+home	 	 	 	指定用户的家目录，需要与createhome配合使
+groups	 	 	 	指定用户的属组
+uid	 	 	 	指定用的uid
+password	 	 	 	指定用户的密码
+name	 	 	 	指定用户名
+createhome	 	 	 	是否创建家目录 yes|no
+system	 	 	 	是否为系统用户
+remove	 	 	 	当state=absent时，remove=yes则表示连同家目录一起删除，等价于userdel -r
+state	 	 	 	是创建还是删除
+shell	 	 	 	指定用户的shell环境
+指定password参数时，不能使用明文密码，因为后面这一串密码会被直接传送到被管理主机的/etc/shadow文件中，所以需要先将密码字符串进行加密处理。然后将得到的字符串放到password中即可。不同的发行版默认使用的加密方式可能会有区别，具体可以查看/etc/login.defs文件确认，centos 6.5版本使用的是SHA512加密算法。
+示例1：
+目的：在指定节点上创建一个用户名为nolinux，组为nolinux的用户
+命令：ansible 10.1.1.113 -m user -a 'name=nolinux groups=nolinux state=present'
+执行命令：
+ 
+
+示例2：
+删除用户
+命令：ansible 10.1.1.113 -m user -a 'name=nolinux groups=nolinux state=absent remove=yes'
+ 
+
+
+①②group模块
+goup模块请求的是groupadd, groupdel, groupmod 三个指令。参数参考ansible-hoc group
+示例：
+目的：在所有节点上创建一个组名为nolinux，gid为2014的组
+命令：ansible all -m group -a 'gid=2014 name=nolinux'
+ 
+
+
+①③script模块
+script模块将控制节点的脚本执行在被控节点上。
+示例：
+[root@host31 ~]# ansible host32 -m script -a /tmp/hello.sh host32 | SUCCESS => { "changed": true, "rc": 0, "stderr": "", "stdout": "this is test from host32\r\n", "stdout_lines": [ "this is test from host32" ->执行结果 ] }
+ 
+①④get_url模块
+该模块主要用于从http、ftp、https服务器上下载文件（类似于wget）
+常用参数
+参数名	是否必须	默认值	选项	说明
+sha256sum	 	 	 	下载完成后进行sha256 check；
+timeout	 	 	 	下载超时时间，默认10s
+url	 	 	 	下载的URL
+url_password、url_username	 	 	 	主要用于需要用户名密码进行验证的情况
+use_proxy	 	 	 	是事使用代理，代理需事先在环境变更中定义
+示例：
+目的：将http://10.1.1.116/favicon.ico文件下载到指定节点的/tmp目录下
+命令：ansible 10.1.1.113 -m get_url -a 'url=http://10.1.1.116/favicon.ico dest=/tmp'
+ 
+
+①⑤synchronize模块
+使用rsync同步文件。
+参数名	是否必须	默认值	选项	说明
+archive	 	 	 	归档，相当于同时开启recursive(递归)、links、perms、times、owner、group、-D选项都为yes ，默认该项为开启
+checksum	 	 	 	跳过检测sum值，默认关闭
+compress	 	 	 	是否开启压缩
+copy_links	 	 	 	复制链接文件，默认为no ，注意后面还有一个links参数
+delete	 	 	 	删除不存在的文件，默认no
+dest	 	 	 	目录路径
+dest_port	 	 	 	dest_port：默认目录主机上的端口 ，默认是22，走的ssh协议
+dirs	 	 	 	传速目录不进行递归，默认为no，即进行目录递归
+rsync_opts	 	 	 	rsync参数部分
+set_remote_user	 	 	 	主要用于/etc/ansible/hosts中定义或默认使用的用户与rsync使用的用户不同的情况
+mode	 	 	 	push或pull 模块，push模的话，一般用于从本机向远程主机上传文件，pull 模式用于从远程主机上取文件
+示例1：
+目的：将主控方/root/a目录推送到指定节点的/tmp目录下
+命令：ansible 10.1.1.113 -m synchronize -a 'src=/root/a dest=/tmp/ compress=yes'
+ 
+delete=yes   使两边的内容一样（即以推送方为主）
+compress=yes  开启压缩，默认为开启
+--exclude=.Git  忽略同步.git结尾的文件
+
+由于模块，默认都是推送push。因此，如果你在使用拉取pull功能的时候，可以参考如下来实现
+mode=pull   更改推送模式为拉取模式
+示例2：
+目的：将10.1.1.113节点的/tmp/a目录拉取到主控节点的/root目录下
+命令：ansible 10.1.1.113 -m synchronize -a 'mode=pull src=/tmp/a dest=/root/'
+ 
+
+示例3：
+由于模块默认启用了archive参数，该参数默认开启了recursive, links, perms, times, owner，group和-D参数。如果你将该参数设置为no，那么你将停止很多参数，比如会导致如下目的递归失败，导致无法拉取
+
+ 
+①⑥ 其他模块：
+mount模块：配置挂载点
+unarchive模块：解压文件模块
+ 
+本文的模块简介仅供参考，要想更好更简便的使用，请多参考官网的帮助文档http://docs.ansible.com/ansible/latest/intro_adhoc.html 或者使用ansible-hoc 模块名查看。网络上的中文文档更新不是很频繁，不建议阅读，建议阅读官方英文文档。
+
+三、核心模块playbook介绍
+ansible的playbook的文件格式为YAML格式，所以希望大家在学习playbook之前先对YAML语法有一定的了解，否则在运行playbook的过程中会经常碰到莫名其妙的语法错误。
+ 
+这边以一个例子简单介绍一下playbook。
+示例目的：指定一个主机名，对这个主机进行配置操作。
+先展示目录结构
+config-ansible
+    |___config_hosts.yml
+    |___roles
+             |___config_hosts
+                        |___tasks
+                                |___main.yml
+                                |___config.yml
+总共3个YAML文件，其中config_hosts.yml为总入口，在这个文件里调用roles/config_hosts/tasks目录下的脚本。执行命令ansible-playbook config_hosts.yml 运行剧本。
+config_hosts.yml内容为
+1. ---
+2. - hosts: node1
+3. roles:
+4. - config_hosts
+ 
+第1行表示该文件是YAML文件，非必须。
+第2行定义该playbook针对的目标主机。
+第3、4行指定角色目录，具体操作在角色中定义。
+main.yml的内容为
+1. ---
+2. - include: config.yml
+第2行指定此roles要导入的task文件。
+config.yml的内容为
+1. ---
+2. - name: copy test.file
+3. copy:
+4. src: /home/test.file
+5. dest: /home/test.file
+6. owner: root
+7. group: root
+8. mode: 0777
+9. force: yes
+10.
+11. - name: exec hello world script
+12. script: /home/helloworld.sh
+13.
+14.- name: rm test.file
+15. file: path=/home/test.file state=absent
+config.yml文件内的代码才是真正执行的任务代码。总共有3个任务，第一个把/home目录的test.file文件拷贝到目标主机的相同路径下，第二个在目标主机执行/home目录下的helloworld.sh，helloworld.sh的内容就是打印一条helloworld信息，第三个任务是使用file模块把目标主机的/home/test.file文件删除。
+ 
+其实playbook就是各个模块的组装，此处只是抛砖引玉，其他模块在playbook中的使用可自行学习，就不再介绍循环、条件判断等功能的实现了。关于ansible playbook的目录结构可以参考http://docs.ansible.com/ansible/latest/playbooks_roles.html#dynamic-versus-static-includes 或者 https://github.com/ceph/ceph-ansible
 
 
 
@@ -44,8 +1778,260 @@ http://mirrors.huaweicloud.com/centos/7/storage/x86_64/ceph-luminous/
 
 
 
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Wed Jan  2 18:38:40 2019 from 192.168.0.254
+[root@Va2 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1903         126        1622           8         154        1570
+Swap:          2047           0        2047
+
+[root@Va2 ~]# ll  /etc/hosts
+-rw-r--r-- 1 root root 482 1月   1 14:21 /etc/hosts
+[root@Va2 ~]# cat   /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va2 ~]# vim  /etc/fstab 
+[root@Va2 ~]# tail -1   /etc/fstab
+#192.168.0.13:/var/webroot   /var/webroot_va2   nfs   defaults,_netdev  0 0
+
+[root@Va2 ~]# rpm  -qa  |grep  nfs-utils
+nfs-utils-1.3.0-0.48.el7.x86_64
 
 
+
+
+
+
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.13
+root@192.168.0.13's password: 
+Last login: Wed Jan  2 14:21:38 2019 from 192.168.0.254
+
+[root@Va3 ~]# grep  -vEn '^#|^$'   /etc/sysconfig/nfs
+9:RPCNFSDARGS=""
+21:RPCMOUNTDOPTS=""
+26:STATDARG=""
+37:SMNOTIFYARGS=""
+40:RPCIDMAPDARGS=""
+49:RPCGSSDARGS=""
+52:GSS_USE_PROXY="yes"
+55:BLKMAPDARGS=""
+[root@Va3 ~]# systemctl  is-active  nfs-server.service 
+active
+[root@Va3 ~]# systemctl  is-enabled   nfs-server.service
+enabled
+[root@Va3 ~]# cat  /etc/exports
+/var/webroot   192.168.0.0/24(rw,no_root_squash)
+[root@Va3 ~]# ll  /var/webroot/
+总用量 8
+-rw-r--r-- 1 root root 12 1月   1 16:58 index.html
+-rw-r--r-- 1 root root 29 1月   1 16:20 Va3.txt
+
+[root@Va3 ~]# showmount   -e  Va3
+Export list for Va3:
+/var/webroot 192.168.0.0/24
+
+
+[root@Va3 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         116         717           8         142         702
+Swap:             0           0           0
+
+[root@Va3 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+[root@Va3 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.14
+root@192.168.0.14's password: 
+Last login: Mon Dec 31 17:32:47 2018
+[root@Va4 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         103         733           8         139         717
+Swap:          2047           0        2047
+
+[root@Va4 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.15
+root@192.168.0.15's password: 
+Last login: Mon Dec 31 17:33:04 2018
+[root@Va5 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         105         734           8         135         717
+Swap:          2047           0        2047
+[root@Va5 ~]#  cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+
+
+
+
+
+
+
+
+
+192.168.0.11  Va1   ansible ---1.10
+192.168.0.12  Va2   web1   ----1.11
+192.168.0.13  Va3   db1    ---1.12
+192.168.0.14  Va4    web2   ---1.21
+192.168.0.15  Va5    db2    ---1.22
+192.168.0.16  Va6    cache  ---1.33
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.16
+root@192.168.0.16's password: 
+Last login: Mon Dec 31 17:33:24 2018
+[root@Va6 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            976         104         735           8         136         718
+Swap:          2047           0        2047
+[root@Va6 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
 
 
 
