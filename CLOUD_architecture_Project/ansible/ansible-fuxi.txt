@@ -1181,7 +1181,13 @@ ansible_ssh_user	默认的 ssh 用户名	ansible_ssh_user=cxpadmin
 ansible_ssh_pass	ssh 密码(这种方式并不安全,我们强烈建议使用 --ask-pass 或 SSH 密钥)	ansible_ssh_pass=’123456’
 ansible_sudo_pass	sudo 密码(这种方式并不安全,我们强烈建议使用 --ask-sudo-pass)	ansible_sudo_pass=’123456’
 ansible_sudo_exe	sudo 命令路径(适用于1.8及以上版本)	ansible_sudo_exe=/usr/bin/sudo
-ansible_connection	与主机的连接类型.比如:local, ssh 或者 paramiko. Ansible 1.2 以前默认使用 paramiko.1.2 以后默认使用 'smart','smart' 方式会根据是否支持 ControlPersist, 来判断'ssh' 方式是否可行.	ansible_connection=local
+
+ansible_connection	与主机的连接类型.比如:local, ssh 或者 paramiko. Ansible 1.2 
+以前默认使用 paramiko.1.2 
+以后默认使用 'smart',
+'smart' 方式会根据是否支持 ControlPersist, 来判断'ssh' 方式是否可行.
+	ansible_connection=local
+
 ansible_ssh_private_key_file	ssh 使用的私钥文件.适用于有多个密钥,而你不想使用 SSH 代理的情况.	ansible_ssh_private_key_file=/root/key
 ansible_shell_type	目标系统的shell类型.默认情况下,命令的执行使用 'sh' 语法,可设置为 'csh' 或 'fish'.	ansible_shell_type=zsh
 
@@ -1754,20 +1760,145 @@ config.yml文件内的代码才是真正执行的任务代码。总共有3个任
 其实playbook就是各个模块的组装，此处只是抛砖引玉，其他模块在playbook中的使用可自行学习，就不再介绍循环、条件判断等功能的实现了。关于ansible playbook的目录结构可以参考http://docs.ansible.com/ansible/latest/playbooks_roles.html#dynamic-versus-static-includes 或者 https://github.com/ceph/ceph-ansible
 
 
+======================== JSON ====================
 
+JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式。
+易于人阅读和编写。同时也易于机器解析和生成。
+它基于JavaScript Programming Language, Standard ECMA-262 3rd Edition - December 1999的一个子集。
 
+JSON是Douglas Crockford在2001年开始推广使用的数据格式，
+在2005年-2006年正式成为主流的数据格式，雅虎和谷歌就在那时候开始广泛地使用JSON格式。
+JSON 语法编辑
+JSON 语法规则
+在 JS 语言中，一切都是对象。
+因此，任何支持的类型都可以通过 JSON 来表示，
 
+例如字符串、数字、对象、数组等。
 
+但是对象和数组是比较特殊且常用的两种类型：
 
+对象表示为键值对
 
+数据由逗号分隔
 
+花括号保存对象
 
+方括号保存数组
 
+JSON 键/值对
+JSON 键值对是用来保存 JS 对象的一种方式，
+和 JS 对象的写法也大同小异，
+键/值对组合中的键名写在前面
+并用双引号 "" 包裹，使用冒号 : 分隔，然后紧接着值：
+{"firstName": "Json"}
 
+等价于这条 JavaScript 语句：
+{firstName : "Json"}
 
+JSON 与 JS 对象的关系
 
+JSON 是 JS 对象的字符串表示法，它使用文本表示一个 JS 对象的信息，本质是一个字符串。
+如
+var obj = {a: 'Hello', b: 'World'}; //这是一个对象，注意键名也是可以使用引号包裹的
 
+var json = '{"a": "Hello", "b": "World"}'; //这是一个 JSON 字符串，本质是一个字符串
 
+JSON 和 JS 对象互转
+要实现从对象转换为 JSON 字符串，使用 JSON.stringify() 方法：
+var json = JSON.stringify({a: 'Hello', b: 'World'}); 
+//结果是 '{"a": "Hello", "b": "World"}'
+
+要实现从 JSON 转换为对象，使用 JSON.parse() 方法：
+var obj = JSON.parse('{"a": "Hello", "b": "World"}'); 
+//结果是 {a: 'Hello', b: 'World'}
+
+常用类型编辑
+在 JS 语言中，一切都是对象。
+因此，任何支持的类型都可以通过 JSON 来表示，例如字符串、数字、对象、数组等。
+
+但是对象和数组是比较特殊且常用的两种类型。
+
+对象：
+对象在 JS 中是使用花括号包裹 {} 起来的内容，
+数据结构为 {key1：value1, key2：value2, ...} 的键值对结构。
+
+在面向对象的语言中，key 为对象的属性，value 为对应的值。
+键名可以使用整数和字符串来表示。值的类型可以是任意类型。
+数组：数组在 JS 中是方括号 [] 包裹起来的内容，数据结构为 ["java", "javascript", "vb", ...] 的索引结构。
+在 JS 中，数组是一种比较特殊的数据类型，它也可以像对象那样使用键值对，但还是索引使用得多。
+同样，值的类型可以是任意类型。
+
+基础示例编辑
+简单地说 [1]  ，JSON 可以将 JavaScript 对象中表示的一组数据转换为字符串，然后就可以在网络或者程序之间轻松地传递这个字符串，并在需要的时候将它还原为各编程语言所支持的数据格式，例如在 PHP 中，可以将 JSON 还原为数组或者一个基本对象。
+在用到AJAX时，如果需要用到数组传值，这时就需要用JSON将数组转化为字符串。
+表示对象
+JSON最常用的格式是对象的 键值对。例如下面这样：
+{"firstName": "Brett", "lastName": "McLaughlin"}
+
+表示数组
+和普通的 JS 数组一样，JSON 表示数组的方式也是使用方括号 []。
+
+{
+ "people":[
+    {
+     "firstName": "Brett",            
+     "lastName":"McLaughlin"         
+    },
+    {           
+     "firstName":"Jason", 
+    "lastName":"Hunter"
+    }
+  ]
+}
+
+在这个示例中，只有一个名为 people的变量，值是包含两个条目的数组，
+每个条目是一个人的记录，其中包含名和姓。
+上面的示例演示如何用括号将记录组合成一个值。
+
+当然，可以使用相同的语法表示更过多的值（每个值包含多个记录）。
+
+在处理 JSON 格式的数据时，
+没有需要遵守的预定义的约束。
+所以，在同样的数据结构中，可以改变表示数据的方式，也可以使用不同方式表示同一事物。
+
+如前面所说，除了对象和数组，你也可以简单地使用字符串或者数字等来存储简单的数据，但这样并没有多大意义。
+
+和XML的比较编辑
+可读性
+JSON和XML的可读性可谓不相上下，一边是简易的语法，一边是规范的标签形式，很难分出胜负。
+可扩展性
+XML天生有很好的扩展性，JSON当然也有，没有什么是XML可以扩展而JSON却不能扩展的。不过JSON在Javascript主场作战，可以存储Javascript复合对象，有着xml不可比拟的优势。
+编码难度
+XML有丰富的编码工具，比如Dom4j、Dom、SAX等，JSON也有提供的工具。无工具的情况下，相信熟练的开发人员一样能很快的写出想要的xml文档和JSON字符串，不过，xml文档要多很多结构上的字符。
+解码难度
+XML的解析方式有两种：
+一是通过文档模型解析，也就是通过父标签索引出一组标记。例如：xmlData.getElementsByTagName("tagName")，但是这样是要在预先知道文档结构的情况下使用，无法进行通用的封装。
+另外一种方法是遍历节点（document 以及 childNodes）。这个可以通过递归来实现，不过解析出来的数据仍旧是形式各异，往往也不能满足预先的要求。
+凡是这样可扩展的结构数据解析起来一定都很困难。
+
+JSON也同样如此。如果预先知道JSON结构的情况下，
+使用JSON进行数据传递简直是太美妙了，可以写出很实用美观可读性强的代码。
+如果你是纯粹的前台开发人员，一定会非常喜欢JSON。
+但是如果你是一个应用开发人员，就不是那么喜欢了，毕竟xml才是真正的结构化标记语言，用于进行数据传递。
+而如果不知道JSON的结构而去解析JSON的话，那简直是噩梦。
+费时费力不说，代码也会变得冗余拖沓，得到的结果也不尽人意。
+但是这样也不影响众多前台开发人员选择JSON。
+因为json.js中的toJSONString()就可以看到JSON的字符串结构。
+当然对于不是经常使用这个字符串的人，这样做仍旧是噩梦。
+常用JSON的人看到这个字符串之后，就对JSON的结构很明了了，就更容易的操作JSON。
+
+以上是在Javascript中仅对于数据传递的xml与JSON的解析。
+在Javascript地盘内，JSON毕竟是主场作战，其优势当然要远远优越于xml。
+如果JSON中存储Javascript复合对象，而且不知道其结构的话，我相信很多程序员也一样是哭着解析JSON的。
+
+除了上述之外，JSON和XML还有另外一个很大的区别在于有效数据率。
+JSON作为数据包格式传输的时候具有更高的效率，
+这是因为JSON不像XML那样需要有严格的闭合标签，这就让有效数据量与总数据包比大大提升，
+从而减少同等数据流量的情况下，网络的传输压力 [2]  。
+实例比较
+XML和JSON都使用结构化方法来标记数据，下面来做一个简单的比较。
+用XML表示中国部分省市数据如下：
+ 
 
 
 

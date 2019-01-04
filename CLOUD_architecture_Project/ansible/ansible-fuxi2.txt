@@ -238,6 +238,32 @@ Ansible配置文件查找顺序
 – 再次检查当前用户家目彔下 ~/ansible.cfg 文件
 – 最后检查 /etc/ansible/ansible.cfg 文件
 
+[root@Va1 ~]# ansible  apptest  -m  ping   ##不在自定义的目录下执行无效
+ [WARNING]: Could not match supplied host pattern, ignoring: apptest
+
+ [WARNING]: No hosts matched, nothing to do
+
+[root@Va1 ~]# cd   /var/myansible/  ##只能在自定义的目录下执行有效
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts
+
+[root@Va1 myansible]# ansible  apptest  -m  ping  ##只能在自定义的目录下执行有效
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+....................
+
+[root@Va1 ~]# ls .ansible/
+cp  tmp
+[root@Va1 ~]# ls .ansible/cp/
+[root@Va1 ~]# ls   .ansible/tmp/
+
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+[root@Va1 ~]# ls  /etc/ansible/roles/
+
 • /etc/ansible/ansible.cfg 默认配置文件路径
 
 • ansible.cfg 配置文件（就两个主要配置文件）
@@ -263,6 +289,14 @@ ansible命令基础
 – -e 定义变量
 
 – -v 详绅信息,-vvvv 开启 debug 模式
+
+[root@Va1 ~]# ls  .ssh/
+known_hosts
+[root@Va1 ~]# ls  .config/
+abrt       gconf                     goa-1.0  imsettings  user-dirs.dirs
+dconf      gnome-initial-setup-done  gtk-3.0  nautilus    user-dirs.locale
+evolution  gnome-session             ibus     pulse       yelp
+
 
 [root@Va1 ~]# cd  /etc/ansible/
 [root@Va1 ansible]# ls
@@ -438,7 +472,7 @@ disabled by setting deprecation_warnings=False in ansible.cfg.
 
 [root@Va1 ~]# grep  -Evn  '^(#|$)'  /etc/ansible/ansible.cfg
 10:[defaults]
-14:inventory      = /etc/ansible/hosts
+14:inventory      = /etc/ansible/hosts  ## 指定组机分组列表的路径
 21:sudo_user      = root
 25:remote_port    = 22
 58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
@@ -471,13 +505,21 @@ n.	强烈不赞成，祈免，反对;
   hosts (1):
     Va6
 
-[root@Va1 ~]# ansible  all  --list-hosts
+[root@Va1 ~]# ansible  all  --list-hosts  ## 显示主机列表，可简写--list
   hosts (5):
     Va2
     Va4
     Va6
     Va3
     Va5
+[root@Va1 ~]# ansible  all  --list   ## 显示主机列表，可简写--list
+  hosts (5):
+    Va2
+    Va4
+    Va6
+    Va3
+    Va5
+
 [root@Va1 ~]# ansible  Va2  --list-hosts
   hosts (1):
     Va2
@@ -513,7 +555,7 @@ net.ipv4.ip_forward = 1
 0
 [root@Va1 ~]# grep  -Evn  '^#|^$'   /etc/sysctl.conf 
 /****
-允许其他主机 PING 本机 设置
+允许其他主机 PING 本机 设置[ 允许其他主机的请求包 进来 ]
 临时允许PING操作的命令为：#echo 0 >/proc/sys/net/ipv4/icmp_echo_ignore_all
 .永久允许PING配置方法。
   /etc/sysctl.conf 中增加一行
@@ -565,7 +607,7 @@ PING Va1 (192.168.0.11) 56(84) bytes of data.
 
    ## //测试是否可以连接，若成功颜色为 淡绿 色SUCCESS 
    ## 若 不能连接 显示 为红色  UNREACHABLE
-
+                              ## 提示连接密码，默认Key验证
 [root@Va1 ~]# ansible  Va2  -m  ping  -k  ##检测ssh的连接,不是ping,与ping无关
 SSH password: 1 输入密码
 Va2 | SUCCESS => {
@@ -666,11 +708,462 @@ ansible.cfg  hosts  roles
 
 [root@Va1 ~]# vim /etc/ansible/hosts 
 
+Inventory 参数选项 inventory 内置参数
+
+ansible_ssh_host  将要连接的远程主机名.与你想要设定的主机的别名不同的话,可通过此变量设置
+ansible_ssh_port  ssh端口号.如果不是默认的端口号,通过此变量设置.	ansible_ssh_port=5000
+ansible_ssh_user  默认的 ssh 用户名
+ansible_ssh_pass	ssh 密码
+ansible_sudo_pass	sudo 密码 建议使用 --ask-sudo-pass
+
+ansible_sudo_exe   sudo 命令路径(适用于1.8及以上版本)	ansible_sudo_exe=/usr/bin/sudo
+
+ansible_sudo	定义sudo用户	ansible_sudo=yonghuming
+
+ansible_connection	与主机的连接类型。eg:ssh;local;paramiko
+以前默认使用 paramiko.1.2 
+以后默认使用 'smart',
+'smart' 方式会根据是否支持 ControlPersist, 来判断'ssh' 方式是否可行.
+	ansible_connection=local
+
+ansible_ssh_private_key_file   ssh 使用的私钥文件.适用于有多个密钥,而你不想使用 SSH 代理的情况.
+ansible_ssh_private_key_file=/root/key
+
+ansible_shell_type	目标系统的shell类型
+目标系统的shell类型.默认情况下,命令的执行使用 'sh' 语法,可设置为 'csh' 或 'fish'[应用于 unix系统]	
+ansible_shell_type=zsh
+
+ansible_python_interpreter  目标主机的 python 路径.适用于的情况: 
+          系统中有多个 Python, 或者命令路径不是"/usr/bin/python",比如 \*BSD, 或者 /usr/bin/python
+不是 2.X 版本的 Python.我们不使用 "/usr/bin/env" 机制,
+因为这要求远程用户的路径设置正确,
+且要求 "python" 可执行程序名不可为 python以外的名字(实际有可能名为python26).	
+应用举例:  ansible_python_interpreter=/usr/bin/python2.6
+
+具体参考官网http://docs.ansible.com/ansible/latest/intro_inventory.html
+
+组名称]
+主机名称戒ip地址,登彔用户名,密码、端口等信息
+
+[root@Va1 ~]# sed  -n  '44,$p'  /etc/ansible/hosts
+[web]
+Va2
+Va4
+/*****
+## ansible_ssh_user  默认的 ssh 用户名
+## ansible_ssh_pass	ssh 密码
+*****/
+[db]
+Va3  ansible_ssh_user="root" ansible_ssh_pass=1 ##ssh 用户名root  ssh密码 1
+Va5  ansible_ssh_user="root" ansible_ssh_pass=1 ##ssh 用户名root  ssh密码 1
+
+[other]
+Va6
+[root@Va1 ~]# 
+[root@Va1 ~]# ansible  db  -m  ping  ##通过/etc/ansible/hosts 设置用户名和密码,不需要交互输入密码了
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# ansible  other  -m  ping  ##没有在 /etc/ansible/hosts 中设置用户名和密码,ssh连接 报错
+Va6 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+[root@Va1 ~]# ansible  other  -m  ping  -k ##没有在 etc/ansible/hosts中设置用户名和密码.只能交互式输入密码
+SSH password: 
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]#  cat  /proc/sys/net/ipv4/icmp_echo_ignore_all 
+0
+[root@Va1 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+
+[root@Va1 ~]# vim  /etc/ansible/hosts 
+[root@Va1 ~]# sed  -n  '44,$p'    /etc/ansible/hosts
+[web]
+Va2 
+Va4 
+
+[db]
+Va3  ansible_ssh_user="root" ansible_ssh_pass=1  ##ssh 用户名root  ssh密码 1
+Va5  ansible_ssh_user="root" ansible_ssh_pass=1  ##ssh 用户名root  ssh密码 1
+
+[other]
+Va6
+
+[webdb] ## 定义了组的成员从Va2 到 Va5 连续 主机号共 4 台主机
+Va[2:5]
+
+[app:children]  ##定义了app组，app组包含web组 和 db组
+web
+db
+
+[web:vars]  
+ansible_ssh_user=root  ##定义了web组的ssh登录用户名
+ansible_ssh_pass=1   ## 定义了web组的ssh登录密码
+
+[root@Va1 ~]# ansible  web   -m  ping 
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# ansible  webdb   --list-hosts
+  hosts (4):
+    Va2
+    Va3
+    Va4
+    Va5
+[root@Va1 ~]# ansible  app   --list
+  hosts (4):
+    Va2
+    Va4
+    Va3
+    Va5
+
+[root@Va1 ~]# vim  /etc/ansible/hosts 
+[root@Va1 ~]# sed  -n  '44,$p'   /etc/ansible/hosts
+[web]
+Va2 
+Va4 
+
+[db]
+Va3  
+Va5
+
+[other]
+Va6  ansible_ssh_user="root" ansible_ssh_pass=1  ##定义特定主机Va6的ssh用户名"root"和ssh密码"1"
+
+[webdb]
+Va[2:5]
+
+[app:children]  ##定义了app组，app组包含web 子组 和 db 子组
+web
+db
+[app:vars]
+ansible_ssh_user=root  ##定义了app组的ssh登录用户名
+ansible_ssh_pass=1    ## 定义了app组的ssh登录密码
+
+[web:vars]
+ansible_ssh_user=root  ##定义了web组的ssh登录用户名
+ansible_ssh_pass=1   ## 定义了web组的ssh登录密码
+
+[root@Va1 ~]# ansible  app   -m  ping 
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# ansible  db   -m  ping 
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+[root@Va1 ~]# grep   -Pv  '^(#|$)'   /etc/ansible/ansible.cfg 
+[defaults]
+inventory      = /etc/ansible/hosts  ## 指定组机分组列表的路径
+sudo_user      = root
+remote_port    = 22
+roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+host_key_checking = False
+deprecation_warnings = False  ##把True 该成False 去除警告提示
+[inventory]
+[privilege_escalation]
+[paramiko_connection]
+[ssh_connection]
+ssh_args = -C -o ControlMaster=auto -o ControlPersist=60s  -o StrictHostKeyChecking=no
+[persistent_connection]
+[accelerate]
+[selinux]
+[colors]
+[diff]
+[root@Va1 ~]# 
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+[root@Va1 ~]# ls  /etc/ansible/roles/
+
+Ansible配置文件查找顺序
+
+– 首先检测 ANSIBLE_CONFIG 变量定义的配置文件
+– 其次检查当前目彔下的 ./ansible.cfg 文件　　　（常用方式）
+– 再次检查当前用户家目彔下 ~/ansible.cfg 文件
+– 最后检查 /etc/ansible/ansible.cfg 文件  [默认的配置文件]
+
+[root@Va1 ~]# mkdir  /var/myansible  ##自定义的目录
+
+[root@Va1 ~]# ls   /var/myansible/
+
+[root@Va1 ~]# vim  /var/myansible/ansible.cfg  ##自定义的配置文件
+
+[root@Va1 ~]# cat  /var/myansible/ansible.cfg 
+[defaults]
+inventory      = /var/myansible/myhosts   ## 指定自定义 组机分组列表的路径
+host_key_checking = False
+
+[root@Va1 ~]# vim   /var/myansible/myhosts  ##自定义的主机分组列表文件
+
+[root@Va1 ~]# cat /var/myansible/myhosts
+
+[app1]
+Va[2:3]
+
+[app2]
+Va[4:6]
+
+[apptest:children]
+app1
+app2
+
+[apptest:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+
+[root@Va1 ~]# ansible  apptest  -m  ping   ##不在自定义的目录下执行无效
+ [WARNING]: Could not match supplied host pattern, ignoring: apptest
+
+ [WARNING]: No hosts matched, nothing to do
+
+[root@Va1 ~]# cd   /var/myansible/  ##只能在自定义的目录下执行有效
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts
+
+[root@Va1 myansible]# ansible  apptest  -m  ping  ##只能在自定义的目录下执行有效
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  apptest  --list
+  hosts (5):
+    Va2
+    Va3
+    Va4
+    Va5
+    Va6
+[root@Va1 myansible]# ansible  app1  --list
+  hosts (2):
+    Va2
+    Va3
+[root@Va1 myansible]# 
+· 主机清单（host inventory）：
+定义ansible管理的主机策略，默认是在ansible的hosts配置文件中定义被管节点，
+同时也支持自定义动态主机清单和指定配置文件路径。
+ 
+    ansible采用paramiko协议库（Fabric也使用这个），通过ssh或者ZeroMQ等连接主机。
+ansible在控制主机主机将ansible模块通过ssh协议（或者Kerberos、LDAP）推送到被管节点执行，
+执行完之后自动删除。
+控制主机与被管理节点之间支持local、SSH、ZeroMQ三种连接方式，默认使用基于SSH的连接。
+在规模较大的情况下使用ZeroMQ连接方式会明显改善执行速度。
+[root@Va1 ~]# ls /root/.ansible/cp/  ##注意本文件0f03850c62 有时间有效期
+0f03850c62
+[root@Va1 ~]# cat  /root/.ansible/cp/0f03850c62 
+cat: /root/.ansible/cp/0f03850c62: 没有那个设备或地址
+
+======================== JSON ====================
+
+JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式。
+易于人阅读和编写。同时也易于机器解析和生成。
+它基于JavaScript Programming Language, Standard ECMA-262 3rd Edition - December 1999的一个子集。
+
+在 JS 语言中，一切都是对象。
+因此，任何支持的类型都可以通过 JSON 来表示，
+
+例如字符串、数字、对象、数组等。
+
+但是对象和数组是比较特殊且常用的两种类型：
+
+对象表示为键:值对
+
+数据由逗号,分隔
+
+{花括号保存对象}
+
+[ 方括号保存数组 ]
+
+JSON 键/值对
+JSON 键值对是用来保存 JS 对象的一种方式，
+和 JS 对象的写法也大同小异，
+键/值对组合中的键名写在前面
+并用双引号 "" 包裹，使用冒号 : 分隔，然后紧接着值：
+{"firstName": "Json"}
+
+等价于这条 JavaScript 语句：
+{firstName : "Json"}
+
+JSON 与 JS 对象的关系
+
+JSON 是 JS 对象的字符串表示法，它使用文本表示一个 JS 对象的信息，本质是一个字符串。
+如
+var obj = {a: 'Hello', b: 'World'}; //这是一个对象，注意键名也是可以使用引号包裹的
+
+var json = '{"a": "Hello", "b": "World"}'; //这是一个 JSON 字符串，本质是一个字符串
+
+JSON 和 JS 对象互转
+要实现从对象转换为 JSON 字符串，使用 JSON.stringify() 方法：
+var json = JSON.stringify({a: 'Hello', b: 'World'}); 
+//结果是 '{"a": "Hello", "b": "World"}'
+
+要实现从 JSON 转换为对象，使用 JSON.parse() 方法：
+var obj = JSON.parse('{"a": "Hello", "b": "World"}'); 
+//结果是 {a: 'Hello', b: 'World'}
+
+表示对象
+JSON最常用的格式是对象的 键值对。
+对象表示为键值对
+
+{"firstName": "Brett", "lastName": "McLaughlin"}
 
 
+表示数组
+JSON 表示数组的方式也是使用方括号 []。
+
+{  ##{花括号保存对象}
+ "people":[  ##方括号保存数组
+    {
+     "key1": "value1",  ##数据由逗号,分隔        
+     "key2":"value2"  ##对象表示为键:值对
+    },   ##数据由逗号,分隔  
+    {           
+     "firstName":"Jason", ##数据由逗号,分隔
+    "lastName":"Hunter"  ## 对象表示为键:值对
+    }
+  ]      ##方括号保存数组
+}     ##{花括号保存对象}
+
+对象表示为键:值对
+
+数据由逗号,分隔
+
+{花括号保存对象}
+
+[ 方括号保存数组 ]
+
+[root@Va1 myansible]# pwd
+/var/myansible
+[root@Va1 myansible]# ls  
+ansible.cfg  myhosts
+[root@Va1 myansible]# vim  myhosts.sh
+
+[root@Va1 myansible]# cat   myhosts.sh
+#!/bin/bash
+echo  '
+{
+  "zu1":["Va2","Va4"],  ##注意少了 空格 会报错
+  "zu2":["Va3","Va5","Va6"]
+}'
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+[root@Va1 myansible]# .  myhosts.sh
+
+{
+  "zu1":["Va2","Va4"],
+  "zu2":["Va3","Va5","Va6"]
+}
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+
+[root@Va1 myansible]# vim  ansible.cfg 
+
+[root@Va1 myansible]# cat  ansible.cfg
+[defaults]
+inventory      = /var/myansible/myhosts.sh  ##注意文件名改成了myhosts.sh
+host_key_checking = False
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+[root@Va1 myansible]# cat  myhosts
+[app1]
+Va[2:3]
+
+[app2]
+Va[4:6]
+
+[apptest:children]
+app1
+app2
+
+[apptest:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+
+[root@Va1 myansible]# ll  /usr/bin/python
+lrwxrwxrwx. 1 root root 7 1月  30 2018 /usr/bin/python -> python2
+
+[root@Va1 myansible]# ll  /usr/bin/python2
+lrwxrwxrwx. 1 root root 9 1月  30 2018 /usr/bin/python2 -> python2.7
+
+[root@Va1 myansible]# ll  /usr/bin/python2.7 
+-rwxr-xr-x. 1 root root 7136 5月   3 2017 /usr/bin/python2.7
+
+[root@Va1 myansible]# which  python
+/usr/bin/python
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+[root@Va1 myansible]# vim myhost.py
+[root@Va1 myansible]# vim  myhosts.py
+[root@Va1 myansible]# cat  myhosts.py
+#!/usr/bin/python
+import  json
+hostlist = {}
+hostlist["zu1"] = ["192.168.0.12","192.168.0.13"]
+hostlist["192.168.0.12"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+hostlist["192.168.0.13"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+
+hostlist["zu2"] = {
+  "hosts" :["192.168.0.14","192.168.0.15"],
+  "vars" :{
+    "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
 
 
-
+[root@Va1 myansible]# 
 
 
 
