@@ -1,0 +1,452 @@
+
+在github上下载单个文件
+1、找到需要下载的文件，点击进入
+查看图片提示 
+     https://github.com/hiys/Cloud_linux/tree/master/nat-pat-tcp/下载git文件.png 
+2、在打开的页面中，找到 Raw 按钮，右键  选择 目标另存为
+查看图片提示
+    https://github.com/hiys/Cloud_linux/blob/master/nat-pat-tcp/下载git文件2.png
+============================================================
+
+
+[root@hiys ~]# echo 5  |clone-auto7
+
+[root@hiys ~]# ls  /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz     repo  rhel7.repo
+
+[root@hiys ~]# cat  /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://127.0.0.1/rhel7
+enabled=1
+gpgcheck=0
+[root@hiys ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -3
+
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@hiys ~]# tail  -3  /etc/fstab 
+UUID=bb62e9f9-f903-40e2-be01-730eb61cc7ea /                       ext4    defaults        1 1
+UUID=d60728be-85d6-4b5d-8ca8-b29016db27f1 /var/lib/libvirt/images ext4    defaults        1 2
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+
+======================   虚拟网络 命令 常用 =====================
+
+[root@hiys ~]# virsh  net-autostart --disable  vbr
+网络vbr取消标记为自动启动
+
+[root@hiys ~]# virsh  net-destroy   vbr
+网络 vbr 被删除
+
+[root@hiys ~]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr.xml
+
+[root@hiys ~]# virsh net-undefine  vbr   ##取消定义一个非活跃的网络 vbr
+网络 vbr 已经被取消定义
+
+[root@hiys ~]# ls  /etc/libvirt/qemu/networks/
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+==================  创建  虚拟网络  vbr   vbr1  private2  [ 10 ] ===========================
+
+[root@room9pc25 ~]# virsh  net-dumpxml  private2
+<network>
+  <name>private2</name>
+  <uuid>dca824f3-cdfc-4fcd-9b98-f8a46656c27d</uuid>
+  <bridge name='private2' stp='on' delay='0'/>
+  <mac address='52:54:00:f8:f9:d7'/>
+  <domain name='private2'/>
+  <ip address='192.168.2.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@room9pc25 ~]# 
+
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# cd  /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr.xml
+
+<network>
+  <name>vbr</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# cp  /etc/libvirt/qemu/networks/vbr.xml  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr1.xml
+
+<network>
+  <name>vbr1</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr1.xml  vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr.xml 
+Network vbr defined from vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr1.xml 
+Network vbr1 defined from vbr1.xml
+
+[root@hiys networks]# virsh  net-autostart  vbr
+Network vbr marked as autostarted
+
+[root@hiys networks]# virsh  net-autostart  vbr1
+Network vbr1 marked as autostarted
+
+[root@hiys networks]# virsh  net-start  vbr
+Network vbr started
+
+[root@hiys networks]# virsh  net-start  vbr1
+Network vbr1 started
+
+[root@hiys networks]# ifconfig vbr ;ifconfig vbr1
+
+
+[root@hiys ~]# cat  local.repo.txt
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+ 
+
+[root@hiys ~]# vim   Vaxip.sh
+[root@hiys ~]# cat   Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+
+[root@hiys ~]# tty
+/dev/pts/0
+[root@hiys ~]# virsh console  Va1
+Connected to domain Va1
+Escape character is ^]
+
+Red Hat Enterprise Linux Server 7.4 (Maipo)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+密码： 123456
+Last login: Tue Jan 30 12:29:01 on :0
+
+[root@localhost ~]# ifconfig 
+
+[root@localhost ~]# vim  Vaxip.sh
+
+[root@localhost ~]# cat  Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+[root@localhost ~]# . Vaxip.sh  1  11  ## 主机名 Va1    ip  11
+.............
+Complete!
+[root@localhost ~]# cat  /etc/hostname 
+Va1
+[root@localhost ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:            992         124         332           6         535         691
+Swap:             0           0           0
+[root@localhost ~]# shutdown  -h  now
+
+[root@hiys ~]# ssh  -X  192.168.0.11
+...............................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.0.11' (ECDSA) to the list of known hosts.
+root@192.168.0.11's password: 1
+Last login: Sat Dec 15 13:39:59 2018
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+[root@Va1 ~]# ifconfig 
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.11  netmask 255.255.255.0  broadcast 192.168.0.255
+        inet6 fe80::5054:ff:fee5:515e  prefixlen 64  scopeid 0x20<link>
+................................
+
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.11  netmask 255.255.255.0  broadcast 192.168.1.255
+        inet6 fe80::5054:ff:fe30:4651  prefixlen 64  scopeid 0x20<link>
+......................
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.11  netmask 255.255.255.0  broadcast 192.168.2.255
+        inet6 fe80::5054:ff:fe7a:7c0a  prefixlen 64  scopeid 0x20<link>
+.........................
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+.............................
+
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+.....................
+
+[root@Va1 ~]# ip route  show
+
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.11 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.11 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va1 ~]# free  -m  
+              total        used        free      shared  buff/cache   available
+Mem:           2000          96        1768           8         135        1750
+Swap:          2047           0        2047
+
+
+[root@hiys ~]# virsh  console  Va2
+连接到域 Va2
+换码符为 ^]
+
+
+Red Hat Enterprise Linux Server 7.4 (Maipo)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+localhost login: root
+密码：123456
+Last login: Tue Jan 30 12:29:01 on :0
+[root@localhost ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           2000         114        1727           8         158        1716
+Swap:          2047           0        2047
+[root@localhost ~]# vim   Vaxip.sh
+
+[root@localhost ~]# cat  Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+[root@localhost ~]# ls  /etc/yum.repos.d/
+[root@localhost ~]# . Vaxip.sh   2   12    ## 主机名 Va2    ip  12
+
+Complete!
+[root@localhost ~]# scp  -o  StrictHostKeyChecking=no  \
+ root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+Warning: Permanently added '192.168.0.254' (ECDSA) to the list of known hosts.
+root@192.168.0.254's password: Taren1
+local.repo.txt                                100%   99    78.3KB/s   00:00    
+[root@localhost ~]# ls  /etc/yum.repos.d/
+local.repo	redhat.repo
+[root@localhost ~]# rm  -f  /etc/yum.repos.d/redhat.repo 
+[root@localhost ~]# ls  /etc/yum.repos.d/
+local.repo.txt
+[root@localhost ~]# cat  /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@localhost ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -3
+repo id                  repo name                                        status
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                   4,986
+repolist: 4,986
+[root@localhost ~]# reboot
+
+[root@hiys ~]# ssh -o  StrictHostKeyChecking=no   -X  192.168.0.12
+............................
+root@192.168.0.12's password: 1
+...............
+[root@Va2 ~]# ip   -o   address
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+2: eth0    inet 192.168.0.12/24 brd 192.168.0.255 scope global eth0\       valid_lft forever preferred_lft forever
+2: eth0    inet6 fe80::5054:ff:fe82:ec5c/64 scope link \       valid_lft forever preferred_lft forever
+3: eth1    inet 192.168.1.12/24 brd 192.168.1.255 scope global eth1\       valid_lft forever preferred_lft forever
+3: eth1    inet6 fe80::5054:ff:fe13:7277/64 scope link \       valid_lft forever preferred_lft forever
+4: eth2    inet 192.168.2.12/24 brd 192.168.2.255 scope global eth2\       valid_lft forever preferred_lft forever
+4: eth2    inet6 fe80::5054:ff:fe58:afb2/64 scope link \       valid_lft forever preferred_lft forever
+5: virbr0    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0\       valid_lft forever preferred_lft forever
+
+[root@Va2 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.12 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.12 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.12 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+

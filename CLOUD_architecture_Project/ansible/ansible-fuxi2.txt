@@ -1129,21 +1129,19 @@ app2
 ansible_ssh_user=root
 ansible_ssh_pass=1
 
+
 [root@Va1 myansible]# ll  /usr/bin/python
 lrwxrwxrwx. 1 root root 7 1月  30 2018 /usr/bin/python -> python2
-
 [root@Va1 myansible]# ll  /usr/bin/python2
 lrwxrwxrwx. 1 root root 9 1月  30 2018 /usr/bin/python2 -> python2.7
-
-[root@Va1 myansible]# ll  /usr/bin/python2.7 
+[root@Va1 myansible]# ll  /usr/bin/python2.7
 -rwxr-xr-x. 1 root root 7136 5月   3 2017 /usr/bin/python2.7
-
 [root@Va1 myansible]# which  python
 /usr/bin/python
 [root@Va1 myansible]# ls
 ansible.cfg  myhosts  myhosts.sh
-[root@Va1 myansible]# vim myhost.py
 [root@Va1 myansible]# vim  myhosts.py
+
 [root@Va1 myansible]# cat  myhosts.py
 #!/usr/bin/python
 import  json
@@ -1161,8 +1159,22 @@ hostlist["zu2"] = {
   "vars" :{
     "ansible_ssh_user":"root","ansible_ssh_pass":"1"
   }
+}
+print(json.dumps(hostlist))
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.py  myhosts.sh
 
 
+[root@Va1 myansible]# chmod  755  myhosts.py
+
+[root@Va1 myansible]# vim  ansible.cfg 
+
+[root@Va1 myansible]# cat  ansible.cfg
+
+[defaults]
+inventory   =  /var/myansible/myhosts.py
+host_key_checking = False
 [root@Va1 myansible]# 
 
 

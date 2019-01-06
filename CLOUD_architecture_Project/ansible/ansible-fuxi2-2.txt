@@ -1,0 +1,1205 @@
+
+
+
+
+[root@hiys ~]# vim   Vaxip.sh
+[root@hiys ~]# cat   Vaxip.sh
+#!/bin/bash
+x=$1
+ip=$2
+export LANG=en_US.UTF-8
+echo  1 |passwd  --stdin  root
+echo  Va${x} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+
+[root@hiys ~]# tty
+/dev/pts/0
+[root@hiys ~]# virsh console  Va1
+[root@hiys ~]# virsh console  Va2
+[root@hiys ~]# virsh console  Va3
+[root@hiys ~]# virsh console  Va4
+[root@hiys ~]# virsh console  Va5
+[root@hiys ~]# virsh console  Va6
+...............
+[root@localhost ~]# . Vaxip.sh  1  11  ## 主机名 Va1    ip  11
+.....................
+[root@localhost ~]# . Vaxip.sh  6  16  ## 主机名 Va6    ip  16
+
+[root@room9pc32 ~]# mkdir     /var/ftp/CentOS7-1708
+[root@room9pc32 ~]# mount  -o  loop  -t  iso9660  /var/git/CentOS7-1708.iso  /var/ftp/CentOS7-1708
+mount: /dev/loop2 写保护，将以只读方式挂载
+
+[root@room9pc32 ~]# tail  -1  /etc/fstab
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso /var/ftp/rhel7/ iso9660 defaults 0 0
+
+[root@room9pc32 ~]# ls  /var/ftp/rhel7/
+addons            GPL       media.repo               RPM-GPG-KEY-redhat-release
+EFI               images    Packages                 TRANS.TBL
+EULA              isolinux  repodata
+extra_files.json  LiveOS    RPM-GPG-KEY-redhat-beta
+
+[root@room9pc32 ~]# ls  /var/ftp/CentOS7-1708/
+CentOS_BuildTag  GPL       LiveOS    RPM-GPG-KEY-CentOS-7
+EFI              images    Packages  RPM-GPG-KEY-CentOS-Testing-7
+EULA             isolinux  repodata  TRANS.TBL
+
+
+[root@room9pc32 ~]# ls  /var/ftp/ansible/
+
+[root@room9pc32 ~]# ls  /var/git/
+ansible  ansible_soft.tar.xz  CentOS7-1708.iso
+
+[root@room9pc32 ~]# tar  -xf  /var/git/ansible_soft.tar.xz   -C  /var/ftp/ansible/
+
+[root@room9pc32 ~]# ls  /var/ftp/ansible/
+ansible_soft
+[root@room9pc32 ~]# ls  /var/ftp/ansible/ansible_soft/
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  python-passlib-1.6.5-2.el7.noarch.rpm
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc32 ~]# mv  /var/ftp/ansible/ansible_soft/*   /var/ftp/ansible/
+
+[root@room9pc32 ~]# ls   /var/ftp/ansible/
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+ansible_soft                             python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  sshpass-1.06-2.el7.x86_64.rpm
+python-httplib2-0.9.2-1.el7.noarch.rpm
+
+[root@room9pc32 ~]# createrepo   /var/ftp/ansible/
+Spawning worker 0 with 2 pkgs
+Spawning worker 1 with 2 pkgs
+Spawning worker 2 with 1 pkgs
+Spawning worker 3 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@room9pc32 ~]# ls   /var/ftp/ansible/
+ansible-2.4.2.0-2.el7.noarch.rpm         python-paramiko-2.1.1-4.el7.noarch.rpm
+ansible_soft                             python-passlib-1.6.5-2.el7.noarch.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
+python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
+
+[root@room9pc32 ~]# 
+
+
+
+
+[root@Va1 ~]# vim    /etc/yum.repos.d/local.repo
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+[root@Va1 ~]# vim  /etc/yum.conf 
+[root@Va1 ~]# sed  -n  8p  /etc/yum.conf
+gpgcheck=0
+[root@Va1 ~]# yum clean  all >/dev/null &&  yum repolist  |tail  -4
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                   6
+repolist: 9,597
+[root@Va1 ~]# 
+
+
+[root@Va1 ~]# vim   /etc/hosts
+[root@Va1 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va1 ~]# rsync  -av   /etc/hosts  '-e  ssh  -p22' root@Va2:/etc/
+.....................
+Are you sure you want to continue connecting (yes/no)? yes
+.........................
+root@va2's password: 1
+..................
+
+[root@Va1 ~]# for  i in  Va{3..6};do  rsync  -av  /etc/hosts  ${i}:/etc/;done
+
+...................
+Are you sure you want to continue connecting (yes/no)? yes
+.........................
+root@va2's password: 1
+..................
+..............
+[root@Va1 ~]# for  i in  Va{2..6};do  rsync  -av  /etc/yum.repos.d/local.repo   ${i}:/etc/yum.repos.d/;done
+
+root@va2's password: 1
+sending incremental file list
+local.repo
+.....................
+[root@Va1 ~]# yum  search  ansible
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+============================================= N/S matched: ansible ==============================================
+ansible.noarch : SSH-based configuration management, deployment, and task execution system
+
+  名称和简介匹配 only，使用“search all”试试。
+  
+[root@Va1 ~]# yum  list  |grep   ansible
+ansible.noarch                           2.4.2.0-2.el7             ansible      
+python-httplib2.noarch                   0.9.2-1.el7               ansible      
+python-paramiko.noarch                   2.1.1-4.el7               ansible      
+python-passlib.noarch                    1.6.5-2.el7               ansible      
+python2-jmespath.noarch                  0.9.0-3.el7               ansible      
+sshpass.x86_64                           1.06-2.el7                ansible   
+   
+[root@Va1 ~]# yum  -y  install  ansible.noarch   |tail   -2
+
+完毕！
+[root@Va1 ~]# rpm  -qa  |grep  ansible
+ansible-2.4.2.0-2.el7.noarch
+
+[root@Va1 ~]# ansible  --version
+ansible 2.4.2.0
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = [u'/root/.ansible/plugins/modules', u'/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python2.7/site-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 2.7.5 (default, May  3 2017, 07:55:04) [GCC 4.8.5 20150623 (Red Hat 4.8.5-14)]
+  
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+
+[root@Va1 ~]# grep  -Evn  "^#|^$"   /etc/ansible/ansible.cfg
+10:[defaults]
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+[root@Va1 ~]# cd  /etc/ansible/
+
+[root@Va1 ansible]# sed  -n   '14p;61p'  /etc/ansible/ansible.cfg 
+#inventory      = /etc/ansible/hosts
+#host_key_checking = False
+
+[root@Va1 ansible]# sed  -i   '14s/#//;61s/#//'  /etc/ansible/ansible.cfg
+
+[root@Va1 ansible]# grep  -Pvn  "^#|^$"   /etc/ansible/ansible.cfg
+10:[defaults]
+14:inventory      = /etc/ansible/hosts
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+61:host_key_checking = False
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# ls  roles/
+
+[root@Va1 ansible]# sysctl  -a  |grep  icmp_echo
+net.ipv4.icmp_echo_ignore_all = 0
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+.........................
+
+[root@Va1 ansible]# sysctl  -a  |grep  ip_forward
+net.ipv4.ip_forward = 1
+net.ipv4.ip_forward_use_pmtu = 0
+................
+
+[root@Va1 ansible]# cat  /proc/sys/net/ipv4/ip_forward  ##  1 代表打开路由转发
+1
+[root@Va1 ansible]# cat /proc/sys/net/ipv4/icmp_echo_ignore_all  ##主要是 0 代表 同意 ping 请求包进
+0
+[root@Va1 ansible]# sysctl   -w  net.ipv4.icmp_echo_ignore_all=1 ## 1 代表禁止 ping请求包进
+net.ipv4.icmp_echo_ignore_all = 1
+[root@Va1 ansible]# sysctl  -p
+[root@Va1 ansible]# cat /proc/sys/net/ipv4/icmp_echo_ignore_all 
+1
+[root@Va1 ansible]# echo  0  >   /proc/sys/net/ipv4/icmp_echo_ignore_all
+[root@Va1 ansible]# cat /proc/sys/net/ipv4/icmp_echo_ignore_all 
+0
+[root@Va1 ansible]# ls
+ansible.cfg  hosts  roles
+
+[root@Va1 ansible]# vim  hosts 
+ 
+[root@Va1 ~]# sed  -n  '44,$p'  /etc/ansible/hosts
+[web]
+Va2
+Va4
+
+[db]
+Va3
+Va5
+
+[other]
+Va6  ansible_ssh_user="root"  ansible_ssh_pass=1
+
+[webdb]
+Va[2:5]
+
+[app:children]
+web
+db
+
+[app:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+
+[root@Va1 ~]# ansible  other   -m  ping ; ansible webdb -m   ping
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+[root@Va1 ~]# ansible  all   -m  ping 
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# 
+Ansible配置文件查找顺序
+
+– 首先检测 ANSIBLE_CONFIG 变量定义的配置文件
+– 其次检查当前目彔下的 ./ansible.cfg 文件　# mkdir  /var/myansible  ##自定义的目录（常用方式）
+– 再次检查当前用户家目彔下 ~/ansible.cfg 文件
+– 最后检查 /etc/ansible/ansible.cfg 文件  [默认的配置文件]
+
+[root@Va1 ~]# mkdir  /var/myansible  ##自定义的目录
+
+[root@Va1 ~]# vim  /var/myansible/ansible.cfg  ##自定义的配置文件
+
+[root@Va1 ~]# cat  /var/myansible/ansible.cfg 
+[defaults]
+inventory      = /var/myansible/myhosts   ## 指定自定义 组机分组列表的路径
+host_key_checking = False
+
+
+
+[root@Va1 ~]# vim   /var/myansible/myhosts  ##自定义的主机分组列表文件
+
+[root@Va1 ~]# cat /var/myansible/myhosts
+
+[app1]
+Va[2:3]
+
+[app2]
+Va[4:6]
+
+[apptest:children]
+app1
+app2
+
+[apptest:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+
+[root@Va1 ~]# ansible  apptest  -m  ping   ##不在自定义的目录下执行无效
+ [WARNING]: Could not match supplied host pattern, ignoring: apptest
+
+ [WARNING]: No hosts matched, nothing to do
+
+[root@Va1 ~]# cd   /var/myansible/  ##只能在自定义的目录下执行有效
+
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts
+
+[root@Va1 myansible]# ansible  apptest  -m  ping  ##只能在自定义的目录下执行有效
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  apptest  --list
+  hosts (5):
+    Va2
+    Va3
+    Va4
+    Va5
+    Va6
+[root@Va1 myansible]# ansible  app1  --list
+  hosts (2):
+    Va2
+    Va3
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts
+
+[root@Va1 myansible]# ls  /root/.ansible/cp/
+[root@Va1 myansible]# ansible  Va3  -m   ping
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+[root@Va1 myansible]# ls  /root/.ansible/cp/
+7689b52767
+[root@Va1 myansible]# ls  /root/.ansible/
+cp  tmp
+[root@Va1 myansible]# ls  /root/.ansible/cp/  ## 临时文件 7689 有效期 默认约 3分钟
+[root@Va1 myansible]# 
+
+
+======================== JSON ====================
+
+JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式。
+易于人阅读和编写。同时也易于机器解析和生成。
+它基于JavaScript Programming Language, Standard ECMA-262 3rd Edition - December 1999的一个子集。
+
+在 JS 语言中，一切都是对象。
+因此，任何支持的类型都可以通过 JSON 来表示，
+
+例如字符串、数字、对象、数组等。
+
+但是对象和数组是比较特殊且常用的两种类型：
+
+对象表示为键:值对
+
+数据由逗号,分隔
+
+{花括号保存对象}
+
+[ 方括号保存数组 ]
+
+JSON 键/值对
+JSON 键值对是用来保存 JS 对象的一种方式，
+和 JS 对象的写法也大同小异，
+键/值对组合中的键名写在前面
+并用双引号 "" 包裹，使用冒号 : 分隔，然后紧接着值：
+{"firstName": "Json"}
+
+等价于这条 JavaScript 语句：
+{firstName : "Json"}
+
+JSON 与 JS 对象的关系
+
+JSON 是 JS 对象的字符串表示法，它使用文本表示一个 JS 对象的信息，本质是一个字符串。
+如
+var obj = {a: 'Hello', b: 'World'}; //这是一个对象，注意键名也是可以使用引号包裹的
+
+var json = '{"a": "Hello", "b": "World"}'; //这是一个 JSON 字符串，本质是一个字符串
+
+JSON 和 JS 对象互转
+要实现从对象转换为 JSON 字符串，使用 JSON.stringify() 方法：
+var json = JSON.stringify({a: 'Hello', b: 'World'}); 
+//结果是 '{"a": "Hello", "b": "World"}'
+
+要实现从 JSON 转换为对象，使用 JSON.parse() 方法：
+var obj = JSON.parse('{"a": "Hello", "b": "World"}'); 
+//结果是 {a: 'Hello', b: 'World'}
+
+表示对象
+JSON最常用的格式是对象的 键值对。
+对象表示为键值对
+
+{"firstName": "Brett", "lastName": "McLaughlin"}
+
+
+表示数组
+JSON 表示数组的方式也是使用方括号 []。
+
+{  ##{花括号保存对象}
+ "people":[  ##方括号保存数组
+    {
+     "key1": "value1",  ##数据由逗号,分隔        
+     "key2":"value2"  ##对象表示为键:值对
+    },   ##数据由逗号,分隔  
+    {           
+     "firstName":"Jason", ##数据由逗号,分隔
+    "lastName":"Hunter"  ## 对象表示为键:值对
+    }
+  ]      ##方括号保存数组
+}     ##{花括号保存对象}
+
+对象表示为键:值对
+
+数据由逗号,分隔
+
+{花括号保存对象}
+
+[ 方括号保存数组 ]
+
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts
+[root@Va1 myansible]# vim myhosts.sh
+[root@Va1 myansible]# cat   myhosts.sh
+#!/bin/bash
+echo  '
+{
+ "zu1":["Va2","Va4"],
+ "zu2":["Va3","Va5","Va6"]
+}'
+
+[root@Va1 myansible]# . myhosts.sh  ##测试
+
+{
+ "zu1":["Va2","Va4"],
+ "zu2":["Va3","Va5","Va6"]
+}
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+
+[root@Va1 myansible]# vim  ansible.cfg 
+
+[root@Va1 myansible]# cat  ansible.cfg
+
+[defaults]
+inventory   =  /var/myansible/myhosts.sh ##注意文件名改成了myhosts.sh
+host_key_checking = False
+
+
+[root@Va1 myansible]# ansible  zu1  --list
+ [WARNING]:  * Failed to parse /var/myansible/myhosts.sh with script plugin: problem running
+/var/myansible/myhosts.sh --list ([Errno 13] Permission denied)
+
+ [WARNING]:  * Failed to parse /var/myansible/myhosts.sh with ini plugin: /var/myansible/myhosts.sh:2: Error
+parsing host definition 'echo  '': No closing quotation
+
+ [WARNING]: Unable to parse /var/myansible/myhosts.sh as an inventory source
+
+ [WARNING]: No inventory was parsed, only implicit localhost is available
+
+ [WARNING]: Could not match supplied host pattern, ignoring: all
+
+ [WARNING]: provided hosts list is empty, only localhost is available
+
+ [WARNING]: Could not match supplied host pattern, ignoring: zu1
+
+ [WARNING]: No hosts matched, nothing to do
+
+[警告]：*无法使用脚本插件分析/var/myansible/myhosts.sh:运行问题
+/var/myansible/myhosts.sh--列表（[errno 13]权限被拒绝）
+
+[警告]：*无法分析带有ini插件的/var/myansible/myhosts.sh:/var/myansible/myhosts.sh:2:错误
+正在分析主机定义“echo”：没有右引号
+
+[警告]：无法将/var/myansible/myhosts.sh分析为库存源
+
+[警告]：未分析清单，只有隐式localhost可用
+
+[警告]：无法匹配提供的主机模式，忽略：全部
+
+[警告]：提供的主机列表为空，只有localhost可用
+
+[警告]：无法匹配提供的主机模式，忽略：zu1
+
+[警告]：没有匹配的主机，无需执行任何操作
+  hosts (0):
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+
+[root@Va1 myansible]# ll  myhosts.sh  ##注意必须加执行权限，否则报错（[errno 13]权限被拒绝）
+-rw-r--r-- 1 root root 74 1月   6 15:37 myhosts.sh
+
+[root@Va1 myansible]# chmod  755  myhosts.sh  ##注意必须加执行权限，否则报错（[errno 13]权限被拒绝）
+
+
+[root@Va1 myansible]# cat  myhosts.sh
+#!/bin/bash
+echo  '
+{
+ "zu1":["Va2","Va4"],
+ "zu2":["Va3","Va5","Va6"]
+}'
+[root@Va1 myansible]# ansible  zu1  --list
+  hosts (2):
+    Va2
+    Va4
+[root@Va1 myansible]# ansible  zu2  --list
+  hosts (3):
+    Va3
+    Va5
+    Va6
+[root@Va1 myansible]# 
+
+[root@Va1 myansible]# ll  /usr/bin/python
+lrwxrwxrwx. 1 root root 7 1月  30 2018 /usr/bin/python -> python2
+
+[root@Va1 myansible]# ll  /usr/bin/python2
+lrwxrwxrwx. 1 root root 9 1月  30 2018 /usr/bin/python2 -> python2.7
+
+[root@Va1 myansible]# ll  /usr/bin/python2.7
+-rwxr-xr-x. 1 root root 7136 5月   3 2017 /usr/bin/python2.7
+
+[root@Va1 myansible]# which  python
+/usr/bin/python
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+
+[root@Va1 myansible]# vim  myhosts.py
+
+[root@Va1 myansible]# cat  myhosts.py
+
+#!/usr/bin/python
+import  json
+hostlist = {}
+hostlist["zu1"] = ["192.168.0.12","192.168.0.13"]
+hostlist["192.168.0.12"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+hostlist["192.168.0.13"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+
+hostlist["zu2"] = {
+  "hosts" :["192.168.0.14","192.168.0.15"],
+  "vars" :{
+    "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+}
+print(json.dumps(hostlist))
+
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.py  myhosts.sh
+
+
+[root@Va1 myansible]# chmod  755  myhosts.py
+
+[root@Va1 myansible]# vim  ansible.cfg ##注意文件名改成了myhosts.py
+
+[root@Va1 myansible]# cat  ansible.cfg
+
+[defaults]
+inventory   =  /var/myansible/myhosts.py  ##注意文件名改成了myhosts.py
+host_key_checking = False
+
+[root@Va1 myansible]# /var/myansible/myhosts.py  ##执行测试（python语言脚本）
+
+{"zu2": {"hosts": ["192.168.0.14", "192.168.0.15"], "vars": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}, "zu1": ["192.168.0.12", "192.168.0.13"], "192.168.0.12": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}, "192.168.0.13": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}
+
+[root@Va1 myansible]# cat  myhosts  ##注意不是此文件了
+[app1]
+Va[2:3]
+
+[app2]
+Va[4:6]
+
+[apptest:children]
+app1
+app2
+
+[apptest:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+[root@Va1 myansible]# ansible  zu2  --list
+ [WARNING]: Found both group and host with same name: 192.168.0.12
+
+ [WARNING]: Found both group and host with same name: 192.168.0.13
+
+  hosts (2):
+    192.168.0.14
+    192.168.0.15
+[root@Va1 myansible]# ansible  zu1 --list
+ [WARNING]: Found both group and host with same name: 192.168.0.12
+
+ [WARNING]: Found both group and host with same name: 192.168.0.13
+
+  hosts (2):
+    192.168.0.12
+    192.168.0.13
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.py  myhosts.sh
+
+[root@Va1 myansible]# vim  myhosts.py 
+
+[root@Va1 myansible]# cat  myhosts.py
+
+#!/usr/bin/python
+import  json
+hostlist = {}
+hostlist["zu1"] = ["192.168.0.12","192.168.0.13"]
+hostlist["Va2"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+hostlist["Va3"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+
+hostlist["zu2"] = {
+  "hosts" :["192.168.0.14","192.168.0.15"],
+  "vars" :{
+    "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+}
+print(json.dumps(hostlist))
+
+[root@Va1 myansible]# pwd
+/var/myansible
+[root@Va1 myansible]# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@Va1 myansible]# ll  myhosts.py
+-rwxr-xr-x 1 root root 409 1月   6 16:13 myhosts.py
+
+[root@Va1 myansible]# ./myhosts.py 
+{"Va2": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}, "Va3": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}, "zu1": ["192.168.0.12", "192.168.0.13"], "zu2": {"hosts": ["192.168.0.14", "192.168.0.15"], "vars": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}}
+
+[root@Va1 myansible]# ansible  zu2  --list
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+  hosts (2):
+    192.168.0.14
+    192.168.0.15
+[root@Va1 myansible]# ansible  zu1  --list
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+  hosts (2):
+    192.168.0.12
+    192.168.0.13
+[root@Va1 myansible]# ansible  Va2  --list
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+  hosts (1):
+    Va2
+[root@Va1 myansible]# ansible  Va3  --list
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+  hosts (1):
+    Va3
+[root@Va1 myansible]# 
+
+[root@Va1 myansible]# cat  myhosts.py 
+#!/usr/bin/python
+import  json
+hostlist = {}
+hostlist["zu1"] = ["192.168.0.12","192.168.0.13"]
+hostlist["Va2"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+hostlist["Va3"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+
+hostlist["zu2"] = {
+  "hosts" :["192.168.0.14","192.168.0.15"],
+  "vars" :{
+    "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+}
+print(json.dumps(hostlist))
+
+[root@Va1 myansible]# ansible  zu1  -m  ping  ## 注意zu1 中没有设置用户与密码，所以ssh连接失败
+
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+192.168.0.13 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+192.168.0.12 | UNREACHABLE! => {
+    "changed": false, 
+    "msg": "Failed to connect to the host via ssh: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).\r\n", 
+    "unreachable": true
+}
+
+=============================
+
+[root@Va1 myansible]# ansible  zu2  -m  ping
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+192.168.0.15 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+192.168.0.14 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  Va2  -m  ping
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  Va3  -m  ping
+ [WARNING]: Found both group and host with same name: Va2
+
+ [WARNING]: Found both group and host with same name: Va3
+
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# 
+[root@Va1 myansible]# which python
+/usr/bin/python
+[root@Va1 myansible]# python
+Python 2.7.5 (default, May  3 2017, 07:55:04) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-14)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import  json
+>>> hosts={}
+>>> hosts["zuming"]={
+... "hosts" :["192.168.0.14","Va5"],
+... "vars" : {
+...   "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+... }
+... }
+>>> json.dumps(hosts)
+'{"zuming": {"hosts": ["192.168.0.14", "Va5"], "vars": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}}'
+>>> quit
+Use quit() or Ctrl-D (i.e. EOF) to exit
+>>> quit()
+[root@Va1 myansible]# 
+=============================
+
+
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.py  myhosts.sh
+
+[root@Va1 myansible]# vim  ansible.cfg 
+
+[root@Va1 myansible]# cat  ansible.cfg
+[defaults]
+inventory   =  /var/myansible/myhosts.sh  ##注意文件名改成了myhosts.sh
+host_key_checking = False
+
+[root@Va1 myansible]# vim  myhosts.sh 
+[root@Va1 myansible]# cat  myhosts.sh
+#!/bin/bash
+echo  '
+{
+ "zu1":{
+      "hosts":["Va2","Va4"],
+      "vars" :{  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+              }
+       },
+
+ "zu2":{
+      "hosts":["Va3","Va5"],
+      "vars" :{  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+              }
+       },
+
+  "Va6":{"ansible_ssh_user":"root","ansible_ssh_pass":"1"
+        }
+}'
+[root@Va1 myansible]# ll myhosts.sh
+-rwxr-xr-x 1 root root 355 1月   6 17:11 myhosts.sh
+
+[root@Va1 myansible]# .  myhosts.sh
+
+{
+ "zu1":{
+      "hosts":["Va2","Va4"],
+      "vars" :{  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+              }
+       },
+
+ "zu2":{
+      "hosts":["Va3","Va5"],
+      "vars" :{  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+              }
+       },
+
+  "Va6":{"ansible_ssh_user":"root","ansible_ssh_pass":"1"
+        }
+}
+[root@Va1 myansible]# 
+
+[root@Va1 myansible]# ansible  Va6  -m  ping
+ [WARNING]: Found both group and host with same name: Va6
+
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  zu1  -m  ping
+ [WARNING]: Found both group and host with same name: Va6
+
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  zu2  -m  ping
+ [WARNING]: Found both group and host with same name: Va6
+
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  all  -m  ping
+ [WARNING]: Found both group and host with same name: Va6
+
+Va6 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# 
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.py  myhosts.sh
+[root@Va1 myansible]# cat  myhosts.sh
+#!/bin/bash
+echo  '
+{
+ "zu1":{
+      "hosts":["Va2","Va4"],
+      "vars" :{  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+              }
+       },
+
+ "zu2":{
+      "hosts":["Va3","Va5"],
+      "vars" :{  "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+              }
+       },
+
+  "Va6":{"ansible_ssh_user":"root","ansible_ssh_pass":"1"
+        }
+}'
+
+
+[root@Va1 myansible]# cat ansible.cfg 
+[defaults]
+inventory   =  /var/myansible/myhosts.sh
+host_key_checking = False
+
+[root@Va1 myansible]# 
+=====================================================
+
+
+[root@Va1 myansible]# cat myhosts
+[app1]
+Va[2:3]
+
+[app2]
+Va[4:6]
+
+[apptest:children]
+app1
+app2
+
+[apptest:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+[root@Va1 myansible]# vim  ansible.cfg 
+
+[root@Va1 myansible]# cat  ansible.cfg
+[defaults]
+inventory   =  /var/myansible/myhosts
+host_key_checking = False
+
+[root@Va1 myansible]# ansible  主机或分组列表 -m  模块名称 -a 模块的参数
+
+
+[root@Va1 myansible]# cat  ansible.cfg
+[defaults]
+inventory   =  /var/myansible/myhosts
+host_key_checking = False
+
+[root@Va1 myansible]# ansible  app1  -m  command   -a  'uptime' ## 查看系统平均负载
+Va3 | SUCCESS | rc=0 >>
+ 17:31:46 up  3:59,      2 users,  load average: 0.00, 0.01, 0.02
+ 当前时间    系统已运行的时间 当前在线用户    平均负载：最近1分钟、5分钟、15分钟 系统的负载
+Va2 | SUCCESS | rc=0 >>
+ 17:31:45 up  3:59,     2 users,    load average: 0.00, 0.01, 0.05
+当前时间    系统已运行的时间 当前在线用户    平均负载：最近1分钟、5分钟、15分钟 系统的负载
+平均负载量：0.00, 0.01, 0.05 最后一个信息是系统的平均负载量
+可以换算成百分比0%，1%，5%
+[root@Va1 myansible]# 
+
+
+/***************
+procps是一个实用程序包，主要包括ps top kill等程序主要用来显示与控制一些系统信息，进程状态之类的内容。
+
+以下显示输入uptime的信息：
+
+04:03:58 up 10 days, 13:19, 1 user, load average: 0.54, 0.40, 0.20
+当前时间 04:03:58
+系统已运行的时间 10 days, 13:19
+当前在线用户 1 user
+平均负载：0.54, 0.40, 0.20，最近1分钟、5分钟、15分钟系统的负载
+平均负载量：最后一个信息是系统的平均负载量。
+你看到这样带两位小数的数字0.25, 0.25, 0.19可以换算成百分比，
+即0.25和0.19分别代表着25%和19%。0.25, 0.25, 0.19分别代表着过去1分钟、5分钟、15分钟系统的平均负载量。
+负载量越低意味着你的系统性能越好。
+
+**********/
+[root@Va1 myansible]# cat  /proc/loadavg   ##最直接查看系统平均负载命令
+0.00 0.01 0.05 2/150 13822
+
+除了前3个数字表示平均进程数量外，
+后面的1个分数的分母表示系统进程总数，分子表示正在运行的进程数；
+最后一个数字表示最近运行的进程ID
+
+每个CPU内核当前活动进程数不大于3，则系统运行表现良好！
+当然这里说的是每个cpu内核，也就是如果你的主机是四核cpu的话，
+那么只要uptime最后输出的一串字符数值小于12即表示系统负载不是很严重.当
+然如果达到20，那就表示当前系统负载非常严重，
+估计打开执行web脚本非常缓慢.
+
+uptime 参数 -V(大写)   查询版本
+[root@Va1 myansible]# ansible  app1  -m  command   -a  'uptime  -V'
+Va2 | SUCCESS | rc=0 >>
+uptime from procps-ng 3.3.10
+
+Va3 | SUCCESS | rc=0 >>
+uptime from procps-ng 3.3.10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va2 ~]# cat   /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va2 ~]# ifconfig  |grep  -A1 flags=
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
