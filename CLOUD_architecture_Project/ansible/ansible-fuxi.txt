@@ -468,6 +468,99 @@ ALL   表示列表中的所有主机
 
     ansible “~(web|db).*\.magedu\.com” -m ping
 
+
+主机和组，是在/etc/ansible/hosts 里进行指定的部分
+模块名，
+可以通过ansible-doc -l 查看目前安装的模块，
+默认不指定时，使用的是command模块，
+具体可以查看/etc/ansible/ansible.cfg 的“#module_name = command ” 部分，
+默认模块可以在该配置文件中进行修改；
+
+模块参数，
+可以通过 “ansible-doc 模块名” 查看具体的用法及后面的参数；
+ansible参数，
+可以通过ansible命令的帮忙信息里查看到，
+这里有很多参数可以供选择，如是否需要输入密码、是否sudo等。
+
+
+1、参数介绍
+
+其中options参数主要有：
+
+参数	说明
+-a	‘Arguments’, —args=’Arguments’ 命令行参数
+-m	NAME, —module-name=NAME 执行模块的名字，默认使用 command 模块，
+        所以如果是只执行单一命令可以不用 -m参数
+
+-i PATH,	—inventory=PATH 指定库存主机文件的路径,默认为/etc/ansible/hosts.
+
+-u Username，	—user=Username 执行用户，使用这个远程用户名而不是当前用户
+
+-U	—sud-user=SUDO_User sudo到哪个用户，默认为 root
+
+-k	—ask-pass 登录密码，提示输入SSH密码而不是假设基于密钥的验证
+
+-K	—ask-sudo-pass 提示密码使用sudo
+
+-s	—sudo sudo运行
+-S	—su 用 su 命令
+
+-l	—list 显示所支持的所有模块
+-s	—snippet 指定模块显示剧本片段
+
+-f	—forks=NUM 并行任务数。NUM被指定为一个整数,默认是5。 
+   #ansible testhosts -a “/sbin/reboot” -f 10 重启testhosts组的所有机器，每次重启10台
+
+—private-key=PRIVATE_KEY_FILE	私钥路径，使用这个文件来验证连接
+-v	—verbose 详细信息
+
+all	针对hosts 定义的所有主机执行
+-M MODULE_PATH,	—module-path=MODULE_PATH 要执行的模块的路径，默认为/usr/share/ansible/
+
+—list-hosts	只打印有哪些主机会执行这个 playbook 文件，不是实际执行该 playbook 文件
+
+-o —one-line	压缩输出，摘要输出.尝试一切都在一行上输出。
+
+-t Directory,	—tree=Directory 将内容保存在该输出目录,结果保存在一个文件中在每台主机上。
+-B	后台运行超时时间
+-P	调查后台程序时间
+-T Seconds,	—timeout=Seconds 时间，单位秒s
+-P NUM,	—poll=NUM 调查背景工作每隔数秒。需要- b
+-c Connection,	—connection=Connection 连接类型使用。可能的选项是paramiko(SSH),SSH和地方。当地主要是用于crontab或启动。
+—tags=TAGS	只执行指定标签的任务 例子:ansible-playbook test.yml –tags=copy 只执行标签为copy的那个任务
+—list-tasks	列出所有将被执行的任务
+
+-C,	—check 只是测试一下会改变什么内容，不会真正去执行;相反,试图预测一些可能发生的变化
+—syntax-check	执行语法检查的剧本,但不执行它
+
+-l SUBSET,	—limit=SUBSET 进一步限制所选主机/组模式 –limit=192.168.0.15 只对这个ip执行
+
+—skip-tags=SKIP_TAGS	只运行戏剧和任务不匹配这些值的标签 —skip-tags=copy_start
+
+-e EXTRA_VARS,	—extra-vars=EXTRA_VARS 额外的变量设置为键=值或YAML / JSON
+-l	—limit 对指定的 主机/组 执行任务 —limit=192.168.0.10，192.168.0.11 或 -l 192.168.0.10，192.168.0.11 只对这个2个ip执行任务
+
+• ping 模块
+– 测试网络连通性, ping模块没有参数
+– 注:测试 ssh 的连通性
+
+1
+– ansible host-pattern -m ping
+
+模块
+• command模块
+– 默认模块,进程执行命令
+– 用法
+
+– ansible host-pattern -m command -a '[args]'
+
+
+
+
+
+
+
+
 ansible命令执行过程
 
 加载自己的配置文件 默认/etc/ansible/ansible.cfg
@@ -2163,6 +2256,78 @@ Swap:          2047           0        2047
 192.168.1.18  Va8
 192.168.0.19  Va9
 192.168.1.19  Va9
+
+
+copy模块
+
+功能： 实现主控端向目标主机copy文件。
+
+复制代码
+[root@localhost ~]# ansible all -m copy -a "src=/home/test.sh dest=/tmp/ owner=root group=root mode=0755"    
+#src 主控端文件位置
+#dest 被控端目标位置
+#owner 文件复制过去后的所有者
+#group 文件复制过去后的所属组
+#mode  文件的权限设定，执行a+x这种方式
+复制代码
+3.5 stat模块
+
+功能： 获取远程文件的状态信息，包括atime,ctime,mtime,md5,uid,gid等信息。
+
+[root@localhost ~]# ansible all -m stat -a "path=/etc/sysctl.conf"
+3.6 yum模块
+
+功能： 安装软件包。
+
+[root@localhost ~]# ansible all -m yum -a "name=httpd state=latest disable_gpg_check=yes enablerepo=epel"
+#name 包名
+#state (Choices: present, installed, latest, absent, removed)[Default: present]
+#disable_gpg_check:禁止gpg检查
+#enablerepo：只启动指定的repo
+
+3.7 cron模块
+
+功能：远程主机crontab配置
+
+[root@localhost ~]# ansible all -m cron -a "name='test' hour='2-5' minute='*/5' day='1' month='3,4' weekday='1' job='ls -l' user=tom"
+
+删除指定crontab
+
+[root@localhost ~]# ansible all -m cron -a "name=test state=absent"
+
+ mount模块
+
+功能： 挂载文件系统
+
+[root@localhost ~]# ansible 192.168.168.111 -m mount -a "path=/mnt/data src=/dev/sd0 fstype=ext3 ots=ro state=present"
+注：mount已经使用path代替了原来的name参数，但是name参数还是可以使用的。
+
+3.9 service模块
+
+功能： 服务管理
+
+复制代码
+[root@localhost ~]# ansible all -m service -a "name=httpd state=restarted"    #启动服务
+[root@localhost ~]# ansible all -m service -a "name=httpd state=running"      #查看服务状态
+[root@localhost ~]# ansible all -m service -a "name=httpd state=stoped"       #停止服务
+复制代码
+
+user模块
+
+功能： 远程主机的用户管理
+
+[root@localhost ~]# ansible all -m user -a "name=jerry comment=' doubi jerry'"   #添加用户 详细参数参考ansible-doc user
+[root@localhost ~]# ansible all -m user -a "name=jerry state=absent remove=yes"  #删除用户
+
+
+
+
+
+
+
+
+
+
 
 
 

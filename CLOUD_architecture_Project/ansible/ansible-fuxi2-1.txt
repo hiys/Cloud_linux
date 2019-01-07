@@ -183,6 +183,13 @@ Network vbr1 started
 
 [root@hiys networks]# ifconfig vbr ;ifconfig vbr1
 
+[root@room9pc01 networks]# ifconfig vbr |grep  -A1  flags= 
+vbr: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.0.254  netmask 255.255.255.0  broadcast 192.168.0.255
+
+[root@room9pc01 networks]# ifconfig vbr1 |grep  -A1  flags= 
+vbr1: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.1.254  netmask 255.255.255.0  broadcast 192.168.1.255
 
 [root@hiys ~]# cat  local.repo.txt
 [rhel7]

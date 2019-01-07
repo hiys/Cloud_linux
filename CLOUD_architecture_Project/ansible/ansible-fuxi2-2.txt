@@ -1,7 +1,4 @@
 
-
-
-
 [root@hiys ~]# vim   Vaxip.sh
 [root@hiys ~]# cat   Vaxip.sh
 #!/bin/bash
@@ -57,6 +54,10 @@ sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
 systemctl   restart  network
 
 
+
+
+[root@room9pc01 ~]# echo  9  |clone-auto7
+................
 [root@hiys ~]# tty
 /dev/pts/0
 [root@hiys ~]# virsh console  Va1
@@ -129,10 +130,9 @@ ansible_soft                             python-passlib-1.6.5-2.el7.noarch.rpm
 python2-jmespath-0.9.0-3.el7.noarch.rpm  repodata
 python-httplib2-0.9.2-1.el7.noarch.rpm   sshpass-1.06-2.el7.x86_64.rpm
 
-[root@room9pc32 ~]# 
-
-
-
+[root@room9pc32 ~]# 注意单词 Strict 
+[root@room9pc01 ~]# ssh  -Xo  StrictHostKeyChecking=no  192.168.0.11
+root@192.168.0.11's password: 1
 
 [root@Va1 ~]# vim    /etc/yum.repos.d/local.repo
 [root@Va1 ~]# cat  /etc/yum.repos.d/local.repo
@@ -157,6 +157,50 @@ ansible                              ansible                                   6
 repolist: 9,597
 [root@Va1 ~]# 
 
+[root@Va1 ~]# sed  -n  '41p;58,60p'  /etc/ssh/ssh_config
+#   Port 22
+Host *
+	GSSAPIAuthentication yes
+# If this option is set to yes then remote X11 clients will have full access
+
+[root@Va1 ~]# sed  -n  '17p;38p;65p;78,80p'  /etc/ssh/sshd_config 
+#Port 22
+#PermitRootLogin yes
+PasswordAuthentication yes
+# GSSAPI options
+GSSAPIAuthentication yes
+GSSAPICleanupCredentials no
+[root@Va1 ~]# sed  -i   '17s/#//;38s/#//'  /etc/ssh/sshd_config 
+[root@Va1 ~]# sed  -n  '17p;38p'  /etc/ssh/sshd_config 
+Port 22
+PermitRootLogin yes
+
+[root@Va1 ~]#  systemctl  restart   sshd
+[root@Va1 ~]# systemctl  is-enabled  sshd
+enabled
+
+
+[root@Va1 ~]# for  i  in  192.168.0.1{2..9};
+do rsync  -av   /etc/yum.repos.d/local.repo '-e  ssh  -p22'  root@${i}:/etc/yum.repos.d/;
+done
+root@192.168.0.12's password: 1
+sending incremental file list
+local.repo
+
+sent 255 bytes  received 31 bytes  81.71 bytes/sec
+total size is 177  speedup is 0.62
+.................
+[root@Va1 ~]# for  i  in  192.168.0.1{2..9};
+do ssh -l root -p22  $i  "yum clean  all >/dev/null &&  yum repolist  |tail  -4";
+done
+
+root@192.168.0.12's password: 1
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                   6
+repolist: 9,597
+root@192.168.0.13's password: 1
+...................
 
 [root@Va1 ~]# vim   /etc/hosts
 [root@Va1 ~]# cat  /etc/hosts
@@ -188,6 +232,7 @@ root@va2's password: 1
 ..................
 
 [root@Va1 ~]# for  i in  Va{3..6};do  rsync  -av  /etc/hosts  ${i}:/etc/;done
+[root@Va1 ~]# for i in Va{2..9};do rsync  -av  /etc/hosts  $i:/etc/;done
 
 ...................
 Are you sure you want to continue connecting (yes/no)? yes
@@ -195,6 +240,24 @@ Are you sure you want to continue connecting (yes/no)? yes
 root@va2's password: 1
 ..................
 ..............
+[root@localhost ~]# cat  /etc/yum.repos.d/local.repo
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+[root@localhost ~]# for  i  in  192.168.0.1{2..9}
+> do
+> rsync -av  /etc/yum.repos.d/local.repo  @${i}:/etc/yum.repos.d/
+> done
+............
+
 [root@Va1 ~]# for  i in  Va{2..6};do  rsync  -av  /etc/yum.repos.d/local.repo   ${i}:/etc/yum.repos.d/;done
 
 root@va2's password: 1
@@ -217,6 +280,11 @@ python-passlib.noarch                    1.6.5-2.el7               ansible
 python2-jmespath.noarch                  0.9.0-3.el7               ansible      
 sshpass.x86_64                           1.06-2.el7                ansible   
    
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         126        1470           8         386        1669
+Swap:          2047           0        2047
+
 [root@Va1 ~]# yum  -y  install  ansible.noarch   |tail   -2
 
 完毕！
@@ -234,6 +302,7 @@ ansible 2.4.2.0
 [root@Va1 ~]# ls  /etc/ansible/
 ansible.cfg  hosts  roles
 
+[root@Va1 ~]# grep  -Evn "^($|#)"   /etc/ansible/ansible.cfg 
 [root@Va1 ~]# grep  -Evn  "^#|^$"   /etc/ansible/ansible.cfg
 10:[defaults]
 58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
@@ -461,6 +530,14 @@ Va3 | SUCCESS => {
 
 [root@Va1 myansible]# ls  /root/.ansible/cp/
 7689b52767
+[root@Va1 myansible]# ansible  Va4  -m ping
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ls  /root/.ansible/cp/
+282c9ecdb8  7689b52767
+
 [root@Va1 myansible]# ls  /root/.ansible/
 cp  tmp
 [root@Va1 myansible]# ls  /root/.ansible/cp/  ## 临时文件 7689 有效期 默认约 3分钟
@@ -888,6 +965,74 @@ Type "help", "copyright", "credits" or "license" for more information.
 Use quit() or Ctrl-D (i.e. EOF) to exit
 >>> quit()
 [root@Va1 myansible]# 
+
+[root@Va1 myansible]# python
+Python 2.7.5 (default, May  3 2017, 07:55:04) 
+[GCC 4.8.5 20150623 (Red Hat 4.8.5-14)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import  json
+>>> hostslist={}
+>>> hostslist["zumingxx"]={
+... "hosts":["Va3","Va7"],
+... "vars":{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+... }
+>>> json.dumps(hostslist)
+'{"zumingxx": {"hosts": ["Va3", "Va7"], "vars": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}}'
+>>> quit()
+[root@Va1 myansible]# 
+
+[root@Va1 myansible]# vim  ansible.cfg 
+
+[root@Va1 myansible]# cat  ansible.cfg
+[defaults]
+inventory   = /var/myansible/myhosts.py
+host_key_checking = False
+
+
+[root@Va1 myansible]# vim  myhosts.py
+
+[root@Va1 myansible]# cat   myhosts.py
+
+#!/usr/bin/python
+import   json
+hostlist = {}
+hostlist["zu1"] = {
+  "hosts": ["192.168.0.12","192.168.0.13"],
+  "vars" : { "ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+}
+hostlist["zu2"] = {
+  "hosts" :["192.168.0.14","192.168.0.15"],
+  "vars" :{
+    "ansible_ssh_user":"root","ansible_ssh_pass":"1"
+  }
+}
+print(json.dumps(hostlist))
+
+[root@Va1 myansible]# chmod  755  myhosts.py
+
+[root@Va1 myansible]# ./myhosts.py 
+{"zu2": {"hosts": ["192.168.0.14", "192.168.0.15"], "vars": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}, "zu1": {"hosts": ["192.168.0.12", "192.168.0.13"], "vars": {"ansible_ssh_user": "root", "ansible_ssh_pass": "1"}}}
+
+[root@Va1 myansible]# ansible  all  -m  ping
+192.168.0.13 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+192.168.0.12 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+192.168.0.15 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+192.168.0.14 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# 
+ 
+
 =============================
 
 
@@ -1025,7 +1170,66 @@ echo  '
 inventory   =  /var/myansible/myhosts.sh
 host_key_checking = False
 
+[root@Va1 myansible]# vim  myhosts.sh
+[root@Va1 myansible]# chmod  a+x  myhosts.sh
+
+[root@Va1 myansible]# cat   myhosts.sh
+#!/bin/bash
+echo  '
+{
+  "zu1":{
+        "hosts": ["Va2","Va4"],
+        "vars" :{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+  },
+  "zu2":{
+        "hosts":["Va3","Va5"],
+        "vars" :{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+  },
+  "192.168.0.16":{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+}'
+
+[root@Va1 myansible]# .  myhosts.sh
+
+{
+  "zu1":{
+        "hosts": ["Va2","Va4"],
+        "vars" :{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+  },
+  "zu2":{
+        "hosts":["Va3","Va5"],
+        "vars" :{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+  },
+  "192.168.0.16":{"ansible_ssh_user":"root","ansible_ssh_pass":"1"}
+}
+[root@Va1 myansible]# ls
+ansible.cfg  myhosts  myhosts.sh
+[root@Va1 myansible]# vim  ansible.cfg 
+[root@Va1 myansible]# cat  ansible.cfg
+[defaults]
+inventory   = /var/myansible/myhosts.sh
+host_key_checking = False
+
+[root@Va1 myansible]# ansible  192.168.0.16  -m  ping
+ [WARNING]: Found both group and host with same name: 192.168.0.16
+
+192.168.0.16 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 myansible]# ansible  zu2  -m  ping
+ [WARNING]: Found both group and host with same name: 192.168.0.16
+
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
 [root@Va1 myansible]# 
+
+
 =====================================================
 
 
@@ -1050,9 +1254,6 @@ ansible_ssh_pass=1
 inventory   =  /var/myansible/myhosts
 host_key_checking = False
 
-[root@Va1 myansible]# ansible  主机或分组列表 -m  模块名称 -a 模块的参数
-
-
 [root@Va1 myansible]# cat  ansible.cfg
 [defaults]
 inventory   =  /var/myansible/myhosts
@@ -1068,8 +1269,6 @@ Va2 | SUCCESS | rc=0 >>
 平均负载量：0.00, 0.01, 0.05 最后一个信息是系统的平均负载量
 可以换算成百分比0%，1%，5%
 [root@Va1 myansible]# 
-
-
 /***************
 procps是一个实用程序包，主要包括ps top kill等程序主要用来显示与控制一些系统信息，进程状态之类的内容。
 
@@ -1107,6 +1306,1008 @@ uptime from procps-ng 3.3.10
 Va3 | SUCCESS | rc=0 >>
 uptime from procps-ng 3.3.10
 
+[root@Va1 myansible]# ansible  主机或分组列表 -m  模块名称 -a 模块的参数
+ansible 主机或组 -m 模块名 -a ‘模块参数’ 
+参数	说明
+-a	‘Arguments’, —args=’Arguments’ 命令行参数
+-m	NAME, —module-name=NAME 执行模块的名字，默认使用 command 模块，
+        所以如果是只执行单一命令可以不用 -m参数
+
+-i PATH,	—inventory=PATH 指定库存主机文件的路径,默认为/etc/ansible/hosts.
+-M MODULE_PATH,	—module-path=MODULE_PATH 要执行的模块的路径，默认为/usr/share/ansible/
+-o —one-line	压缩输出，摘要输出.尝试一切都在一行上输出。
+-e EXTRA_VARS,	—extra-vars=EXTRA_VARS 额外的变量设置为键=值或YAML / JSON
+-v	—verbose 详细信息
+-f	—forks=NUM 并行任务数。NUM被指定为一个整数,默认是5。 
+   #ansible testhosts -a “/sbin/reboot” -f 10 重启testhosts组的所有机器，每次重启10台
+
+-l	—list 显示所支持的所有模块
+
+[root@Va1 ~]# sed  -n  '44,$p'  /etc/ansible/hosts
+[web]
+Va2
+Va4
+
+[db]
+Va3
+Va5
+
+[other]
+Va6  ansible_ssh_user="root"  ansible_ssh_pass=1
+
+[webdb]
+Va[2:5]
+
+[app:children]
+web
+db
+
+[app:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+
+[root@Va1 ~]# vim  /etc/ansible/hosts 
+[root@Va1 ~]# sed   -n  '44,$p'   /etc/ansible/hosts
+[web]
+Va2
+Va4
+
+[db]
+Va3
+Va5
+
+[other]
+Va6
+
+[app:children]
+web
+db
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+
+[root@Va1 ~]# grep  -Pvn  '^(#|$)'   /etc/ansible/ansible.cfg 
+10:[defaults]
+14:inventory      = /etc/ansible/hosts
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+61:host_key_checking = False
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+/*********************************************
+SSH 为 Secure Shell 的缩写，
+SSH 为建立在应用层基础上的安全协议。
+SSH 是目前较可靠，专为远程登录会话和其他网络服务提供安全性的协议
+
+ssh-keygen -t rsa -b 4096 -C "邮箱"
+-t 表示密钥的类型 ，-b表示密钥的长度，-C 用于识别这个密钥的注释 
+
+这条命令的目的是为了让本地机器ssh登录远程机器上的GitHub账户无需输入密码
+
+ssh-keygen -b 2048 -t rsa                    
+#这里的-b 2048 是密钥加密的长度，最好设大点
+
+key文件会保存在/root/.ssh目录下
+这时候.ssh目下会多出几个文件
+
+id_rsa   私钥文件
+id_rsa.pub  公钥文件,这个文件里的内容要放到其它主机里面去。
+
+-t rsa：t是type的缩写
+
+-t即指定密钥的类型，密钥的类型有两种，一种是RSA，一种是DSA：
+        RSA：RSA加密算法是一种非对称加密算法，是由三个麻省理工的牛人弄出来的，
+RSA是他们三个人姓的开头首字母组合。
+        DSA：Digital Signature Algorithm (DSA)是Schnorr和ElGamal签名算法的变种。
+为了让两个linux机器之间使用ssh不需要用户名和密码。
+所以采用了数字签名RSA或者DSA来完成这个操作。
+
+ssh-keygen默认使用rsa密钥，所以不加-t rsa也行，
+如果你想生成dsa密钥，就需要加参数-t dsa。
+
+-b 4096：b是bit的缩写
+
+-b 指定密钥长度。对于RSA密钥，最小要求768位，默认是2048位。
+  命令中的4096指的是RSA密钥长度为4096位。
+
+DSA密钥必须恰好是1024位(FIPS 186-2 标准的要求)
+
+-N new_passphrase 
+提供一个新的密语。 
+-P passphrase 
+提供(旧)密语。 
+-p 要求改变某私钥文件的密语而不重建私钥。程序将提示输入私钥文件名、原来的密语、以及两次输入新密语。 
+
+[root@Va1 ~]# cd  /root/.ssh/
+[root@Va1 .ssh]# ls
+known_hosts
+[root@Va1 .ssh]# >  known_hosts
+[root@Va1 .ssh]# ssh-keygen  -t  rsa  -b  2048  -N  ''  ##注意-N 空格''
+# ssh-keygen  -t 指定密钥的类型  -b 指定密钥长度  -N new_passphrase提供一个新的密码
+
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:  直接回车
+SHA256:NYoUP+BUbr1hKG3l1DsJU9bfIBXm1zEPEjqvYI+7Zfs root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+|      +.. oo=+=+ |
+|     o * *ooo+o.=|
+|      + O Xo +.o=|
+|     . = = *+  .o|
+|      . S . ..   |
+|       . + .     |
+|        . =      |
+|         + .     |
+|        o...E    |
++----[SHA256]-----+
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_host
+
+id_rsa   私钥文件
+id_rsa.pub  公钥文件,这个文件里的内容要放到其它主机里面去
+
+http://blog.51cto.com/453412/2087430
+批量部署密钥  ansible-doc -l | grep auth  //查看安全模块
+
+ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(< /root/.ssh/id_rsa.pub)'" -k -v
+//把生成的公钥推送到所有的主机，  exclusive=true文件强制覆盖掉
+
+[root@Va1 .ssh]#  sed  -n  '44,$p'  /etc/ansible/hosts
+[web]
+Va2
+Va4
+
+[db]
+Va3
+Va5
+
+[other]
+Va6
+
+[app:children]
+web
+db
+[root@Va1 .ssh]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+
+[root@Va1 .ssh]# key=$(< id_rsa.pub );echo  $key
+
+ssh-rsa AAAAB3N...../91qyP0p4Mxn28Yz7WAGc6QQdcndkQxpy90S8DN6zhgrSTArZSHL92Gl1p//HMdiuJYWDxtFIhX root@Va1
+
+[root@Va1 .ssh]# cat  id_rsa.pub 
+ssh-rsa AAAAB3NzaC1y........98c/91qyP0p4Mxn28Yz7WAGc6QQdcndkQxpy90S8DN6zhgrSTArZSHL92Gl1p//HMdiuJYWDxtFIhX root@Va1
+
+[root@Va1 .ssh]# cat  known_hosts 
+[root@Va1 .ssh]# ll known_hosts
+-rw-r--r--. 1 root root 0 1月   7 17:05 known_hosts
+[root@Va1 .ssh]# 
+
+[root@Va1 ~]# ansible  主机或分组列表 -m  模块名称 -a 模块的参数
+ansible 主机或组 -m 模块名 -a ‘模块参数’ 
+参数	说明
+-a	‘Arguments’, —args=’Arguments’ 命令行参数
+-m	NAME, —module-name=NAME 执行模块的名字，默认使用 command 模块，
+        所以如果是只执行单一命令可以不用 -m参数
+
+-i PATH,	—inventory=PATH 指定库存主机文件的路径,默认为/etc/ansible/hosts.
+-M MODULE_PATH,	—module-path=MODULE_PATH 要执行的模块的路径，默认为/usr/share/ansible/
+-o —one-line	压缩输出，摘要输出.尝试一切都在一行上输出。
+-e EXTRA_VARS,	—extra-vars=EXTRA_VARS 额外的变量设置为键=值或YAML / JSON
+-v	—verbose 详细信息
+-f	—forks=NUM 并行任务数。NUM被指定为一个整数,默认是5。 
+   #ansible testhosts -a “/sbin/reboot” -f 10 重启testhosts组的所有机器，每次重启10台
+
+-l	—list 显示所支持的所有模块
+
+http://blog.51cto.com/453412/2087430
+批量部署密钥  ansible-doc -l | grep auth  //查看安全模块
+
+ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(< /root/.ssh/id_rsa.pub)'" -k -v
+//把生成的公钥推送到所有的主机，  exclusive=true文件强制覆盖掉
+
+批量部署证书文件
+• 每次交亏输入密码比较麻烦
+• 密码写入配置文件安全性很差
+• 不同主机不同密码,配置文件要上天
+• 使用 key 方式认证,是一个不错的选择
+• 给所有主机部署公钥
+
+ansible all     ##所有主机
+user=root     ##远程连接的用户
+exclusive=true    ###强行写入【覆盖原有公钥文件内容】
+manage_dir=true   ###没有目录就自动创建目录
+key= 密钥
+
+exclusive	英[ɪkˈsklu:sɪv]
+美[ɪkˈsklusɪv]
+adj.	专用的; 高级的; 排外的; 单独的;
+n.	独家新闻; 专有物;
+
+authorize	英[ˈɔ:θəraɪz]
+美[ˈɔθəˌraɪz]
+vt.	授权，批准，委托;
+
+
+
+
+[root@Va1 .ssh]# ansible-doc  -l  |grep  authorized
+authorized_key       Adds or removes an SSH authorized key 
+
+================ ##批量部署密钥（公钥匙 ==============
+
+
+[root@Va1 .ssh]# ansible all  -m  authorized_key  -a  "user=root  exclusive=true  \
+manage_dir=true  key='$(< /root/.ssh/id_rsa.pub)'"  -k  ##批量部署密钥（公钥匙）
+
+SSH password: 1 ##输入所有root用户的ssh连接密码（注意所有主机密码必须相同，否则不能正确执行）
+
+
+
+Va4 | SUCCESS => {
+    "changed": true, 
+    "comment": null, 
+    "exclusive": true, 
+    "key": "ssh-rsa AAAAB3NzaC...........0S8DN6zhgrSTArZSHL92Gl1p//HMdiuJYWDxtFIhX root@Va1", 
+    "key_options": null, 
+    "keyfile": "/root/.ssh/authorized_keys", 
+    "manage_dir": true, 
+    "path": null, 
+    "state": "present", 
+    "unique": false, 
+    "user": "root", 
+    "validate_certs": true
+}
+Va2 | SUCCESS => {
+    "changed": true, 
+.....................
+Va3 | SUCCESS => {
+ ...........................
+}
+Va5 | SUCCESS => {
+    "changed": true, 
+.....................
+}
+Va6 | SUCCESS => {
+..................
+    "validate_certs": true
+}
+[root@Va1 .ssh]# cd
+[root@Va1 ~]# ll  /root/.ssh/id_rsa
+-rw------- 1 root root 1679 1月   7 17:20 /root/.ssh/id_rsa
+[root@Va1 ~]# ll   /root/.ssh/id_rsa.pub 
+-rw-r--r-- 1 root root 390 1月   7 17:20 /root/.ssh/id_rsa.pub
+
+[root@Va6 ~]# ls  /root/.ssh/  ##注意 目录/root/.ssh/是ansible 自动创建的
+authorized_keys
+
+ ###注意文件authorized_keys内容和id_rsa.pub文件内容一致相同，是ansible自动传递生成的
+
+[root@Va6 ~]# ll /root/.ssh/authorized_keys 
+-rw------- 1 root root 390 1月   7 18:12 /root/.ssh/authorized_keys
+
+[root@Va7 ~]# ls  /root/.ssh/  ##注意Va7 不在主机列表里，所以没有自动创建目录.ssh/
+ls: 无法访问/root/.ssh/: 没有那个文件或目录
+
+[root@Va1 ~]# ssh  Va6  hostname  ##验证 批量部署密钥（公钥匙）成功
+Va6
+[root@Va1 ~]# ssh  Va2  hostname
+Va2
+[root@Va1 ~]# ssh  -l  root Va3  hostname
+Va3
+
+[root@Va1 ~]# ansible-doc  -l  |wc  -l
+1378
+
+[root@Va1 ~]# ansible-doc  -l  |grep -A1  authorize
+authorized_key                            Adds or removes an SSH authorized key       
+avi_actiongroupconfig                     Module for setup of ActionGroupConfig Avi RE..
+
+[root@Va1 ~]# ansible-doc  -l  |grep  "^ping "  ##查看ping模块帮助
+ping                                      Try to connect to host, verify a usable pyth...
+
+[root@Va1 ~]# ansible-doc   ping  |grep  -A2  "EXAMPLES:" ##查看ping模块帮助
+EXAMPLES:
+# Test we can logon to 'webservers' and execute python with json lib.
+# ansible webservers -m ping
+
+[root@Va1 ~]# pstree  -p  |head  -2
+systemd(1)-+-ModemManager(674)-+-{ModemManager}(733)
+           |                   `-{ModemManager}(736)
+[root@Va1 ~]# pstree  -p  |grep sshd
+           |-sshd(1396)---bash(1398)-+-grep(5282)
+           |-sshd(1632)
+[root@Va1 ~]# echo  $$
+1398
+[root@Va1 ~]# man  bash
+
+受限的shell(RESTRICTED SHELL)
+       如果 bash 以 rbash 名称启动，或者启动时使用了 -r  选项，那么它成为受限的  shell。
+       受限的  shell 一般用来建立一个比标准的 shell 受到更多控制的环境。 它的行为与 bash
+       一致，除了下列行为是不允许的 (disallowed) 或不会运行的 (not performed)。
+
+       ·      使用 cd 来改变路径；
+       ·      设置或取消 SHELL, PATH, ENV, 或 BASH_ENV 变量的值；
+       ·      指定的命令名中包含 / ；
+       ·      指定包含 / 的文件名作为传递给内建命令 .  的参数；
+       ·      指定包含斜杠 (slash) 的文件名作为 -p 选项的参数，传递给 hash 内建命令；
+       ·      启动时从 shell 环境中导入 (import) 函数定义；
+       ·      启动时解释 shell 环境中 SHELLOPTS 的值；
+       ·      使用 >, >|, <>, >&, &>, 和 >> 等重定向操作符重定向输出；
+
+       ·      使用 exec 内建命令来以另一个命令替换 shell；
+       ·      使用 enable 内建命令的 -f 和 -d 选项来增加和删除内建命令；
+       ·      使用 enable 内建命令来允许和禁止 shell 内建命令；
+       ·      指定 command 内建命令的 -p 选项；
+       ·      使用 set +r 或 set +o restricted 来关闭受限模式。
+
+       这些限制在所有启动文件读取之后才会生效。
+
+       当一个  shell  脚本作为一个命令执行时  (参见上面的  命令执行(COMMAND   EXECUTION)
+       章节)， rbash 关闭为执行脚本而孵化 (spawn) 的 shell 的所有限制。
+
+[root@Va1 ~]# which  ls
+alias ls='ls --color=auto'
+	/usr/bin/ls
+[root@Va1 ~]# ll  /usr/bin/ls  ##ls 是外部命令
+-rwxr-xr-x. 1 root root 117656 6月  30 2016 /usr/bin/ls
+
+[root@Va1 ~]# /usr/bin/ls   -l  /usr/bin/ls
+-rwxr-xr-x. 1 root root 117656 6月  30 2016 /usr/bin/ls
+
+shell内置命令和外部命令的区别
+
+　　内部命令实际上是shell程序的一部分，
+其中包含的是一些比较简单的linux系统命令，
+这些命令由shell程序识别并在shell程序内部完成运行，
+通常在linux系统加载运行时shell就被加载并驻留在系统内存中。
+内部命令是写在bash源码里面的，
+其执行速度比外部命令快，
+因为解析内部命令shell不需要创建子进程。
+比如：exit，history，cd，echo等。
+
+
+　　外部命令是linux系统中的实用程序部分，
+因为实用程序的功能通常都比较强大，
+所以其包含的程序量也会很大，
+在系统加载时并不随系统一起被加载到内存中，
+而是在需要时才将其调用内存。
+通常外部命令的实体并不包含在shell中，
+但是其命令执行过程是由shell程序控制的。
+shell程序 管理 外部命令 执行的 路径查找、加载存放，并控制命令的执行。
+外部命令是在bash之外额外安装的，
+通常放在/bin，/usr/bin，/sbin，/usr/sbin......等等。
+可通过“echo $PATH”命令查看外部命令的存储路径，
+比如：ls、vi等。
+
+　　用type命令可以分辨内部命令与外部命令：
+[root@Va1 ~]# type  ls
+ls 是 `ls --color=auto' 的别名
+[root@Va1 ~]# type  cd
+cd 是 shell 内嵌
+
+[root@Va1 ~]# type  vim
+vim 已被哈希 (/usr/bin/vim)
+
+[root@Va1 ~]# type  vi
+vi 是 /usr/bin/vi
+
+[root@Va1 ~]# which type
+/usr/bin/which: no type in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+[root@Va1 ~]# type  type
+type 是 shell 内嵌
+
+内部命令和外部命令最大的区别之处就是性能。
+内部命令由于构建在shell中而不必创建多余的进程，
+要比外部命令执行快得多。
+因此和执行更大的脚本道理一样，
+执行包含很多外部命令的脚本会损害脚本的性能
+
+[root@Va1 ~]# type set
+set 是 shell 内嵌
+[root@Va1 ~]# echo  $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@Va1 ~]# type  enable
+enable 是 shell 内嵌
+
+[root@Va1 ~]# type  history   ##内部命令
+history 是 shell 内嵌
+
+[root@Va1 ~]# type echo  ##内部命令
+echo 是 shell 内嵌
+
+[root@Va1 ~]# ansible   Va3  -m  command  -a  'uptime'   ##外部命令可以用command模块执行
+Va3 | SUCCESS | rc=0 >>
+ 19:23:27 up  5:10,    2 users,     load average: 0.00, 0.01, 0.05
+当前时间    系统已运行的时间 当前在线用户    平均负载：最近1分钟、5分钟、15分钟 系统的负载
+平均负载量：0.00, 0.01, 0.05 最后一个信息是系统的平均负载量
+可以换算成百分比0%，1%，5%
+
+[root@Va1 ~]# type  uptime
+uptime 是 /usr/bin/uptime
+
+[root@Va1 ~]# which  uptime 
+/usr/bin/uptime
+
+[root@Va1 ~]# which   history
+/usr/bin/which: no history in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+
+[root@Va1 ~]# ansible   Va3  -m  command  -a  'history'  ##内部命令不能用command模块执行
+Va3 | FAILED | rc=2 >>
+[Errno 2] 没有那个文件或目录
+
+[root@Va1 ~]# history 
+    1  systemctl set-default multi-user.target 
+    2  systemctl stop firewalld.service 
+    3  systemctl disable firewalld.service 
+。。。。。。。。。。。。。。。
+
+>> copy 模块（实现主控端向目标主机拷贝文件，类似于 scp 功能）
+
+例：
+
+shell > ansible Client -m copy -a "src=/home/test.sh desc=/tmp/ owner=root group=root mode=0755"
+           # 向 Client 组中主机拷贝 test.sh 到 /tmp 下，属主、组为 root ，权限为 0755
+ 
+
+>> stat 模块（获取远程文件状态信息，atime/ctime/mtime/md5/uid/gid 等信息）
+例：
+
+shell > ansible Client -m stat -a "path=/etc/syctl.conf"
+ 
+
+>> get_url 模块（实现在远程主机下载指定 URL 到本地，支持 sha256sum 文件校验）
+
+例：
+
+shell > ansible Client -m get_utl -a "url=http://www.baidu.com dest=/tmp/index.html mode=0440 force=yes"
+ 
+
+>> yum 模块（软件包管理）
+
+例：
+
+shell > ansible Client -m yum -a "name=curl state=latest"
+ 
+cron 模块（远程主机 crontab 配置）
+
+例：
+
+shell > ansible Client -m cron -a "name='check dirs' hour='5,2' job='ls -alh > /dev/null'"
+ 
+
+效果：
+
+shell > ansible Client -m cron -a "name='check dirs' hour='5,2' job='ls -alh > /dev/null'"
+ 
+
+>> mount 模块（远程主机分区挂载）
+
+例：
+
+ansible Client -m mount -a "name=/mnt/data src=/dev/sd0 fstype=ext4 opts=ro state=present"
+ 
+
+>> service 模块（远程主机系统服务管理）
+
+例：
+
+shell > ansible Client -m service -a "name=nginx state=stoped" 
+shell > ansible Client -m service -a "name=nginx state=restarted" 
+shell > ansible Client -m service -a "name=nginx state=reloaded"
+ 
+
+>> user 服务模块（远程主机用户管理）
+
+例：
+
+shell > ansible Client -m user -a "name=wang comment='user wang'" 
+shell > ansible Client -m user -a "name=wang state=absent remove=yes" # 添加删除用户
+ 
+
+ 
+
+进行分组管理
+
+mkdir ansible
+
+cd  ansible/
+
+vim  ansible.cfg
+
+[defaults]
+
+inventory    =  myhost
+
+host_key_checking  =  False
+
+ 
+
+vim  myhost
+
+[app1]
+
+web1
+
+db1
+
+ 
+
+[app2]
+
+web2
+
+db2
+
+ 
+
+[app]
+
+cache
+
+ 
+
+ansible  app --list-host
+
+ansible  app1 --list-host
+
+ansible  app2 --list-hos
+
+ 
+
+动态主机
+• 无限可能
+– Ansible Inventory实际上是包含静态Inventory和动态Inventory两部分,静态Inventory指的是在文件
+
+   /etc/ansible/hosts中指定的主机和组,DynamicInventory指通过外部脚本获取主机列表,并按照ansible
+
+   所要求的格式返回给ansilbe命令的。
+
+
+• json
+– JSON的全称是”JavaScript Object Notation”,意思是JavaScript对象表示法,
+它是一种基亍文本,独立亍诧言的轻量级数据交换格式。
+
+
+• 注意事项:
+
+– 2、hostdata行,其中的"hosts" 部分可以省略,但如果使用时,必须是"hosts"
+
+ 
+
+动态主机
+• 脚本输出主机列表
+
+复制代码
+#!/usr/bin/python
+import json
+hostlist = {}          组ip
+hostlist["bb组名"] = ["192.168.1.15", "192.168.1.16"]
+hostlist["192.168.1.13"] = {
+  "ansible_ssh_user":"root","ansible_ssh_pass":"pwd"
+}
+hostlist["aa"] = {
+       "hosts" : ["192.168.1.11", "192.168.1.12"],
+       "vars" : {
+       "ansible_ssh_user":"root","ansible_ssh_pass":"pwd"
+}
+}
+print( json.dumps(hostlist))
+复制代码
+ 
+
+动态主机
+• 脚本输出样例
+
+复制代码
+/bin/bash/
+echo  {
+"aa" : {
+"hosts" : ["192.168.1.11", "192.168.1.12"],
+"vars" : {
+"ansible_ssh_user" : "root",
+"ansible_ssh_pass" : "pwd"
+}
+},
+"bb" : ["192.168.1.15", "192.168.1.16"],
+"192.168.1.13": { "ansible_ssh_user" : "root",
+"ansible_ssh_pass" : "pwd"}
+}
+复制代码
+ 
+
+批量执行
+ansible命令基础
+• ansible <host-pattern> [options]
+– host-pattern 主机戒定义的分组
+– -M 指定模块路径
+– -m 使用模块,默认 command 模块
+– -a or --args 模块参数
+– -i inventory 文件路径,戒可执行脚本
+– -k 使用交亏式登彔密码
+– -e 定义变量
+– -v 详绅信息,-vvvv 开吭 debug 模式
+
+
+• 列出要执行的主机,不执行任何操作
+
+1
+– ansible all --list-hosts
+　　
+
+• 批量检测主机
+
+1
+– ansible all -m ping
+
+• 批量执行命令
+
+1
+– ansible all -m command -a 'id' -k
+ 
+
+批量部署证书文件
+• 每次交亏输入密码比较麻烦
+• 密码写入配置文件安全性很差
+• 不同主机不同密码,配置文件要上天
+• 使用 key 方式认证,是一个不错的选择
+• 给所有主机部署公钥
+
+ansible all -m authorized_key -a "user=root exclusive=true manage_dir=true key='$(</root/.ssh/id_rsa.pub)'" -k -v
+ 
+
+ansible all     ##所有主机
+user=root     ##用户
+exclusive=true    ###强行写入
+manage_dir=true   ###没有就创建
+key= 密钥
+
+ 
+
+批量部署证书文件
+• 报错
+– "msg": "Using a SSH password instead of a key is not possible because Host Key checking is
+enabled and sshpass does not support this. Please add this host's fingerprint to your
+known_hosts file to manage this host."
+– 解决方法:
+– 修改 ansible.cfg
+
+host_key_checking = False
+ 
+
+ 
+
+批量配置管理
+模块
+• ansible-doc
+– 模块的手册,相当不 shell 的 man
+– 非常重要,非常重要,非常重要
+– ansible-doc -l   列出所有模块
+– ansible-doc modulename   查看帮劣
+• ping 模块
+– 测试网络连通性, ping模块没有参数
+– 注:测试 ssh 的连通性
+
+1
+– ansible host-pattern -m ping
+ 
+
+ 
+
+ 
+
+模块
+• command模块
+– 默认模块,进程执行命令
+– 用法
+
+– ansible host-pattern -m command -a '[args]'
+ 
+
+– 查看所有机器负载
+
+ansible all -m command -a 'uptime'
+ 
+
+– 查看日期和时间
+
+1
+ansible all -m command -a 'date +%F_%T'
+　　
+
+ 
+
+ 
+
+ 
+
+模块
+• command模块注意事项:
+– 该模块通过-a跟上要执行的命令可以直接执行,不过命令里如果有带有如下字符部分则执行不成功
+
+– "<", ">", "|", "&"
+ 
+
+– 该模块丌吭劢 shell 直接在 ssh 迚程中执行,所有使用到 shell 特性的命令执行都会失败
+– 下列命令执行会失败
+
+ansible all -m command -a 'ps aux|grep ssh'
+ansible all -m command -a 'set'
+ 
+
+模块
+• shell   |  raw 模块
+– shell 模块用法基本和command一样,区别是 shell模块是通过/bin/sh迚行执行命令,可以执行任意命令
+– raw模块,用法和shell 模块一样 ,可以执行任意命令
+– 区别是 raw 没有chdir、creates、removes参数
+– 执行以下命令查看结果
+
+ansible t1 -m command -a 'chdir=/tmp touch f1'
+ansible t1 -m shell -a 'chdir=/tmp touch f2'
+ansible t1 -m raw -a 'chdir=/tmp touch f3'
+ 
+
+模块
+• script模块
+– 复杂命令怎么办?
+– ansible 要上天
+– 直接在本地写脚本,然后使用 script 模块批量执行
+
+– ansible t1 -m script -a 'urscript'
+– 友情提示: 该脚本包含但不限于 shell 脚本,只要指定 Sha-bang 解释器的脚本都可运行
+
+ 
+
+实验
+
+使用ansible 给 web1 和 db1 添加用户和密码
+
+ansible web1,db1 -m shell -a "useradd zhang3 && echo 123456 |passwd --stdin zhang3 "
+ 
+
+ 
+
+使用ansible 给 web组的 添加 用户 lishi ，初始密码为 123 ，可以让第一次登入用户的时候需要改密码
+但是 web组内的有 zhangsan 的就不创建
+
+ 
+
+ansible web -m script -a "b.sh"
+ 
+
+ cat b.sh
+
+复制代码
+#!/bin/bash
+id zhang3
+   if [ $? == 0 ];then
+      exit
+else 
+     useradd lishi && echo 'passwd' |passwd --stdin 'lishi'
+     chage -d 0 lishi
+fi
+复制代码
+ 
+
+ 
+
+模块
+• copy 模块
+– 复制文件到进程主机
+– src:要复制到进程主机的文件在本地的地址,可以是绝对路径,也可以是相对路径。如果路径是一个目彔,它将递归复制。
+
+   在这种情况下,如果路径使用"/"来结尾,则只复制目录里的内容,如果没有使用"/"来结尾,则包含目彔在内的整个内容
+
+   全部复制,类似于rsync
+
+
+– dest:必选项。进程主机的绝对路径,如果源文件是一个目彔,那么该路径也必须是个目彔
+
+ 
+
+• copy 模块
+– backup:在覆盖之前将原文件备份,备份文件包含时间信息。有两个选项:yes|no
+– force:如果目标主机包含该文件,但内容不同,如果设置为yes,则强制覆盖,如果为no,
+   则只有当目标主机的目标位置不存在该文件时,才复制。默认为yes
+– 复制文件
+
+ansible t1 -m copy -a 'src=/root/alog dest=/root/a.log'
+ 
+
+– 复制目录
+
+ansible t1 -m copy -a 'src=urdir dest=/root/'
+ 
+
+ 
+
+模块
+• lineinfile | replace 模块
+– 类似 sed 的一种行编辑替换模块
+– path 目的文件
+– regexp 正则表达式
+– line 替换后的结果
+
+ansible t1 -m lineinfile -a 'path="/etc/selinux/config"  regexp="^SELINUX=" line="SELINUX=disabled"'
+ 
+
+– 替换指定字符
+
+ansible t1 -m replace -a 'path="/etc/selinux/config"  regexp="^(SELINUX=).*" replace="\1disabled"'
+ 
+
+ 
+
+模块
+• yum模块
+– 使用yum包管理器来管理软件包
+– config_file:yum的配置文件
+– disable_gpg_check:关闭gpg_check
+– disablerepo:不启用某个源
+– enablerepo:启用某个源
+– name:要迚行操作的软件包的名字,也可以传递一个url戒者一个本地的rpm包的路径
+– state:状态(present,absent,latest)
+
+ 
+
+• yum模块
+– 删除软件包
+
+ansible t1 -m yum -a 'name="lrzsz" state=absent'
+ 
+
+– 删除多个软件包
+
+ansible t1 -m yum -a 'name="lrzsz,lftp" state=absent'
+ 
+
+– 安装软件包
+
+ansible t1 -m yum -a 'name="lrzsz"'
+
+– 安装多个软件包
+
+ansible t1 -m yum -a 'name="lrzsz,lftp"'
+ 
+
+ 
+
+模块
+• service模块
+– name:必选项,服务名称
+– enabled:是否开机启动 yes|no
+– sleep:如果执行了restarted,在则stop和start之间沉睡几秒钟
+– state:对当前服务执行启动,停止、重启、重新加载等操作(started,stopped,restarted,reloaded)
+
+ansible t1 -m service -a 'name="sshd" enabled="yes" state="started"'
+ 
+
+ 
+
+模块
+• setup模块
+– 主要用亍获取主机信息,在playbooks里经常会用到的
+一个参数gather_facts就不该模块相关。setup模块下经常使用的一个参数是filter参数
+– filter 可以过滤到我们需要的信息
+
+ansible t1 -m setup -a 'filter=ansible_distribution'
+ 
+
+搭建个小实验
+
+– 安装 apache
+– 修改 apache 监听的端口为 8080
+– 为 apache 增加 ServerName 配置
+– 设置默认主页
+– 启动服务
+– 设置开机自启动
+
+ 
+
+1、给所有控制的服务器安装 apache 服务
+
+ansible all -m shell -a 'yum -y install httpd'
+ansible all -m shell -a 'systemctl restart httpd'
+ 
+
+2、 修改 apache 监听的端口为 8080
+
+ansible all -m lineinfile -a 'path="/etc/httpd/conf/httpd.conf" regexp="^Listen" line="Listen 8080"'
+ 
+
+3、 为 apache 增加 ServerName 配置
+
+ansible all -m lineinfile -a 'path="/etc/httpd/conf/httpd.conf" regexp="^#ServerName" line="ServerName www.zzc.com"'
+ 
+
+4、 设置默认主页
+
+ansible all -m shell -a "echo zhanzhichengnsd1804 > /var/www/html/index.html"
+ 
+
+5、 设置开机自启动
+
+ansible all -m service -a 'name="httpd" enabled="yes" state="restarted"'
+ 
+
+以下是都ansible 的一些操作
+
+复制代码
+ansible  all -m copy  -a 'src=/root/b.sh dest=/root/a.sh'
+
+ansible  all -m shell -a 'src=/etc/resolv.conf dest=/etc/resolv.conf'
+
+ansible  all -m shell -a 'cat  /etc/resolv.conf'
+
+ansible  all -m shell -a  "ifconfig eth0 |awk '{print \$2}'"
+
+ansible  all -m shell -a  "ifconfig eth0 |awk 'NR==2{print \$2}'"
+
+ansible  all -m shell -a  "ifconfig eth0 |awk 'NR==3{print \$2}'"
+
+ansible  all -m lineinfile -a 'path="/etc/sysconfig/network-scripts/ifcfg-eth0" regexp="^BOOT" line="BOOTPROTO=static"'
+
+
+ansible  all -m shell  -a "cat /etc/sysconfig/network-scripts/ifcfg-eth0"
+
+ansible  all -m lineinfile -a  'path="/etc/sysconfig/network-scripts/ifcfg-eth0" regexp="^BOOT" line="BOOTPROTO=none"'
+
+ansible  all -m shell      -a 'cat  /etc/sysconfig/network-scripts/ifcfg-eth0'  
+
+sed -n 'p'  /etc/sysconfig/network-scripts/ifcfg-eth0
+
+sed -i 's#none#atstic#p'  /etc/sysconfig/network-scripts/ifcfg-eth0 
+
+ansible  all -m  shell 'cat /etc/sysconfig/network-scripts/ifcfg-eth0'
+
+ansible  all -m  shell -a  'cat /etc/sysconfig/network-scripts/ifcfg-eth0'
+
+ansible  all -m  shell -a  'sed -i 's#none#atstic#p'  /etc/sysconfig/network-scripts/ifcfg-eth0'
+
+
+ansible  all -m  shell -a   'cat /etc/sysconfig/network-scripts/ifcfg-eth0'
+
+ansible  cache -m replace -a 'path="/etc/selinux/config" regexp="^(SELINUX=).*" replace="\1disabled"'
+
+
+ansible  cache -m shell  -a 'cat  /etc/selinux/config'
+
+
+ansible  all -m yum  -a "name=lrzsz,lftp"
+
+
+ansible  all -m shell  -a "rpm -qa lrzsz,lftp"
+
+ansible  all -m shell  -a "rpm -qa lrzsz  lftp"
+
+
+ansible  all -m shell  -a "rpm  -qa  httpd"
+
+
+ansible  all -m shell  -a "echo zhanzhichengnsd1804 > /var/www/html/index.html"
+
+ansible  all -m shell  -a  "ifconfig eth0|awk 'NR==2{print \$2}'"
+
+ansible  all -m shell - a  "ifconfig eth0|awk 'NR==2{print \$2,\"www.zzc.com\"}'>> /etc/hosts "
+
+
+ansible  all -m service -a 'name="httpd"  enabled="yes" state="started"'
+
+
+ansible  all -m service -a 'name="httpd"  enabled="yes" state="restarted"'
+ 
 
 
 
@@ -1115,27 +2316,24 @@ uptime from procps-ng 3.3.10
 
 
 
+[root@Va2 ~]# sed  -n  '17p;38p'  /etc/ssh/sshd_config 
+#Port 22
+#PermitRootLogin yes
 
+[root@Va2 ~]# sed  -i   '17s/#//;38s/#//'  /etc/ssh/sshd_config 
 
+[root@Va2 ~]# sed  -n  '17p;38p;65p'  /etc/ssh/sshd_config 
+Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
 
+[root@Va2 ~]# sed  -n  '41p;58,59p'  /etc/ssh/ssh_config 
+#   Port 22
+Host *
+	GSSAPIAuthentication yes
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[root@Va2 ~]# systemctl  restart   sshd  ;  systemctl  is-enabled  sshd
+enabled
 
 [root@Va2 ~]# cat   /etc/hosts
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
@@ -1174,28 +2372,6 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
 virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
         inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
 [root@Va2 ~]# 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
