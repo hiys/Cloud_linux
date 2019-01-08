@@ -1075,7 +1075,7 @@ ansible web1 -m yum -a 'name="lrzsz,lftp"'
 • service模块
 
 – name:必选项,服务名称
-– enabled:是否开机吭劢 yes|no
+– enabled:是否开机自启动yes|no
 – sleep:如果执行了restarted,在则stop和start间沉睡几秒钟
 – state:对当前服务执行启动,停止、重启、重新加载等操作(started,stopped,restarted,reloaded)
 ansible t1 -m service -a 'name="sshd" enabled="yes"　state="started"'
@@ -2320,14 +2320,138 @@ user模块
 [root@localhost ~]# ansible all -m user -a "name=jerry state=absent remove=yes"  #删除用户
 
 
+[root@Va2 ~]# ifconfig   eth0   ## ifconfig 可设置网络设备的状态，或是显示目前的设置
+
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+        inet6 fe80::5054:ff:fea9:b0ef  prefixlen 64  scopeid 0x20<link>
+        ether 52:54:00:a9:b0:ef  txqueuelen 1000  (Ethernet)
+        RX packets 12705  bytes 5417441 (5.1 MiB)
+        RX errors 0  dropped 14  overruns 0  frame 0
+        TX packets 3576  bytes 525540 (513.2 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+功能说明：显示或设置网络设备
+  语　法：
+  ifconfig [网络设备]  [down up -allmulti -arp -promisc]    [add<地址>]    [del<地址>]  
+                          [<硬件地址>]        [media<网络媒介类型>]      [mem_start<内存地址>]  
+                   [metric<数目>]        [mtu<字节>]        [netmask<子网掩码>]  
+                   [tunnel<地址>]     [-broadcast<地址>]    [-pointopoint<地址>]
 
 
+参　数：
+
+　　[网络设备] 网络设备的名称。
+
+　　down 关闭指定的网络设备。
+
+　　up 启动指定的网络设备。
+
+　　-arp 打开或关闭指定接口上使用的ARP协议。前面加上一个负号用于关闭该选项。
+
+　　-allmuti 关闭或启动指定接口的无区别模式。前面加上一个负号用于关闭该选项。
+
+　　-promisc 关闭或启动指定网络设备的promiscuous模式。前面加上一个负号用于关闭该选项。
+
+　　add<地址> 设置网络设备IPv6的IP地址。
+
+　　del<地址> 删除网络设备IPv6的IP地址。
 
 
+　　media<网络媒介类型> 设置网络设备的媒介类型。
 
+　　mem_start<内存地址> 设置网络设备在主内存所占用的起始地址。
 
+　　metric<数目> 指定在计算数据包的转送次数时，所要加上的数目。
 
+　　mtu<字节> 设置网络设备的MTU。
+Maximum Transmission Unit，缩写MTU，中文名是：最大传输单元。
 
+　　netmask<子网掩码> 设置网络设备的子网掩码。
+
+　　tunnel<地址> 建立IPv4与IPv6之间的隧道通信地址。
+
+　　-broadcast<地址> 将要送往指定地址的数据包当成广播数据包来处理。
+
+　　-pointopoint<地址> 与指定地址的网络设备建立直接连线，此模式具有保密功能。
+
+配置网卡的IP地址
+
+　　ifconfig eth0 192.168.0.1 netmask 255.255.255.0
+
+　　在eth0上配置上192.168.0.1 的IP地址及24位掩码。
+若想再在eth0上在配置一个192.168.1.1/24 的IP地址 用下面的命令
+
+　　ifconfig eth0：0 192.168.1.1 netmask 255.255.255.0
+
+　　这时再用ifconifg命令查看，就可以看到两个网卡的信息了，分别为：eth0和eth0：0.若还想再增加IP，那网卡的命名就接着是：eth0：1、eth0：2……想要几个就填几个。ok！
+
+　　配置网卡的硬件地址
+　　ifconfig eth0 hw ether xx：xx：xx：xx：xx：xx就将网卡的硬件地址更改了，
+   此时可以骗过局域网内的IP地址邦定了。
+
+　　将网卡禁用
+　　ifconfig eth0 down
+
+　　将网卡启用
+　　ifconfig eth0 up
+
+Maximum Transmission Unit，缩写MTU，中文名是：最大传输单元。
+
+OSI
+Open System Interconnect Reference Model 开放式系统互联参考模型
+
+在7层网络协议中，MTU是数据链路层的概念。
+MTU限制的是数据链路层的payload，也就是上层协议的大小，例如IP，ICMP等。
+MTU其实就是在每一个节点的管控值，
+只要是大于这个值的数据帧，
+要么选择分片，
+要么直接丢弃。
+
+OSI中的层               功能                      TCP/IP协议族
+应用层   文件传输，电子邮件，文件服务，虚拟终端  TFTP，HTTP，SNMP，FTP，SMTP，DNS，Telnet
+表示层   数据格式化，代码转换，数据加密           没有协议
+会话层   解除或建立与别的接点的联系               没有协议
+传输层   提供端对端的接口                         TCP，UDP
+网络层   为数据包选择路由                         IP，ICMP，RIP，OSPF，BGP，IGMP
+数据链路层  传输有地址的帧以及错误检测功能      SLIP，CSLIP，PPP，ARP，RARP，MTU
+物理层     以二进制数据形式在物理媒体上传输数据  ISO2110，IEEE802，IEEE802.2
+
+以太网 帧 是传输中的最小可识别单元
+
+一个标准的以太网数据帧大小是：1518，
+头信息有14字节，
+尾部校验和FCS占了4字节，
+所以真正留给上层协议传输数据的大小就是：1518 - 14 - 4 = 1500
+
+写成公式就是：( T - 14 - 4 ) / T，
+当T趋于无穷大的时候，效率接近100%，
+也就是MTU的值越大，传输效率最高，
+但是基于上一点传输时间的问题，
+头加尾是18，凑个整1500，总大小就是1518，
+传输效率：
+1500 / 1518 =  98.8%
+
+100Mbps传输时间：
+( 1518 * 8 ) / ( 100 * 1024 * 1024 ) * 1000 = 0.11(ms)
+
+2Mbps传输时间：
+( 1518 * 8 ) / ( 2 * 1024 * 1024 ) * 1000 = 5.79(ms)
+
+1518这个值是考虑到传输效率以及传输时间而折中选择的一个值，
+并且由于目前网络链路中的节点太多，
+其中某个节点的MTU值如果和别的节点不一样，
+就很容易带来拆包重组的问题，甚至会导致无法发送
+
+PPPoE协议介于以太网和IP之间，协议分为两部分，
+PPP( Point to Point Protocol )和oE( over Ethernet )，
+也就是以太网上的PPP协议，而PPPoE协议头信息为:
+
+| VER(4bit) | TYPE(4bit) | CODE(8bit) | SESSION-ID(16bit) | LENGTH(16bit) |
+这里总共是48位，是6个字节，
+另外2个字节是PPP协议的ID号，
+占用两个字节，
+所以在PPPoE环境下，最佳MTU值应该是：1500 - 4 - 2 = 1492。
 
 
 
