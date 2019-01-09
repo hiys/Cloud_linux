@@ -1805,11 +1805,205 @@ virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
 [root@Va2 ~]# 
 
 
+1 简述什么是ansible
+
+参考答案
+ansible是2013年推出的一款IT自动化和DevOps软件，2015年被RedHat收购。是基于Python研发，糅合很多老运维工具的优点，实现了批量操作系统配置，批量程序部署，批量运行命令等功能
+2 ansible可以实现什么功能
+
+参考答案
+自动化部署APP
+自动化管理配置项
+自动化持续交付
+自动化（AWS）云服务管理
+3 ansible优点有哪些
+
+参考答案
+只需要SSH和Python即可使用，无客户端
+ansible功能强大，模块丰富
+上手容易，门槛低
+基于Python开发，做二次开发更容易
+使用公司比较多，社区活跃
+4 简述ansible中主机定义与分组的步骤
+
+参考答案
+1、ansible.cfg 配置文件：
+inventory定义托管主机地址配置文件
+2、编辑/etc/ansible/hosts文件，写入远程主机的地址。
+格式：
+# 表示注释
+[组名称]
+主机名称或ip地址，登录用户名，密码、端口等信息
+测试：
+ansible [组名称] --list-hosts
+定义主机分组练习
 
 
 
+1 阐述ansible七种武器有哪些
+
+参考答案
+第一种武器：
+ansible 命令，用于执行临时性的工作，必须掌握
+第二种武器：
+ansible-doc是ansible模块的文档说明，针对每个模块都有详细的说明及
+应用案例介绍，功能和Linux系统man命令类似，必须掌握
+
+ansible-doc:是Ansible模块文档说明，针对每个模块都有详细的用法说明和应用案例介绍；
+
+第三种武器：
+ansible-console是ansible为用户提供的交互式工具，
+用户可以在ansible-console虚拟出来的终端上像Shell一样使用ansible内置的各种命令，
+这为习惯使用Shell交互方式的用户提供了良好的使用体验
+
+ansible-console:让用户可以在ansible-console虚拟出来的终端上像Shell一样使用Ansible内置的各种命令；
+
+ansible-console
+
+root@mageduweb (2)[f:10] $ service name=httpd state=stopped
+
+root@mageduweb (2)[f:10] $
+执行用户@当前操作的主机组 (当前组的主机数量)[f:并发数]$
+
+设置并发数： forks n  例如： forks 10
+切换组： cd groupname  例如： cd mageduweb
+列出当前组主机列表： list
+列出所有的内置模块： ?
 
 
+第四种武器：
+galaxy
+英 [ˈgæləksi]  美 [ˈɡæləksi]  
+星系;银河系;一群显赫的（出色的）人物
+
+ansible-galaxy从github上下载管理Roles的一款工具，与python的pip类似
+ansible-galaxy:可以简单的理解为Github或PIP的功能，通过ansible-galaxy，我们可以下载安装优秀个Roles；
+
+ansible-galaxy
+
+用法：ansible-galaxy [delete|import|info|init|install|list|login|remove|search|setup] [—help] [options] …
+
+去 https://galaxy.ansible.com/ 上传或下载优秀的Playbook(roles)
+
+#列出所有已安装的galaxy
+ansible-galaxy list
+
+#安装galaxy
+ansible-galaxy install geerlingguy.redis
+
+#删除galaxy
+ansible-galaxy remove geerlingguy.redis
+
+
+第五种武器：
+playbook
+英 [p'leɪbʊk]   美 [p'leɪbʊk]  
+剧本，剧本集
+
+ansible-playbook是日常应用中使用频率最高的命令，工作机制：通过读取
+先编写好的playbook文件实现批量管理，可以理解为按一定条件组成的ansible任
+务集，必须掌握
+ansible-playbook:是日常应用中使用频率最高的命令，其工作机制是，
+通过读取预先编写好的playbook文件实现批量管理；
+
+第六种武器：
+vault
+英 [vɔ:lt]   美 [vɔlt]  
+n.
+墓穴;拱顶，穹窿;地下室;撑物跳
+[vault] 穹窿状覆盖物的顶部
+穹窿 [qióng lóng]
+(1) [sky]∶指天
+(2) [vault;arched roof]∶中间高而四周下垂的样子
+
+ansible-vault主要用于配置文件加密，如编写的playbook文件中包含敏
+感信息，不想其他人随意查看，可用它加密/解密这个文件
+ansible-valut
+
+用法:ansible-vault [create|decrypt|edit|encrypt|rekey|view] [—help] [options] vaultfile.yml
+
+ansible-vault encrypt hello.yml  # 加密
+ansible-vault decrypt hello.yml  # 解密
+ansible-vault view hello.yml  # 查看
+
+
+
+第七种武器：
+
+pull 拉;扯;拉过来;划（船）(被动模式)2000台主机以上适用 被 动服务模式
+pull 拉;扯;拉过来;划（船）(被动模式)2000台主机以上适用 被 动服务模式
+
+push  推，推动
+push 推，推动(主动模式)
+
+ansible-pull:Ansible的另一种工作模式，pull模式(被动模式)，
+ansible默认使用push模式(主动模式)；
+
+ansible有两种工作模式pull/push ，默认使用push模式工作，
+pull和push工作模式机制刚好相反
+ 
+一般2000台主机以下 适用主动服务模式
+2000台主机以上适用 被 动服务模式
+
+适用场景：有大批量机器需要配置，即便使用高并发线程依旧要花费很多时间
+通常在配置大批量机器的场景下使用，灵活性稍有欠缺，但效率几乎可以无限
+提升，对运维人员的技术水平和前瞻性规划有较高要求
+
+
+2 什么是JSON以及其特性是什么
+
+参考答案
+JSON简介：
+JSON是JavaScript对象表示法，它是一种基于文本独立于语言的轻量级数
+据交换格式
+JSON中的分隔符限于单引号" ' " 、小括号" () " 、中括号" [ ] " 、大
+括号" { } " 、冒号 " : " 和逗号 " , "
+JSON特性：
+JSON是纯文本、具有"自我描述性"（人类可读）、具有层级结构（值中存在值）、
+可通过JavaScript进行解析
+3 简述YAML是什么
+
+参考答案
+是一个可读性高，用来表达数据序列的格式
+YAML（YAML Ain't Markup Language）参考了多种语言，如：C语言、Python、Perl等，并从XML、电子邮件的数据格式中获得灵感，Clark Evans在2001年首次发表了这种语言，目前已有数种编程语言或脚本语言支持这种语言
+4 简述什么是playbook
+
+参考答案
+playbook是ansible用于配置，部署和管理托管主机剧本，通过playbook的详细描述，执行其中的一系列tasks，可以让远端主机达到预期状态
+也可以说，playbook字面意思即剧本，现实中由演员按剧本表演，在ansible中由计算机进行安装，部署应用，提供对外服务，以及组织计算机处理各种各样的事情
+5 用playbook安装Apache,修改端口，配置ServerName，修改主页，设置开机自启
+
+参考答案
+[root@ansible ansible]# vim http.yml
+---
+- hosts: cache
+  remote_user: root
+  tasks:
+    - name: install one specific version of Apache
+      yum:
+        name: httpd        //安装Apache
+        state: installed
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^Listen '
+        line: 'Listen 8080'        //修改端口为8080
+    - replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^#(ServerName).*'        //配置ServerName
+        replace: '\1 localhost'
+    - service:
+        name: httpd
+        enabled: yes        //开机自启
+        state: restarted
+    - copy:
+        src: /root/index.html        //修改主页，可以自己写个页面
+        dest: /var/www/html/index.html
+[root@ansible ansible]# curl 192.168.1.56:8080
+hello world
+[root@ansible ansible]# ssh cache
+Last login: Fri Sep  7 09:32:05 2018 from 192.168.1.51
+[root@cache ~]# apachectl -t
+Syntax OK
 
 
 

@@ -1,0 +1,1556 @@
+
+setup模块
+
+– 主要用亍获取主机信息,在playbooks里经常会用到的
+一个参数gather_facts就不该模块相关。setup模块下经常使用的一个参数是filter参数
+– filter 可以过滤到我们需要的信息
+
+ansible t1 -m setup -a 'filter=ansible_distribution'
+
+[root@Va1 ~]# ansible  Va2  -m  setup  -a  'filter="ansible_os_family"'
+Va2 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_os_family": "RedHat"
+    }, 
+    "changed": false
+}
+
+#### 安装Apache服务设置开机自启
+
+[root@Va1 ~]# ansible  other  -m yum  -a  'name="httpd,elinks"  state=installed'
+Va6 | SUCCESS => {
+    "changed": true, 
+    "msg": "", 
+    "rc": 0, 
+    "results": [
+...............
+[root@Va1 ~]# ansible  Va6  -m  service  -a  'name=httpd  enabled=yes  state=started'
+Va6 | SUCCESS => {
+    "changed": true, 
+    "enabled": true, 
+    "name": "httpd", 
+    "state": "started", 
+    "status": {
+.....................................
+[root@Va1 ~]# ansible  Va6  -m  shell  -a  "netstat  -npult |grep  httpd"
+Va6 | SUCCESS | rc=0 >>
+tcp6       0      0 :::80                   :::*                    LISTEN      5040/httpd          
+
+[root@Va1 ~]# ansible  Va6  -m  shell  -a  \
+>     "cat  /etc/httpd/conf/httpd.conf |grep -A2 -n  '^Listen'"
+
+Va6 | SUCCESS | rc=0 >>
+42:Listen 80
+43-
+44-#
+[root@Va1 ~]# ansible  Va6  -m  shell  -a   'echo  "Va6  httpd apache" > /var/www/html/index.html'
+Va6 | SUCCESS | rc=0 >>
+
+
+[root@Va1 ~]# ansible  Va6  -m  shell  -a   'elinks  -dump  127.0.0.1'
+Va6 | SUCCESS | rc=0 >>
+   Va6 httpd apache
+
+[root@Va6 ~]# ls  /var/www/html/
+index.html
+[root@Va6 ~]# elinks  -dump  127.0.0.1
+   Va6 httpd apache
+
+state	(非必选项) 默认值present用于设置 新增或替换一行 
+
+state=absent   删除行
+                  
+   ## ##设置/etc/httpd/conf/httpd.conf 替换Listen 80 一行  修改端口号为8080
+
+[root@Va1 ~]# ansible  other  -m  lineinfile  -a  \
+> 'path=/etc/httpd/conf/httpd.conf  regexp="^Listen" line="Listen 8080"  state=present'  
+
+Va6 | SUCCESS => {
+    "backup": "", 
+    "changed": true, 
+    "msg": "line replaced"
+}
+
+[root@Va6 ~]# cat  /etc/httpd/conf/httpd.conf |grep  "^Listen"
+Listen 8080
+
+[root@Va1 ~]# ansible  Va6  -m  shell  -a   'systemctl  restart  httpd'
+Va6 | SUCCESS | rc=0 >>
+
+[root@Va1 ~]# ansible  Va6  -m  shell  -a   'elinks  -dump  127.0.0.1:8080'
+Va6 | SUCCESS | rc=0 >>
+   Va6 httpd apache
+
+[root@Va1 ~]# 
+
+Apache的主配置文件：/etc/httpd/conf/httpd.conf
+默认站点主目录：/var/www/html/
+Apache服务器的配置信息全部存储在主配置文件/etc/httpd/conf/httpd.conf中
+
+Virtual Hosts---虚拟主机，虚拟主机不能与Main Server主服务器共存，
+当启用了虚拟主机之后，Main Server就不能使用了
+
+[root@Va6 ~]# grep  -ni  "^serverroot"  /etc/httpd/conf/httpd.conf 
+31:ServerRoot "/etc/httpd"
+用于指定Apache的运行目录，
+服务启动之后自动将目录改变为当前目录，
+在后面使用到的所有相对路径都是相对这个目录下
+
+0.0.0.0/8可以表示本网络中的所有主机，
+0.0.0.0/8也可表示本网络上的某个特定主机,
+0.0.0.0/32可以用作本机的源地址，
+
+综合起来可以说0.0.0.0表示整个网络
+严格说来，0.0.0.0已经不是一个真正意义上的IP地址了。
+它表示的是这样一个集合：
+所有不清楚的主机和目的网络。
+
+网络中0.0.0.0的IP地址表示整个网络，即网络中的所有主机
+
+在路由器配置中可用0.0.0.0/0表示默认路由，
+作用是帮助路由器发送路由表中无法查询的包。
+如果设置了全零网络的路由，
+路由表中无法查询的包
+都将送到全零网络的路由中去
+
+[root@Va6 ~]# grep -A2  -n  "case $ACMD" /usr/sbin/apachectl  ##apache的主要执行文件
+110:case $ACMD in
+111-start|stop|restart|status)
+112-    /usr/bin/systemctl $ACMD httpd.service
+
+[root@Va6 ~]# grep  -ni  "#servername"  /etc/httpd/conf/httpd.conf 
+95:#ServerName www.example.com:80
+
+[root@Va6 ~]# which  apachectl 
+/usr/sbin/apachectl
+
+修改ServerName配置，执行apachectl -t命令不报错
+
+[root@Va6 ~]# apachectl   -t  ## 1）没有修改之前有报错
+
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name,
+ using 192.168.0.16. Set the 'ServerName' directive globally to suppress this message
+Syntax OK
+ah00558:httpd:无法使用192.168.0.16可靠地确定服务器的完全限定域名。
+全局设置“servername”指令以禁止显示此消息
+语法好
+[root@Va6 ~]# cat  /etc/httpd/conf/httpd.conf |grep  "^Listen"
+Listen 8080
+
+[root@Va6 ~]# grep  -niA1  "#servername"   /etc/httpd/conf/httpd.conf
+95:#ServerName www.example.com:80
+96-
+
+修改ServerName配置，执行apachectl -t命令不报错
+
+[root@Va6 ~]# apachectl   -t  ## 1）没有修改之前有报错
+
+                               #### 替换指定字符^#(ServerName).*  修改ServerName配置 
+[root@Va1 ~]# ansible  other  -m  replace  -a 'path=/etc/httpd/conf/httpd.conf  regexp="^#(ServerName).*"   replace="\1  www.Va6.com"' 
+
+Va6 | SUCCESS => {
+    "changed": true, 
+    "msg": "1 replacements made"
+}
+
+[root@Va6 ~]# grep  -niA1  "^servername"   /etc/httpd/conf/httpd.conf
+95:ServerName  www.Va6.com
+96-
+
+[root@Va1 ~]# ansible  Va6  -m  command -a  'grep  "^ServerName"  /etc/httpd/conf/httpd.conf'
+
+Va6 | SUCCESS | rc=0 >>
+ServerName  www.Va6.com
+
+[root@Va1 ~]# ansible  Va6  -m  shell  -a   'systemctl  restart  httpd'
+
+Va6 | SUCCESS | rc=0 >>
+
+
+ ## 在某一行前面插入一行：
+ansible all -m lineinfile -a "dest=/root/test.txt  insertbefore='aa(.*)' line='eeee'"
+
+在某一行后面插入一行，insertafter
+
+[root@Va6 ~]# head  -4  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+                                     ### 在某一行后面插入一行，insertafter
+[root@Va1 ~]# ansible  Va6  -m  lineinfile  -a  "dest=/etc/hosts insertafter='^(192.168.0.11).*' line='192.168.0.16  www.Va6.com'"
+
+Va6 | SUCCESS => {
+    "backup": "", 
+    "changed": true, 
+    "msg": "line added"
+}
+[root@Va6 ~]# head  -4  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.0.16  www.Va6.com
+
+[root@Va1 ~]# ansible  Va6  -m  command  -a "elinks  -dump  127.0.0.1:8080"
+Va6 | SUCCESS | rc=0 >>
+   Va6 httpd apache
+
+[root@Va1 ~]# ansible  Va6  -m  command  -a "elinks  -dump   www.Va6.com:8080"
+Va6 | SUCCESS | rc=0 >>
+   Va6 httpd apache
+
+[root@Va1 ~]# ansible  Va6  -m  command  -a "apachectl  -t"
+Va6 | SUCCESS | rc=0 >>
+Syntax OK
+
+[root@Va6 ~]# apachectl  -t    ## 修改后不报错##( 修改 ServerName配置 )
+Syntax OK
+
+[root@Va1 ~]# echo "<h1>Va1--ansible Va6 apache </h1>" > index.html
+
+                        ## 在覆盖之前将原文件备份，备份文件包含时间信息 backup=yes
+[root@Va1 ~]# ansible  other  -m  copy  -a  'src=/root/index.html  dest=/var/www/html/index.html backup=yes'
+Va6 | SUCCESS => {
+................
+[root@Va6 ~]# ls  /var/www/html/
+index.html  index.html.7837.2019-01-08@21:06:12~
+
+[root@Va6 ~]# cat  /var/www/html/index.html.7837.2019-01-08@21\:06\:12~ 
+Va6  httpd apache
+
+[root@Va6 ~]# cat  /var/www/html/index.html
+<h1>Va1--ansible Va6 apache </h1>
+
+[root@Va1 ~]# ansible  Va6  -m  command  -a "elinks  -dump   www.Va6.com:8080"
+Va6 | SUCCESS | rc=0 >>
+                            Va1--ansible Va6 apache
+
+#24.249.81.43来自美国
+[root@Va1 ~]# ansible  Va6  -m  command  -a "nslookup  www.Va6.com"
+Va6 | SUCCESS | rc=0 >>
+Server:		192.168.0.254
+Address:	192.168.0.254#53
+
+Non-authoritative answer:
+Name:	www.Va6.com
+Address: 24.249.81.43   #24.249.81.43来自美国
+
+[root@Va1 ~]# 
+
+
+Ansible工作原理：
+
+管理端支持local 、ssh、zeromq 三种方式连接被管理端，
+默认使用基于ssh的连接 
+
+可以按应用类型等方式进行Host Inventory（主机群）分类，
+管理节点通过各类模块实现相应的操作－－－单个模块，单条命令的批量执行，我们可以称之为ad-hoc；
+
+管理节点可以通过playbooks 实现多个task的集合实现一类功能，
+如web服务的安装部署、数据库服务器的批量备份等。
+
+playbooks我们可以简单的理解为，系统通过组合多条ad-hoc操作的配置文件
+
+一、ansible七种武器
+• 第一种武器
+– ansible 命令,用于执行临时性的工作,也是我们之前
+主要学习的功能,必须掌握
+
+• 第二种武器
+– ansible-doc 是 Ansible模块文档说明,针对每个模块
+都有详细的用法说明及应用案例介终,功能和Linux系
+统man命令类似,必须掌握
+
+• 第三种武器
+– ansible-console 是 Ansible 为用户提供的一款交互
+式工具,用户可以在 ansible-console 虚拟出来的终
+端上像 Shell 一样使用 Ansible 内置的各种命令,
+这为习惯亍使用 Shell 交互方式的用户提供了良好的
+使用体验。
+
+• 第四种武器
+– ansible-galaxy 从 github 上下载管理 Roles 的一款
+工具,不 python 的 pip 类似。ansible七种武器
+
+• 第五种武器
+– ansible-playbook 是日常应用中使用频率最高的命令,
+其工作机制是:通过读叏预先编写好的 playbook 文
+件实现批量管理。要实现的功能不命令 ansible 一样,
+可以理解为按一定条件组成的 ansible 任务集,必须掌握
+
+• 第六种武器
+– ansible-vault 主要用亍配置文件加密,如编写的
+Playbook 配置文件中包含敏感信息,丌希望其他人随
+意查看, ansible-vault 可加密/解密这个配置文件ansible七种武器
+
+• 第七种武器
+– ansible-pull (被动模式)2000台主机以上适用 被 动服务模式
+
+– Ansible 有两种工作模式 pull/push ,默认使用 push(推，推动)
+模式工作,pull 模式和通常使用的 push 模式工作机理刚好相反
+
+– 适用场景:有数量巨大的机器需要配置,即使使用高
+幵収线程依旧要花费很多时间;
+– 通常在配置大批量机器的场景下会使用,灵活性稍有
+欠缺,但效率几乎可以无限提升,对运维人员的技术
+水平和前瞻性规划有较高要求。
+
+第七种武器：
+
+pull 拉;扯;拉过来;划（船）(被动模式)2000台主机以上适用 被 动服务模式
+pull 拉;扯;拉过来;划（船）(被动模式)2000台主机以上适用 被 动服务模式
+
+push  推，推动
+push 推，推动(主动模式)
+
+ansible-pull:Ansible的另一种工作模式，pull模式(被动模式)，
+ansible默认使用push模式(主动模式)；
+
+ansible有两种工作模式pull/push ，默认使用push模式工作，
+pull和push工作模式机制刚好相反
+ 
+一般2000台主机以下 适用主动服务模式
+2000台主机以上适用 被 动服务模式
+
+适用场景：有大批量机器需要配置，即便使用高并发线程依旧要花费很多时间
+通常在配置大批量机器的场景下使用，灵活性稍有欠缺，但效率几乎可以无限
+提升，对运维人员的技术水平和前瞻性规划有较高要求
+
+push  推，推动
+
+pull 拉;扯;拉过来;划（船）
+pull 拉;扯;拉过来;划（船）
+
+push 
+推，推动
+
+JSON 是 JS 对象的字符串表示法，它使用文本表示一个 JS 对象的信息，本质是一个字符串。
+如
+var obj = {a: 'Hello', b: 'World'}; //这是一个对象，注意键名也是可以使用引号包裹的
+
+var json = '{"a": "Hello", "b": "World"}'; //这是一个 JSON 字符串，本质是一个字符串
+
+JSON 和 JS 对象互转
+要实现从对象转换为 JSON 字符串，使用 JSON.stringify() 方法：
+var json = JSON.stringify({a: 'Hello', b: 'World'}); 
+//结果是 '{"a": "Hello", "b": "World"}'
+
+要实现从 JSON 转换为对象，使用 JSON.parse() 方法：
+var obj = JSON.parse('{"a": "Hello", "b": "World"}'); 
+//结果是 {a: 'Hello', b: 'World'}
+
+
+对象表示为键:值对 { "键1": "值1",  "键2": "值2" ,"键3": "值3",  "键4": "值4" }
+
+数据由逗号,分隔
+
+{花括号保存对象}
+
+方括号保存数组  [  {对象1}, { 对象2} , { 对象3} ]
+
+{ "键": [  { "键": "值",  "键": "值" }, {  "键": "值",  "键": "值"} ]
+}
+
+{ "键1": [  { "键": "值",  "键": "值" }, {  "键": "值",  "键": "值"} ],
+  "键2": [  { "键": "值",  "键": "值" }, {  "键": "值",  "键": "值"} ],
+  "键3": [  { "键": "值",  "键": "值" }, {  "键": "值",  "键": "值"} ]
+}
+
+yaml简介
+• yaml 基础语法
+– YAML的结构通过空格杢展示
+– 数组使用"- "来表示
+– 键值对使用": "来表示
+– YAML使用一个固定的缩进风格表示数据层级结构关系
+– 一般每个 缩进 级别 由 两个 以上 空格 组成
+– # 表示注释
+• 注意:
+– 不要使用tab,缩迚是初学者容易出错的地方之一
+– 同一层级缩迚必须对齐
+YAML文件扩展名通常为.yaml，如example.yaml
+
+playbook语法基础
+• playbook 诧法格式
+– playbook由 YAML 语言编写,遵循 YAML 标准
+
+– 在同一行中,#之后的内容表示注释
+– 同一个列表中的元素应该保持相同的缩进
+– playbook 由一个或多个 play 组成
+– play 中 hosts,variables,roles,tasks 等对象的表示
+方法都是键值中间以 ": " 分隔表示
+– YAML 还有一个小的怪癖. 所有的 YAML 文件开始行都
+应该是 ---. 这是 YAML 格式的一部分, 表明一个文件的开始
+
+ansible-playbook
+
+Usage: ansible-playbook playbook.yml
+
+playbook 用yaml语法把多个模块堆起来的一个文件 。
+
+http://galaxy.ansible.com
+https://galaxy.ansible.com/explore#/
+http://github.com/
+http://ansible.com.cn/
+https://github.com/ansible/ansible
+https://github.com/ansible/ansible-examples
+
+yaml是一个可读性高的用来表达资料序列的格式。YAML参考了其他多种语言，包括：XML、C语言、Python、Perl以及电子邮件格式RFC2822等。Clark Evans在2001年在首次发表了这种语言，另外Ingy döt Net与Oren Ben-Kiki也是这语言的共同设计者。
+
+2.特点
+
+YAML的可读性好
+YAML和脚本语言的交互性好
+YAML使用实现语言的数据类型
+YAML有一个一致的信息模型
+YAML易于实现
+YAML可以基于流来处理
+YAML表达能力强，扩展性好
+
+YAML的语法和其他高阶语言类似，并且可以简单表达清单、散列表、标量等数据结构。其结构（Structure）通过空格来展示，序列（Sequence）里的项用”-“来代表，Map里的键值对用”:”分隔。下面是一个示例。
+
+- hosts: 10.1.0.1        #定义主机
+      vars:                      #定义变量
+           var1: value
+           var2: value
+      tasks:                    #定义任务
+           - name:           #任务名称。
+       #这里就可以开始用模块来执行具体的任务了。
+
+      handlers:     #定义触发通知所作的操作。里面也是跟tasks一样，用模块定义任务。
+           - name:
+
+      remote_user:             #远程主机执行任务时的用户。一般都是root，一般也不用指定。
+
+    - hosts: web
+      vars:
+      tasks:
+      handlers:
+      remote_user:
+YAML文件扩展名通常为.yaml，如example.yaml
+
+Playbooks:
+
+
+核心组件：
+
+Hosts:执行的远程主机列表
+Tasks：任务，由模块定义的操作的列表；
+Varniables:内置变量或自定义变量在playbook中调用
+Templates：模板，即使用了模板语法的文本文件；
+Handlers：和nogity结合使用，为条件触发操作，满足条件方才执行，否则不执行；
+Roles：角色；
+* 安装http脚本实现：
+
+#!/bin/bash
+
+# 安装Apache
+yum install --quiet -y httpd httpd-devel   # command: yum install --quiet -y httpd httpd-devel
+# 复制配置文件
+cp /path/to/config/httpd.conf /etc/httpd/conf/httpd.conf -f
+cp/path/to/httpd-vhosts.conf /etc/httpd/conf/httpd-vhosts.conf -f
+# 启动Apache，并设置开机启动
+service httpd start
+chkconfig httpd on
+
+
+
+* 安装httpd ansible-playbook实现
+
+---
+- hosts: all
+  tasks:
+   - name: "安装Apache"
+     command: yum install --quiet -y httpd httpd-devel
+   - name: "复制配置文件"
+     command: cp /tmp/httpd.conf /etc/httpd/conf/httpd.conf
+     command: cp /tmp/httpd-vhosts.conf /etc/httpd/conf/httpd-vhosts.conf
+   - name: "启动Apache，并设置开机启动"
+     command: service httpd start
+     command: chkconfig httpd on
+playbook的基础组件：
+
+Hosts：运行指定任务的目标主机；
+remote_user：在远程主机以哪个用户身份执行；
+    sudo_user：非管理员需要拥有sudo权限；
+tasks：任务列表
+    模块，模块参数：
+        格式：
+            (1) action: module arguments
+            (2) module: arguments
+示例：
+
+vim test.yaml,后缀也可以是.yml
+
+从标签位置开始执行
+
+跳过标签
+handlers 和 notify 结合使用触发条件,让playbook在满足一定触发条件时才去执行某条task
+- name: TASK_NAME
+  module: arguments
+  notify: HANDLER_NAME
+handlers:
+- name: HANDLER_NAME
+  module: arguments
+
+第一次的话都会运行，后边如果文件内容发生改变就会触发notify，然后会直接执行handlers的内容（这里notify后边的事件就都不会执行了）。估计是md5那种的校验。删了个#号竟然也会通知。
+
+playbook 变量使用
+
+变量来源：
+（1）ansible setup facts远程主机的所有变量都可以用
+（2）自定义变量
+a. 在/etc/ansible/hosts 定义变量，在主机组中的主机单独定义，优先级高于组中公共变量
+b. 在/etc/ansible/hosts 定义变量，针对主机组中的所有主机集中定义变量
+c. 通过命令行指定变量，优先级最高
+
+(a) 向不同的主机传递不同的变量；
+
+        IP/HOSTNAME variable_name=value
+            [web]
+            10.1.6.72 qzx=httpd
+            10.1.6.73 qzx=nginx
+
+
+(b) 向组内的所有主机传递相同的变量 ；
+
+        [groupname:vars]
+        variable_name=value
+
+        [web:qzx]
+        qzx=httpd
+
+        [web]
+        10.1.6.72
+        10.1.6.73
+变量调用方式：
+
+{{ variable_name }} 通过{{ }} 调用变量，且变量和{}两头之间必须有空格
+
+额外介绍的是：
+
+在playbook中调用变量时，有时”{{ variable_name }}”需要要双引号引起来方可生效，有时候必须不能用””引起来
+
+d.在playbook中定义,建议使用这个！
+
+vars:
+    - var_name: value
+    - var_name: value
+e.Inventory还可以使用参数
+
+用于定义ansible远程连接目标主机时使用的属性，而非传递给playbook的变量；
+        ansible_ssh_host
+        ansible_ssh_port
+        ansible_ssh_user
+        ansible_ssh_pass
+        ansible_sudo_pass
+        ...
+f.在角色调用时传递
+
+roles:
+- { role: ROLE_NAME, var: value, ...}
+
+
+Jinja2是基于python的模板引擎，
+功能比较类似于于PHP的smarty，
+J2ee的Freemarker和velocity。
+ 它能完全支持unicode，
+并具有集成的沙箱执行环境，应用广泛。
+jinja2使用BSD授权。
+
+特性编辑
+沙箱执行模式，模板的每个部分都在引擎的监督之下执行，
+模板将会被明确地标记在白名单或黑名单内，
+这样对于那些不信任的模板也可以执行。
+
+强大的自动HTML转义系统，可以有效地阻止跨站脚本攻击。
+
+模板继承机制，此机制可以使得所有的模板都具有相似一致的布局，
+也方便了开发人员对模板的修改和管理。
+
+高效的执行效率，
+Jinja2引擎在模板第一次加载时就把源码转换成Python字节码，加快模板执行时间。
+
+可选的预编译模式。
+调试系统融合了标准的Python的TrackBack系统，使得模板编译和运行期间的错误能及时被发现和调试。
+
+语法可配置，可以重新配置Jinja2使得它更好地适应LaTeX或JavaScript的输出。
+模板设计人员帮助手册，此手册指导设计人员更好地使用Jinja2引擎的各种方法。 
+
+
+templates模版
+
+文本文件，内部嵌套有模板语言脚本（使用模板语言编写）
+
+Jinja2 是由python编写的。 在我们打算使用基于文本的模板语言时，jinja2是很好的解决方案。yeml是写playbook，jinja2是写配置文件模板的。
+
+功能：
+将模板的文件的变量值转换成对应的本地主机的确定值。例如：ansible端写一个内建变量{{ ansible_processor_vcpus }}，当这个文件被复制到对应主机时会自动生成对应主机 cpu的颗数的结果替换之。
+
+Jinja2语法：
+
+字面量：
+    字符串：使用单引号或双引号； 
+    数字：整数、浮点数；
+    列表：[item1, item2, ...]
+    元组：(item1, item2, ...)
+    字典：{key1:value1, key2:value2, ...}
+    布尔型：true/false
+
+算术运算：
+    +, -, *, /, //, %, **
+
+比较操作：
+    ==, !=, >, <, >=, <=
+
+逻辑运算：and, or, not
+
+模版讲解：
+
+{{ ... }}：装载一个变量，模板渲染的时候，会使用传进来的同名参数这个变量代表的值替换掉。
+  模板的表达式 都是包含在分隔符{{ }}内的
+
+{% ... %}：装载一个控制语句。
+{# ... #}：装载一个注释，模板渲染的时候会忽视这中间的值
+
+1. <html lang="en">
+2. <head>
+3. <title>My Webpage</title>
+4. </head>
+5. <body>
+6. <ul id="navigation">
+7. {% for item in navigation %}
+8. <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+9. {% endfor %}
+10. </ul>
+11.
+12. {{ a_variable }}  ##调用变量 ##shell中 使用 ${var} 调用变量 
+13. {{ user.name }}
+14. {{ user['name'] }}
+15.
+16. {# a comment #}
+17. </body>
+18.</html>
+
+运算符
+
++号运算符：可以完成数字相加，字符串相加，列表相加。但是并不推荐使用+运算符来操作字符串，字符串相加应该使用~运算符。
+-号运算符：只能针对两个数字相减。
+/号运算符：对两个数进行相除。
+%号运算符：取余运算。
+*号运算符：乘号运算符，并且可以对字符进行相乘。
+**号运算符：次幂运算符，比如2**3=8。
+in操作符：跟python中的in一样使用，比如{{1 in [1,2,3]}}返回true。
+~号运算符：拼接多个字符串，比如{{"Hello" ~ "World"}}将返回HelloWorld。
+
+
+执行模板文件中的脚本，并生成结果数据流，需要使用template模块；
+
+template:使用了Jinjia2格式作为文件模版，进行文档内变量的替换的模块。相当于copy。
+
+将jinja2的文件模板理解并执行，转化为各个主机间的对应值
+
+backup       建立个包括timestamp在内的文件备份，以备不时之需.
+dest       远程节点上的绝对路径，用于放置template文件。
+group      设置远程节点上的的template文件的所属用户组
+mode       设置远程节点上的template文件权限。类似Linux中chmod的用法
+owner      设置远程节点上的template文件所属用户
+src        本地Jinjia2模版的template文件位置。
+注意：此模板不能在命令行使用，而只能用于playbook；用法同copy
+
+（1） templates文件必须存放于目录名为templates下，且命名为 .j2 结尾
+（2）yaml/yml playbook文件需和templates目录平级，目录结构如下：
+    ./
+    ├── temnginx.yml
+    └── templates
+        └── nginx.conf.j2
+
+2、条件测试：
+when语句：在tasks中使用，Jinja2的语法格式；
+
+3、循环：迭代，需要重复执行的任务；
+对迭代项的引用，固定变量名为”item”，使用with_item属性给定要迭代的元素； 这个是以任务为中心，围绕每个任务来跑主机，如果中间某个任务中断，那么所有主机以后的任务就无法安装。
+
+元素：
+
+列表
+字符串
+字典
+
+Django和Flask框架中都使用了jinja2模板引擎来渲染模板，通过后端向模板中传递变量，通过过滤器可以修改这些变量，过滤器添加在变量名之后，中间使用竖线分割。 
+例如：把值的首字母转换为大写，其他字母转换为小写
+
+{{ name|capitalize }}
+1
+下表列出jinjia2部分的常用过滤器
+
+过滤器	说明
+safe	渲染时不转义
+capitalize	把值的首字母转换成大写，其他字母转换成小写
+lower	把值转换成小写形式
+upper	把值转换成大写形式
+title	把值中每个单词的首字母都转换成大写
+trim	把值的首尾空格去掉
+striptags	渲染前把值中所有的HTML标签都删掉
+自定义过滤器
+ 自定义过滤器的过程其实就是写一个函数，
+这个函数至少有一个参数作为被过滤的内容，
+即竖线左边的变量，其他的参数则需要传入
+
+
+角色：roles
+
+以特定的层级目录结构进行组织的tasks、variables、handlers、templates、files等；相当于函数的调用把各个事件切割成片段来执行。
+
+mkdir ./{nginx,memcached,httpd,mysql}/{file,templates,vars,handlers,meta,default,tasks} -pv
+
+role_name/
+
+    files/：存储由copy或script等模块调用的文件； 
+
+    tasks/：此目录中至少应该有一个名为main.yml的文件，用于定义各task；其它的文件需要由main.yml进行“包含”调用；
+
+    handlers/：此目录中至少应该有一个名为main.yml的文件，用于定义各handler；其它的文件需要由main.yml进行“包含”调用；
+
+    vars/：此目录中至少应该有一个名为main.yml的文件，用于定义各variable；其它的文件需要由main.yml进行“包含”调用；
+
+    templates/：存储由template模块调用的模板文本；
+
+    meta/：此目录中至少应该有一个名为main.yml的文件，定义当前角色的特殊设定及其依赖关系；其它的文件需要由main.yml进行“包含”调用；
+
+    default/：此目录中至少应该有一个名为main.yml的文件，用于设定默认变量；
+
+对象表示为键:值对 { "键1": "值1",  "键2": "值2" ,"键3": "值3",  "键4": "值4" }
+
+数据由逗号,分隔
+
+{花括号保存对象}
+
+方括号保存数组  [  {对象1}, { 对象2} , { 对象3} ]
+方括号保存数组  [  '元素1',   '元素2',   '元素3',  '元素4', ]
+
+数组，是有序的元素序列
+各个元素能够包含不同种类的数据（对象、字符串、数值等等）
+
+{ "键": [  { "键": "值",  "键": "值" }, {  "键": "值",  "键": "值"} ]
+}
+
+{ "键1": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+  "键2": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+  "键3": [  { "键e": "值e",  "键f": "值f" }, {  "键g": "值g",  "键h": "值h"} ]
+}
+
+二维数组的元素也称为双下标变量，
+其表示的形式为：  数组名[下标][下标]
+二维数组 本质上
+是以数组作为数组元素的数组，即“数组的数组”，
+类型说明符 
+数组名[常量表达式][常量表达式]。
+二维数组又称为矩阵，行列数相等的矩阵称为方阵。
+int a[3][4]; 说明了一个三行四列的数组，数组名为a，
+其下标变量的类型为整型。该数组的下标变量共有3×4个，即：
+a[0][0],a[0][1],a[0][2],a[0][3]
+a[1][0],a[1][1],a[1][2],a[1][3]
+a[2][0],a[2][1],a[2][2],a[2][3]
+
+JSON中的分隔符限于
+单引号 ' 、 小括号 ( ) 、中括号 [ ] 、大括号 { } 、冒号 : 和 逗号 ,
+json的分隔符（delimiter）只允许使用"双引号"，不能使用'单引号'
+json只接受utf-8编码的字符
+json只能用来表示对象（object）和数组（array）
+
+
+aren't 完整形式：are not
+YAML，即YAML Aren’t Markup Language的缩写，
+不是标记语言
+YAML 是一种简洁的非标记语言。
+
+YAML以数据为中心，
+  使用空白，  缩进，  分行  组织数据，
+
+yaml简介
+• yaml 基础语法
+– YAML的结构通过 空格 展示
+
+块级列表 使用 短横线 和 空格 开头，如 "- "
+– 数组   使用 "- " 来表示
+– 键值对 使用 ": " 来表示
+键值对 使用 冒号 和 空格 来隔开 键和值，如 "key: value"
+
+– YAML使用一个 固定的 缩进风格 表示 数据 层级 结构关系
+– 一般每个 缩进 级别 由 两个 以上 空格 组成
+
+– # 表示注释
+
+• 注意:
+– 不要使用tab,缩迚是初学者容易出错的地方之一
+– 同一层级缩迚必须对齐
+
+层级关系 除了使用缩进，还能够使用特定符号来表示。
+
+数组 使用 [方括号]和 逗号, 来表示
+
+- [Sammy Sosa , 63, 0.288]
+- [Ken Sosa , 70, 0.302]
+
+
+
+多个键值对 使用{花括号} , 的,逗号, 来表示
+例子 Mark McGwire: {hr: 65, avg: 0.278}
+键值对 使用 冒号 和 空格 来隔开 键和值，如 "key: value"
+
+YAML文件扩展名通常为.yaml，如example.yaml
+
+YAML 基本规则：
+
+大小写敏感
+使用 缩进 表示 层级 关系
+ 禁止 使用 tab 缩进 ，只能使用  空格 键
+[ 注意有些编辑器会自动把空格转换成 tab,一定要选择不能自动转换tab的编辑器 ]
+
+缩进长度  没有 限制，只要元素 对齐 就 表示 这些元素属于一个层级。
+使用#表示注释
+
+字符串可以 不用 引号 标注
+
+YAML 是一个数据序列化语言，方便人类阅读，可用于所有编程语言
+可以用于 conf 配置
+YAML 用缩进来表示层级关系，每行是一个语句。
+
+块级列表 使用 短横线 和 空格 开头，如 "- "
+C
+PHP
+javascript
+
+键值对 使用冒号和空格来隔开键和值，如 "key: value"
+
+C: 系统语言
+PHP: 服务器语言
+javascript: 网页端语言
+```
+注释 以井号开头，如 "# 这是一行注释"
+javascript: 网页端语言 #使用 nodejs 也可以写服务器脚本
+
+
+
+
+https://www.jianshu.com/p/2c11487b201b
+https://www.jianshu.com/p/667961cdf9c4
+
+[root@Va1 ~]# file  /etc/ansible/ansible.cfg  ## 以 yaml 语言格式编写的文件
+/etc/ansible/ansible.cfg: ASCII text
+
+[root@Va1 ~]# head  -2   /etc/ansible/ansible.cfg ## 以 yaml 语言格式编写的文件
+# config file for ansible -- https://ansible.com/
+# ===============================================
+[root@Va1 ~]#  tail  -2  /etc/ansible/ansible.cfg ## 以 yaml 语言格式编写的文件
+# Set how many context lines to show in diff
+# context = 3
+
+基本语法规则:
+
+1.大小写敏感
+2.使用  缩进 表示层级关系
+3.不允许使用TAB键来缩进，只允许使用空格键来缩进
+4.缩进的空格数量不重要
+5.使用"#"来表示注释
+2、支持的数据格式：
+
+1.对象：键值对的集合，又称映射(mapping) / 哈希（hashes）/ 字典(dictionary)
+2.数组: 一组按次序排列的值，又称序列(sequence) / 列表(list)
+3.纯量(scalars)：单个的，不可再分的值
+
+scalar
+英 [ˈskeɪlə(r)]   美 [ˈskelɚ, -ˌlɑr]  
+adj.
+标量的;梯状的;分等级的;数量的
+n.
+数量，标量
+
+3、对象
+
+对象的一组键值对，是用冒号结构来表示
+键值对 使用冒号和 空格 来隔开键和值，如 "key: value"
+animal: cats
+students: {zhangsan: boy, xiaohong: girl}
+
+4、、数组
+一组 连词线 "- " 开头的行，构成一个数组
+- cat
+- dog
+- panda
+
+数据的子结构也是一个数组，可以在该项下面缩进空格来表示层级关系
+-
+ - cat
+ - dog
+ - panda
+
+– 同一层级缩迚必须对齐
+
+层级关系 除了使用缩进，还能够使用特定符号来表示。
+
+数组 使用 [方括号]和 逗号, 来表示
+
+- [Sammy Sosa , 63, 0.288]
+- [Ken Sosa , 70, 0.302]
+
+
+数组也可以采用行内表示法
+animal: [cat, dog]  ##注意 空格
+
+复合结构
+对象和数组可以结合使用，形成复合结构
+
+languages:
+  - Ruby
+  - Perl
+  - Python
+websites:
+  YAML: yaml.org
+  Ruby: ruby-lang.org
+  Python: python.org
+
+--------------------- 
+– YAML的结构通过 空格 展示
+
+块级列表 使用 短横线 和 空格 开头，如 "- "
+– 数组   使用 "- " 来表示
+– 键值对 使用 ": " 来表示
+键值对 使用 冒号 和 空格 来隔开 键和值，如 "key: value"
+
+– YAML使用一个 固定的 缩进风格 表示 数据 层级 结构关系
+– 一般每个 缩进 级别 由 两个 以上 空格 组成
+
+#YAML格式
+environments:
+    dev:
+        url: http://dev.bar.com
+        name: Developer Setup
+    prod:
+        url: http://foo.bar.com
+        name: My Cool App
+my:
+    servers:
+        - dev.bar.com
+        - foo.bar.com
+
+可以直观的看到，YAML使用 冒号:  加 缩进 的方式代表层级（属性）关系，
+使用 短横杠 空格"- "  代表数组元素。
+– 同一层级缩迚必须对齐
+
+层级关系 除了使用 缩进，还能够使用特定符号来表示。
+
+数据的子结构也是一个数组，可以在该项下面缩进空格来表示层级关系
+-
+ - cat
+ - dog
+ - panda
+– 同一层级缩迚必须对齐
+
+#即表示url属性值；
+url: http://www.wolfcode.cn 
+#即表示server.host属性的值；
+server:
+    host: http://www.wolfcode.cn 
+#数组，即表示server为[a,b,c]
+server:
+    - 120.168.117.21
+    - 120.168.117.22
+    - 120.168.117.23
+#常量
+pi: 3.14   #定义一个数值3.14
+hasChild: true  #定义一个boolean值
+name: '你好YAML'   #定义一个字符串
+
+对象
+使用冒号代表，格式为key: value。冒号后面要加一个空格：
+key: value
+
+可以使用缩进表示层级关系；
+key: 
+    child-key: value
+    child-key2: value2
+
+YAML中还支持流式(flow)语法表示对象，比如上面例子可以写为：
+key: {child-key: value, child-key2: value2}
+
+较为复杂的对象格式，可以使用问号加一个空格代表一个复杂的key，配合一个冒号加一个空格代表一个value：
+?  
+    - complexkey1
+    - complexkey2
+:
+    - complexvalue1
+    - complexvalue2
+
+意思即对象的属性是一个数组[complexkey1,complexkey2]，对应的值也是一个数组[complexvalue1,complexvalue2]
+
+
+companies:
+    -
+        id: 1
+        name: company1
+        price: 200W
+    -
+        id: 2
+        name: company2
+        price: 500W
+
+意思是companies属性是一个数组，每一个数组元素又是由id,name,price三个属性构成；
+数组也可以使用流式(flow)的方式表示：
+companies: [{id: 1,name: company1,price: 200W},{id: 2,name: company2,price: 500W}]
+
+常量
+
+YAML中提供了多种常量结构，包括：整数，浮点数，字符串，NULL，日期，布尔，时间。下面使用一个例子来快速了解常量的基本使用：
+boolean: 
+    - TRUE  #true,True都可以
+    - FALSE  #false，False都可以
+float:
+    - 3.14
+    - 6.8523015e+5  #可以使用科学计数法
+int:
+    - 123
+    - 0b1010_0111_0100_1010_1110    #二进制表示
+null:
+    nodeName: 'node'
+    parent: ~  #使用~表示null
+string:
+    - 哈哈
+    - 'Hello world'  #可以使用双引号或者单引号包裹特殊字符
+    - newline
+      newline2    #字符串可以拆成多行，每一行会被转化成一个空格
+date:
+    - 2018-02-17    #日期必须使用ISO 8601格式，即yyyy-MM-dd
+datetime: 
+    -  2018-02-17T15:02:31+08:00    #时间使用ISO 8601格式，时间和日期之间使用T连接，最后使用+代表时区
+
+一些特殊符号
+YAML中提供了很多特殊符号，在这里简单介绍常用的一些：
+1，---  YAML可以在同一个文件中，使用---表示一个文档的开始；比如Springboot中profile的定义：
+server:
+    address: 192.168.1.100
+---
+spring:
+    profiles: development
+    server:
+        address: 127.0.0.1
+---
+spring:
+    profiles: production
+    server:
+        address: 192.168.1.120
+
+代表定义了两个profile，一个是development，一个production；也常常使用---来分割不同的内容，比如记录日志：
+---
+Time: 2018-02-17T15:02:31+08:00
+User: ed
+Warning:
+     This is an error message for the log file
+---
+Time: 2018-02-17T15:05:21+08:00
+User: ed
+Warning:
+    A slightly different error message.
+
+2，... 和---配合使用，在一个配置文件中代表一个文件的结束：
+---
+time: 20:03:20
+player: Sammy Sosa
+action: strike (miss)
+...
+---
+time: 20:03:47
+player: Sammy Sosa
+action: grand slam
+...
+
+相当于在一个yaml文件中连续写了两个yaml配置项。
+3，!! YAML中使用!!做类型强行转换：
+string:
+    - !!str 54321
+    - !!str true
+
+相当于把数字和布尔类型强转为字符串。当然允许转型的类型很多，比如：
+--- !!set
+- Mark McGwire: 65
+- Sammy Sosa: 63
+- Sammy Sosa: 63
+- Ken Griffy: 58
+
+将数组解析为set，简单理解，转化的内容就是：[{Ken Griffy=58}, {Mark McGwire=65}, {Sammy Sosa=63}]，重复的Sammy Sosa去掉；
+4，>在字符串中折叠换行，| 保留换行符，这两个符号是YAML中字符串经常使用的符号，比如：
+accomplishment: >
+ Mark set a major league
+ home run record in 1998.
+stats: |
+ 65 Home Runs
+ 0.278 Batting Average
+
+那么结果是：
+stats=65 Home Runs
+ 0.278 Batting Average,
+
+即| 符号保留了换行符，而accomplishment的结果为：
+accomplishment=Mark set a major league home run record in 1998.
+
+即将换行符转化成了空格；  
+ 要注意一点的是，每行的文本前一定要有一个空格。
+
+ | 符号常见用于在YAML中配置 HTML 片段：
+
+phraseTemplate: |
+  <p style="color: red">
+    some template ${msg}
+  </p>
+
+5，引用。重复的内容在YAML中可以使用&来完成锚点定义，使用*来完成锚点引用，例如：
+hr:
+- Mark McGwire
+- &SS Sammy Sosa
+rbi:
+- *SS 
+- Ken Griffey
+
+可以看到，在hr中，使用&SS为Sammy Sosa设置了一个锚点（引用），名称为SS，在rbi中，使用*SS完成了锚点使用，那么结果为：
+{rbi=[Sammy Sosa, Ken Griffey], hr=[Mark McGwire, Sammy Sosa]}
+
+我们也可以这样定义：
+SS: &SS Sammy Sosa
+hr:
+ - Mark McGwire
+ - *SS
+rbi:
+ - *SS 
+ - Ken Griffey
+
+注意，不能独立的定义锚点，比如不能直接这样写： &SS  Sammy Sosa；另外，锚点能够定义更复杂的内容，比如：
+default: &default
+    - Mark McGwire
+    - Sammy Sosa
+hr: *default
+
+那么hr相当于引用了default的数组，注意，hr: *default要写在同一行。
+
+6，合并内容。主要和锚点配合使用，可以将一个锚点内容直接合并到一个对象中。来看一个示例：
+merge:
+  - &CENTER { x: 1, y: 2 }
+  - &LEFT { x: 0, y: 2 }
+  - &BIG { r: 10 }
+  - &SMALL { r: 1 }
+  
+sample1: 
+    <<: *CENTER
+    r: 10
+    
+sample2:
+    << : [ *CENTER, *BIG ]
+    other: haha
+    
+sample3:
+    << : [ *CENTER, *BIG ]
+    r: 100
+
+在merge中，定义了四个锚点，分别在sample中使用。
+sample1中，<<: *CENTER意思是引用{x: 1,y: 2}，并且合并到sample1中，那么合并的结果为：sample1={r=10, y=2, x=1}
+sample2中，<<: [*CENTER, *BIG] 意思是联合引用{x: 1,y: 2}和{r: 10}，并且合并到sample2中，那么合并的结果为：sample2={other=haha, x=1, y=2, r=10}
+sample3中，引入了*CENTER, *BIG，还使用了r: 100覆盖了引入的r: 10，所以sample3值为：sample3={r=100, y=2, x=1}
+
+有了合并，我们就可以在配置中，把相同的基础配置抽取出来，在不同的子配置中合并引用即可。
+以上示例均通过Snakeyaml测试通过
+
+https://www.jianshu.com/p/97222440cd08
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va2 ~]# sed  -n  '17p;38p'  /etc/ssh/sshd_config 
+#Port 22
+#PermitRootLogin yes
+
+[root@Va2 ~]# sed  -i   '17s/#//;38s/#//'  /etc/ssh/sshd_config 
+
+[root@Va2 ~]# sed  -n  '17p;38p;65p'  /etc/ssh/sshd_config 
+Port 22
+PermitRootLogin yes
+PasswordAuthentication yes
+
+[root@Va2 ~]# sed  -n  '41p;58,59p'  /etc/ssh/ssh_config 
+#   Port 22
+Host *
+	GSSAPIAuthentication yes
+
+[root@Va2 ~]# systemctl  restart   sshd  ;  systemctl  is-enabled  sshd
+enabled
+
+[root@Va2 ~]# cat   /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+[root@Va2 ~]# ifconfig  |grep  -A1 flags=
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.0.12  netmask 255.255.255.0  broadcast 192.168.0.255
+--
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.1.12  netmask 255.255.255.0  broadcast 192.168.1.255
+--
+eth2: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.168.2.12  netmask 255.255.255.0  broadcast 192.168.2.255
+--
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+--
+virbr0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255
+[root@Va2 ~]# 
+
+YAML 与 XML
+
+具有 XML 同样的优点，但比 XML 更加简单、敏捷等
+YAML 与 JSON
+
+JSON 可以看作是 YAML 的子集，也就是说 JSON 能够做的事情，YAML 也能够做
+
+YAML 能表示得比 JSON 更加简单和阅读，例如“字符串不需要引号”。所以 YAML 容易可以写成 JSON 的格式，但并不建议这种做
+
+YAML 能够描述比 JSON 更加复杂的结构，例如“关系锚点”可以表示数据引用（如重复数据的引用）。
+
+1.3 YAML 组织结构
+
+　　YAML 文件可以由一或多个文档组成（也即相对独立的组织结构组成），文档间使用“---”（三个横线）在每文档开始作为分隔符。同时，文档也可以使用“...”（三个点号）作为结束符（可选）。如下图所示：
+
+技术分享
+
+<br/>
+
+如果只是单个文档，分隔符“---”可省略。
+
+每个文档并不需要使用结束符“...”来表示结束，但是对于网络传输或者流来说，作为明确结束的符号，有利于软件处理。（例如不需要知道流关闭就能知道文档结束） <br/>
+
+　　YAML 认为数据由以下三种结构组成：（每个文档由三种结构混合组成）
+
+标量 （相当于数据类型）
+
+序列 （相当于数组和列表）
+
+键值表（相当于 Map 表）
+
+2. YAML 编写规范
+
+规范一：文档使用 Unicode 编码作为字符标准编码，例如 UTF-8
+
+规范二：使用“#”来表示注释内容
+
+# 客户订单
+date: 2015-02-01
+customer:
+  - name: Jai
+items:
+  - no: 1234         # 订单号
+  - descript: cpu
+规范三：使用空格作为嵌套缩进工具。通常建议使用两个空格缩进，不建议使用 tab （甚至不支持）
+
+规范四：序列表示
+
+使用“-”（横线） + 单个空格表示单个列表项
+--- # 文档开始
+- 第一章 简介
+- 第二章 设计目录
+使用"[]"表示一组数据
+--- # 文档开始
+[blue, red, green]
+组合表示。每个结构都可以嵌套组成复杂的表示结构。
+--- # 文档开始
+- [blue, red, green]     # 列表项本身也是一个列表
+- [Age, Bag]
+- site: {osc:www.oschina.net, baidu: www.baidu.com}  # 这里是同 键值表 组合表示
+规范五：键值表
+
+使用 “:”（冒号） + 空格表示单个键值对
+# 客户订单
+date: 2015-02-01
+customer:
+  - name: Jai
+items:
+  - no: 1234         # 订单号
+  - descript: cpu
+  - price: ￥800.00
+使用"{}"表示一个键值表
+# 客户订单
+date: 2015-02-01
+customer:
+  - name: Jai
+items: {no: 1234, descript: cpu, price: ￥800.00}
+"? " 问号+空格表示复杂的键。当键是一个列表或键值表时，就需要使用本符号来标记。
+ # 使用一个列表作为键
+ ? [blue, reg, green]: Color
+ # 等价于
+ ? - blue
+   - reg
+   - gree
+ : Color
+组合表示。每个结构都可以嵌套组成复杂的表示结构。 
+
+ Color:
+    - blue
+    - red
+    - green
+ 
+ # 相当于 (也是 JSON 的表示)
+ {Color: [blue, red, green]}
+ div:
+    - border: {color: red, width: 2px}
+    - background: {color: green}
+    - padding: [0, 10px, 0, 10px]
+ # 使用缩进表示的键值表与列表项
+ items:
+    - item: cpu
+      model: i3
+      price: ￥800.00
+    - item: HD
+      model: WD
+      price: ￥450.00
+ # 上面使用 “-” 前导与缩进来表示多个列表项，相当于下面的JSON表示
+ items: [{item:cpu, model:i3, price:￥800.00}, {item:HD, model:WD, price: ￥450.00}]
+规范六：文本块
+
+使用 “|” 和文本内容缩进表示的块：保留块中已有的回车换行。相当于段落块
+
+yaml: |      # 注意 ":" 与 "|" 之间的空格
+   JSON的语法其实是YAML的子集，大部分的JSON文件都可以被YAML的解释器解释。
+   如果你想更深入的学习YAML，我建议你去 http://www.yaml.org 看看
+使用 “>” 和文本内容缩进表示的块：将块中回车替换为空格，最终连接成一行。
+
+yaml: >      # 注意 ":" 与 ">" 之间的空格，另外可以使用空行来分段落
+   JSON的语法其实是YAML的子集，
+   大部分的JSON文件都可以被YAML的解释器解释。
+
+   如果你想更深入的学习YAML，我建议你去 http://www.yaml.org 看看
+
+使用定界符“”（双引号）、‘’（单引号）或回车表示的块：最终表示成一行。
+
+yaml:     # 使用回车的多行，最终连接成一行。
+   JSON的语法其实是YAML的子集，
+   大部分的JSON文件都可以被YAML的解释器解释。
+yaml:     # 使用了双引号，双引号的好处是可以转义，即在里面可以使用特殊符号
+   "JSON的语法其实是YAML的子集，
+   大部分的JSON文件都可以被YAML的解释器解释。"
+规范七：数据类型的约定
+
+对一些常用数据类型的表示格式进行了约定，包括:
+
+ integer: 12345     # 整数标准形式
+ octal: 0o34        # 八进制表示，第二个是字母 o
+ hex: 0xFF          # 十六进制表示
+ 
+ float: 1.23e+3     # 浮点数
+ fixed: 13.67       # 固定小数
+ minmin: -.inf      # 表示负无穷
+ notNumber: .NaN    # 无效数字
+ 
+ null:              # 空值
+ boolean: [true, false] # 布尔值
+ string: ‘12345‘    # 字符串
+ 
+ date: 2015-08-23   # 日期
+ datetime: 2015-08-23T02:02:00.1z  # 日期时间
+ iso8601: 2015-08-23t21:59:43.10-05:00  # iso8601 日期格式
+ spaced: 2015-08-23 21:59:43.10 -5      # ?
+“!”（叹号）显式指示类型，或自定义类型标识。单叹号通常是自定义类型，双叹号是内置类型
+
+ isString: !!str 2015-08-23     # 强调是字符串不是日期数据
+ picture: !!binary |            # Base64  图片
+     R0lGODlhDAAMAIQAAP//9/X
+     17unp5WZmZgAAAOfn515eXv
+     Pz7Y6OjuDg4J+fn5OTk6enp
+     56enmleECcgggoBADs=
+ #下面是内置类型
+ !!int               # 整数类型
+ !!float             # 浮点类型
+ !!bool              # 布尔类型
+ !!str               # 字符串类型
+ !!binary            # 也是字符串类型
+ !!timestamp         # 日期时间类型
+ !!null              # 空值
+ !!set               # 集合
+ !!omap, !!pairs     # 键值列表或对象列表
+ !!seq               # 序列，也是列表
+ !!map               # 键值表
+ #下面是一些例子：
+ --- !!omap
+ - Mark: 65
+ - Sammy: 63
+ - Key: 58
+ --- !!set           # 注意，“?”表示键为列表，在这里列表为 null
+ ? Mark
+ ? Sammy
+ ? Key
+ # 下面是自定义的类型或标识
+ %TAG ! tag:clarkevans.com,2002:   # % 是指令符号
+ --- !shape
+ # Use the ! handle for presenting
+ # tag:clarkevans.com,2002:circle
+ - !circle
+   center: &ORIGIN {x: 73, y: 129}
+   radius: 7
+ - !line
+   start: *ORIGIN
+   finish: { x: 89, y: 102 }
+ - !label
+   start: *ORIGIN
+   color: 0xFFEEBB
+   text: Pretty vector drawing.
+规范八：锚点与引用，定义数据的复用。
+
+第一步：使用 “&” 定义数据锚点（即要复制的数据）
+第二步：使用 “*” 引用上述锚点数据（即数据的复制目的地）
+ ---
+ hr:
+   - Mark McGwire
+   # Following node labeled SS
+   - &SS Sammy Sosa            # 定义要复制的数据
+ rbi:
+   - *SS # Subsequent occurrence   这里是数据复制目标
+   - Ken Griffey
+ 
+http://docs.jinkan.org/docs/jinja2/templates.html#builtin-tests
+
+过滤器
+变量可以通过 过滤器 修改。过滤器与变量用管道符号（ | ）分割，并且也 可以用圆括号传递可选参数。
+多个过滤器可以链式调用，前一个过滤器的输出会被作为 后一个过滤器的输入。
+
+例如 {{ name|striptags|title }}
+ 会移除 name 中的所有 HTML 标签并且改写 为标题样式的大小写格式。
+过滤器接受带圆括号的参数，如同函数调用。
+这个例子会 把一个列表用逗号连接起来: {{ list|join(', ') }} 。
+
+测试可以用于对照普通表达式测试一个变量。 
+要测试一个变量或表达式，你要在变量后加上一个 is 以及测试的名称。
+例如，要得出 一个值是否定义过，
+你可以用 name is defined ，这会根据 name 是否定义返回 true 或 false 。
+
+测试也可以接受参数。
+如果测试只接受一个参数，你可以省去括号来分组它们。
+divisible 英 [dɪˈvɪzəbl]   美 [dɪˈvɪzəbəl]  
+        adj. 可分开的，可除尽的
+
+例如， 下面的两个表达式做同样的事情:
+{% if loop.index is divisibleby 3 %}
+{% if loop.index is divisibleby(3) %}
+
+下面的 内置过滤器清单 节介绍了所有的内置过滤器。
+
+abs(number)
+返回参数的绝对值
+
+attr(obj, name)
+获取对象的属性。foo|attr（“bar”）的工作方式与foo[“bar”]类似，
+只是始终返回一个属性，而不查找项。
+
+folio   英 [ˈfəʊliəʊ]   美 [ˈfoʊlioʊ]  
+n. 对开的纸，（原稿的）一页，页码或张数
+adj. 对折的，对开的 vt. 编页码
+
+[folio]∶印刷上指相当于整张纸的一半（整张纸的二分之一）
+
+batch(value, linecount, fill_with=None)
+批处理（值、行计数、填充为无）
+批处理项目的筛选器。它的工作原理和切片很像，只是反过来。
+它返回具有给定项数的列表列表。
+如果提供第二个参数，则用于填充缺少的项。请参见此示例：
+<table>
+{%- for row in items|batch(3, '&nbsp;') %}
+  <tr>
+  {%- for column in row %}
+    <td>{{ column }}</td>
+  {%- endfor %}
+  </tr>
+{%- endfor %}
+</table>
+
+
+
+Playbook 示例
+
+[root@master src]# cat  /opt/playbook/test.yaml
+---
+- hosts: test  #定义的主机组，即应用的主机
+  remote_user: root     # 远程用户为root
+
+  tasks:
+    - name: mkdir ssh dir
+      shell: mkdir -p /root/scripts/.ssh
+
+    - name: copy ssh file
+      copy: src=/root/scripts/.ssh/authorized_keys dest=/root/.ssh/authorized_keys 
+
+    - name: rsync scripts
+      synchronize: src=/root/scripts dest=/root rsync_opts=-avuz # rsync增量传输
+
+    - name:  rsync tomcat jdk
+      synchronize: src=/opt/service dest=/opt  rsync_opts=-avuz
+
+    - name: "initialize"
+      shell: sh /root/scripts/auto_fdisk.sh
+    - shell: sh /root/scripts/useradd.sh   #存在多个相同模块时，后面的木块要加-
+    - shell: sh /root/scripts/init.sh
+    - shell: sh /root/scripts/service.sh
+
+
+原文：https://blog.csdn.net/qq_32642039/article/details/81559728 
+
+定义输出的格式通过yml中的debug来完成。以下是我只是定义的只是获取stdout的内容
+
+修改playbook
+
+- name: Demo Proc Stop
+  shell: /data/server/eric/demo.sh stop
+  register: demoStop
+
+- name: Process Status
+  debug: var=demoStop.stdout
+  with_items: demoStop.results
+上面的方法是通过将demoStop.stdout赋予var变量，后面再由demoStop.results输出var的值来完成
+
+以下为输出的结果
+
+ok: [192.168.101.110] => (item=demoStop.results) => {
+    "item": "demoStop.results", 
+    "var": {
+        "demoStop.stdout": "stop finished"
+    }
+}
+
+
+
