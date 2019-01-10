@@ -236,6 +236,11 @@ key: [{a: a, b1: [bb1, bb2, bb3]}, {c: c, d2: [dd1, dd2, dd3]}, {e: e, f3: [ff1,
   "键2": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
   "键3": [  { "键e": "值e",  "键f": "值f" }, {  "键g": "值g",  "键h": "值h"} ]
 }
+
+大括号{} 表示对象, 用 点号 . 来引用 对象的 .属性/或函数 .(函数后面要加小括号)... 
+中括号[] 表示数组, 用['下标']的方式来引用. 即使是混合式的数据结构, 也是同样的道理.
+json的数据, 都是用 双引号, 
+不管是key, 还是 value, 都要用 双引号 表示....
 *************/
 
 Jinja2是基于python的模板引擎，
@@ -718,6 +723,38 @@ Va2                        : ok=2    changed=0    unreachable=0    failed=0
 
 http://docs.jinkan.org/docs/jinja2/templates.html#builtin-tests
 
+[root@Va1 ~]# cat  apache.yaml 
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:
+        name: httpd
+        state: present
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^Listen "
+        insertafter: "^Listen "
+        line: "Listen  8080"
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^#ServerName "
+        insertbefore: "^#ServerName "
+        line: "ServerName  localhost"
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+    - service:
+        name: httpd
+        state: started
+        enabled: yes
+[root@Va1 ~]# 
 
 
 

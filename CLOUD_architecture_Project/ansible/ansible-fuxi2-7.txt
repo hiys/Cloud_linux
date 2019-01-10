@@ -1,0 +1,1588 @@
+
+http://www.yaml.org
+
+Jinja2是基于python的模板引擎，
+功能比较类似于于PHP的smarty，
+J2ee的Freemarker和velocity。
+ 它能完全支持unicode，
+并具有集成的沙箱执行环境，应用广泛。
+jinja2使用BSD授权。
+
+/*********json  格式  注意 json 分隔符 有 逗号, ******************
+{ "键": [  { "键": "值",  "键": "值" }, {  "键": "值",  "键": "值"} ]
+}
+
+{ "键1": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+  "键2": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+  "键3": [  { "键e": "值e",  "键f": "值f" }, {  "键g": "值g",  "键h": "值h"} ]
+}
+创建一个新的 JavaScript 变量，然后将 JSON 格式的数据字符串直接赋值给它
+var people = {
+             "键1": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+             "键2": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+             "键3": [  { "键e": "值e",  "键f": "值f" }, {  "键g": "值g",  "键h": "值h"} ]
+           }
+
+访问 JSON 格式的数据 
+在 JavaScript 中使用下面这样的代码：
+people.键1[0].键a;
+people.键1[1].键c;
+
+people.键2[0].键b;
+people.键3[1].键h;
+
+注意，数组索引是从零开始的
+
+在 JavaScript 中 转换 字符串：
+String newJSONtext = people.toJSONString();
+
+在 JavaScript 中 对象转换 字符串：
+String myObjectInJSON = myObject.toJSONString();
+
+大括号{} 表示对象, 用 点号 . 来引用 对象的 .属性/或函数 .(函数后面要加小括号)... 
+中括号[] 表示数组, 用['下标']的方式来引用. 即使是混合式的数据结构, 也是同样的道理.
+json的数据, 都是用 双引号, 
+不管是key, 还是 value, 都要用 双引号 表示....
+
+为了方便地处理JSON数据，JSON提供了json.js包，
+下载地址：http://lib.sinaapp.com/js/json2/json2.js
+json 只接受 utf-8 编码的字符，
+所以json_encode()的参数必须是utf-8编码
+
+http://caibaojian.com/json-intro.html
+*************/
+
+playbook语法基础
+• playbook 语法格式
+– playbook由 YAML 语言编写,遵循 YAML 标准
+
+– 在同一行中,#之后的内容表示注释
+– 同一个列表中的元素应该保持相同的缩进
+– playbook 由一个或多个 play 组成
+– play 中 hosts,variables,roles,tasks 等对象的表示
+方法都是键值中间以 ": " 分隔表示
+– YAML 还有一个小的怪癖. 所有的 YAML 文件开始行都
+应该是 ---. 这是 YAML 格式的一部分, 表明一个文件的开始
+
+Playbook 简介 
+playbook是ansible用于配置，部署和管理托管主机剧本，
+通过playbook的详细描述，执行其中的一系列tasks，可以让远端主机达到预期状态
+
+Playbooks与Ad-Hoc相比，是一种完全不同的运用Ansible的方式，而且是非常之强大的；
+也是系统ansible命令的集合，其利用yaml语言编写，
+运行过程，ansbile-playbook命令根据自上而下的顺序依次执行。
+ 
+简单来说，Playbooks 是一种简单的配置管理系统与多机器部署系统的基础。
+与现有的其他系统有不同之处，且非常适合于复杂应用的部署。 
+同时，Playbooks开创了很多特性，
+它可以允许你传输某个命令的状态到后面的指令，
+如你可以从一台机器的文件中抓取内容并附为变量，然后在另一台机器中使用，
+这使得你可以实现一些复杂的部署机制，这是ansible命令无法实现的。
+ 
+Playbooks可用于声明配置，更强大的地方在于，
+在Playbooks中可以编排有序的执行过程，甚至于做到在多组机器间，来回有序的执行特别指定的步骤。
+并且可以同步或异步的发起任务。
+ 
+我们使用Ad-Hoc时，主要是使用 /usr/bin/ansible 程序执行任务.
+
+而使用Playbooks时，更多是将之放入源码控制之中，
+
+ansible有两种工作模式pull/push ，默认使用push(推，推动)模式工作(主动模式)，
+
+用之推送(push 推，推动) 你的配置或是用于确认你的远程系统的配置是否符合配置规范。 
+
+在如右的链接中：ansible-examples repository，有一些整套的Playbooks，它们阐明了上述的这些技巧。
+
+二、Playbook 构成 
+Playbook主要有以下四部分构成： 
+1. target section：定义将要执行playbook的远程主机组 
+2. variable section：定义playbook运行时需要使用的变量 
+
+3. task section：定义将要在远程主机上执行的任务列表 
+
+4. handler section：定义task执行完成以后需要调用的任务
+
+而Playbook对应的目录层有五个，分别如下： 
+一般所需的目录层有：(视情况可变化) 
+1. vars 变量层 
+2. tasks 任务层 
+3. handlers 触发条件 
+4. files 文件 
+5. template 模板 
+
+structure
+英 [ˈstrʌktʃə(r)]   美 [ˈstrʌktʃɚ]  
+n. 结构;构造;建筑物;体系
+vt. 构成，排列;安排
+
+YAML的语法和其他高阶语言类似，并且可以简单表达清单、散列表、标量等数据结构。
+
+其结构（Structure）通过空格来展示，
+
+序列（Sequence）里的项用”-“来代表，
+
+Map里的键值对用”:”分隔。
+
+下面是一个示例。
+
+- hosts: 10.1.0.1        #定义主机
+      vars:                      #定义变量
+           var1: value
+           var2: value
+      tasks:                    #定义任务
+           - name:           #任务名称。
+       #这里就可以开始用模块来执行具体的任务了。
+
+      handlers:     #定义触发通知所作的操作。里面也是跟tasks一样，用模块定义任务。
+           - name:
+
+      remote_user:             #远程主机执行任务时的用户。一般都是root，一般也不用指定。
+
+    - hosts: web
+      vars:
+      tasks:
+      handlers:
+      remote_user:
+YAML文件扩展名通常为.yaml，如example.yaml
+https://blog.csdn.net/qq_32642039/article/details/81559728
+
+
+ansible-pull:Ansible的另一种工作模式，pull模式(被动模式)，
+
+ansible默认使用push模式(主动模式)；
+
+ansible有两种工作模式pull/push ，默认使用push模式工作(主动模式)，
+pull和push工作模式机制刚好相反
+ 
+一般2000台主机以下 适用主动服务模式
+2000台主机以上适用 被 动服务模式
+
+push  推，推动
+
+pull 拉;扯;拉过来;划（船）
+
+使用ansible-playbook  运行playbook文件,
+执行结果 输出 内容格式 json格式
+不同颜色,如
+绿色 代表执行成功
+*** 代表 系统状态发生改变
+红色代表 执行失败
+
+---
+父键父数组名key:
+  -
+    子键a: 子值a
+    子键b子数组名1:
+      - 子值b子数组元素b1
+      - 子值b子数组元素b2
+      - 子值b子数组元素b3
+  -
+    子键c: 子值c
+    子键d-子数组名2:
+      - 子值d子数组元素d1
+      - 子值d子数组元素d2
+      - 子值d子数组元素d3
+  -
+    子键e: 子值e
+    子键f子数组名3:
+      - 子值f子数组元素f1
+      - 子值f子数组元素f2
+      - 子值f子数组元素f3
+
+数组也可以使用流式(flow)的方式表示：
+companies: [{id: 1,name: company1,price: 200W},{id: 2,name: company2,price: 500W}]
+
+父键父数组名key: [{子键a: 子值a, 子键b子数组名1: [子值b子数组元素b1, 子值b子数组元素b2, 子值b子数组元素b3]}, {子键c: 子值c, 子键d子数组名2: [子值d子数组元素d1, 子值d子数组元素d2, 子值d子数组元素d3]}, {子键e: 子值e, 子键f子数组名3: [子值f子数组元素f1, 子值f子数组元素f2, 子值f子数组元素f3]}]
+
+数组也可以使用流式(flow)的方式表示：
+
+key: [{a: a, b1: [bb1, bb2, bb3]}, {c: c, d2: [dd1, dd2, dd3]}, {e: e, f3: [ff1, ff2, ff3]}]
+  
+ ##注意逗号和冒号后面必须有一个空格,yaml语言格式
+
+============注意 yaml 分隔符没有逗号,  YAML 是一种简洁的非标记语言================
+
+---                  #  ---代表一个文件的开始
+"父键-父数组名key":        # 注意直接敲 回车符号换行
+  -                     # 注意头部对齐 缩进 2 个空格, 短横杠 - 后面直接敲 回车符号换行[ 下面的都是子数组 ]
+    "子键a": "子值a"  # 注意头部对齐 缩进 4 个空格, 直接敲 回车符号换行
+    "子键b-子数组名1":         # 注意头部对齐 缩进 4 个空格, 直接敲 回车符号换行
+      - "子值b-子数组元素b1"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+      - "子值b-子数组元素b2"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+      - "子值b-子数组元素b3"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+  -                     # 注意头部对齐 缩进 2 个空格, 短横杠 - 后面直接敲 回车符号换行[ 下面的都是子数组 ]
+    "子键c": "子值c"  # 注意头部对齐 缩进 4 个空格, 直接敲 回车符号换行
+    "子键d-子数组名2":         # 注意头部对齐 缩进 4 个空格, 直接敲 回车符号换行
+      - "子值d-子数组元素d1"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+      - "子值d-子数组元素d2"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+      - "子值d-子数组元素d3"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+  -                     # 注意头部对齐 缩进 2 个空格, 短横杠 - 后面直接敲 回车符号换行[ 下面的都是子数组 ]
+    "子键e": "子值e"  # 注意头部对齐 缩进 4 个空格, 直接敲 回车符号换行
+    "子键f-子数组名3":         # 注意头部对齐 缩进 4 个空格, 直接敲 回车符号换行
+      - "子值f-子数组元素f1"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+      - "子值f-子数组元素f2"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+      - "子值f-子数组元素f3"  # 注意头部对齐 缩进 6 个空格,短横杠 后 一个 空格
+...           # ...代表一个文件的结束
+
+
+key: [{a: a, b1: [bb1, bb2, bb3]}, {c: c, d2: [dd1, dd2, dd3]}, {e: e, f3: [ff1, ff2, ff3]}]
+  
+[root@Va1 ~]# cd  /root/.ssh/
+[root@Va1 .ssh]# ls
+known_hosts
+[root@Va1 .ssh]# >  known_hosts
+[root@Va1 .ssh]# ssh-keygen  -t  rsa  -b  2048  -N  ''  ##注意-N 空格''
+# ssh-keygen  -t 指定密钥的类型  -b 指定密钥长度  -N new_passphrase提供一个新的密码
+
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:   直接回车
+SHA256:NYoUP+BUbr1hKG3l1DsJU9bfIBXm1zEPEjqvYI+7Zfs root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+|      +.. oo=+=+ |
+|     o * *ooo+o.=|
+|      + O Xo +.o=|
+|     . = = *+  .o|
+|      . S . ..   |
+|       . + .     |
+|        . =      |
+|         + .     |
+|        o...E    |
++----[SHA256]-----+
+[root@Va1 .ssh]# ls
+id_rsa  id_rsa.pub  known_hosts
+
+[root@Va1 .ssh]# cat  id_rsa.pub 
+ssh-rsa AAAAB3NzaC1y........98c/91qyP0p4Mxn28Yz7WAGc6QQdcndkQxpy90S8DN6zhgrSTArZSHL92Gl1p//HMdiuJYWDxtFIhX root@Va1
+
+[root@Va1 .ssh]# ansible-doc  -l  |grep  authorized
+authorized_key       Adds or removes an SSH authorized key 
+
+[root@Va1 .ssh]# ansible all  -m  authorized_key  -a  "user=root  exclusive=true  \
+manage_dir=true  key='$(< /root/.ssh/id_rsa.pub)'"  -k  ##批量部署密钥（公钥匙）
+
+SSH password: 1 ##输入所有root用户的ssh连接密码（注意所有主机密码必须相同，否则不能正确执行）
+
+[root@Va1 ~]# ssh  Va6  hostname  ##验证 批量部署密钥（公钥匙）成功
+Va6
+
+[root@Va1 ~]# ls  /etc/ansible/
+ansible.cfg  hosts  roles
+
+[root@Va1 ~]# grep  -Pvn  '^(#|$)'   /etc/ansible/ansible.cfg 
+10:[defaults]
+14:inventory      = /etc/ansible/hosts
+58:roles_path    = /etc/ansible/roles:/usr/share/ansible/roles
+61:host_key_checking = False
+309:[inventory]
+322:[privilege_escalation]
+328:[paramiko_connection]
+352:[ssh_connection]
+404:[persistent_connection]
+425:[accelerate]
+440:[selinux]
+449:[colors]
+465:[diff]
+
+[root@Va1 ~]# sed  -n  '44,$p'  /etc/ansible/hosts
+[web]
+Va2
+Va4
+
+[db]
+Va3
+Va5
+
+[other]
+Va6
+
+[app:children]
+web
+db
+[root@Va1 ~]# 
+
+[root@Va1 ~]# vim  ping.yml
+[root@Va1 ~]# cat  ping.yml
+
+---                   #  ---代表一个文件的开始
+- hosts: Va2       # 注意头部对齐 ,无缩进, 短横杠- 和 冒号:  后 一个 空格
+  remote_user: root  ## # 注意头部对齐 缩进 2 个空格
+  tasks:          # # # 注意头部对齐 缩进 2 个空格
+    - ping:      # # # 注意头部对齐 缩进 4 个空格,短横杠 后 一个 空格
+
+/**************
+使用ansible-playbook  运行playbook文件,
+执行结果 输出 内容格式 json格式
+不同颜色,如
+绿色 代表执行成功
+*** 代表 系统状态发生改变
+红色代表 执行失败
+
+[root@Va1 ~]# ansible-playbook  ping.yml  #绿色 代表执行成功
+
+PLAY [Va2] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va2]
+
+TASK [ping] ********************************************************************
+ok: [Va2]
+
+PLAY RECAP *********************************************************************
+Va2                        : ok=2    changed=0    unreachable=0    failed=0   
+
+[root@Va1 ~]# ll  ping.yml
+-rw-r--r-- 1 root root 58 1月   9 21:23 ping.yml
+[root@Va1 ~]# cat  ping.yml
+---
+- hosts: Va2
+  remote_user: root
+  tasks:
+    - ping:
+[root@Va1 ~]# 
+
+http://docs.jinkan.org/docs/jinja2/templates.html#builtin-tests
+
+YAML 
+缩进
+YAML 使用一个固定的缩进风格表示层级结构,每个缩进由两个空格组成, 不能使用tabs
+冒号
+  以冒号结尾的(回车换行)除外，其他所有冒号后面所有必须有空格。
+短横线 - 
+-  表示列表项，使用一个短横杠 -  加一个空格。
+  多个项使用同样的缩进级别作为同一列表。
+数组使用"-  "[ 使用一个短横杠 -  加一个空格 ]来表示
+
+在ansible中，任何一个模块都会返回json格式的数据
+stdout_lines还包含了一个json数组，
+也就是所谓的yaml列表项(即使用[中括号]包围的)
+
+playbook 变量使用
+变量来源：
+（1）ansible setup facts远程主机的所有变量都可以用
+（2）自定义变量
+a. 在/etc/ansible/hosts 定义变量，在主机组中的主机单独定义，优先级高于组中公共变量
+b. 在/etc/ansible/hosts 定义变量，针对主机组中的所有主机集中定义变量
+c. 通过命令行指定变量，优先级最高
+
+facts组件是用来收集被管理节点信息的，使用setup模块可以获取这些信息
+
+[root@Va1 ~]# ansible-doc  -s  setup  |grep  -A3  filter:
+      filter:                # if supplied, only return facts that match this
+                               shell-style
+                               (fnmatch)
+                               wildcard.
+使用filter可以筛选指定的facts信息。例如：
+[root@Va1 ~]# ansible  Va2  -m  setup  -a "filter=changed"
+Va2 | SUCCESS => {
+    "ansible_facts": {}, 
+    "changed": false
+}
+[root@Va1 ~]# ansible  Va2  -m  setup  -a "filter=ansible_os_family"
+Va2 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_os_family": "RedHat"
+    }, 
+    "changed": false
+}
+
+[root@Va1 ~]# ansible-playbook  --help  |grep  -A1  "\-S, --su"
+    -S, --su            run operations with su (deprecated, use become)
+                           使用su运行操作（已弃用，请使用become）
+         
+    -R SU_USER, --su-user=SU_USER
+            su命令行选项已被弃用，取而代之的是“成为”命令行参数。
+此功能将在版本中删除
+2.6。可以通过设置禁用拒绝警告
+在ansible.cfg中，
+deprecation_warnings=False
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts  -S  -R root  echo.yml
+
+[root@Va1 ~]# ansible-playbook  --help  |grep  -A1  "\-b, --become"
+    -b, --become        run operations with become (does not imply password
+                        prompting)
+                            使用been运行操作（不表示密码提示）
+
+
+ debug 调试模块，用于在调试中输出信息
+
+常用参数：
+msg：调试输出的消息
+var：将某个任务执行的输出作为变量传递给debug模块，debug会直接将其打印输出
+verbosity：debug的级别（默认是0级，全部显示）
+
+register  登记，注册;
+verbosity  [vɜ:'bɒsətɪ]美 [ və:ˈbɑsətɪ]  
+n. 冗长，赘言
+
+
+
+短横线 - 
+-  表示列表项，使用一个短横杠 -  加一个空格。
+  多个项使用同样的缩进级别作为同一列表。
+数组使用"-  "[ 使用一个短横杠 -  加一个空格 ]来表示
+
+在ansible中，任何一个模块都会返回json格式的数据
+stdout_lines还包含了一个json数组，
+也就是所谓的yaml列表项(即使用中括号包围的)
+
+[root@Va1 ~]# cat  ping.yml
+
+---                   #  ---代表一个文件的开始
+- hosts: Va2       # 注意头部对齐 ,无缩进, 短横杠- 和 冒号:  后 一个 空格
+  remote_user: root  ## # 注意头部对齐 缩进 2 个空格
+  tasks:          # # # 注意头部对齐 缩进 2 个空格
+    - ping:      # # # 注意头部对齐 缩进 4 个空格,短横杠 后 一个 空格
+
+/**************
+register  登记，注册;
+verbosity  [vɜ:'bɒsətɪ]美 [ və:ˈbɑsətɪ]  
+n. 冗长，赘言
+
+- name: Print debug infomation eg 
+  hosts: test2 
+  gather_facts: F 
+  tasks: 
+  - name: Command run line 
+    shell: date 
+    register: result 
+  - name: Show debug info 
+    debug: var=result.stdout verbosity=0
+
+
+[root@Va1 ~]# vim  echo.yml
+
+ debug 调试模块，用于在调试中输出信息
+常用参数：
+msg：调试输出的消息
+var：将某个任务执行的输出作为变量传递给debug模块，debug会直接将其打印输出
+verbosity：debug的级别（默认是0级，全部显示）
+
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo hello   world  # 注意头部对齐 缩进 4 个空格,短横杠 后 一个 空格
+      register: say_hi       # 注意头部对齐 缩进 6 个空格
+    - debug: var=say_hi.stdout   verbosity=0
+
+[root@Va1 ~]# ll  echo.yml
+-rw-r--r-- 1 root root 124 1月  10 14:01 echo.yml
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi.stdout": "hello world"
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# vim  echo.yml 
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo hello   world
+      register: say_hi
+    - debug: var=say_hi
+
+/*******************
+playbook 将 shell 模块中 echo命令 的结果 注册 为 变量say_hi
+并使用 debug模块 输出
+
+在ansible中，json格式的数据，其内每一项都可以通过变量来引用它。
+引用的前提是先将其 注册 为 变量
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+            ## facts组件 是用来收集被管理节点信息的，使用setup模块可以获取这些信息
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "cmd": "echo hello world", 
+        "delta": "0:00:00.002023", 
+        "end": "2019-01-10 15:04:18.205710", 
+        "failed": false, 
+        "rc": 0, 
+        "start": "2019-01-10 15:04:18.203687", 
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "hello world", 
+        "stdout_lines": [
+            "hello world"
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+结果是一段json格式的数据，最顶端的key为say_hi，
+其内是一大段的字典(即使用大括号包围的)，
+
+其中的stdout_lines还包含了一个json数组，
+        "stdout_lines": [
+            "hello world"
+        ]
+也就是所谓的yaml列表项 (即使用中括号包围的)
+  tasks:
+    - shell: echo hello   world
+      register: say_hi
+    - debug: var=say_hi
+
+[root@Va1 ~]# 
+ facts收集的信息是json格式的，
+其内任一项都可以当作变量被直接引用(如在playbook、jinja2模板中)引用
+
+在ansible中，json格式的数据，其内每一项都可以通过变量来引用它。
+引用的前提是先将其 注册 为 变量
+
+[root@Va1 ~]# vim  echo.yml
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+当从/root/echo.yml构造映射时，第5行第7列，
+找到重复的dict键（shell）。仅使用上次定义的值。
+.........
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "hello xxixixi", 
+        "stdout_lines": [
+            "hello xxixixi"
+        ]
+
+目前fact支持两种类型的文件：ini和json
+
+注册和定义变量的各种方式
+
+ansible中定义变量的方式有很多种，大致有：
+(1)将模块的执行结果注册为变量；
+(2)直接定义字典类型的变量；
+(3)role中文件内定义变量；
+(4)命令行传递变量；
+(5)借助with_items迭代将多个task的结果赋值给一个变量；
+(6)inventory中的主机或主机组变量；
+(7)内置变量。
+
+使用register选项，
+可以将当前task的输出结果赋值给一个变量。
+例如，下面的示例中将echo的结果"haha"赋值给say_hi变量。
+注意，模块的输出结果是json格式的，
+所以，引用变量时要指定引用的对象。
+
+循环：迭代，需要重复执行的任务；
+对迭代项的引用，固定变量名为”item”，使用 with_item 属性 给定要迭代的元素；
+ 这个是以任务为中心，围绕每个任务来跑主机，
+如果中间某个任务中断，那么所有主机以后的任务就无法安装。
+
+Jinja2语法：
+模版讲解：
+{{ ... }}：装载一个变量，模板渲染的时候，会使用传进来的同名参数这个变量代表的值替换掉。
+  模板的表达式 都是包含在分隔符{{ }}内的
+
+{% ... %}：装载一个控制语句。
+{# ... #}：装载一个注释，模板渲染的时候会忽视这中间的值
+
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo hello   world  # 注意头部对齐 缩进 4 个空格,短横杠 后 一个 空格
+      register: say_hi       # 注意头部对齐 缩进 6 个空格
+    - debug: var=say_hi.stdout   verbosity=0
+
+[root@Va1 ~]# vim  echo.yml 
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo  {{item}} # 注意头部对齐 缩进 4 个空格,短横杠 后 一个 空格
+      with_items:    # 注意头部对齐 缩进 6 个空格
+        - haha
+        - xixi      # 注意头部对齐 缩进 8 个空格
+        - hehe
+      register: say_hi   # 注意头部对齐 缩进 6 个空格
+    - debug: var=say_hi
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3] => (item=haha)
+changed: [Va3] => (item=xixi)
+changed: [Va3] => (item=hehe)
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "msg": "All items completed", 
+        "results": [
+            {
+.........................
+                }, 
+                "item": "haha", 
+                "rc": 0, 
+                "start": "2019-01-10 16:14:49.568387", 
+                "stderr": "", 
+                "stderr_lines": [], 
+                "stdout": "haha", 
+                "stdout_lines": [
+                    "haha"
+                ]
+            }, 
+....................
+                }, 
+                "item": "xixi", 
+                "rc": 0, 
+                "start": "2019-01-10 16:14:49.751857", 
+                "stderr": "", 
+                "stderr_lines": [], 
+                "stdout": "xixi", 
+                "stdout_lines": [
+                    "xixi"
+                ]
+            }, 
+....................
+                }, 
+                "item": "hehe", 
+                "rc": 0, 
+                "start": "2019-01-10 16:14:49.968174", 
+                "stderr": "", 
+                "stderr_lines": [], 
+                "stdout": "hehe", 
+                "stdout_lines": [
+                    "hehe"
+                ]
+            }
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+
+
+
+[root@Va1 ~]# vim  echo.yml 
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo  {{item}}   # 注意头部对齐 缩进 4 个空格
+      with_items:   # 注意头部对齐 缩进 6 个空格
+        - haha
+        - xixi   # 注意头部对齐 缩进 8 个空格
+        - hehe
+      register: say_hi
+    - debug: var=say_hi.results[0].stdout
+    - debug: var=say_hi.results[1].stdout
+    - debug: var=say_hi.results[2].stdout
+
+每次迭代的过程中，
+调用 item 的模块 都会将 结果 保存在一个 key为results 的数组中。
+因此，引用迭代后注册的变量时，
+需要在变量名中加上results，
+并指定数组名。
+例如上面的say_hi.results[N].stdout
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3] => (item=haha)
+changed: [Va3] => (item=xixi)
+changed: [Va3] => (item=hehe)
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi.results[0].stdout": "haha"
+}
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi.results[1].stdout": "xixi"
+}
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi.results[2].stdout": "hehe"
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=5    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]#  
+
+ debug 调试模块，用于在调试中输出信息
+常用参数：
+msg：调试输出的消息
+var：将某个任务执行的输出作为变量传递给debug模块，debug会直接将其打印输出
+verbosity：debug的级别（默认是0级，全部显示）
+
+[root@Va1 ~]# vim  echo.yml 
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo  {{item}}
+      with_items:
+        - haha
+        - xixi
+      register: say_hi
+    - debug: var=say_hi  verbosity=0  # debug的级别（默认是0级，全部显示）
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3] => (item=haha)
+changed: [Va3] => (item=xixi)
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "msg": "All items completed", 
+        "results": [
+            {
+                "_ansible_ignore_errors": null, 
+                "_ansible_item_result": true, 
+......................
+                "changed": true, 
+                "cmd": "echo haha", 
+..........................
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "echo haha", 
+.................................
+                    }
+                }, 
+                "item": "haha", 
+                "rc": 0, 
+                "start": "2019-01-10 16:34:50.082789", 
+                "stderr": "", 
+                "stderr_lines": [], 
+                "stdout": "haha", 
+                "stdout_lines": [
+                    "haha"
+                ]
+            }, 
+            {
+                "_ansible_ignore_errors": null, 
+                "_ansible_item_result": true, 
+..........................
+                "changed": true, 
+                "cmd": "echo xixi", 
+..............................
+                "invocation": {
+                    "module_args": {
+                        "_raw_params": "echo xixi", 
+                        "_uses_shell": true, 
+..................................
+                    }
+                }, 
+                "item": "xixi", 
+                "rc": 0, 
+                "start": "2019-01-10 16:34:50.268026", 
+                "stderr": "", 
+                "stderr_lines": [], 
+                "stdout": "xixi", 
+                "stdout_lines": [
+                    "xixi"
+                ]
+            }
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+
+ 数组使用"- "( 减号 加 一个) 来表示
+使用 "- " ( 减号 加 一个 或 多个空格 或则 换行符号回车 ) 作为 列表项，也就是json中的数组
+
+具体在ansible playbook中，列表所描述的是局部环境，它不一定要有名称，不一定要从同一个属性开始，只要使用"- "，它就表示圈定一个范围，范围内的项都属于该列表。例如：
+---
+  - name: list1              # 列表1，同时给了个名称name: list1 
+    hosts: localhost         # 指出了hosts是列表1的一个对象
+    remote_user: root        # 列表1的属性
+    tasks:                   # 列表1的属性
+  - hosts: 192.168.100.65    # 列表2，但是没有为列表命名 
+    remote_user: root
+    sudo: yes
+    tasks:
+
+注意，每一个playbook中必须包含"hosts"和"tasks"项。
+更严格地说，是每个play的顶级列表必须包含这两项。
+
+就像上面的例子中，就表示该playbook中包含了两个play，
+每个play的顶级列表都包含了hosts和tasks。
+
+绝大多数情况下，
+一个playbook中都只定义一个play，所以只有一个顶级列表项。
+
+字典
+官方手册上这么称呼，其实就是key=value的另一种写法。
+使用"冒号+空格"分隔，即key: value。
+它一般当作列表项的属性
+
+具体到playbook中，一般"虚拟性"的内容都可以通过字典的方式书写，而实体化的、动作性的、对象性的内容则应该定义为列表形式。
+---
+  - hosts: localhost              # 列表1
+    remote_user: root
+    tasks:
+      - name: test1    # 子列表，下面是shell模块，是一个动作，所以定义为列表，只不过加了个name
+        shell: echo /tmp/a.txt
+        register: hi_var
+      - debug: var=hi_var.stdout  # 调用模块，这是动作，所以也是列表
+      - include: /tmp/nginx.yml   # 同样是动作，包含文件
+      - include: /tmp/mysql.yml
+      - copy:           # 调用模块，定义为列表。但模块参数是虚拟性内容，应定义为字典而非列表
+          src: /etc/resolv.conf   # 模块参数1 ##注意缩进,严格区分空格数量
+          dest: /tmp              # 模块参数2
+
+  - hosts: 192.168.100.65       # 列表2
+    remote_user: root
+    vars:
+      nginx_port: 80        # 定义变量，是虚拟性的内容，应定义为字典而非列表
+      mysql_port: 3306
+      vars_files: 
+        - nginx_port.yml     # 无法写成key/value格式，且是实体文件，因此定义为列表
+      tasks:
+        - name: test2
+          shell: echo /tmp/a.txt
+          register: hi_var            # register是和最近一个动作绑定的
+        - debug: var=hi_var.stdout
+
+从上面示例的copy模块可以得出，模块的参数是虚拟性内容，
+也能使用字典的方式定义
+
+字典格式的key/value，也支持内联格式写法 使用大括号{k: v1,K: v2,k: v3}
+列表项 [ 使用中括号 ] 
+
+playbook中有3种方式进行续行。
+在"key: "的后面使用 " > " 大于号。
+在"key: "的后面使用 " | " 竖线。这种方式可以像脚本一样写很多行语句。
+多层  缩进。
+
+YAML 
+缩进
+YAML 使用一个固定的缩进风格表示层级结构,每个缩进由两个空格组成, 不能使用tabs
+冒号
+  以冒号结尾的(回车换行)除外，其他所有冒号后面所有必须有空格。
+短横线 - 
+-  表示列表项，使用一个短横杠 -  加一个空格。
+  多个项使用同样的缩进级别作为同一列表。
+数组使用"-  "[ 使用一个短横杠 -  加一个空格 ]来表示
+
+在ansible中，任何一个模块都会返回json格式的数据
+stdout_lines还包含了一个json数组，
+也就是所谓的yaml列表项 [ 即使用[中括号]包围的 ]
+
+[root@Va1 ~]# vim  echo.yml 
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:   # 注意头部对齐 缩进 2 个空格
+    - shell: |   # 注意头部对齐 缩进 4 个空格
+        echo  "haha"  # 注意头部对齐 缩进 8 个空格
+        echo  "xixi"
+      register: say_hi  # 注意头部对齐 缩进 6 个空格
+    - debug: var=say_hi  verbosity=0
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "cmd": "echo \"haha\"\n echo \"xixi\"", 
+        "delta": "0:00:00.002084", 
+        "end": "2019-01-10 17:23:33.166233", 
+        "failed": false, 
+        "rc": 0, 
+        "start": "2019-01-10 17:23:33.164149", 
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "haha\nxixi", 
+        "stdout_lines": [
+            "haha", 
+            "xixi"
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+[root@Va1 ~]# cat echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: |      # 在"key: "的后面使用 " | " 竖线 , 进行续行
+        echo  "haha" # 注意头部对齐 缩进 8 个空格
+        echo  "xixi"
+      register: say_hi
+    - debug: var=say_hi  verbosity=0
+==================================
+yaml
+# 使用了双引号，双引号的好处是可以转义，即在里面可以使用特殊符号
+     #可以使用双引号或者 单引号 包裹特殊字符
+字符串可以 不用 引号 标注
+
+>在字符串中折叠换行，| 保留换行符，这两个符号是YAML中字符串经常使用的符号
+
+层级关系 除了使用缩进，还能够使用特定符号来表示
+
+playbook中有3种方式进行续行。
+在"key: "的后面使用 " > " 大于号。
+在"key: "的后面使用 " | " 竖线。这种方式可以像脚本一样写很多行语句。
+多层  缩进,进行续行
+========================
+
+[root@Va1 ~]# vim  echo.yml
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:         # 注意头部对齐 缩进 2 个空格
+    - shell: >   # 在"key: "的后面使用 " > " 大于号, 进行续行
+        echo  "haha"  # 注意头部对齐 缩进 8 个空格
+        echo  "xixi"
+      register: say_hi
+    - debug: var=say_hi  verbosity=0  # 注意头部对齐 缩进 4 个空格
+
+/*** > 在字符串中折叠换行，
+ 注意 大于号的输出结果是 
+ "cmd": "echo \"haha\" echo \"xixi\"", 
+
+        "stdout_lines": [
+            "haha echo xixi"
+        ]
+
+
+ # 注意 | 保留换行符 , 使用 " | " 竖线 的输出结果是 
+"cmd": "echo \"haha\"\n echo \"xixi\"",
+
+        "stdout_lines": [
+            "haha", 
+            "xixi"
+        ]
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "cmd": "echo \"haha\" echo \"xixi\"", 
+        "delta": "0:00:00.002171", 
+        "end": "2019-01-10 17:34:14.678704", 
+        "failed": false, 
+        "rc": 0, 
+        "start": "2019-01-10 17:34:14.676533", 
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "haha echo xixi", 
+        "stdout_lines": [
+            "haha echo xixi"
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# vim   echo.yml
+[root@Va1 ~]# cat  echo.yml
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo  "haha"  ## 注意头部对齐 缩进 4 个空格,多层  缩进,进行续行
+        echo  "xixi"  # 比模块shell缩进更多 # 注意头部对齐 缩进 8 个空格
+      register: say_hi
+    - debug: var=say_hi  verbosity=0
+
+/***多层  缩进, 在字符串中折叠换行，
+ 注意 多层  缩进 的输出结果是 
+ "cmd": "echo \"haha\" echo \"xixi\"", 
+
+        "stdout_lines": [
+            "haha echo xixi"
+        ]
+## 效果和使用 " > " 大于号 相同 [ 在字符串中折叠换行 ]
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts    echo.yml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+TASK [debug] *******************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "cmd": "echo \"haha\" echo \"xixi\"", 
+        "delta": "0:00:00.002095", 
+        "end": "2019-01-10 17:55:39.540134", 
+        "failed": false, 
+        "rc": 0, 
+        "start": "2019-01-10 17:55:39.538039", 
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "haha echo xixi", 
+        "stdout_lines": [
+            "haha echo xixi"
+        ]
+    }
+}
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+
+[root@Va1 ~]# ansible-doc   user  |grep  -A5  "\- user:"
+- user:
+    name: johnd
+    comment: "John Doe"
+    uid: 1040
+    group: admin
+
+--
+- user:
+    name: james
+    shell: /bin/bash
+    groups: admins,developers
+    append: yes
+
+--
+- user:
+    name: johnd
+    state: absent
+    remove: yes
+
+# Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
+- user:
+    name: jsmith
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+
+--
+- user:
+    name: james18
+    shell: /bin/zsh
+    groups: developers
+    expires: 1422403387
+
+[root@Va1 ~]# 
+ expire
+英 [ɪkˈspaɪə(r)]   美 [ɪkˈspaɪr]  
+vi. 期满;文件、协议等（因到期而）失效;
+
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts   user.yaml 
+
+PLAY [web] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [command] *****************************************************************
+changed: [Va4]
+changed: [Va2]
+
+TASK [user] ********************************************************************
+changed: [Va2]
+changed: [Va4]
+
+TASK [taskname listname change passwd] *****************************************
+changed: [Va2]
+changed: [Va4]
+
+TASK [command] *****************************************************************
+changed: [Va2]
+changed: [Va4]
+
+PLAY RECAP *********************************************************************
+Va2                        : ok=5    changed=4    unreachable=0    failed=0   
+Va4                        : ok=5    changed=4    unreachable=0    failed=0   
+
+[root@Va1 ~]# cat   user.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: groupadd  -g 10088  admin
+    - user:
+        name: jack
+        comment: "jack Do"
+        uid: 10086
+        group: admin
+    - name: taskname listname change passwd  #子列表1，下面是shell模块，是一个动作: 描述信息 
+      shell: echo 1 | passwd  --stdin  jack
+    - shell: chage  -d  0  jack  ##强制修改linux帐号密码
+
+/*************
+chage -d 0命令,将帐号的新建时间设置成1970年1月1日,
+这样建立的帐号下次登录的时候,第一次会要求修改帐号
+*********/
+
+[root@Va1 ~]# ll  user.retry 
+-rw-r--r-- 1 root root 8 1月  10 18:28 user.retry
+[root@Va1 ~]# cat  user.retry
+Va2
+Va4
+[root@Va2 ~]# grep   -n  jack   /etc/passwd
+42:jack:x:10086:10088:jack Do:/home/jack:/bin/bash
+
+[root@Va2 ~]# ls -ld   /home/jack/
+drwx------ 3 jack admin 78 1月  10 18:37 /home/jack/
+[root@Va4 ~]# ls -ld   /home/jack/
+drwx------ 3 jack admin 78 1月  10 18:37 /home/jack/
+
+[root@Va1 ~]# ssh  -l jack  Va2  "grep  -n  jack  /etc/passwd"
+jack@va2's password: 1  输入yaml文件里定义的密码 1
+WARNING: Your password has expired.
+Password change required but no TTY available.
+ expire
+英 [ɪkˈspaɪə(r)]   美 [ɪkˈspaɪr]  
+vi. 期满;文件、协议等（因到期而）失效;
+
+[root@Va1 ~]# ssh  -l jack  Va2  
+jack@va2's password: 1  输入yaml文件里定义的密码 1
+You are required to change your password immediately (root enforced)
+Last login: Thu Jan 10 18:43:36 2019 from 192.168.0.11
+WARNING: Your password has expired.
+You must change your password now and login again!
+更改用户 jack 的密码 。
+为 jack 更改 STRESS 密码。
+（当前）UNIX 密码：1
+新的 密码：12345222
+无效的密码： 密码是一个回文
+新的 密码：Hix53.es
+重新输入新的 密码：Hix53.es
+passwd：所有的身份验证令牌已经成功更新。
+Connection to va2 closed.
+
+[root@Va1 ~]# ssh  -l jack  Va2  "grep  -n  jack  /etc/passwd"
+jack@va2's password:  Hix53.es
+42:jack:x:10086:10088:jack Do:/home/jack:/bin/bash
+
+[root@Va1 ~]# ansible all -m  command  -a  "systemctl is-active httpd" |grep -iA1 success
+
+Va6 | SUCCESS | rc=0 >>
+active
+
+specific
+英 [spəˈsɪfɪk]   美 [spɪˈsɪfɪk]  
+adj.
+具体的;明确的;特种的;[免疫学]特效的
+n.
+特效药;特性;细节;显著的性质，特性
+
+[root@Va1 ~]# ansible-doc   yum
+................
+- name: install one specific version of Apache
+  yum:
+    name: httpd-2.2.29-1.4.amzn1
+    state: present
+
+[root@Va1 ~]# ansible-doc  lineinfile
+- lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^Listen '
+    insertafter: '^#Listen '
+    line: 'Listen 8080'
+
+[root@Va1 ~]# ansible-doc  copy
+
+# Example from Ansible Playbooks
+- copy:
+    src: /srv/myfiles/foo.conf
+    dest: /etc/foo.conf
+    owner: foo
+    group: foo
+    mode: 0644
+
+
+[root@Va1 ~]# ansible-doc   service
+EXAMPLES:
+# Example action to start service httpd, if not running
+- service:
+    name: httpd
+    state: started
+
+
+handlers
+英 ['hændləz]   美 ['hændləz]  
+n. 操作者;经理人;操作者，陶器工人，经理人;;经营商
+
+handler
+英 [ˈhændlə(r)]   美 [ˈhændlɚ]  
+n. 处理者，管理者;（动物）驯化者;[自]（信息）处理机;拳击教练
+
+notify
+英 [ˈnəʊtɪfaɪ]   美 [ˈnoʊtɪfaɪ]  
+vt. 通知;布告
+
+notify 可以看到它包含了一个具体项目的列表，
+这里表示的是“start httpd”，这个不是ansible的命令，
+
+而是对handlers的引用，它可以执行某些功能，
+
+在handlers中里面定义
+
+handlers其实是和hosts、user以及tasks是同一个级别的，
+
+它表示只有在客户端发生了任务时才会去执行它，
+这里就比如说某一个客户端本来没有安装httpd命令，
+发生了tasks里面执行的安装httpd命令，
+那么这个客户端才会去执行这个“start httpd”，
+如果还有一个客户端本身已经安装了httpd命令，
+所以他就不会执行安装命令，
+那么“start httpd”也不会执行 
+
+第二行service就表示引用了ansible的service模块，
+使用的参数是冒号后面的内容
+
+#apache.yml
+---
+
+- hosts: all
+  user: root
+
+  tasks:
+    - name: Apache server Install
+      yum: name=httpd state=installed
+      notify:
+        - start httpd
+    - name: Apache server index.html Update
+      copy: src=/mnt/index.html dest=/var/www/html/ mode=644
+
+  handlers:
+    - name: start httpd
+      service: name=httpd state=started enabled=yes
+
+>在字符串中折叠换行，| 保留换行符，这两个符号是YAML中字符串经常使用的符号
+层级关系 除了使用缩进，还能够使用特定符号来表示
+
+playbook中有3种方式进行续行。
+在"key: "的后面使用 " > " 大于号。
+在"key: "的后面使用 " | " 竖线。这种方式可以像脚本一样写很多行语句。
+多层  缩进,进行续行
+## 注意头部对齐 缩进 4 个空格,多层  缩进,进行续行
+       # 比模块shell缩进更多 # 注意头部对齐 缩进 8 个空格
+
+[root@Va1 ~]# vim  apache.yaml
+[root@Va1 ~]# cat  apache.yaml
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:       #注意头部对齐 缩进 2 个空格
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:              ## 注意头部对齐 缩进 6 个空格,多层  缩进,进行续行
+        name: httpd     # 比模块yum 缩进更多 # 注意头部对齐 缩进 8 个空格
+        state: present  # present 表示 安装目前已经存在的httpd  #注意头部对齐 缩进 8 个空格
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf #注意头部对齐 缩进 8 个空格
+        regexp: "^Listen "
+        insertafter: "^Listen "
+        line: "Listen  8080"
+    - lineinfile:      #注意头部对齐 缩进 4 个空格
+        path: /etc/httpd/conf/httpd.conf #注意头部对齐 缩进 8 个空格
+        regexp: "^#ServerName "
+        insertbefore: "^#ServerName "
+        line: "ServerName  localhost"
+    - copy:
+        src: /root/index.html    #注意头部对齐 缩进 8 个空格
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+    - service:
+        name: httpd   #注意头部对齐 缩进 8 个空格
+        state: started
+        enabled: yes
+
+[root@Va1 ~]# vim   index.html
+[root@Va1 ~]# cat  index.html
+
+<h1>Va1--ansible web  Va2 Va4 apache </h1>
+
+ ## #自定义主机，非必选项，默认将引用/etc/ansible/hosts的参数，
+  ## 要引用自定义hosts，需要通过 参数  -i  file路径  来实现
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts  apache.yaml 
+
+PLAY [web] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [tasks-zi-listname install the specific  version of Apache] ***************
+changed: [Va4]
+changed: [Va2]
+
+TASK [lineinfile] **************************************************************
+changed: [Va4]
+changed: [Va2]
+
+TASK [lineinfile] **************************************************************
+changed: [Va2]
+changed: [Va4]
+
+TASK [copy] ********************************************************************
+changed: [Va4]
+changed: [Va2]
+
+TASK [service] *****************************************************************
+changed: [Va2]
+changed: [Va4]
+
+PLAY RECAP *********************************************************************
+Va2                        : ok=6    changed=5    unreachable=0    failed=0   
+Va4                        : ok=6    changed=5    unreachable=0    failed=0   
+
+
+[root@Va1 ~]# ansible   web  -m command  -a  "curl  127.0.0.1:8080"
+
+ [WARNING]: Consider using get_url or uri module rather than running curl
+                考虑使用get-url或uri模块，而不是运行curl
+Va4 | SUCCESS | rc=0 >>
+<h1>Va1--ansible web  Va2 Va4 apache </h1>  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    43  100    43    0     0  22039      0 --:--:-- --:--:-- --:--:-- 43000
+
+Va2 | SUCCESS | rc=0 >>
+<h1>Va1--ansible web  Va2 Va4 apache </h1>  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    43  100    43    0     0  21717      0 --:--:-- --:--:-- --:--:-- 43000
+
+[root@Va1 ~]# ansible   web  -m command  -a  "curl  -i  127.0.0.1:8080"
+ [WARNING]: Consider using get_url or uri module rather than running curl
+ 考虑使用get-url或uri模块，而不是运行curl
+....................
+[root@Va1 ~]# ansible  web  -m  yum  -a  "name=elinks  state=present"
+Va2 | SUCCESS => {
+...........
+    ]
+}
+Va4 | SUCCESS => {
+    "changed": true, 
+    "msg": "", 
+    "rc": 0, 
+    "results": [
+...............
+    ]
+}
+[root@Va1 ~]# ansible   web  -m command  -a  "elinks  -dump  127.0.0.1:8080"
+Va4 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+Va2 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+[root@Va1 ~]# ansible   web  -m command  -a  "grep  -En  '^(Listen |ServerName )' /etc/httpd/conf/httpd.conf"
+Va2 | SUCCESS | rc=0 >>
+42:Listen  8080
+95:ServerName  localhost
+
+Va4 | SUCCESS | rc=0 >>
+42:Listen  8080
+95:ServerName  localhost
+
+[root@Va1 ~]# ansible   web  -m  shell  -a  "grep  -En1  '^(Listen |ServerName )'  /etc/httpd/conf/httpd.conf"
+Va2 | SUCCESS | rc=0 >>
+41-#Listen 12.34.56.78:80
+42:Listen  8080
+43-
+--
+94-#
+95:ServerName  localhost
+96-
+
+Va4 | SUCCESS | rc=0 >>
+41-#Listen 12.34.56.78:80
+42:Listen  8080
+43-
+--
+94-#
+95:ServerName  localhost
+96-
+
+[root@Va1 ~]# 
+
+
+[root@Va1 ~]# vim  user.yaml 
+[root@Va1 ~]# ansible-playbook   -i  /etc/ansible/hosts  user.yaml 
+
+PLAY [other] ********************************************************************
+
+TASK [Gathering Facts] **********************************************************
+ok: [Va6]
+
+TASK [command] ******************************************************************
+changed: [Va6]
+
+TASK [user] *********************************************************************
+changed: [Va6]
+
+TASK [taskname listname change passwd] ******************************************
+changed: [Va6]
+
+PLAY RECAP **********************************************************************
+Va6                        : ok=4    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ~]# cat user.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    username: wang5
+  tasks:
+    - shell: groupadd  -g 10088  admin
+    - user:
+        name: "{{username}}"
+        comment: "{{username}} declarative description"
+        uid: 10086
+        group: admin
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{username}}"
+        chage  -d  0  {{username}}
+        grep  -n  "{{username}}"  /etc/passwd
+
+[root@Va1 ~]# 
+
+[root@Va1 ~]# ansible-playbook   -i  /etc/ansible/hosts  user.yaml
+
+verbosity：debug的级别（默认是0级，全部显示）
+
+
+
+[root@Va1 ~]# vim  user.yaml 
+[root@Va1 ~]# cat  user.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    username: li4
+  tasks:
+    - shell: groupadd  -g 10089  zuxx
+    - user:
+        name: "{{username}}"
+        comment: "{{username}} declarative description"
+        uid: 1008
+        group: admin
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{username}}"
+        chage  -d  0  " {{username}}"
+        grep  -n   "{{username}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts   user.yaml
+
+PLAY [other] ********************************************************************
+
+TASK [Gathering Facts] **********************************************************
+ok: [Va6]
+
+TASK [command] ******************************************************************
+changed: [Va6]
+
+TASK [user] *********************************************************************
+changed: [Va6]
+
+TASK [taskname listname change passwd] ******************************************
+changed: [Va6]
+
+TASK [debug] ********************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 li4 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n43:li4:x:1008:10088:li4 declarative description:/home/li4:/bin/bash"
+}
+
+PLAY RECAP **********************************************************************
+Va6                        : ok=5    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
