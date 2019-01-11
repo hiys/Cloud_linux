@@ -1,0 +1,1675 @@
+
+[root@Va1 ~]# ls  /var/myansible/
+ansible.cfg  myhosts  myhosts.py  myhosts.sh
+
+[root@Va1 ~]# cat   /var/myansible/ansible.cfg 
+[defaults]
+inventory   = /var/myansible/myhosts
+host_key_checking = False
+
+[root@Va1 ~]# cat   /var/myansible/myhosts
+[app1]
+Va[2:3]
+
+[app2]
+Va[4:6]
+
+[apptest:children]
+app1
+app2
+
+[apptest:vars]
+ansible_ssh_user=root
+ansible_ssh_pass=1
+                               ## -i PATH, --inventory=PATH：资产的文件路径
+[root@Va1 ~]# ansible app1  -i  /var/myansible/myhosts  -m  command  -a  "echo  hello"
+
+Va2 | SUCCESS | rc=0 >>
+hello
+
+Va3 | SUCCESS | rc=0 >>
+hello
+
+[root@Va1 ~]# type echo
+echo 是 shell 内嵌
+
+  ##-i PATH, --inventory=PATH：资产的文件路径 未指定-i 默认路径 -i  /etc/ansible/hosts
+
+[root@Va1 ~]# ansible app1    -m  command  -a  "echo  hello" ##  未指定-i  报错
+[WARNING]: Could not match supplied host pattern, ignoring: app1
+
+ [WARNING]: No hosts matched, nothing to do
+
+
+
+[root@Va1 ~]# cat  apache.yaml 
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:
+        name: httpd
+        state: present
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^Listen "
+        insertafter: "^Listen "
+        line: "Listen  8080"
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^#ServerName "
+        insertbefore: "^#ServerName "
+        line: "ServerName  localhost"
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+    - service:
+        name: httpd
+        state: started
+        enabled: yes
+[root@Va1 ~]# 
+[root@Va1 ~]# cat  user.yaml 
+---
+- hosts: other
+  remote_user: root
+  vars:
+    username: li4
+  tasks:
+    - shell: groupadd  -g 10089  zuxx
+    - user:
+        name: "{{username}}"
+        comment: "{{username}} declarative description"
+        uid: 1008
+        group: admin
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{username}}"
+        chage  -d  0  " {{username}}"
+        grep  -n   "{{username}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]# ansible   web  -m  command  -a  "apachectl  -t"
+Va2 | SUCCESS | rc=0 >>
+Syntax OK
+
+Va4 | SUCCESS | rc=0 >>
+Syntax OK
+
+[root@Va1 ~]# cat  echo.yml 
+---
+- hosts: Va3
+  remote_user: root
+  tasks:
+    - shell: echo  "haha"
+        echo  "xixi"
+      register: say_hi
+    - debug: var=say_hi  verbosity=0
+
+[root@Va1 ~]# ansible-playbook   -i  /etc/ansible/hosts   echo.yml
+
+PLAY [Va3] **********************************************************************
+
+TASK [Gathering Facts] **********************************************************
+ok: [Va3]
+
+TASK [command] ******************************************************************
+changed: [Va3]
+
+TASK [debug] ********************************************************************
+ok: [Va3] => {
+    "say_hi": {
+        "changed": true, 
+        "cmd": "echo \"haha\" echo \"xixi\"", 
+        "delta": "0:00:00.002023", 
+        "end": "2019-01-11 12:12:28.514957", 
+        "failed": false, 
+        "rc": 0, 
+        "start": "2019-01-11 12:12:28.512934", 
+        "stderr": "", 
+        "stderr_lines": [], 
+        "stdout": "haha echo xixi", 
+        "stdout_lines": [
+            "haha echo xixi"
+        ]
+    }
+}
+
+PLAY RECAP **********************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+
+
+[root@Va1 ~]# vim  user.yaml 
+[root@Va1 ~]# cat   user.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    username: zh3
+    groupname: zuxx1
+  tasks:
+    - shell: groupadd  -g 11089  "{{groupname}}"
+    - user:
+        name: "{{username}}"
+        comment: "{{username}} declarative description"
+        uid: 1108
+        group: "{{groupname}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{username}}"
+        chage  -d  0   "{{username}}"
+        grep  -n   "{{username}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts  user.yaml
+
+PLAY [other] ********************************************************************
+
+TASK [Gathering Facts] **********************************************************
+ok: [Va6]
+
+TASK [command] ******************************************************************
+changed: [Va6]
+
+TASK [user] *********************************************************************
+changed: [Va6]
+
+TASK [taskname listname change passwd] ******************************************
+changed: [Va6]
+
+TASK [debug] ********************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 zh3 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n44:zh3:x:1108:11089:zh3 declarative description:/home/zh3:/bin/bash"
+}
+
+PLAY RECAP **********************************************************************
+Va6                        : ok=5    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+ [root@Va6 ~]# grep -n  zh3  /etc/passwd
+44:zh3:x:1108:11089:zh3 declarative description:/home/zh3:/bin/bash
+
+[root@Va6 ~]# grep  -nA3  lisi  /etc/group
+67:lisi:x:1000:lisi
+68-apache:x:48:
+69-admin:x:10088:
+70-zuxx:x:10089:
+
+[root@Va1 ~]# vim user.yaml 
+[root@Va1 ~]# cat  user.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    user:
+      name: json
+      group: admin
+      uid: 1122
+  tasks:
+    - user:
+        name: "{{user.name}}"
+        comment: "{{user.name}} declarative description"
+        uid: "{{user.uid}}"
+        group: "{{user.group}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{user.name}}"
+        chage  -d  0  "{{user.name}}"
+        grep  -n   "{{user.name}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts  user.yaml
+
+PLAY [other] ********************************************************************
+
+TASK [Gathering Facts] **********************************************************
+ok: [Va6]
+
+TASK [user] *********************************************************************
+changed: [Va6]
+
+TASK [taskname listname change passwd] ******************************************
+changed: [Va6]
+
+TASK [debug] ********************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 json 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n45:json:x:1122:10088:json declarative description:/home/json:/bin/bash"
+}
+
+PLAY RECAP **********************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ll  user.retry 
+-rw-r--r-- 1 root root 4 1月  10 21:35 user.retry
+[root@Va1 ~]# cat  user.retry
+Va6
+[root@Va1 ~]# ls   /root/.ansible/
+cp  tmp
+[root@Va1 ~]# ls   /root/.ansible/cp/
+
+ansible-playbook <filename.yml> ... [options]
+
+  <filename.yml>:yaml格式的playbook文件路径，必须指明
+  [options]: 选项
+    -C, --check：并不在远程主机上执行，只是测试。
+    -i PATH, --inventory=PATH：资产的文件路径
+    --flush-cache：清楚fact缓存
+    --list-hosts：列出匹配的远程主机，并不执行任何动作
+    -t, TAGS, --tags=TAGS：运行指定的标签任务
+    --skip-tags:跳过指定的notify，
+
+~]# cat httpd02.yml
+
+- hosts: 192.168.200.136
+  remote_user: root
+  tasks:
+  - name: install httpd
+    yum: name=httpd state=present
+  - name: install configure file
+    notify: restart httpd service
+    template: src=httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf
+  - name: start httpd service
+    service: name=httpd state=started
+  handlers:
+  - name: restart httpd servcie
+    service: name=httpd state=restarted
+
+notify表明此task改变时，它会触发一个事件，
+此事件会调用name为restart httpd service的handlers task。
+
+指定执行任务
+
+资产文件
+
+注意，修改了端口号
+
+~] cat /etc/ansibele/hosts
+
+[webservers]
+192.168.200.136  httpd_port=8080   
+[test]
+192.168.200.13[6:7]
+
+修改playbook文件
+
+~]# cat httpd03.yml
+
+- hosts: 192.168.200.136
+  remote_user: root
+  tasks:
+  - name: install httpd
+    yum: name=httpd state=present
+  - name: install configure file
+    notify: restart httpd service
+    tags: reinstall configure file
+    template: src=httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf
+  - name: start httpd service
+    service: name=httpd state=started
+  handlers:
+  - name: restart httpd service
+    service: name=httpd state=restarted
+
+执行playbook
+playbook只执行了拷贝文件，以及拷贝文件触发的重启服务事件。也可以看到服务开启的是8080端口。
+
+使用 -e选项传入参数
+ansible-playbook 192.168.200.136 -e "httpd_port=808" httpd04.yml
+
+ansible中变量的优先级
+
+--extra-vars （-e 选项指定的变量）最高
+inventory 主机清单中定义的变量（ansible_ssh_user等)
+play剧本中vars、vars_files定义的变量
+系统的facts变量
+角色定义的默认变量 最低
+从上到下优先级逐渐降低，高优先级会覆盖掉低优先级的变量
+
+入口 yaml 文件中通过 {{ ** }} 获取变量，
+命令行通过 -i 指定 hosts 文件， 
+-e 传入参数，
+如果同时传入多个 host 参数可使用 逗号,分隔，
+同时也可以使用 hosts 文件中的变量 ，
+其中 remote_user: root 可以在 ansiplay-book 命令行中使用 -u root 替代。
+
+ansible-playbook <filename.yml> ... [options]
+
+  <filename.yml>:yaml格式的playbook文件路径，必须指明
+  [options]: 选项
+    -C, --check：并不在远程主机上执行，只是测试。
+    -i PATH, --inventory=PATH：资产的文件路径
+    --flush-cache：清楚fact缓存
+    --list-hosts：列出匹配的远程主机，并不执行任何动作
+    -t, TAGS, --tags=TAGS：运行指定的标签任务
+    --skip-tags:跳过指定的notify，
+notify表明此task改变时，它会触发一个事件，
+
+ 使用-e 进行自定义变量
+ansible-playbook –e varname=value
+-e自定义变量的优先级高于setup调用的变量
+ -e    定义Playbook中使用的变量，格式"key=value,key=value"
+一次性对多个变量赋值：
+ansible-playbook -e 'ansible_fqdn="testfile"  pname=samba'  vars.yml
+
+[root@Va1 ~]# ansible-playbook --help   |grep  -A2 "\-e "
+  -e EXTRA_VARS, --extra-vars=EXTRA_VARS
+                        set additional variables as key=value or YAML/JSON, if
+                           将附加变量设置为key=value或yaml/json
+                        filename prepend with @
+                             如果文件名前面有@
+  如果文件名前面有@ ,将附加变量设置为key=value或yaml/json
+
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+TASK [debug] **********************************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 jj 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n49:jj:x:1133:10089:jj declarative description:/home/jj:/bin/bash"
+}
+
+PLAY RECAP ************************************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# cat  user.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    user:
+      name: json
+      group: admin
+      uid: 1122
+  tasks:
+    - user:
+        name: "{{user.name}}"
+        comment: "{{user.name}} declarative description"
+        uid: "{{user.uid}}"
+        group: "{{user.group}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{user.name}}"
+        chage  -d  0  "{{user.name}}"
+        grep  -n   "{{user.name}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+[root@Va1 ~]# ansible  other  -m  command  -a  "id  jj" 
+Va6 | SUCCESS | rc=0 >>
+uid=1133(jj) gid=10089(zuxx) 组=10089(zuxx)
+
+[root@Va1 ~]# 
+
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+                             # yaml格式传参数 注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{ user: { name: jj2, group: zuxx, uid: 1134 } }'  user.yaml
+...............................
+TASK [debug] **********************************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 jj2 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n50:jj2:x:1134:10089:jj2 declarative description:/home/jj2:/bin/bash"
+}
+
+PLAY RECAP ************************************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "id  jj2" 
+Va6 | SUCCESS | rc=0 >>
+uid=1134(jj2) gid=10089(zuxx) 组=10089(zuxx)
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "grep -n jj  /etc/passwd" 
+Va6 | SUCCESS | rc=0 >>
+49:jj:x:1133:10089:jj declarative description:/home/jj:/bin/bash
+50:jj2:x:1134:10089:jj2 declarative description:/home/jj2:/bin/bash
+
+[root@Va1 ~]# 
+
+
+在命令行里面传值得的方法：
+ ansible-playbook e33_var_in_command.yml --extra-vars "hosts=web user=root" 
+
+还可以用json格式传递参数：
+ansible-playbook e33_var_in_command.yml --extra-vars "{'hosts':'vm-rhel7-1', 'user':'root'}" 
+
+还可以将参数放在文件里面：
+ansible-playbook e33_var_in_command.yml --extra-vars "@vars.json"
+
+[root@Va1 ~]# ansible-playbook --help   |grep  -A2 "\-e "
+  -e EXTRA_VARS, --extra-vars=EXTRA_VARS
+                        set additional variables as key=value or YAML/JSON, if
+                           将附加变量设置为key=value或yaml/json
+                        filename prepend with @
+                             如果文件名前面有@
+  如果文件名前面有@ ,将附加变量设置为key=value或yaml/json
+
+Yaml 也允许另一种写法，将所有键值对写成一个行内对象。
+ hash: { name: Steve, foo: bar } 
+yaml数组也可以采用行内表示法。
+ animal: [Cat, Dog]
+
+转为 JavaScript 如下。
+ { animal: [ 'Cat', 'Dog' ] }
+
+
+一组连词线开头的行，构成一个数组。
+- Cat
+- Dog
+- Goldfish
+转为 JavaScript 如下。
+ [ 'Cat', 'Dog', 'Goldfish' ]
+
+数据结构的子成员是一个数组，则可以在该项下面缩进2个空格。
+-
+  - Cat
+  - Dog
+  - Goldfish
+yaml数组也可以采用行内表示法。
+[ [Cat, Dog, Goldfish] ]
+
+转为 JavaScript 如下。
+ [ [ 'Cat', 'Dog', 'Goldfish' ] ]
+
+
+[root@Va6 ~]# grep  -nA3  lisi  /etc/group
+67:lisi:x:1000:lisi
+68-apache:x:48:
+69-admin:x:10088:
+70-zuxx:x:10089:
+
+[root@Va1 ~]# cat  user.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    user:
+      name: json
+      group: admin
+      uid: 1122
+  tasks:
+    - user:
+        name: "{{user.name}}"
+        comment: "{{user.name}} declarative description"
+        uid: "{{user.uid}}"
+        group: "{{user.group}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{user.name}}"
+        chage  -d  0  "{{user.name}}"
+        grep  -n   "{{user.name}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]# 
+　yaml中允许表示三种格式，分别为常量值、对象和数组
+
+例如：
+其中#作为注释，yaml中只有行注释
+基本格式要求：
+1.大小写敏感；
+2.使用缩进代表层级关系；
+3.缩进只能使用空格，不能使用tab键，不要求空格个数，只需要相同层级左对齐（一般2或4个空格）。
+对象：
+使用冒号代表，格式为key:  value。冒号后要有一个空格：
+
+可使用缩进 ,   >大于号 ,  竖线 |  等特殊符号 表示层级关系：
+
+key:
+  child-key: value
+  child-key2: value
+yaml中还支持流式（flow）语法表示对象，比如上面例子可写为：
+
+key: {child-key: value, child-key2: value2}
+# 注意 键冒号:  与逗号,后  都有空格
+
+较为复杂的对象格式，可以使用问号加一个空格代表一个复杂的key，配合一个冒号加一个空格代表一个value：
+
+意思即对象的属性是一个数组[complexkey1, complexkey2]，对应的值也是一个数组[complexvalue1, complexvalue2]
+
+使用流式语法即为[complexkey1,complexkey2]:[complexvalue1,complexvalue2]
+
+数组
+
+使用一个短横线加一个空格表示一个数组项：
+
+可以简单的理解为[[java,LOL]]
+
+父键父数组名key:
+  -
+    子键a: 子值a
+    子键b子数组名1:
+      - 子值b子数组元素b1
+      - 子值b子数组元素b2
+      - 子值b子数组元素b3
+  -
+    子键c: 子值c
+    子键d-子数组名2:
+      - 子值d子数组元素d1
+      - 子值d子数组元素d2
+      - 子值d子数组元素d3
+
+意思是companies属性是一个数组，每一个数组元素又是由id、name、price三个属性构成；
+
+使用流式语法表示为：
+key: [ { a: a, b1: [bb1, bb2, bb3]}, {c: c, d2: [dd1, dd2, dd3] } ]
+
+/***************json 格式 ***********
+{ "键1": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ],
+  "键2": [  { "键a": "值a",  "键b": "值b" }, {  "键c": "值c",  "键"d: "值d"} ]
+} **************/
+
+
+常量：
+
+yaml中提供了多种常量结构，包括整数、浮点数、字符串、null、日期、布尔值、时间。
+
+使用+代表时区
+
+特殊符号
+
+1. ---  yaml可以在同一个文件中，使用---表示一个文档的开始：
+
+代表定义了两个profile，一个是development，一个是production；也常使用---来分割不同的内容，比如记录日志：
+
+2. ...和---配合使用，在一个配置文件中代表一个文件的结束：
+
+相当于在一个yaml中连续写了两个yaml配置项
+
+3. !!yaml中使用!!做类型强行转换：
+
+相当于把数字和布尔值类型强转换为字符串
+
+将数组解析为set集合，简单理解，转化的内容就是[{Mark McGwire: 65}, {Sammy Sosa: 63}, {Ken Griffy: 58}]，去掉重复。
+
+4. >在字符串中折叠换行， |保留换行，这两个符号是yaml中字符串经常使用的符号，比如：
+
+那么，accomplishment的结果为：将换行符转化成了空格，需要主意的是，每行的文本钱一定要有一个空格
+
+stats的结果是：
+
+常见|符号多用于yaml中配置html片段：
+
+5.引用。重复的内容在yaml中可以使用&符号来完成锚点定义，使用*来完成锚点引用，例如：
+
+可以看到，在hr中，使用&SS为Sammy Sosa设置了一个锚点引用，名称为SS，在rbi中，使用*SS来引用锚点：
+
+注意：不能独立的定义锚点，比如不能直接这样写： &SS Sammy Sosa；另外，锚点能够定义更复杂的内容，比如：
+
+那么hr相当于引用了default的数组，注意，hr: *default要写在同一行。
+
+6.合并内容。主要和锚点配合使用，可以将一个锚点内容直接合并到一个对象中，例如：
+
+在merge中定义了四个锚点，分别在sample中使用。
+
+sample1中，<<: *CENTER意思是引用{x: 1, y:2}，并且合并到sample1中，那么合并的结果为：sample1={r=10， y=2，x=1}
+
+sample2中，<<: [*CENTER, *BIG]意思是联合引用{x:1, y:2}和{R: 10}，并且合并到sample2中，那么结果为sample2={other=haha，x=1，y=2}
+
+sample3中，引入了*CENTER，*BIG，还使用了r: 100覆盖了引入的r：10，所以sample3值为sample3={r=100, y=2, x=1}
+
+
+[root@Va1 ~]# ansible-playbook --help   |grep  -A2 "\-e "
+  -e EXTRA_VARS, --extra-vars=EXTRA_VARS
+                        set additional variables as key=value or YAML/JSON, if
+                           将附加变量设置为key=value或yaml/json
+                        filename prepend with @
+                             如果文件名前面有@
+  如果文件名前面有@ ,将附加变量设置为key=value或yaml/json
+
+
+在命令行里面传参数值的方法：
+ ansible-playbook e33_var_in_command.yml --extra-vars "hosts=web user=root" 
+
+还可以用json格式传递参数：
+ansible-playbook e33_var_in_command.yml --extra-vars "{'hosts':'vm-rhel7-1', 'user':'root'}" 
+
+还可以将参数放在文件里面：
+ansible-playbook e33_var_in_command.yml --extra-vars "@vars.json"
+
+
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+                             # yaml格式传参数 注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{ user: { name: jj2, group: zuxx, uid: 1134 } }'  user.yaml
+...............................
+
+===============================================================
+
+[root@Va1 ~]# vim  user2.yaml
+[root@Va1 ~]# cat  user2.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    name: json            ## 注意变量名name 最好不使用保留名称的变量：name
+    group: admin
+    uid: 1122
+  tasks:
+    - user:
+        name: "{{name}}"
+        comment: "{{name}} declarative description"
+        uid: "{{uid}}"
+        group: "{{group}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{name}}"
+        chage  -d  0  "{{name}}"
+        grep  -n   "{{name}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]#                    # yaml 格式传参数 语法没有问题,结果正确 
+
+[root@Va1 ~]# ansible-playbook -i /etc/ansible/hosts  -e  '{ name: jinj, group: zuxx, uid: 1123 }'  user2.yaml
+ [WARNING]: Found variable using reserved name: name
+                发现 使用保留名称的变量：name
+.................................
+TASK [debug] ************************************************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 jinj 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n46:jinj:x:1123:10089:jinj declarative description:/home/jinj:/bin/bash"
+}
+
+PLAY RECAP **************************************************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+[root@Va6 ~]# id  jinj
+uid=1123(jinj) gid=10089(zuxx) 组=10089(zuxx)
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "id  jinj"
+Va6 | SUCCESS | rc=0 >>
+uid=1123(jinj) gid=10089(zuxx) 组=10089(zuxx)
+
+ ======================================================
+
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+                             # yaml格式传参数 注意大括号{ }, 空格, 逗号
+[root@Va1 ~]# ansible-playbook  -e   '{ user: { name: jj2, group: zuxx, uid: 1134 } }'  user.yaml
+...............................
+
+                    # json 格式 传参数 语法没有问题,结果正确
+
+[root@Va1 ~]# ansible-playbook -i /etc/ansible/hosts  -e   \
+>  '{"nameadd":"lala","group":"lisi","uid":"1125"}'  user2.yaml
+
+.................................
+TASK [debug] ************************************************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 lala 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n47:lala:x:1125:1000:lala declarative description:/home/lala:/bin/bash"
+}
+
+PLAY RECAP **************************************************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "id  lala"
+Va6 | SUCCESS | rc=0 >>
+uid=1125(lala) gid=1000(lisi) 组=1000(lisi)
+
+[root@Va1 ~]# cat  user2.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    nameadd: json   ## 注意变量名nameadd  最好不使用保留名称的变量：name
+    group: admin
+    uid: 1122
+  tasks:
+    - user:
+        name: "{{nameadd}}"
+        comment: "{{nameadd}} declarative description"
+        uid: "{{uid}}"
+        group: "{{group}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{nameadd}}"
+        chage  -d  0  "{{nameadd}}"
+        grep  -n   "{{nameadd}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]# 
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+
+                             # yaml格式传参数 注意大括号{ }, 空格, 逗号
+[root@Va1 ~]# ansible-playbook  -e   '{ user: { name: jj2, group: zuxx, uid: 1134 } }'  user.yaml
+...............................
+
+[root@Va1 ~]# ansible-playbook -i /etc/ansible/hosts  -e  'nameadd="jinj2"  uid="1126"'  user2.yaml  
+                                                               ##在命令行里面传参数 键值对 的方法 ,变量优先级命令行最高
+
+......................................
+TASK [debug] ************************************************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 jinj2 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n48:jinj2:x:1126:10088:jinj2 declarative description:/home/jinj2:/bin/bash"
+}
+
+PLAY RECAP **************************************************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "id  jinj2"
+Va6 | SUCCESS | rc=0 >>
+uid=1126(jinj2) gid=10088(admin) 组=10088(admin)
+
+[root@Va1 ~]# 
+使用 -e选项传入参数
+ansible-playbook 192.168.200.136 -e "httpd_port=808" httpd04.yml
+
+ansible中变量的优先级
+
+--extra-vars （-e 选项指定的变量）最高
+inventory 主机清单中定义的变量（ansible_ssh_user等)
+play剧本中vars、vars_files定义的变量
+系统的facts变量
+角色定义的默认变量 最低
+从上到下优先级逐渐降低，高优先级会覆盖掉低优先级的变量
+
+入口 yaml 文件中通过 {{ ** }} 获取变量，
+命令行通过 -i 指定 hosts 文件， 
+-e 传入参数，
+如果同时传入多个 host 参数可使用 逗号,分隔，
+同时也可以使用 hosts 文件中的变量 ，
+其中 remote_user: root 可以在 ansiplay-book 命令行中使用 -u root 替代。
+
+
+在命令行里面传值得的方法：
+ ansible-playbook e33_var_in_command.yml --extra-vars "hosts=web user=root" 
+
+还可以用json格式传递参数：
+ansible-playbook e33_var_in_command.yml --extra-vars "{'hosts':'vm-rhel7-1', 'user':'root'}" 
+
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+
+                             # yaml格式传参数 注意大括号{ }, 空格, 逗号
+[root@Va1 ~]# ansible-playbook  -e   '{ user: { name: jj2, group: zuxx, uid: 1134 } }'  user.yaml
+...............................
+
+[root@Va1 ~]# ansible-playbook -i /etc/ansible/hosts  -e  'nameadd="jinj2"  uid="1126"'  user2.yaml  
+                                ##在命令行里面传参数 键值对 的方法 ,变量优先级命令行（-e 选项指定的变量）最高
+
+还可以将参数放在文件里面：
+ansible-playbook e33_var_in_command.yml --extra-vars "@vars.json"
+
+
+[root@Va1 ~]# ansible-playbook --help   |grep  -A2 "\-e "
+  -e EXTRA_VARS, --extra-vars=EXTRA_VARS
+                        set additional variables as key=value or YAML/JSON, if
+                           将附加变量设置为key=value或yaml/json
+                        filename prepend with @
+                             如果文件名前面有@
+  如果文件名前面有@ ,将附加变量设置为key=value或yaml/json
+
+parameter
+英 [pəˈræmɪtə(r)]  美 [pəˈræmɪtɚ]  
+n. [数]参数;<物><数>参量;限制因素;决定因素
+
+[root@Va1 ~]# vim   parameter.vars
+[root@Va1 ~]# cat   parameter.vars  ##注意这是yaml格式文件
+user:
+  name: testname
+  group: admin
+  uid: 1135
+[root@Va1 ~]# file   parameter.vars
+parameter.vars: ASCII text
+
+[root@Va1 ~]# cat    user.yaml 
+---
+- hosts: other
+  remote_user: root
+  vars:
+    user:
+      name: json
+      group: admin
+      uid: 1122
+  tasks:
+    - user:
+        name: "{{user.name}}"
+        comment: "{{user.name}} declarative description"
+        uid: "{{user.uid}}"
+        group: "{{user.group}}"
+    - name: taskname listname change passwd
+      shell: |
+        echo 1 | passwd  --stdin  "{{user.name}}"
+        chage  -d  0  "{{user.name}}"
+        grep  -n   "{{user.name}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+                                      # 将参数放在文件里面 -e  "@文件路径 " 传参数 
+
+[root@Va1 ~]# ansible-playbook  -e  "@parameter.vars"   user.yaml  ##注意parameter.vars是yaml格式文件
+.......................
+TASK [debug] *******************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 testname 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n51:testname:x:1135:10088:testname declarative description:/home/testname:/bin/bash"
+}
+
+PLAY RECAP *********************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "grep -n testname  /etc/passwd" 
+Va6 | SUCCESS | rc=0 >>
+51:testname:x:1135:10088:testname declarative description:/home/testname:/bin/bash
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "id  testname" 
+Va6 | SUCCESS | rc=0 >>
+uid=1135(testname) gid=10088(admin) 组=10088(admin)
+
+[root@Va1 ~]# 
+
+[root@Va1 ~]# vim   parameter.json
+[root@Va1 ~]# cat   parameter.json
+{"user":
+  {
+    "name":"jsontest",
+    "group":"apache",
+    "uid":"1136"
+  }
+}
+                                     # 将参数放在文件里面 -e  "@文件路径 " 传参数 
+
+[root@Va1 ~]# ansible-playbook  -e  "@parameter.vars"   user.yaml  ##注意parameter.vars是yaml格式文件
+.......................
+
+[root@Va1 ~]# ansible-playbook  -e  "@parameter.json"   user.yaml  ##注意parameter.json是json格式文件
+...................
+
+TASK [debug] *******************************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "更改用户 jsontest 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n52:jsontest:x:1136:48:jsontest declarative description:/home/jsontest:/bin/bash"
+}
+
+PLAY RECAP *********************************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  other  -m  command  -a  "id   jsontest" 
+Va6 | SUCCESS | rc=0 >>
+uid=1136(jsontest) gid=48(apache) 组=48(apache)
+
+[root@Va1 ~]# 
+[root@Va1 ~]# ls  parameter.
+parameter.json  parameter.vars  
+
+[root@Va1 ~]# cat   parameter.vars  ##注意这是yaml格式文件
+user:
+  name: testname
+  group: admin
+  uid: 1135
+[root@Va1 ~]# file   parameter.vars
+parameter.vars: ASCII text
+
+[root@Va1 ~]# file  parameter.json ##注意这是json格式文件
+parameter.json: ASCII text
+
+[root@Va1 ~]# cat   parameter.json ##注意这是json格式文件
+{"user":
+  {
+    "name":"jsontest",
+    "group":"apache",
+    "uid":"1136"
+  }
+}
+[root@Va1 ~]# 
+                                     # 将参数放在文件里面 -e  "@文件路径 " 传参数 
+
+[root@Va1 ~]# ansible-playbook  -e  "@parameter.vars"   user.yaml  ##注意parameter.vars是yaml格式文件
+.......................
+
+[root@Va1 ~]# ansible-playbook  -e  "@parameter.json"   user.yaml  ##注意parameter.json是json格式文件
+...................
+
+                                     #json 格式传参数  注意大括号{}
+[root@Va1 ~]# ansible-playbook  -e   '{"user":{"name":"jj","group":"zuxx","uid":"1133"}}'  user.yaml
+..........................
+
+                             # yaml格式传参数 注意大括号{ }, 空格, 逗号
+[root@Va1 ~]# ansible-playbook  -e   '{ user: { name: jj2, group: zuxx, uid: 1134 } }'  user.yaml
+...............................
+
+[root@Va1 ~]# ansible-playbook -i /etc/ansible/hosts  -e  'nameadd="jinj2"  uid="1126"'  user2.yaml  
+                                ##在命令行里面传参数 键值对 的方法 ,变量优先级命令行（-e 选项指定的变量）最高
+
+
+[root@Va1 ~]# ansible-doc  user  |grep  -A3  "\- password"
+- password
+        Optionally set the user's password to this crypted value.  See
+        the user example in the github examples directory for what this
+        looks like in a playbook. See
+
+[root@Va1 ~]# vim  user2.yaml 
+[root@Va1 ~]# cat   user2.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    nameadd: nametest
+  tasks:
+    - user:
+        name: "{{nameadd}}"
+        group: admin
+        password: 1   # 注意新添加的用户 nametest 的密码是明文显示的,不安全
+    - name: taskname listname change passwd
+      shell: |
+        chage  -d  0  "{{nameadd}}"
+        grep  -n   "{{nameadd}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]# ansible-playbook  user2.yaml  ##注意新添加的用户 nametest 的密码是明文显示的,不安全
+...................
+TASK [debug] *******************************************************************
+ok: [Va6] => {
+    "testuser.stdout": "53:nametest:x:10087:10088::/home/nametest:/bin/bash"
+}
+
+PLAY RECAP *********************************************************************
+Va6                        : ok=4    changed=2    unreachable=0    failed=0  
+ 
+[root@Va1 ~]# ansible  other  -m  command  -a  "grep -n nametest /etc/shadow" 
+
+Va6 | SUCCESS | rc=0 >>
+53:nametest:1:0:0:99999:7:::
+
+[root@Va6 ~]# tail  -2   /etc/passwd
+jsontest:x:1136:48:jsontest declarative description:/home/jsontest:/bin/bash
+
+用户名:口令密码占位符:用户标识号:组标识号:注释性描述 :  主目录 :  登录Shell
+nametest:  x   :    10087 : 10088:    :/home/nametest:/bin/bash
+
+
+[root@Va6 ~]# grep  -n  nametest  /etc/shadow  ##注意新添加的用户 nametest 的密码 1 是  明文显示的,不安全
+53:nametest:1:0:0:99999:7:::
+
+encrypt
+英 [ɪnˈkrɪpt]   美 [ɛnkrɪpt]  
+加密，将…译成密码
+把…加密（或编码），将…译成密码
+
+ENCRYPT_METHOD SHA512
+加密方法sha512
+[root@Va6 ~]# tail  -2   /etc/shadow  ## $6$开头的，表明是用SHA-512加密
+
+jsontest:$6$6WsDpeOw$vLqn7vmXoH9AzlV5/3qlu2Zh.FkuK8/U9Zo4WK0/99UUwqcdM3voG3xqwaVw44qAzFMdFdjxcGeslOeBAkwLg.:0:0:99999:7:::
+
+登录名:加密口令:最后一次修改时间:最小时间间隔:最大时间间隔:警告时间:不活动时间:失效时间:标志
+nametest: 1 :     0       :    0    :   99999 :   7   :        :     :
+
+
+“登录名”是与/etc/passwd文件中的登录名相一致的用户账号
+“口令”字段存放的是加密后的用户口令字：
+
+如果为空，则对应用户没有口令，登录时不需要口令；
+星号代表帐号被锁定；
+双叹号表示这个密码已经过期了；
+$6$开头的，表明是用SHA-512加密；
+$1$表明是用MD5加密；
+$2$ 是用Blowfish加密；
+$5$ 是用 SHA-256加密；
+
+“最后一次修改时间”表示的是从某个时刻起，到用户最后一次修改口令时的天数。
+时间起点对不同的系统可能不一样。例如在Linux中，这个时间起点是1970年1月1日。
+
+“最小时间间隔”指的是两次修改口令之间所需的最小天数。
+“最大时间间隔”指的是口令保持有效的最大天数。
+“警告时间”字段表示的是从系统开始警告用户到用户密码正式失效之间的天数。
+“不活动时间”表示的是用户没有登录活动但账号仍能保持有效的最大天数。
+
+“失效时间”字段给出的是一个绝对的天数，如果使用了这个字段，那么就给出相应账号的生存期。
+期满后，该账号就不再是一个合法的账号，也就不能再用来登录了。
+
+[root@Va6 ~]# echo  123  |openssl  md5
+(stdin)= ba1f2511fc30423bdbb183fe33f3dd0f
+
+[root@Va6 ~]# echo  123  |openssl  sha1
+(stdin)= a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0
+
+[root@Va6 ~]# echo  123  |openssl  blowfish
+enter bf-cbc encryption password: 123
+Verifying - enter bf-cbc encryption password:123
+验证-输入BF CBC加密密码
+Salted__d@Ґ�i�>䀑���[root@Va6 ~]# 
+
+salted
+英 ['sɔ:ltɪd]   美 ['sɔ:ltɪd]  
+adj.盐腌的;盐味的;有经验的;（动物）有免疫力的
+v.（撒盐似的）散布( salt的过去式和过去分词 );使更有趣;加盐于…以调味;把盐撒在路面上（以使冰雪融化）
+
+[root@Va6 ~]# echo  123  |openssl  sha512
+(stdin)= ea2fe56bb8c1fb5ada84963b42ed71b764a74b092d75755173ade06f2f4aada9c00d6c302e185035cbe85fdff31698bca93e8661f0cbcef52cf2ff65864fd742
+
+SHA (Secure Hash Algorithm，译作安全散列算法) 
+是美国国家安全局 (NSA) 设计，
+美国国家标准与技术研究院 (NIST) 发布的一系列密码散列函数
+
+SHA-512 (这些有时候也被称做 SHA-2)。
+简介　SHA 家族
+正式名称为 SHA 的家族第一个成员发布于 1993年。
+然而现在的人们给它取了一个非正式的名称 SHA-0 以避免与它的后继者混淆。
+两年之后， SHA-1，第一个 SHA 的后继者发布了。 
+另外还有四种变体，曾经发布以提升输出的范围和变更一些细微设计:
+ SHA-224, SHA-256, SHA-384 和 SHA-512 (这些有时候也被称做 SHA-2)：
+
+c++实现代码
+//SHA512.h
+#ifndef SHA512_H
+#define SHA512_H
+#include <string>
+....................
+openssl
+安全套接字层;SSL协议;漏洞
+OpenSSL是一个开放源代码的软件库包，
+应用程序可以使用这个包来进行安全通信，避免窃听，
+同时确认另一端连接者的身份
+
+[root@Va6 ~]# echo  123  |openssl  sha512
+(stdin)= ea2fe56bb8c1fb5ada84963b42ed71b764a74b092d75755173ade06f2f4aada9c00d6c302e185035cbe85fdff31698bca93e8661f0cbcef52cf2ff65864fd742
+
+[root@Va6 ~]# echo  123  |openssl  sha1
+(stdin)= a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0
+
+
+[root@Va6 ~]# grep  -Evn  '^#|^$'  /etc/login.defs
+15:MAIL_DIR	/var/spool/mail
+25:PASS_MAX_DAYS	99999
+26:PASS_MIN_DAYS	0
+27:PASS_MIN_LEN	5
+28:PASS_WARN_AGE	7
+33:UID_MIN                  1000
+34:UID_MAX                 60000
+36:SYS_UID_MIN               201
+37:SYS_UID_MAX               999
+42:GID_MIN                  1000
+43:GID_MAX                 60000
+45:SYS_GID_MIN               201
+46:SYS_GID_MAX               999
+60:CREATE_HOME	yes
+64:UMASK           077
+68:USERGROUPS_ENAB yes
+71:ENCRYPT_METHOD SHA512 
+    加密方法   sha512
+[root@Va6 ~]# 
+
+[root@Va6 ~]# grep  -n  nametest  /etc/shadow  ##注意新添加的用户 nametest 的密码 1 是  明文显示的,不安全
+53:nametest:1:0:0:99999:7:::
+
+[root@Va1 ~]# ssh  -l  nametest  Va6  ##明文密码不能登陆
+nametest@va6's password: 1
+Permission denied, please try again.
+nametest@va6's password: 1
+Permission denied, please try again.
+nametest@va6's password: 1
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+权限被拒绝（publickey、gssapi keyex、gssapi with mic、password）
+
+
+
+[root@Va1 ~]# vim  user2.yaml 
+[root@Va1 ~]# cat   user2.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    nameadd: nametest4
+  tasks:
+    - user:
+        name: "{{nameadd}}"
+        group: admin
+        password: "{{'1'|password_hash('sha512')}}" #使用SHA512密码散列函数加密,注意大小写sha,引号
+    - name: taskname listname change passwd
+      shell: |
+        chage  -d  0  "{{nameadd}}"
+        grep  -n   "{{nameadd}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]# ansible-playbook   user2.yaml
+...................
+[root@Va1 ~]# 
+[root@Va1 ~]# ssh  -l  nametest4  Va6 
+  
+nametest4@va6's password: 1
+You are required to change your password immediately (root enforced)
+WARNING: Your password has expired.
+You must change your password now and login again!
+更改用户 nametest4 的密码 。
+为 nametest4 更改 STRESS 密码。
+（当前）UNIX 密码：1
+新的 密码：Hix53.es
+重新输入新的 密码：Hix53.es
+passwd：所有的身份验证令牌已经成功更新。
+Connection to va6 closed.
+
+[root@Va1 ~]# cat  user2.yaml
+---
+- hosts: other
+  remote_user: root
+  vars:
+    nameadd: nametest4
+  tasks:
+    - user:
+        name: "{{nameadd}}"
+        group: admin
+        password: "{{'1'|password_hash('sha512')}}" # 使用SHA512密码散列函数加密,注意大小写sha,'引号'
+    - name: taskname listname change passwd
+      shell: |
+        chage  -d  0  "{{nameadd}}"
+        grep  -n   "{{nameadd}}"  /etc/passwd
+      register: testuser
+    - debug: var=testuser.stdout  verbosity=0
+
+[root@Va1 ~]# 
+useradd与adduser的区别
+
+useradd与adduser都是创建新的用户
+
+在CentOs下useradd与adduser是没有区别的都是在创建用户，
+在home下自动创建目录，没有设置密码，
+需要使用passwd命令修改密码。
+
+在Ubuntu下useradd与adduser有所不同
+1、useradd在使用该命令创建用户是
+不会在/home下自动创建与用户名同名的用户目录，
+而且不会自动选择shell版本，
+也没有设置密码，
+那么这个用户是不能登录的，
+需要使用passwd命令修改密码。
+
+2、adduser在使用该命令创建用户是
+会在/home下自动创建与用户名同名的用户目录，自动选择系统shell版本，
+会在创建时会提示输入密码，更加友好。
+
+[root@Va1 ~]# which  true
+/usr/bin/true
+[root@Va1 ~]# type  true
+true 是 shell 内嵌
+[root@Va1 ~]# ll  /usr/bin/true
+-rwxr-xr-x. 1 root root 28920 6月  30 2016 /usr/bin/true
+
+[root@Va1 ~]# which  false
+/usr/bin/false
+[root@Va1 ~]# type  false
+false 是 shell 内嵌
+
+[root@Va1 ~]# true  &&  echo  $? # 注意逻辑且 &&
+0
+[root@Va1 ~]# false   ||  echo  $?  # 注意逻辑或 ||
+1
+[root@Va1 ~]# 
+
+[root@Va1 ~]# vim  user3.yaml 
+[root@Va1 ~]# cat  user3.yaml
+---
+- hosts: Va3
+  remote_user: root
+  vars:
+    username: nb
+  tasks:
+    - shell: adduser "{{username}}"  
+      ignore_errors: True      ##忽略报错,继续执行,优点有提示错误信息
+    - shell: echo "aa" |passwd  --stdin  "{{username}}"
+
+/*********
+- shell: adduser "{{username}}" || true  ##忽略报错,继续执行,缺点 无 提示,没有提示信息
+- shell: echo "aa" |passwd  --stdin  "{{username}}"
+*******/
+
+[root@Va1 ~]# ansible-playbook   user3.yaml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible-playbook   user3.yaml
+
+PLAY [Va3] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va3]
+
+TASK [command] *****************************************************************
+fatal: [Va3]: FAILED! => {"changed": true, "cmd": "adduser \"nb\"", "delta": "0:00:00.003361", "end": "2019-01-11 18:40:30.520062", "msg": "non-zero return code", "rc": 9, "start": "2019-01-11 18:40:30.516701", "stderr": "adduser：用户“nb”已存在", "stderr_lines": ["adduser：用户“nb”已存在"], "stdout": "", "stdout_lines": []}
+...ignoring
+
+TASK [command] *****************************************************************
+changed: [Va3]
+
+PLAY RECAP *********************************************************************
+Va3                        : ok=3    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+
+handles
+英 ['hændlz]   美 ['hændlz]  
+n. 手柄;（织物、毛皮等的）手感( handle的名词复数 );举动;柄状物
+v. 操作( handle的第三人称单数 );容易╱难以)驾驶;操纵;行动
+
+handle
+英 [ˈhændl]   美 [ˈhændl]  
+n. 手柄;（织物、毛皮等的）手感;举动;柄状物
+vi. 操作，操控;容易搬运
+vt. 用双手触摸、举起或握住;用手操作，操纵;处理或负责，管理;〈美〉买卖，经营
+
+task
+英 [tɑ:sk]   美 [tæsk]  
+n. 作业;工作，任务;苦差事
+vt. 交给某人（任务）;使过于劳累
+
+~]# cat httpd02.yml
+
+- hosts: 192.168.200.136
+  remote_user: root
+  tasks:
+  - name: install httpd
+    yum: name=httpd state=present
+  - name: install configure file
+    notify: restart httpd service
+    template: src=httpd.conf.j2 dest=/etc/httpd/conf/httpd.conf
+  - name: start httpd service
+    service: name=httpd state=started
+  handlers:
+  - name: restart httpd servcie
+    service: name=httpd state=restarted
+
+notify表明此task改变时，它会触发一个事件，
+等所有的变化完成后,一次性 调用handles.name为restart httpd service
+的 handles中定义的操作
+service: name=httpd state=restarted
+
+ handlers 是task列表
+handlers：用于当关注的资源发生变化时触发一定的操作。
+  “notify”这个action可用于在每个play的最后被触发，
+这样可以避免多次有改变发生时每次都执行指定的操作，
+取而代之，仅在所有的变化发生完成后一次性地执行指定操作。
+
+在notify中列出的操作称为handler，
+
+也即notify中调用handlers中定义的操作。
+
+tags（标签）
+
+      tags用于让用户选择运行playbook中的某个或某些任务。
+虽然ansible具有幂等性，会跳过没有变化的部分，
+但是，有些代码为测试其确实没有发生变化，也会耗费很长时间。
+我们将playbook中的指定任务打上标签，
+在运行playbook时指定标签名称，这样就不用运行全部代码了。
+
+      playbook中可定义多个标签，且可重名。
+
+      示例：
+
+        - name: configration file
+
+         copy: src=/root/httpd.conf dest=/etc/httpd/conf/httpd.conf    
+
+         notify: restart httpd
+
+         tags: conf
+
+      运行指定标签的任务：ansible-playbook httpd.yml -t conf
+
+案例：使用ansible对websrvs组的两台主机做httpd的高可用
+
+    以下node1为ansible节点，node2和node3为被控节点，已被添加至主机组websrvs。这里假设两个被控节点上已安装好httpd服务程序，且已建立双机互信。
+
+[root@node1 ~]# vim /etc/ansible/hosts
+
+[websrvs]
+192.168.30.20
+192.168.30.13
+[dbsrvs]
+192.168.30.14
+[root@node1 ~]# ls hb_conf   #准备好需要的文件
+authkeys  ha.cf  haresources
+[root@node1 ~]# vim heartbeat.yml   #创建playbook
+
+- hosts: websrvs
+  remote_user: root
+  tasks:
+  - name: ensure heartbeat latest version
+    yum: name=heartbeat state=present
+  - name: authkeys
+    copy: src=/root/hb_conf/authkeys dest=/etc/ha.d/ mode=600
+    notify: restart heartbeat
+  - name: ha.cf
+    copy: src=/root/hb_conf/ha.cf dest=/etc/ha.d/
+    notify: restart heartbeat
+    tags: conf   #打标签
+  - name: haresources
+    copy: src=/root/hb_conf/haresources dest=/etc/ha.d/
+    notify: restart heartbeat
+  handlers:
+  - name: restart heartbeat
+    service: name=heartbeat state=restarted
+
+[root@node1 ~]# ansible-playbook heartbeat.yml    #运行playbook
+
+===========================
+
+[root@Va1 ~]# vim  apache.yaml 
+[root@Va1 ~]# cat  apache.yaml
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:
+        name: httpd
+        state: present
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^Listen "
+        insertafter: "^#Listen "
+        line: "Listen  80"
+      notify:
+# zhuyi  hanshuming  yao  yizhi
+        - reload httpd
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^ServerName "
+        line: "ServerName  127.0.0.1"
+      notify: reload httpd
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+  handlers:
+# zhushi biaoshi lianjie hanshuming
+    - name: reload httpd
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
+
+[root@Va1 ~]# ansible-playbook  apache.yaml
+
+PLAY [web] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [tasks-zi-listname install the specific  version of Apache] ***************
+ok: [Va2]
+ok: [Va4]
+
+TASK [lineinfile] **************************************************************
+changed: [Va2]
+changed: [Va4]
+
+TASK [lineinfile] **************************************************************
+changed: [Va2]
+changed: [Va4]
+
+TASK [copy] ********************************************************************
+ok: [Va2]
+ok: [Va4]
+
+RUNNING HANDLER [reload httpd] *************************************************
+changed: [Va4]
+changed: [Va2]
+
+PLAY RECAP *********************************************************************
+Va2                        : ok=6    changed=3    unreachable=0    failed=0   
+Va4                        : ok=6    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+[root@Va2 ~]# grep  -En  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf
+42:Listen  80
+95:ServerName  localhost
+[root@Va4 ~]# grep  -En  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf
+42:Listen  80
+95:ServerName  localhost
+
+[root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -En  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf'
+Va2 | SUCCESS | rc=0 >>
+42:Listen  80
+95:ServerName  localhost
+
+Va4 | SUCCESS | rc=0 >>
+42:Listen  80
+95:ServerName  localhost
+
+[root@Va2 ~]# grep  -nB2  "^Listen "  /etc/httpd/conf/httpd.conf
+40-#
+41-#Listen 12.34.56.78:80
+42:Listen  80
+
+[root@Va2 ~]# grep  -n  "^#Listen "  /etc/httpd/conf/httpd.conf
+41:#Listen 12.34.56.78:80
+
+[root@Va1 ~]# vim  apache.yaml 
+[root@Va1 ~]# cat  apache.yaml
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:
+        name: httpd
+        state: present
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^Listen "
+        insertbefore: "^#Listen "
+        line: "Listen  8080"
+      notify:
+# zhuyi  hanshuming  yao  yizhi
+        - reload httpd  ## 注意短横线 - 空格 数组,可以触发多个条件,即可以调用多个handlers定义的name
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^ServerName "
+        line: "ServerName  127.0.0.1"
+      notify: reload httpd
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+  handlers:
+# zhushi biaoshi lianjie hanshuming
+    - name: reload httpd
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
+
+handlers是另一种任务列表，
+你可以把handlers理解成另外一种tasks，
+你可以理解成它们是'平级'的，
+handlers与tasks是'对齐'的（缩进相同），
+上例中的handlers中只有一个任务，这个任务的名称为"reload httpd"，
+handlers中的任务需要被tasks中的任务调用，
+上例中，"reload httpd" 
+被"tasks-zi-listname install the specific  version of Apache"调用了，
+我们使用notify关键字'调用'handlers中的任务，
+或者说，通过notify关键字'通知'handlers中的任务，
+
+handlers是另一种任务列表，所以handlers中可以有多个任务，被tasks中不同的任务notify
+
+[root@Va1 ~]#  ansible-playbook  apache.yaml
+
+PLAY [web] ***************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************
+ok: [Va2]
+ok: [Va4]
+
+TASK [tasks-zi-listname install the specific  version of Apache] *********************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [lineinfile] ********************************************************************************
+changed: [Va4]
+changed: [Va2]
+
+TASK [lineinfile] ********************************************************************************
+changed: [Va2]
+changed: [Va4]
+
+TASK [copy] **************************************************************************************
+ok: [Va4]
+ok: [Va2]
+
+RUNNING HANDLER [reload httpd] *******************************************************************
+changed: [Va2]
+changed: [Va4]
+
+PLAY RECAP ***************************************************************************************
+Va2                        : ok=6    changed=3    unreachable=0    failed=0   
+Va4                        : ok=6    changed=3    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -En1  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf'
+Va4 | SUCCESS | rc=0 >>
+41-#Listen 12.34.56.78:80
+42:Listen  8080
+43-
+--
+94-#
+95:ServerName  127.0.0.1
+96-
+
+Va2 | SUCCESS | rc=0 >>
+41-#Listen 12.34.56.78:80
+42:Listen  8080
+43-
+--
+94-#
+95:ServerName  127.0.0.1
+96-
+
+[root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -n2  "^Listen "  /etc/httpd/conf/httpd.conf'Va2 | SUCCESS | rc=0 >>
+40-#
+41-#Listen 12.34.56.78:80
+42:Listen  8080
+43-
+44-#
+
+Va4 | SUCCESS | rc=0 >>
+40-#
+41-#Listen 12.34.56.78:80
+42:Listen  8080
+43-
+44-#
+
+[root@Va1 ~]# ansible  web  -m  command  -a  "elinks  -dump  127.0.0.1:8080"
+Va4 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+Va2 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+[root@Va1 ~]# 
+
+可以在一个task中一次性notify多个handler，
+当多个handler的name相同时，只有一个handler会被执行，
+一次notify多个handler，则需要借助 关键字 'listen'，
+可以把listen理解成"组名"，
+我们可以把多个handler分成"组"，
+当我们需要一次性notify多个handler时，
+只要将多个handler分为"一组"，使用相同的"组名"即可，
+当notify对应的值为"组名"时，
+"组"内的所有handler都会被notify
+
+---
+- hosts: test211
+  remote_user: root
+  tasks:
+  - name: task1
+    file: path=/data/testfile1
+          state=touch
+    notify: handler group1
+
+  handlers:
+  - name: handler1
+    listen: handler group1
+    file: path=/data/ht1
+          state=touch
+  - name: handler2
+    listen: handler group1
+    file: path=/data/ht2
+          state=touch
+
+https://blog.csdn.net/reblue520/article/details/81612241
+
+
+setup模块
+
+– 主要用亍获取主机信息,在playbooks里经常会用到的
+一个参数gather_facts就不该模块相关。setup模块下经常使用的一个参数是filter参数
+– filter 可以过滤到我们需要的信息
+
+ansible t1 -m setup -a 'filter=ansible_distribution'
+
+[root@Va1 ~]# ansible  Va2  -m  setup  -a  'filter="ansible_os_family"'
+Va2 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_os_family": "RedHat"
+    }, 
+    "changed": false
+}
+
+使用register内的变量
+
+Ansible playbook内task之间还可以互相传递数据，
+比如我们总共有两个tasks,
+其中第2个task是否执行是需要判断第1个task运行后的结果，
+这个时候我们就得在task之间传递数据，
+需要把第1个task执行的结果传递给第2个task。
+Ansible task之间传递数据使用register方式。
+
+---
+  - hosts: all
+    gather_facts: False
+    #vars_files:
+    #    - var.yaml
+    tasks:
+          #- name: Display Host Variable from hostfile
+          #  debug: msg="The {{ inventory_hostname }} Vaule is {{ key }}"
+          - name: register variable
+            shell: hostname
+            register: info
+          - name: display variable
+            debug: msg="The varibale is {{ info }}"
+
+这里我们把第一个task执行hostname的结果register给info这个变量，
+然后在第二个task把这个结果使用debug模块打印出来，
+执行结果如下：
+
+
+
+
+
+
+
+
+
+
+
