@@ -23,13 +23,7 @@ ansible_ssh_user=root
 ansible_ssh_pass=1
                                ## -i PATH, --inventory=PATH：资产的文件路径
 [root@Va1 ~]# ansible app1  -i  /var/myansible/myhosts  -m  command  -a  "echo  hello"
-
-Va2 | SUCCESS | rc=0 >>
-hello
-
-Va3 | SUCCESS | rc=0 >>
-hello
-
+..................
 [root@Va1 ~]# type echo
 echo 是 shell 内嵌
 
@@ -39,8 +33,6 @@ echo 是 shell 内嵌
 [WARNING]: Could not match supplied host pattern, ignoring: app1
 
  [WARNING]: No hosts matched, nothing to do
-
-
 
 [root@Va1 ~]# cat  apache.yaml 
 # apache.yaml
@@ -113,33 +105,9 @@ Syntax OK
     - debug: var=say_hi  verbosity=0
 
 [root@Va1 ~]# ansible-playbook   -i  /etc/ansible/hosts   echo.yml
-
-PLAY [Va3] **********************************************************************
-
-TASK [Gathering Facts] **********************************************************
-ok: [Va3]
-
-TASK [command] ******************************************************************
-changed: [Va3]
-
+................
 TASK [debug] ********************************************************************
-ok: [Va3] => {
-    "say_hi": {
-        "changed": true, 
-        "cmd": "echo \"haha\" echo \"xixi\"", 
-        "delta": "0:00:00.002023", 
-        "end": "2019-01-11 12:12:28.514957", 
-        "failed": false, 
-        "rc": 0, 
-        "start": "2019-01-11 12:12:28.512934", 
-        "stderr": "", 
-        "stderr_lines": [], 
-        "stdout": "haha echo xixi", 
-        "stdout_lines": [
-            "haha echo xixi"
-        ]
-    }
-}
+............
 
 PLAY RECAP **********************************************************************
 Va3                        : ok=3    changed=1    unreachable=0    failed=0   
@@ -168,25 +136,7 @@ Va3                        : ok=3    changed=1    unreachable=0    failed=0
       register: testuser
     - debug: var=testuser.stdout  verbosity=0
 [root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts  user.yaml
-
-PLAY [other] ********************************************************************
-
-TASK [Gathering Facts] **********************************************************
-ok: [Va6]
-
-TASK [command] ******************************************************************
-changed: [Va6]
-
-TASK [user] *********************************************************************
-changed: [Va6]
-
-TASK [taskname listname change passwd] ******************************************
-changed: [Va6]
-
-TASK [debug] ********************************************************************
-ok: [Va6] => {
-    "testuser.stdout": "更改用户 zh3 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n44:zh3:x:1108:11089:zh3 declarative description:/home/zh3:/bin/bash"
-}
+..............................
 
 PLAY RECAP **********************************************************************
 Va6                        : ok=5    changed=3    unreachable=0    failed=0   
@@ -227,22 +177,7 @@ Va6                        : ok=5    changed=3    unreachable=0    failed=0
 
 
 [root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts  user.yaml
-
-PLAY [other] ********************************************************************
-
-TASK [Gathering Facts] **********************************************************
-ok: [Va6]
-
-TASK [user] *********************************************************************
-changed: [Va6]
-
-TASK [taskname listname change passwd] ******************************************
-changed: [Va6]
-
-TASK [debug] ********************************************************************
-ok: [Va6] => {
-    "testuser.stdout": "更改用户 json 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n45:json:x:1122:10088:json declarative description:/home/json:/bin/bash"
-}
+................................
 
 PLAY RECAP **********************************************************************
 Va6                        : ok=4    changed=2    unreachable=0    failed=0   
@@ -254,18 +189,7 @@ Va6
 [root@Va1 ~]# ls   /root/.ansible/
 cp  tmp
 [root@Va1 ~]# ls   /root/.ansible/cp/
-
-ansible-playbook <filename.yml> ... [options]
-
-  <filename.yml>:yaml格式的playbook文件路径，必须指明
-  [options]: 选项
-    -C, --check：并不在远程主机上执行，只是测试。
-    -i PATH, --inventory=PATH：资产的文件路径
-    --flush-cache：清楚fact缓存
-    --list-hosts：列出匹配的远程主机，并不执行任何动作
-    -t, TAGS, --tags=TAGS：运行指定的标签任务
-    --skip-tags:跳过指定的notify，
-
+....................
 ~]# cat httpd02.yml
 
 - hosts: 192.168.200.136
@@ -285,12 +209,7 @@ ansible-playbook <filename.yml> ... [options]
 notify表明此task改变时，它会触发一个事件，
 此事件会调用name为restart httpd service的handlers task。
 
-指定执行任务
-
-资产文件
-
 注意，修改了端口号
-
 ~] cat /etc/ansibele/hosts
 
 [webservers]
@@ -324,21 +243,7 @@ playbook只执行了拷贝文件，以及拷贝文件触发的重启服务事件
 ansible-playbook 192.168.200.136 -e "httpd_port=808" httpd04.yml
 
 ansible中变量的优先级
-
---extra-vars （-e 选项指定的变量）最高
-inventory 主机清单中定义的变量（ansible_ssh_user等)
-play剧本中vars、vars_files定义的变量
-系统的facts变量
-角色定义的默认变量 最低
-从上到下优先级逐渐降低，高优先级会覆盖掉低优先级的变量
-
-入口 yaml 文件中通过 {{ ** }} 获取变量，
-命令行通过 -i 指定 hosts 文件， 
--e 传入参数，
-如果同时传入多个 host 参数可使用 逗号,分隔，
-同时也可以使用 hosts 文件中的变量 ，
-其中 remote_user: root 可以在 ansiplay-book 命令行中使用 -u root 替代。
-
+..........
 ansible-playbook <filename.yml> ... [options]
 
   <filename.yml>:yaml格式的playbook文件路径，必须指明
@@ -701,13 +606,7 @@ uid=1123(jinj) gid=10089(zuxx) 组=10089(zuxx)
 >  '{"nameadd":"lala","group":"lisi","uid":"1125"}'  user2.yaml
 
 .................................
-TASK [debug] ************************************************************************************************************
-ok: [Va6] => {
-    "testuser.stdout": "更改用户 lala 的密码 。\npasswd：所有的身份验证令牌已经成功更新。\n47:lala:x:1125:1000:lala declarative description:/home/lala:/bin/bash"
-}
 
-PLAY RECAP **************************************************************************************************************
-Va6                        : ok=4    changed=2    unreachable=0    failed=0   
 
 [root@Va1 ~]# ansible  other  -m  command  -a  "id  lala"
 Va6 | SUCCESS | rc=0 >>
@@ -816,10 +715,12 @@ n. [数]参数;<物><数>参量;限制因素;决定因素
 
 [root@Va1 ~]# vim   parameter.vars
 [root@Va1 ~]# cat   parameter.vars  ##注意这是yaml格式文件
+
 user:
   name: testname
   group: admin
   uid: 1135
+
 [root@Va1 ~]# file   parameter.vars
 parameter.vars: ASCII text
 
@@ -1225,18 +1126,7 @@ false 是 shell 内嵌
 *******/
 
 [root@Va1 ~]# ansible-playbook   user3.yaml
-
-PLAY [Va3] *********************************************************************
-
-TASK [Gathering Facts] *********************************************************
-ok: [Va3]
-
-TASK [command] *****************************************************************
-changed: [Va3]
-
-TASK [command] *****************************************************************
-changed: [Va3]
-
+..............................
 PLAY RECAP *********************************************************************
 Va3                        : ok=3    changed=2    unreachable=0    failed=0   
 
@@ -1330,7 +1220,8 @@ tags（标签）
 
 案例：使用ansible对websrvs组的两台主机做httpd的高可用
 
-    以下node1为ansible节点，node2和node3为被控节点，已被添加至主机组websrvs。这里假设两个被控节点上已安装好httpd服务程序，且已建立双机互信。
+    以下node1为ansible节点，node2和node3为被控节点，已被添加至主机组websrvs。
+这里假设两个被控节点上已安装好httpd服务程序，且已建立双机互信。
 
 [root@node1 ~]# vim /etc/ansible/hosts
 
@@ -1446,14 +1337,7 @@ Va4                        : ok=6    changed=3    unreachable=0    failed=0
 95:ServerName  localhost
 
 [root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -En  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf'
-Va2 | SUCCESS | rc=0 >>
-42:Listen  80
-95:ServerName  localhost
-
-Va4 | SUCCESS | rc=0 >>
-42:Listen  80
-95:ServerName  localhost
-
+..................
 [root@Va2 ~]# grep  -nB2  "^Listen "  /etc/httpd/conf/httpd.conf
 40-#
 41-#Listen 12.34.56.78:80
@@ -1516,68 +1400,38 @@ handlers是另一种任务列表，所以handlers中可以有多个任务，被t
 
 [root@Va1 ~]#  ansible-playbook  apache.yaml
 
-PLAY [web] ***************************************************************************************
-
-TASK [Gathering Facts] ***************************************************************************
-ok: [Va2]
-ok: [Va4]
-
-TASK [tasks-zi-listname install the specific  version of Apache] *********************************
-ok: [Va4]
-ok: [Va2]
-
-TASK [lineinfile] ********************************************************************************
-changed: [Va4]
-changed: [Va2]
-
-TASK [lineinfile] ********************************************************************************
-changed: [Va2]
-changed: [Va4]
-
-TASK [copy] **************************************************************************************
-ok: [Va4]
-ok: [Va2]
-
-RUNNING HANDLER [reload httpd] *******************************************************************
-changed: [Va2]
-changed: [Va4]
-
+PLAY [web] 
+........................
 PLAY RECAP ***************************************************************************************
 Va2                        : ok=6    changed=3    unreachable=0    failed=0   
 Va4                        : ok=6    changed=3    unreachable=0    failed=0   
 
-[root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -En1  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf'
-Va4 | SUCCESS | rc=0 >>
-41-#Listen 12.34.56.78:80
-42:Listen  8080
-43-
---
-94-#
-95:ServerName  127.0.0.1
-96-
+RECAP
+abbr.
+reliability evaluation continuous analysis program 
+可靠性评估连续分析程序;
+[计]= Reliability Evaluation Continuous Analysis Program,
+可靠性评价连续分析程序
 
-Va2 | SUCCESS | rc=0 >>
-41-#Listen 12.34.56.78:80
-42:Listen  8080
-43-
---
-94-#
-95:ServerName  127.0.0.1
-96-
+reliability
+英 [rɪˌlaɪə'bɪlətɪ]  美 [rɪˌlaɪəˈbɪlətɪ]  
+n. 可靠，可信赖
+
+evaluation
+英 [ɪˌvæljʊ'eɪʃn]   美 [ɪˌvæljʊˈeʃən]  
+n. 估价;<数>赋值;估计价值;[医学]诊断
+
+analysis
+英 [əˈnæləsɪs]   美 [əˈnælɪsɪs]  
+n. 分析，分解;梗概，要略;[数]解析;验定
+
+[root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -En1  "^(Listen |ServerName )"  /etc/httpd/conf/httpd.conf'
+
+.....................
 
 [root@Va1 ~]# ansible  web  -m  shell  -a    'grep  -n2  "^Listen "  /etc/httpd/conf/httpd.conf'Va2 | SUCCESS | rc=0 >>
-40-#
-41-#Listen 12.34.56.78:80
-42:Listen  8080
-43-
-44-#
 
-Va4 | SUCCESS | rc=0 >>
-40-#
-41-#Listen 12.34.56.78:80
-42:Listen  8080
-43-
-44-#
+..............
 
 [root@Va1 ~]# ansible  web  -m  command  -a  "elinks  -dump  127.0.0.1:8080"
 Va4 | SUCCESS | rc=0 >>
@@ -1662,425 +1516,112 @@ Ansible task之间传递数据使用register方式。
 这里我们把第一个task执行hostname的结果register给info这个变量，
 然后在第二个task把这个结果使用debug模块打印出来，
 
-1. 变量
-（1）变量命名
-变量名仅能由字母、数字和下划线组成，而且只能以字母开头。
+ debug 调试模块，用于在调试中输出信息
+常用参数：
+msg：调试输出的消息
+var：将某个任务执行的输出作为变量传递给debug模块，debug会直接将其打印输出
+verbosity：debug的级别（默认是0级，全部显示）
 
-（2）facts
-facts是由正在通信的远程目标主机发回的信息，
-这些信息被保存在ansible变量中。
-要获取指定的远程主机所支持的所有facts，
-可使用如下命令进行：
-# ansible hostname -m setup
+[root@Va6 ~]# which  true  &&  which false  && which type
+/usr/bin/true
+/usr/bin/false
+/usr/bin/which: no type in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
 
-（3）register
-把任务的输出定义为变量，然后用于其他任务，示例如下：
-tasks:
-   - shell: /usr/bin/foo
-     register: foo_result
-     ignore_errors: True
+[root@Va6 ~]# type   true   && type  false  &&  type   type
+true 是 shell 内嵌
+false 是 shell 内嵌
+type 是 shell 内嵌
 
-（4）通过命令行传递变量
-在运行playbook的时候也可以传递一些变量供playbook使用，示例如下：
-ansible-playbook test.yml --extra-vars "hosts=www user=magedu"
-就是说hosts和user这两个变量可以在test.yml文件中直接调用
+[root@Va6 ~]# echo  $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
 
-（5）通过roles传递变量
-当给一个主机应用角色的时候可以传递变量，然后在角色内使用这些变量，
-示例如下：
-- hosts: webservers
-  roles: 
-        - common
-        - { role: foo_app_instance, dir: '/web/htdocs/a.com', port: 8080 }
-注意:role、dir、port是变量名，冒号后面的是变量值。
+[root@Va6 ~]# ll   /usr/bin/true 
+-rwxr-xr-x. 1 root root 28920 6月  30 2016 /usr/bin/true
+[root@Va6 ~]# ll  /usr/bin/false 
+-rwxr-xr-x. 1 root root 28920 6月  30 2016 /usr/bin/false
 
- 
-2. Inventory
+[root@Va6 ~]# yum  provides   true
+...................   
+coreutils-8.22-18.el7.x86_64 : A set of basic GNU tools commonly used in shell scripts
+源    ：CentOS7-1708
+匹配来源：
+文件名    ：/usr/bin/true
 
-ansible的主要功能在于批量主机操作，为了便捷地使用其中的部分主机，
-可以在inventory file中将其分组命名。
-默认的inventory file为/etc/ansible/hosts。
-inventory file可以有多个，且也可以通过Dynamic Inventory来动态生成。
+coreutils-8.22-18.el7.x86_64 : A set of basic GNU tools commonly used in shell scripts
+源    ：@anaconda/7.4
+匹配来源：
+文件名    ：/usr/bin/true
 
-（1）inventory文件格式
-inventory文件遵循INI文件风格，
-中括号中的字符为组名。
-可以将同一个主机同时归并到多个不同的组中；
-此外，当如若目标主机使用了非默认的SSH端口，还可以在主机名称之后使用冒号加端口号标明。
+[root@Va6 ~]# rpm   -qf   /usr/bin/true
+coreutils-8.22-18.el7.x86_64
+[root@Va6 ~]# rpm   -qf   /usr/bin/false
+coreutils-8.22-18.el7.x86_64
 
-[webservers]
-www1.wisedu.com:8888
-www2.wisedu.com
-如果主机名称遵循相似的命名模式，还可以使用列表的方式标识各主机，例如：
+[root@Va6 ~]# yum  provides   type
+...........
+No matches found
+[root@Va6 ~]# 
 
-[webservers]
-www[01:50].example.com
+[root@Va6 ~]# true &&  echo $? ; false  ||  echo  $?
+0
+1
+[root@Va6 ~]# if  echo haha >/dev/null;then  echo  then xixi;fi
+then xixi
 
-[databases]
-db-[a:f].example.com
- 
+[root@Va6 ~]# if  id  lala;then  echo lala is existed;fi;
+uid=1125(lala) gid=1000(lisi) 组=1000(lisi)
+lala is existed
 
- （2）主机变量
-可以在inventory中定义主机时为其添加主机变量以便于在playbook中使用，例如：
-.............
-1.5 注册和定义变量的各种方式
+[root@Va6 ~]# if  id  lala>/dev/null;then  echo lala is existed;fi;
+lala is existed
 
-ansible中定义变量的方式有很多种，大致有：(1)将模块的执行结果注册为变量；(2)直接定义字典类型的变量；(3)role中文件内定义变量；(4)命令行传递变量；(5)借助with_items迭代将多个task的结果赋值给一个变量；(6)inventory中的主机或主机组变量；(7)内置变量。
-1.5.1 register注册变量
+[root@Va6 ~]# if  id  nb;then  echo nb is not existed;fi;
+id: nb: no such user
 
-使用register选项，可以将当前task的输出结果赋值给一个变量。例如，下面的示例中将echo的结果"haha"赋值给say_hi变量。注意，模块的输出结果是json格式的，所以，引用变量时要指定引用的对象。
----
-    - hosts: localhost
-      tasks: 
-        - shell: echo haha
-          register: say_hi
-        - debug: var=say_hi.stdout
-1.5.2 set_fact定义变量
+[root@Va6 ~]# if  id  nb 2>/dev/null;then  echo nb is not existed;fi;
 
-set_fact和register的功能很相似，也是将值赋值给变量。它更像shell中变量的赋值方式，可以将某个变量的值赋值给另一个变量，也可以将字符串赋值给变量。
-例如：
----
-    - hosts: 192.168.100.65
-      tasks:
-        - shell: echo haha
-          register: say_hi
-        - set_fact: var1="{{say_hi.stdout}}"
-        - set_fact: var2="your name is"
-        - debug: msg="{{var2}} {{var1}}"
-1.5.3 vars定义变量
+[root@Va6 ~]# if ! id  nb;then  echo nb is not existed;fi;
+id: nb: no such user
+nb is not existed
 
-可以在play或task层次使用vars定义字典型变量。如果同名，则task层次的变量覆盖play层次的变量。
-例如：
----
-    - hosts: localhost
-      vars: 
-        var1: value1
-        var2: value2
-      tasks: 
-         - debug: msg="{{var1}} {{var2}}"
-           vars: 
-             var2: value2.2
-输出结果为：
-TASK [debug] ********************************************
-ok: [localhost] => {
-    "msg": "value1 value2.2"
-}
-1.5.4 vars_files定义变量
+[root@Va6 ~]# if ! id  nb 2>/dev/null;then  echo nb is not existed;fi;
+nb is not existed
 
-和vars一样，只不过它是将变量以字典格式定义在独立的文件中，且vars_files不能定义在task层次，只能定义在play层次。
----
-    - hosts: localhost
-      vars_files: 
-        - /tmp/var_file1.yml
-        - var_file2.yml
-      tasks: 
-         - debug: msg="{{var1}} {{var2}}"
-上面var_file2.yml使用的是相对路径，基于playbook所在的路径。例如该playbook为/tmp/x.yml，则var_file2.yml也应该在/tmp下。当然，完全可以使用绝对路径。
-1.5.5 roles中的变量
+grep基本正则表达式元字符
+匹配次数
+  *:前一个字符出现任意次数，包括0次
+ .* :任意字符出现任意次数
+\?：前一个字符出现1次或者0次
+\+:出现1次或者1次以上
+\{n\}:精确匹配次数
+\{m,n\}:匹配m到n次之间
+\{n,\} :匹配最少n次以上
+\{,n\} :匹配最多n次以上
+[a-z]\+ : 任意一个字符至少出现一次 ； 
+. 在[]中没有任何意义，就是点本身
 
-由于role是整合playbook的，它有默认的文件组织结构。其中有一个目录vars，其内的main.yml用于定义变量。还有defaults目录内的main.yml则是定义role默认变量的，默认变量的优先级最低。
-shell> tree /yaml
-/yaml
-├── roles
-│   └── nginx
-│       ├── defaults
-│           └── main.yml      
-│       ├── files
-│       ├── handlers
-│       ├── meta
-│       ├── tasks
-│       ├── templates
-│       └── vars
-│           └── main.yml
-└── site.yml
-main.yml中变量定义方式也是字典格式，例如：
----
-    mysql_port: 3306
-1.5.6 命令行传递变量
+[root@Va6 ~]# grep  -n  nametest[0-9]?  /etc/passwd
+[root@Va6 ~]# grep  -En  nametest[0-9]?  /etc/passwd
+53:nametest:x:10087:10088::/home/nametest:/bin/bash
+54:nametest2:x:10088:10088::/home/nametest2:/bin/bash
+55:nametest3:x:10089:10088::/home/nametest3:/bin/bash
+56:nametest4:x:10090:10088::/home/nametest4:/bin/bash
 
-ansible和ansible-playbook命令的"-e"选项都可以传递变量，传递的方式有两种：-e key=value和-e @var_file。注意，当key=value方式传递变量时，如果变量中包含特殊字符，必须防止其被shell解析。
-例如：
-ansible localhost -m shell -a "echo {{say_hi}}" -e 'say_hi="hello world"'
-ansible localhost -m shell -a "echo {{say_hi}}" -e @/tmp/var_file1.yml
-其中/tmp/var_file1.yml中的内容如下：
----
-    say_hi: hello world
-1.5.7 借助with_items叠加变量
+[root@Va6 ~]# id   nametest4
+uid=10090(nametest4) gid=10088(admin) 组=10088(admin)
 
-ansible中可以借助with_items实现列表迭代的功能，
-作用于变量注册的行为上，
-就可以实现将多个结果赋值给同一个变量。
-例如下面的playbook中，给出了3个item列表，
-并在shell模块中通过固定变量"{{item}}"分别迭代，
-第一次迭代的是haha，第二次迭代的是heihei，第三次迭代的是hehe，
-也就实现了3次循环。
-最后，将结果注册为变量hi_var。
----
-    - hosts: localhost
-      remote_user: root
-      tasks:
-        - name: test #
-          shell: echo "{{item}}"
-          with_items:
-            - haha
-            - heihei
-            - hehe
-          register: hi_var
-        - debug: var=hi_var.results[0].stdout
-        - debug: var=hi_var.results[1].stdout
-        - debug: var=hi_var.results[2].stdout
-每次迭代的过程中，调用item的模块都会将结果保存在一个key为results的数组中。
-因此，引用迭代后注册的变量时，需要在变量名中加上results，并指定数组名。
-例如上面的hi_var.results[N].stdout。
-还可以使用for循环遍历列表。例如：
-- debug: msg="{% for i in hi_var.results %} {{i.stdout}} {% endfor %}"
-其实，看一下hi_var的输出就很容易理解了。以下是hi_var的第一个列表的输出。
-"hi_var": {
-    "changed": true, 
-    "msg": "All items completed", 
-    "results": [
-        {
-            "_ansible_item_result": true, 
-            "_ansible_no_log": false, 
-            "_ansible_parsed": true, 
-            "changed": true, 
-            "cmd": "echo \"haha\"", 
-            "delta": "0:00:00.001942", 
-            "end": "2017-09-21 04:45:57.032946", 
-            "invocation": {
-                "module_args": {
-                    "_raw_params": "echo \"haha\"", 
-                    "_uses_shell": true, 
-                    "chdir": null, 
-                    "creates": null, 
-                    "executable": null, 
-                    "removes": null, 
-                    "warn": true
-                }
-            }, 
-            "item": "haha", 
-            "rc": 0, 
-            "start": "2017-09-21 04:45:57.031004", 
-            "stderr": "", 
-            "stderr_lines": [], 
-            "stdout": "haha", 
-            "stdout_lines": [
-                "haha"
-            ]
-        }
-1.5.8 inventory中主机变量和主机组变量
+[root@Va6 ~]# userdel   -r   nametest4
 
-在inventory文件中可以为主机和主机组定义变量，
-不仅包括内置变量赋值，还包括自定义变量赋值。
-例如以下inventory文件。
-192.168.100.65 ansible_ssh_port=22 var1=1
-[centos7]
-192.168.100.63
-192.168.100.64
-192.168.100.65 var1=2
-[centos7:vars]
-var1=2.2
-var2=3
-[all:vars]
-var2=4
-其中ansible_ssh_port是主机内置变量，为其赋值22，这类变量是设置类变量，不能被引用。
-此外还在多处为主机192.168.100.65进行了赋值。
-其中[centos7:vars]和[all:vars]表示为主机组赋值，
-前者是为centos7这个组赋值，后者是为所有组赋值。
-以下是执行语句：
-shell> ansible 192.168.100.65 -i /tmp/hosts -m shell -a 'echo "{{var1}} {{var2}}"'
-192.168.100.65 | SUCCESS | rc=0 >>
-2 3
-从结果可知，主机变量优先级高于主机组变量，
-给定的主机组变量优先级高于all特殊组。
+[root@Va6 ~]# id   nametest4
+id: nametest4: no such user
 
-除了在inventory文件中定义主机、主机组变量，
-还可以将其定义在host_vars和group_vars目录下的独立的文件中，
-但要求这些host_vars或group_vars这两个目录
-和inventory文件或playbook文件在同一个目录下，
-且变量的文件以对应的主机名或主机组名命名。
+ debug 调试模块，用于在调试中输出信息
+常用参数：
+msg：调试输出的消息
+var：将某个任务执行的输出作为变量传递给debug模块，debug会直接将其打印输出
+verbosity：debug的级别（默认是0级，全部显示）
 
-例如，inventory文件路径为/etc/ansible/hosts，playbook文件路径为/tmp/x.yml，
-则主机192.168.100.65和主机组centos7的变量文件路径可以为以下几种：
-/etc/ansible/host_vars/192.168.100.65
-/etc/ansible/group_vars/centos7
-/tmp/host_vars/192.168.100.65
-/tmp/group_vars/centos7
-以下为几个host_vars和group_vars目录下的文件内容。
-shell> cat /etc/ansible/{host_vars/192.168.100.65,group_vars/centos7} \
-           /tmp/{host_vars/192.168.100.65,group_vars/centos7}
-var1: 1
-var2: 2
-var3: 3
-var4: 4
-以下为/tmp/x.yml的内容。
----
-    - hosts: 192.168.100.65
-      tasks:
-        - debug: msg='{{var1}} {{var2}} {{var3}} {{var4}}'
-执行结果如下：
-TASK [debug] **********************************************
-ok: [192.168.100.65] => {
-    "msg": "1 2 3 4"
-}
-1.5.9 内置变量
-
-ansible除了inventory中内置的一堆不可被引用的设置类变量，
-还有几个全局都可以引用的内置变量，
-主要有以下几个：
-inventory_hostname、
-inventory_hostname_short、
-groups、group_names、
-hostvars、play_hosts、
-inventory_dir
-和ansible_version。
-
-1.inventory_hostname和inventory_hostname_short
-分表代表的是inventory中被控节点的主机名和主机名的第一部分，
-如果定义的是主机别名，则变量的值也是别名。
-
-例如inventory中centos7主机组定义为如下：
-[centos7]
-192.168.100.63
-host1 ansible_ssh_host=192.168.100.64
-www.host2.com ansible_ssh_host=192.168.100.65
-分别输出它们的inventory_hostname和inventory_hostname_short。
-shell> ansible centos7 -m debug -a 'msg="{{inventory_hostname}} & {{inventory_hostname_short}}"'
-192.168.100.63 | SUCCESS => {
-    "msg": "192.168.100.63 & 192"
-}
-host1 | SUCCESS => {
-    "msg": "host1 & host1"
-}
-www.host2.com | SUCCESS => {
-    "msg": "www.host2.com & www"
-}
-2.groups和group_names
-group_names返回的是主机所属主机组，如果该主机在多个组中，则返回多个组，
-如果它不在组中，则返回ungrouped这个特殊组。
-例如，某个inventory文件如下：
-192.168.100.60
-192.168.100.63
-192.168.100.64
-192.168.100.65 
-[centos6]
-192.168.100.60
-[centos7]
-192.168.100.63
-host1 ansible_ssh_host=192.168.100.64
-www.host2.com ansible_ssh_host=192.168.100.65
-[centos:children]
-centos6
-centos7
-其中100.60定义在centos6和centos中，所以返回这两个组。
-同理100.63返回centos7和centos。
-100.64和100.65则返回ungrouped，
-虽然它们在centos7中都定义了别名，
-但至少将100.64和100.65作为主机名时，它们是不在任何主机中的。
-另一方面，host1和www.host2.com这两个别名主机都返回centos7和centos两个组。
-groups变量则是返回其所在inventory文件中所有组和其内主机名。
-注意，该变量对每个控制节点都返回一次，所以返回的内容可能非常多。
-例如，上面的inventory中，如果指定被控节点为centos7，
-则会重复返回3次(因为有3台被控主机)该inventory文件。
-其中的第三台主机www.host2.com的返回结果为：
-www.host2.com | SUCCESS => {
-    "msg": {
-        "all": [
-            "192.168.100.60", 
-            "192.168.100.63", 
-            "192.168.100.64", 
-            "192.168.100.65", 
-            "host1", 
-            "www.host2.com"
-        ], 
-        "centos": [
-            "192.168.100.60", 
-            "192.168.100.63", 
-            "host1", 
-            "www.host2.com"
-        ], 
-        "centos6": [
-            "192.168.100.60"
-        ], 
-        "centos7": [
-            "192.168.100.63", 
-            "host1", 
-            "www.host2.com"
-        ], 
-        "ungrouped": [
-            "192.168.100.60", 
-            "192.168.100.63", 
-            "192.168.100.64", 
-            "192.168.100.65"
-        ]
-    }
-}
-3.hostvars
-该变量用于引用其他主机上收集的facts中的数据，或者引用其他主机的主机变量、主机组变量。
-其key为主机名或主机组名。
-举个例子，假如使用ansible部署一台php服务器host1，
-且配置文件内需要指向另一台数据库服务器host2的ip地址ip2，
-可以直接在配置文件中指定ip2，
-但也可以在模板配置文件中直接引用host2收集的facts数据中的ansible_eth0.ipv4.address变量。
-例如，centos7主机组中包含了192.168.100.[63:65]共3台主机。playbook内容如下：
----
-    - hosts: centos7
-      tasks:
-        - debug: msg="{{hostvars['192.168.100.63'].ansible_eth0.ipv4.address}}"
-执行结果如下：
-TASK [debug] *********************************************************
-ok: [192.168.100.63] => {
-    "msg": "192.168.100.63"
-}
-ok: [192.168.100.64] => {
-    "msg": "192.168.100.63"
-}
-ok: [192.168.100.65] => {
-    "msg": "192.168.100.63"
-}
-但注意，在引用其他主机facts中数据时，要求被引用主机进行了facts收集动作，或者有facts缓存。否则都没收集，当然无法引用其facts数据。也就是说，当被引用主机没有facts缓存时，ansible的控制节点中必须同时包含引用主机和被引用主机。
-除了引用其他主机的facts数据，还可以引用其他主机的主机变量和主机组变量，且不要求被引用主机有facts数据，因为主机变量和主机组变量是在ansible执行任务前加载的。
-例如，inventory中格式如下：
-192.168.100.59
-[centos7]
-192.168.100.63 var63=63
-192.168.100.64
-192.168.100.65
-[centos7:vars]
-var64=64
-playbook内容如下：
----
-    - hosts: 192.168.100.59
-      tasks:
-        - debug: msg="{{hostvars['192.168.100.63'].var63}} & {{hostvars['192.168.100.65'].var64}}"
-执行结果如下：
-TASK [debug] ***************************************
-ok: [192.168.100.59] => {
-    "msg": "63 & 64"
-}
-4.play_hosts和inventory_dir
-play_hosts代表的是当前play所涉及inventory内的所有主机名列表。
-例如，inventory内容为：
-192.168.100.59
-[centos6]
-192.168.100.62
-192.168.100.63
-[centos7]
-192.168.100.64
-192.168.100.65
-那么，该inventory内的任意一或多台主机作为ansible或ansible-playbook的被控节点时，都会返回整个inventory内的所有主机名称。
-inventory_dir是所使用inventory所在的目录。
-5.ansible_version
-代表的是ansible软件的版本号。变量返回的内容如下：
-{
-        "full": "2.3.1.0", 
-        "major": 2, 
-        "minor": 3, 
-        "revision": 1, 
-        "string": "2.3.1.0"
-    }
-
- [root@Va1 ~]# vim  user3.yaml 
+[root@Va1 ~]# vim  user3.yaml 
 
 [root@Va1 ~]# cat  user3.yaml
 ---
@@ -2106,35 +1647,7 @@ inventory_dir是所使用inventory所在的目录。
     - debug: var=resultn.results[2].stdout
 
 [root@Va1 ~]# ansible-playbook  user3.yaml
-
-PLAY [all] ************************************************************************
-
-TASK [Gathering Facts] ************************************************************
-ok: [Va2]
-ok: [Va6]
-ok: [Va3]
-ok: [Va5]
-ok: [Va4]
-
-TASK [command] ********************************************************************
-failed: [Va2] (item=nametest) => {.............."stderr": "id: nametest: no such user", "stderr_lines": ["id: nametest: no such user"], "stdout": "", "stdout_lines": []}
-failed: [Va5] (item=nametest) => {................ "stderr_lines": ["id: nametest: no such user"], "stdout": "", "stdout_lines": []}
-changed: [Va6] => (item=nametest)
-failed: [Va3] (item=nametest) => {............"stderr_lines": ["id: nametest: no such user"], "stdout": "", "stdout_lines": []}
-failed: [Va4] (item=nametest) => {................."stderr": "id: nametest: no such user", "stderr_lines": ["id: nametest: no such user"], "stdout": "", "stdout_lines": []}
-
-failed: [Va2] (item=nametest2) => {.............["id: nametest2: no such user"], "stdout": "", "stdout_lines": []}
-failed: [Va5] (item=nametest2) => {............. ["id: nametest2: no such user"], "stdout": "", "stdout_lines": []}
-changed: [Va6] => (item=nametest2)
-failed: [Va4] (item=nametest2) => {................ ["id: nametest2: no such user"], "stdout": "", "stdout_lines": []}
-failed: [Va3] (item=nametest2) => {............. ["id: nametest2: no such user"], "stdout": "", "stdout_lines": []}
-
-failed: [Va5] (item=nametest3) => {.........["id: nametest3: no such user"], "stdout": "", "stdout_lines": []}
-failed: [Va2] (item=nametest3) => {.............["id: nametest3: no such user"], "stdout": "", "stdout_lines": []}
-changed: [Va6] => (item=nametest3)
-failed: [Va4] (item=nametest3) => {............["id: nametest3: no such user"], "stdout": "", "stdout_lines": []}
-failed: [Va3] (item=nametest3) => {"....... ["id: nametest3: no such user"], "stdout": "", "stdout_lines": []}
-
+.................
 TASK [test  echo  username] *******************************************************
 changed: [Va6]
 
@@ -2153,6 +1666,155 @@ ok: [Va6] => {
     "resultn.results[2].stdout": "uid=10089(nametest3) gid=10088(admin) 组=10088(admin)"
 }
 	to retry, use: --limit @/root/user3.retry
+.......................
+retry
+英 [ˌri:ˈtraɪ]   美 [ˌri:'traɪ]  
+v. 再试，再审
+
+借助with_items叠加变量
+
+ansible中可以借助with_items实现列表迭代的功能，
+作用于变量注册的行为上，
+就可以实现将多个结果赋值给同一个变量。
+例如下面的playbook中，给出了3个item列表，
+并在shell模块中通过固定变量"{{item}}"分别迭代
+
+[root@Va1 ~]# vim  user3.yaml
+[root@Va1 ~]# cat   user3.yaml
+---
+- hosts: all
+  remote_user: root
+  vars:
+    username:
+      - nametest
+      - nametest2
+      - nametest3
+  tasks:
+    - shell: id  "{{item}}"
+      with_items:
+        - "{{username[0]}}"
+        - "{{username[1]}}"
+        - "{{username[2]}}"
+      register: resultn
+    - name: test  del  username  and  add user
+      user:
+        name: nb
+        password: "{{'1'|password_hash('sha512')}}"
+      when: resultn
+    - debug: var=resultn.stdout
+
+[root@Va1 ~]# ansible-playbook   user3.yaml
+
+PLAY [all] ************************************************************************
+
+TASK [Gathering Facts] ************************************************************
+ok: [Va4]
+ok: [Va6]
+ok: [Va3]
+ok: [Va5]
+ok: [Va2]
+
+TASK [command] ********************************************************************
+failed: [Va3] (item=nametest) => {"changed": true, "cmd": ........
+failed: [Va5] (item=nametest) => {"changed": true, ............
+failed: [Va4] (item=nametest) => {"changed": true, ...........
+failed: [Va2] (item=nametest) => {"changed": true, "cmd": "id \"namete ...............
+changed: [Va6] => (item=nametest)
+................
+changed: [Va6] => (item=nametest2)
+..........
+changed: [Va6] => (item=nametest3)
+
+TASK [test  del  username  and  add user] *****************************************
+changed: [Va6]
+
+TASK [debug] **********************************************************************
+ok: [Va6] => {
+    "resultn.stdout": "VARIABLE IS NOT DEFINED!"
+}
+	to retry, use: --limit @/root/user3.retry
+
+PLAY RECAP ************************************************************************
+Va2                        : ok=1    changed=0    unreachable=0    failed=1   
+Va3                        : ok=1    changed=0    unreachable=0    failed=1   
+Va4                        : ok=1    changed=0    unreachable=0    failed=1   
+Va5                        : ok=1    changed=0    unreachable=0    failed=1   
+Va6                        : ok=4    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ssh  Va6  id  nb
+uid=10090(nb) gid=10090(nb) 组=10090(nb)
+[root@Va1 ~]# ssh  Va6  "grep  -En  nametest[0-9]?  /etc/passwd"
+53:nametest:x:10087:10088::/home/nametest:/bin/bash
+54:nametest2:x:10088:10088::/home/nametest2:/bin/bash
+55:nametest3:x:10089:10088::/home/nametest3:/bin/bash
+
+
+[root@Va1 ~]# cat   user3.yaml
+---
+- hosts: all
+  remote_user: root
+  vars:
+    username:
+      - nametest
+      - nametest2
+      - nametest3
+  tasks:
+    - shell: id  "{{item}}"
+      with_items:
+        - "{{username[0]}}"
+        - "{{username[1]}}"
+        - "{{username[2]}}"
+      register: resultn
+    - name: test  del  username  and  add user
+      user:
+        name: nb
+        password: "{{'1'|password_hash('sha512')}}"
+      ignore_errors: True
+      when: resultn
+    - debug: var=resultn.results.stdout
+
+
+[root@Va1 ~]# vim  user3.yaml 
+[root@Va1 ~]# cat  user3.yaml
+---
+- hosts: all
+  remote_user: root
+  vars:
+    username:
+      - nametest
+      - nametest2
+      - nametest3
+  tasks:
+    - shell: id  "{{item}}"
+      with_items:
+        - "{{username[0]}}"
+        - "{{username[1]}}"
+        - "{{username[2]}}"
+      register: resultn
+    - name: test  del  username  and  add user
+      shell: |
+        userdel  -r  "{{username[1]}}"
+        userdel  -r  "{{username[2]}}"
+      when: resultn
+    - debug: var=resultn.results[0].stdout
+    - debug: var=resultn.results[1].stdout
+    - debug: var=resultn.results[2].stdout
+
+[root@Va1 ~]# ansible-playbook   user3.yaml
+..............
+TASK [debug] **********************************************************************
+ok: [Va6] => {
+    "resultn.results[0].stdout": "uid=10087(nametest) gid=10088(admin) 组=10088(admin)"
+}
+TASK [debug] **********************************************************************
+ok: [Va6] => {
+    "resultn.results[1].stdout": "uid=10088(nametest2) gid=10088(admin) 组=10088(admin)"
+}
+TASK [debug] **********************************************************************
+ok: [Va6] => {
+    "resultn.results[2].stdout": "uid=10089(nametest3) gid=10088(admin) 组=10088(admin)"
+}
+	to retry, use: --limit @/root/user3.retry
 
 PLAY RECAP ************************************************************************
 Va2                        : ok=1    changed=0    unreachable=0    failed=1   
@@ -2161,7 +1823,241 @@ Va4                        : ok=1    changed=0    unreachable=0    failed=1
 Va5                        : ok=1    changed=0    unreachable=0    failed=1   
 Va6                        : ok=6    changed=2    unreachable=0    failed=0   
 
+[root@Va1 ~]# ssh  Va6  "grep  -En  nametest[0-9]?  /etc/passwd"
+53:nametest:x:10087:10088::/home/nametest:/bin/bash
+
+
+子串截取的三种用法：
+${变量名:起始位置:长度}
+expr substr "$变量名" 起始位置 长度
+[root@svr5 ~]# expr substr "$phone" 9 3
+897
+使用expr substr 截取字符串时，起始编号从1开始，这个要注意与${}相区分。
+
+使用${}截取时，起始位置可以省略，省略时从第一个字符开始截,起始编号从 0 开始
+[root@svr5 ~]# phone="13788768897"
+[root@svr5 ~]# echo ${#phone}
+11                                         //包括11个字符
+从左侧开始截取前6个字符：
+[root@svr5 ~]# echo ${phone:0:6}
+137887
+[root@svr5 ~]# echo ${phone::6}
+137887
+
+echo $变量名 | cut -b 起始位置-结束位置
+[root@svr5 ~]# echo $phone | cut -b 1-6
+137887
+
+子串替换的两种用法：
+只替换第一个匹配结果：${变量名/old/new}
+替换全部匹配结果：${变量名//old/new}
+字符串掐头去尾：
+从左向右，最短匹配删除：${变量名#*关键词}
+从左向右，最长匹配删除：${变量名##*关键词}
+从右向左，最短匹配删除：${变量名%关键词*}
+[root@Va1 ~]# echo  $(uptime  |awk  '{print $(NF-2)}')
+0.00,
+[root@Va1 ~]# var=$(uptime  |awk  '{print $(NF-2)}');echo  ${var%,}
+0.00
+
+从右向左，最长匹配删除：${变量名%%关键词*}
+
+[root@Va1 ~]# uptime 
+ 16:17:21 up  4:11,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va1 ~]# uptime  |awk  '{print $(NF-2)}'
+0.00,
+
+[root@Va1 ~]# printf  "aab109.0998"
+aab109.0998
+
+[root@Va1 ~]# printf  "%s"  "aab109.0998"  ##转为字符串
+aab109.0998
+
+[root@Va1 ~]# printf  "%d"   "aab109.0998" ##转为整数
+-bash: printf: aab109.0998: 无效数字
+0
+
+[root@Va1 ~]# printf  "%d"   "109.0998"    ##转为整数
+-bash: printf: 109.0998: 无效数字
+109
+
+[root@Va1 ~]# printf  "%d"   "109"  ##转为整数
+109
+
+[root@Va1 ~]# printf  "%f"   "109.0998"   ##转为小数
+109.099800[root@Va1 ~]# printf  "%.2f"   "109.0998" ##转为保留二位小数
+109.10
+
+[root@Va1 ~]# uptime 
+ 16:17:21 up  4:11,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va1 ~]# uptime  |awk  '{print $(NF-2)}'
+0.00,
+[root@Va1 ~]# uptime  |awk  '{printf("%.2f",$(NF-2))}'
+0.00[root@Va1 ~]# 
+
+[root@Va1 ~]# vim load.yaml 
+[root@Va1 ~]# cat   load.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime |awk  '{printf("%.2f",$(NF-2))}'
+      register: resultsn
+    - service:
+        name: httpd
+        state: stopped
+      when: resultsn.stdout|float == 0.00
+
+[root@Va1 ~]# ansible-playbook  load.yaml
+
+PLAY [web] *********************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [command] *****************************************************************
+changed: [Va4]
+changed: [Va2]
+
+TASK [service] *****************************************************************
+changed: [Va4]
+changed: [Va2]
+
+PLAY RECAP *********************************************************************
+Va2                        : ok=3    changed=2    unreachable=0    failed=0   
+Va4                        : ok=3    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  web  -m  command  -a  "systemctl is-active  httpd"
+Va4 | FAILED | rc=3 >>
+inactivenon-zero return code
+
+Va2 | FAILED | rc=3 >>
+inactivenon-zero return code
+
+[root@Va1 ~]# cat   load.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime |awk  '{printf("%.2f",$(NF-2))}'
+      register: resultsn
+    - service:
+        name: httpd
+        state: stopped
+      when: resultsn.stdout|float == 0.00
+
+[root@Va1 ~]# cat   load.retry 
+Va2
+Va4
 [root@Va1 ~]# 
+
+awk中的两个术语：
+记录（默认就是文本的每一行）
+字段 （默认就是每个记录中由空格或TAB分隔的字符串）
+$0就表示一个记录，$1表示记录中的第一个字段。
+一般 print $0 就是打印整行内容（$0前面不需要反斜杠），print $1表示只打印每行第一个字段。
+
+Awk 的两个特殊模式
+BEGIN 和 END，BEGIN 被放置在没有读取任何数据之前，
+而 END 被放置在所有的数据读取完成以后执行
+
+体现如下：
+BEGIN{}: 读入第一行文本之前执行的语句，一般用来初始化操作
+{}: 逐行处理
+END{}: 处理完最后以行文本后执行，一般用来处理输出结果
+
+文件开头加tou，末尾加wei，打印行号,第一个字段,第2个字段
+
+[root@Va2 ~]# echo  -e  "a1#a2#a3\nb1#b2#b3\nc1#c2#c3" > wenjian.txt
+[root@Va2 ~]# cat   wenjian.txt
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+[root@Va2 ~]# awk  -F# 'BEGIN{print "tou"}{print NR, $1, $2}END{print "wei"}'  wenjian.txt
+tou
+1 a1 a2
+2 b1 b2
+3 c1 c2
+wei
+[root@Va2 ~]# 
+统计文本总字段个数
+[root@Va2 ~]# awk  -F# 'BEGIN{i=0}{i+=NF}END{print i}'  wenjian.txt
+9
+[root@Va2 ~]# awk  -F# 'BEGIN{i=0}{if(NR<=2){print "hello"}i+=NF}END{print i}'  wenjian.txt
+hello
+hello
+9
+[root@Va2 ~]# awk  -F# 'BEGIN{i=0}{if(NR<=2){print "hello"}else{i+=NF}} END{print i}'  wenjian.txt
+hello
+hello
+3
+[root@Va2 ~]# awk   -F# 'BEGIN{for(i=0;i<=NF;i++){print i,"haha"}}{print  i,$1,$2,$3}'  wenjian.txt
+0 haha
+1 a1 a2 a3
+1 b1 b2 b3
+1 c1 c2 c3
+
+[root@Va2 ~]# awk  -F# 'BEGIN {do {++i;print i,"xixi",NF}while (i<=2)}'  wenjian.txt
+1 xixi 0
+2 xixi 0
+3 xixi 0
+
+[root@Va2 ~]# awk  -F# '{while (i<=NF){i++;print i,$1,NF}}'  wenjian.txt
+1 a1 3
+2 a1 3
+3 a1 3
+4 a1 3
+
+[root@Va2 ~]# awk  'BEGIN{while(1){}}'  &
+[1] 7337
+[root@Va2 ~]# uptime
+ 18:27:45 up  6:22,  1 user,  load average: 0.07, 0.03, 0.05
+
+[root@Va2 ~]# uptime
+ 18:28:12 up  6:22,  1 user,  load average: 0.39, 0.11, 0.07
+
+[root@Va2 ~]# bg  1
+-bash: bg: 任务 1 已在后台
+[root@Va2 ~]# jobs
+[1]+  运行中               awk 'BEGIN{while(1){}}' &
+[root@Va2 ~]# fg 1
+awk 'BEGIN{while(1){}}'
+^C
+
+[root@Va2 ~]# awk  'BEGIN{while(true){}}'  &
+[1] 7390
+[root@Va2 ~]# jobs
+[1]+  完成                  awk 'BEGIN{while(true){}}'
+
+[root@Va2 ~]# awk  'BEGIN{while(true){}}'  
+[root@Va2 ~]# echo  $?
+0
+[root@Va2 ~]# awk  'BEGIN{while(true){}}'  &
+[1] 7409
+[root@Va2 ~]# echo  $?
+0
+[1]+  完成                  awk 'BEGIN{while(true){}}'
+
+
+[root@Va1 ~]# ansible  all  -a  "shutdown  -h  now"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
