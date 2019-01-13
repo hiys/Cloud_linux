@@ -1897,6 +1897,40 @@ aab109.0998
 [root@Va1 ~]# uptime  |awk  '{printf("%.2f",$(NF-2))}'
 0.00[root@Va1 ~]# 
 
+
+ printf的使用
+
+print format 生成报表
+
+%d        十进制有符号整数  
+
+%u        十进制无符号整数  
+
+%f        浮点数  
+
+%s        字符串  
+
+%c        显示字符的ASCII码  
+%p        指针的值  
+%e        科学技术法显示数值  
+%x        %X 无符号以十六进制表示的整数  
+%o        无符号以八进制表示的整数  
+%g        %G 以科学计数法或浮点数的格式显示数值  
+%%        显示其自身  
+
+修饰符：  
+-:  左对齐     
++:  显示数值符号  
+N： 显示
+
+-F 指定段的分隔符
+
+例：（1）生成报表
+
+
+
+
+
 [root@Va1 ~]# vim load.yaml 
 [root@Va1 ~]# cat   load.yaml
 ---
@@ -1999,6 +2033,10 @@ hello
 1 a1 a2 a3
 1 b1 b2 b3
 1 c1 c2 c3
+[root@Va2 ~]# awk  -F# '{while(i<NF){i++;print i,"haha"}}'  wenjian.txt 
+1 haha
+2 haha
+3 haha
 
 [root@Va2 ~]# awk  -F# 'BEGIN {do {++i;print i,"xixi",NF}while (i<=2)}'  wenjian.txt
 1 xixi 0
@@ -2010,7 +2048,7 @@ hello
 2 a1 3
 3 a1 3
 4 a1 3
-
+       # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
 [root@Va2 ~]# awk  'BEGIN{while(1){}}'  &
 [1] 7337
 [root@Va2 ~]# uptime
@@ -2041,8 +2079,767 @@ awk 'BEGIN{while(1){}}'
 0
 [1]+  完成                  awk 'BEGIN{while(true){}}'
 
+       # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
+[root@Va2 ~]# awk  'BEGIN{while(1){}}'  &
+[1] 7337
+=================================
+
+[root@Va2 ~]# awk  'BEGIN{while(false){print "xixixi"}}'
+[root@Va2 ~]# echo  $?
+0
+[root@Va2 ~]# awk  'BEGIN{while(true){print "xixixi"}}'
+[root@Va2 ~]# echo  $?
+0                            # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
+[root@Va2 ~]# awk  'BEGIN{while(0){print "xixixi"}}'
+[root@Va2 ~]# echo  $?
+0
+[root@Va2 ~]# awk  'BEGIN{while(1){print "xixixi"}}'
+
+       # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
+[root@Va2 ~]# awk  'BEGIN{while(1){print "xixixi"}}' > whileawk.txt
+^C
+[root@Va2 ~]# ll   whileawk.txt
+-rw-r--r-- 1 root root 192184320 1月  13 13:47 whileawk.txt
+[root@Va2 ~]# wc  -l  whileawk.txt
+27454902 whileawk.txt
+
+[root@Va2 ~]# tail  -2  whileawk.txt
+xixixi
+xixixi[root@Va2 ~]# 
+[root@Va2 ~]# 
+
+[root@Va2 ~]# awk  'BEGIN{while(0){print "xixixi"}}' > whileawk.txt
+[root@Va2 ~]# ll   whileawk.txt
+-rw-r--r-- 1 root root 0 1月  13 13:49 whileawk.txt
+[root@Va2 ~]# cat  whileawk.txt
+[root@Va2 ~]# 
+
 
 [root@Va1 ~]# ansible  all  -a  "shutdown  -h  now"
+
+============================================
+
+（5）BEGIN  END
+
+BEGIN{ 动作;动作;... }  在处理文件之前，要执行的动作；只执行一次
+
+END{ 动作;动作;... }    在处理完文件之后，要执行的动作；只执行一次
+
+BEGIN ：可以给文件添加标题、定义变量、定义文件的分隔符
+
+END：汇总的操作
+
+ 数学计算
+ 1 [root@tx3 ~]# awk 'BEGIN{print sin(30)}'
+ 2 
+ 3 -0.988032
+ 4 
+ 5 [root@tx3 ~]# awk 'BEGIN{print cos(60)}'
+ 6 
+ 7 -0.952413
+ 8 
+ 9 [root@tx3 ~]# awk 'BEGIN{print int(22/6)}'
+10 
+11 3
+12 
+13 [root@tx3 ~]# awk 'BEGIN{print sqrt(3)}'
+14 
+15 1.73205
+
+getline可以从管道和标准输入读取输入，然后传递给变量。
+
+
+  ~]# awk 'BEGIN{"date"| getline a}{print}END{print a}' 
+[root@Va2 ~]# cat   wenjian.txt 
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+                            ## getline可以从管道和标准输入读取输入，然后传递给变量
+[root@Va2 ~]# awk  'BEGIN{"date"| getline varx}{print $0}END{print  varx}'  wenjian.txt
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+2019年 01月 13日 星期日 14:05:57 CST
+
+awk里的流控制和循环
+
+（1）简单的条件判断
+语法：(表达式 ? 值1 : 值2) 如果表达式成立，输出值1；否则输出值2
+
+复制代码
+[root@tx3 ~]# cat num
+ [root@tx3 ~]# awk '{print ( $1 > $2 ? $1 : $2)}' num
+[root@Va2 ~]# vim  num.txt
+
+   简单的条件判断
+#  语法：(表达式 ? 值1 : 值2) 如果表达式成立，输出值1；否则输出值2
+
+[root@Va2 ~]# cat  num.txt
+1#12#13
+2#22#23
+3#32#33                      ## $1 大于 $2  表达式 结果 false,输出值 $2
+[root@Va2 ~]# awk  -F# '{print ($1>$2 ? $1:$2)}'  num.txt
+12
+22
+32                         ## $2 大于 $2  表达式 结果 true,输出值 $3
+[root@Va2 ~]# awk  -F# '{print ($3>$2 ? $3:$2)}'  num.txt
+13
+23
+33
+[root@Va2 ~]# 
+循环while 
+语法：'var=初值;while (表达式){动作1;...更新变量的动作;}'
+
+awk -F: '{i=1; while (i<=NF) {print $i;i++}}' 
+awk -F: '{i=NF; while (i>=2) {printf $i ":";i--};print $1}' 
+
+[root@Va2 ~]# awk  -F# '{i=0;while (i<NF){print i,$3;i++}}'  num.txt
+0 13
+1 13
+2 13
+0 23
+1 23
+2 23
+0 33
+1 33
+2 33
+
+循环while 
+语法：'var=初值;while (表达式){动作1;...更新变量的动作;}'
+
+[root@Va2 ~]# awk  -F# '{i=NF;while (i>0){print i,$2,$3;i--}}'  num.txt
+3 12 13
+2 12 13
+1 12 13
+3 22 23
+2 22 23
+1 22 23
+3 32 33
+2 32 33
+1 32 33
+                        # 注意分隔符-F#  FS="#"格式 1
+[root@Va2 ~]# awk  -F# '{i=NF;while (i>0){print i,$2,$3;i--};print $0}'  num.txt
+3 12 13
+2 12 13
+1 12 13
+1#12#13
+3 22 23
+2 22 23
+1 22 23
+2#22#23
+3 32 33
+2 32 33
+1 32 33
+3#32#33              注意分隔符 -F#  FS="#"格式  2
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{i=NF;while (i>0){print i;i--};print $0}'  num.txt
+3
+2
+1
+1#12#13
+3
+2
+1
+2#22#23
+3
+2
+1
+3#32#33
+[root@Va2 ~]# 
+函数
+@1split 切割字符串
+split("等待被切割的字符串",数组名,"切割用的分隔符")
+[root@Va2 ~]# cat wenjian.txt
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+[root@Va2 ~]# awk   'BEGIN{FS="#";split("zu1/zu2/yuan3",da,"/");print da[1],da[2],da[3]}{print $0}'  wenjian.txt 
+zu1 zu2 yuan3
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+
+sub()  局部替换
+gsub() 全局替换
+sub(/要替换的内容/,"替换成什么内容") # 局部替换
+sub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+
+gsub(/要替换的内容/,"替换成什么内容")  #全局替换
+gsub(/要替换的内容/,"替换成什么内容",指定字段如$7)
+
+[root@Va2 ~]# cat wenjian.txt
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3        #sub(/要替换的内容/,"替换成什么内容") #sub()  局部替换
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{sub(/a/,"x");print $0}'  wenjian.txt x1#a2#a3
+b1#b2#b3
+c1#c2#c3                       #gsub() 全局替换
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{gsub(/a/,"x");print $0}'  wenjian.txt 
+x1#x2#x3
+b1#b2#b3
+c1#c2#c3
+              #gsub() 全局替换# gsub(/要替换的内容/,"替换成什么内容",指定字段 $2)
+
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{gsub(/a/,"x",$2);print }'  wenjian.txt 
+a1 x2 a3
+b1#b2#b3
+c1#c2#c3
+                   #sub()  局部替换 # sub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+[root@Va2 ~]# uptime  |awk  '{sub(/,/,"",$(NF-2));print  $(NF-2)}'
+0.00
+               #gsub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+[root@Va2 ~]# uptime  |awk  '{gsub(/,/,"",$(NF-2));print  $(NF-2)}'
+0.00
+[root@Va2 ~]# uptime 
+ 15:20:33 up  2:21,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va2 ~]# uptime |awk  '{printf("%.2f",$(NF-2))}'
+0.00[root@Va2 ~]# 
+[root@Va2 ~]# uptime 
+ 15:14:57 up  2:15,  1 user,  load average: 0.00, 0.01, 0.05
+[root@Va2 ~]# uptime |awk  '{print $(NF-2)}'
+0.00,
+
+
+[root@room9pc01 ~]# ssh -Xo  StrictHostKeyChecking=no  192.168.0.11
+....................
+[root@Va1 ~]# vim  load.yaml 
+[root@Va1 ~]# cat  load.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime |awk  '{printf("%.2f",$(NF-2))}'
+      register: resultsn
+    - service:
+        name: httpd
+        state: stopped
+      when: resultsn.stdout|float > 0.07
+[root@Va1 ~]# ansible  web  -m  shell -a  "netstat  -npult |grep httpd;uptime"
+Va4 | SUCCESS | rc=0 >>
+tcp6       0      0 :::8080                 :::*                    LISTEN      1090/httpd          
+ 13:32:15 up 33 min,  2 users,  load average: 0.00, 0.01, 0.05
+
+Va2 | SUCCESS | rc=0 >>
+tcp6       0      0 :::8080                 :::*                    LISTEN      1091/httpd          
+ 13:32:15 up 33 min,  2 users,  load average: 0.00, 0.01, 0.05
+
+[root@Va1 ~]# ansible  web  -m  shell -a  "grep -En '^Listen |^ServerName '  /etc/httpd/conf/httpd.conf"
+Va2 | SUCCESS | rc=0 >>
+42:Listen  8080
+95:ServerName  127.0.0.1
+
+Va4 | SUCCESS | rc=0 >>
+42:Listen  8080
+95:ServerName  127.0.0.1
+
+
+[root@Va1 ~]# ansible-playbook  load.yaml 
+
+PLAY [web] ***********************************************************************
+
+TASK [Gathering Facts] ***********************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [command] *******************************************************************
+changed: [Va4]
+changed: [Va2]
+
+TASK [service] *******************************************************************
+skipping: [Va2]
+skipping: [Va4]
+
+PLAY RECAP ***********************************************************************
+Va2                        : ok=2    changed=1    unreachable=0    failed=0   
+Va4                        : ok=2    changed=1    unreachable=0    failed=0   
+
+
+
+              #gsub() 全局替换# gsub(/要替换的内容/,"替换成什么内容",指定字段 $2)
+
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{gsub(/a/,"x",$2);print }'  wenjian.txt 
+a1 x2 a3
+b1#b2#b3
+c1#c2#c3
+                   #sub()  局部替换 # sub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+[root@Va2 ~]# uptime  |awk  '{sub(/,/,"",$(NF-2));print  $(NF-2)}'
+0.00
+               #gsub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+[root@Va2 ~]# uptime  |awk  '{gsub(/,/,"",$(NF-2));print  $(NF-2)}'
+0.00
+[root@Va2 ~]# uptime 
+ 15:20:33 up  2:21,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va2 ~]# uptime |awk  '{printf("%.2f",$(NF-2))}'
+0.00[root@Va2 ~]# 
+[root@Va2 ~]# uptime 
+ 15:14:57 up  2:15,  1 user,  load average: 0.00, 0.01, 0.05
+[root@Va2 ~]# uptime |awk  '{print $(NF-2)}'
+0.00,
+
+[root@Va1 ~]# 
+       # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
+[root@Va2 ~]# awk  'BEGIN{while(1){print "xixixi"}}' > whileawk.txt
+^C
+[root@Va2 ~]# ll   whileawk.txt
+-rw-r--r-- 1 root root 192184320 1月  13 13:47 whileawk.txt
+[root@Va2 ~]# wc  -l  whileawk.txt
+27454902 whileawk.txt
+
+[root@Va2 ~]# tail  -2  whileawk.txt
+xixixi
+xixixi[root@Va2 ~]# 
+[root@Va2 ~]# 
+                    # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
+[root@Va2 ~]# awk  'BEGIN{while(0){print "xixixi"}}' > whileawk.txt
+[root@Va2 ~]# ll   whileawk.txt
+-rw-r--r-- 1 root root 0 1月  13 13:49 whileawk.txt
+[root@Va2 ~]# cat  whileawk.txt
+[root@Va2 ~]# 
+
+[root@Va1 ~]# ansible  web  -m  shell -a  "netstat  -npult |grep httpd;uptime"
+Va4 | SUCCESS | rc=0 >>
+tcp6       0      0 :::8080                 :::*                    LISTEN      1090/httpd          
+ 13:32:15 up 33 min,  2 users,  load average: 0.00, 0.01, 0.05
+
+Va2 | SUCCESS | rc=0 >>
+tcp6       0      0 :::8080                 :::*                    LISTEN      1091/httpd          
+ 13:32:15 up 33 min,  2 users,  load average: 0.00, 0.01, 0.05
+
+
+[root@Va2 ~]# awk  'BEGIN{while(2){print "sisi"}}' >whileawk.txt ##注意加载系统负载测试
+
+
+[root@Va1 ~]# cat  load.yaml 
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - shell: uptime |awk  '{printf("%.2f",$(NF-2))}'
+      register: resultsn
+    - service:
+        name: httpd
+        state: stopped
+      when: resultsn.stdout|float > 0.07
+
+[root@Va1 ~]# ansible  web  -m  shell -a  "netstat  -npult |grep httpd;uptime"
+Va4 | SUCCESS | rc=0 >>
+tcp6       0      0 :::8080                 :::*                    LISTEN      1090/httpd          
+ 15:32:36 up  2:33,  2 users,  load average: 0.04, 0.03, 0.05
+
+Va2 | SUCCESS | rc=0 >>
+ 15:32:39 up  2:33,  2 users,  load average: 1.58, 0.58, 0.25
+
+
+[root@Va1 ~]# ansible-playbook  load.yaml  ##执行任务,条件判断 负载均衡
+
+Va4 | SUCCESS | rc=0 >>
+ 15:34:10 up  2:34,  2 users,  load average: 0.14, 0.07, 0.06
+
+Va2 | FAILED! => {
+
+...............
+[root@Va1 ~]# ansible  web  -m  shell -a  "netstat  -npult |grep httpd;uptime"
+Va2 | UNREACHABLE! => {
+ ...........in \"/tmp\". Failed command was: ( umask 77 && mkdir -p \"` echo /root/.ansible/tmp/ansible-tmp-1547364885.61-208742050009294 `\" && echo ansible-tmp-1547364885.61-208742050009294=\"` echo /root/.ansible/tmp/ansible-tmp-1547364885.61-208742050009294 `\" ), exited with result 1", 
+    "unreachable": true
+}
+Va4 | SUCCESS | rc=0 >>
+ 15:34:45 up  2:35,  2 users,  load average: 0.08, 0.07, 0.06
+
+[root@Va1 ~]# ansible  web  -m  shell -a  "elinks  -dump  127.0.0.1:8080"
+Va2 | UNREACHABLE! => {
+........... in \"/tmp\". Failed command was: ( umask 77 && mkdir -p \"` echo /root/.ansible/tmp/ansible-tmp-1547364921.76-53374533012312 `\" && echo ansible-tmp-1547364921.76-53374533012312=\"` echo /root/.ansible/tmp/ansible-tmp-1547364921.76-53374533012312 `\" ), exited with result 1", 
+    "unreachable": true
+}
+Va4 | FAILED | rc=1 >>
+ELinks: 拒绝连接non-zero return code
+ 
+
+[root@Va1 ~]# vim  user4.yaml
+[root@Va1 ~]# cat  user4.yaml
+---
+- hosts: db
+  remote_user: root
+  vars:
+    username:
+      - namedb
+      - namedb2
+  tasks:
+    - name: add  user
+      user:
+        name: "{{item.name}}"
+        group: root
+        password: "{{item.pwd|password_hash('sha512')}}"
+      with_items:
+        - {name: "{{username[0]}}", pwd: aa}
+        - {name: "{{username[1]}}", pwd: "12"}  ##注意 整数类型 12 转字符串类型加 双引号
+        - {name: jj, pwd: bb}
+      register: resultn
+    - debug: var=resultn.stdout
+
+[root@Va1 ~]# 
+[root@Va1 ~]# ansible db  -m  shell  -a  "id  namedb ;id namedb2;id  jj"
+Va5 | FAILED | rc=1 >>
+id: namedb: no such user
+id: namedb2: no such user
+id: jj: no such usernon-zero return code
+
+Va3 | FAILED | rc=1 >>
+id: namedb: no such user
+id: namedb2: no such user
+id: jj: no such usernon-zero return code
+
+[root@Va1 ~]# ansible-playbook  user4.yaml
+
+PLAY [db] ******************************************************************************************
+
+TASK [Gathering Facts] *****************************************************************************
+ok: [Va3]
+ok: [Va5]
+
+TASK [add  user] ***********************************************************************************
+changed: [Va3] => (item={u'pwd': u'aa', u'name': u'namedb'})
+changed: [Va5] => (item={u'pwd': u'aa', u'name': u'namedb'})
+changed: [Va3] => (item={u'pwd': u'12', u'name': u'namedb2'})
+changed: [Va5] => (item={u'pwd': u'12', u'name': u'namedb2'})
+changed: [Va3] => (item={u'pwd': u'bb', u'name': u'jj'})
+changed: [Va5] => (item={u'pwd': u'bb', u'name': u'jj'})
+
+TASK [debug] ***************************************************************************************
+ok: [Va3] => {
+    "resultn.stdout": "VARIABLE IS NOT DEFINED!"
+}
+ok: [Va5] => {
+    "resultn.stdout": "VARIABLE IS NOT DEFINED!"
+}
+
+PLAY RECAP *****************************************************************************************
+Va3                        : ok=3    changed=1    unreachable=0    failed=0   
+Va5                        : ok=3    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible db  -m  shell  -a  "id  namedb ;id namedb2;id  jj"
+Va5 | SUCCESS | rc=0 >>
+uid=1002(namedb) gid=0(root) 组=0(root)
+uid=1003(namedb2) gid=0(root) 组=0(root)
+uid=1004(jj) gid=0(root) 组=0(root)
+
+Va3 | SUCCESS | rc=0 >>
+uid=1002(namedb) gid=0(root) 组=0(root)
+uid=1003(namedb2) gid=0(root) 组=0(root)
+uid=1004(jj) gid=0(root) 组=0(root)
+
+[root@Va1 ~]# ssh  -l  namedb2  -o  StrictHostKeyChecking=no Va3   "ls  /home"
+namedb2@va3's password: 12 输入密码 12
+jj
+lily
+lisi
+namedb
+namedb2
+[root@Va1 ~]# 
+[root@Va1 ~]# ssh  -l  jj  -o  StrictHostKeyChecking=no Va3   "ls  /home"
+jj@va3's password: bb  输入密码 bb
+jj
+lily
+lisi
+namedb
+namedb2
+[root@Va1 ~]# cat  user4.yaml
+---
+- hosts: db
+  remote_user: root
+  vars:
+    username:
+      - namedb
+      - namedb2
+  tasks:
+    - name: add  user
+      user:
+        name: "{{item.name}}"
+        group: root
+        password: "{{item.pwd|password_hash('sha512')}}"
+      with_items:
+        - {name: "{{username[0]}}", pwd: aa}
+        - {name: "{{username[1]}}", pwd: "12"}
+        - {name: jj, pwd: bb}
+      register: resultn
+    - debug: var=resultn.stdout
+
+[root@Va1 ~]# 
+[root@Va1 ~]# cat  user3.yaml
+---
+- hosts: all
+  remote_user: root
+  vars:
+    username:
+      - nametest
+      - nametest2
+      - nametest3
+  tasks:
+    - shell: id  "{{item}}"
+      with_items:
+        - "{{username[0]}}"
+        - "{{username[1]}}"
+        - "{{username[2]}}"
+      register: resultn
+    - name: test  del  username  and  add user
+      shell: |
+        userdel  -r  "{{username[1]}}"
+        userdel  -r  "{{username[2]}}"
+      when: resultn
+    - debug: var=resultn.results[0].stdout
+    - debug: var=resultn.results[1].stdout
+    - debug: var=resultn.results[2].stdout
+
+
+[root@Va1 ~]# vim  user5.yaml
+循环
+标准遍历
+嵌套遍历
+   #用with_nested可以遍历一个列表，
+注意这里会遍历多层，
+直到最内层
+[root@Va1 ~]# cat   user5.yaml
+---
+- hosts: Va3
+  remote_user: root
+  vars:
+    shzu: [a1, b2, c3]  ##外层列表
+    id: [1, 2, 3]  ##内层列表
+  tasks:
+    - name: test shuzu item  only
+      shell: echo  {{item}}
+      with_nested:
+        - "{{shzu}}" ##外层列表
+        - "{{id}}"  ##内层列表
+
+[root@Va1 ~]# ansible-playbook  user5.yaml
+
+PLAY [Va3] *****************************************************************************************
+
+TASK [Gathering Facts] *****************************************************************************
+ok: [Va3]
+
+TASK [test shuzu item  only] ***********************************************************************
+changed: [Va3] => (item=[u'a1', 1])
+changed: [Va3] => (item=[u'a1', 2])
+changed: [Va3] => (item=[u'a1', 3])
+changed: [Va3] => (item=[u'b2', 1])
+changed: [Va3] => (item=[u'b2', 2])
+changed: [Va3] => (item=[u'b2', 3])
+changed: [Va3] => (item=[u'c3', 1])
+changed: [Va3] => (item=[u'c3', 2])
+changed: [Va3] => (item=[u'c3', 3])
+
+PLAY RECAP *****************************************************************************************
+Va3                        : ok=2    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# 
+
+循环
+标准遍历
+嵌套遍历
+   #用with_nested可以遍历一个列表，
+注意这里会遍历多层，
+直到最内层
+
+
+遍历字典
+用with_dict可以遍历一个字典，
+用key和value来表示。
+示例如下：
+
+变量文件
+---
+users:
+  alice:
+    name: Alice Appleworth
+    telephone: 123-456-7890
+  bob:
+    name: Bob Bananarama
+    telephone: 987-654-3210
+
+
+playbook文件
+tasks:
+  - name: Print phone records
+    debug: msg="User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
+    with_dict: users
+
+==========================
+
+[root@Va1 ~]# vim  apache.yaml 
+[root@Va1 ~]# cat  apache.yaml
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:
+        name: httpd
+        state: present
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^Listen "
+        insertbefore: "^#Listen "
+        line: "Listen  80"
+      tags: conf_Listen
+      notify:
+# zhuyi  hanshuming  yao  yizhi
+        - reload httpd
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^ServerName "
+        line: "ServerName  127.0.0.1"
+      notify: reload httpd
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+      tags: conf_index
+  handlers:
+# zhushi biaoshi lianjie hanshuming
+    - name: reload httpd
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
+
+[root@Va1 ~]# cat  index.html 
+<h1>Va1--ansible web  Va2 Va4 apache </h1>
+
+[root@Va1 ~]# echo  "<h1>add  Va1  test</h1>"  >>   index.html
+
+“身份验证或权限失败。在某些情况下，您可能已经能够进行身份验证，并且对目标目录没有权限。
+考虑将ansible.cfg中的远程临时路径更改为根位于\“/tmp\”的路径。
+失败的命令是：
+（umask 77&&mkdir-p\“`echo/root/.ansible/tmp/ansible-tmp-1547371878.79-94670799101163`\”&&echo ansible-tmp-1547371878.79-94670799101163=\“`echo/root/.ansible/tmp/ansible-tmp-1547371878.79-94670799101163`\”，退出结果1“，
+
+[root@Va2 ~]# ls  /root/.ansible/
+tmp
+[root@Va2 ~]# ls  /root/.ansible/tmp/
+ansible-tmp-1546868490.25-138553014502434  ansible-tmp-1547127851.61-270473511507706
+ansible-tmp-1546955267.49-191178428299686  ansible-tmp-1547213950.97-183655942905760
+ansible-tmp-1547040813.29-220534103901891  ansible-tmp-1547289401.29-75738778648655
+
+[root@Va2 ~]# rm  -rf  /root/.ansible/
+
+[root@Va1 ~]# ansible all  -m  authorized_key  -a  "user=root  exclusive=true  \
+manage_dir=true  key='$(< /root/.ssh/id_rsa.pub)'"  -k 
+SSH password: 1
+.........
+Va2 | SUCCESS => {
+..............
+
+[root@Va1 ~]# ansible-playbook   apache.yaml  --tags=conf_Listen
+
+PLAY [web] ********************************************************************************
+
+TASK [Gathering Facts] ********************************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [lineinfile] *************************************************************************
+changed: [Va4]
+changed: [Va2]
+
+RUNNING HANDLER [reload httpd] ************************************************************
+changed: [Va2]
+changed: [Va4]
+
+PLAY RECAP ********************************************************************************
+Va2                        : ok=3    changed=2    unreachable=0    failed=0   
+Va4                        : ok=3    changed=2    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  web  -m  shell -a  "elinks  -dump   127.0.0.1"
+Va4 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+Va2 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+[root@Va1 ~]# cat  apache.yaml 
+# apache.yaml
+---
+- hosts: web
+  remote_user: root
+  tasks:
+    - name: tasks-zi-listname install the specific  version of Apache
+      yum:
+        name: httpd
+        state: present
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^Listen "
+        insertbefore: "^#Listen "
+        line: "Listen  80"
+      tags: conf_Listen   ##标记只执行特定指定的命令
+      notify:
+# zhuyi  hanshuming  yao  yizhi
+        - reload httpd
+    - lineinfile:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: "^ServerName "
+        line: "ServerName  127.0.0.1"
+      notify: reload httpd
+    - copy:
+        src: /root/index.html
+        dest: /var/www/html/index.html
+        backup: yes
+        owner: apache
+        group: apache
+        mode: 0644
+      tags: conf_index   ##标记只执行特定指定的命令
+  handlers:
+# zhushi biaoshi lianjie hanshuming
+    - name: reload httpd
+      service:
+        name: httpd
+        state: restarted
+        enabled: yes
+
+[root@Va1 ~]# ansible-playbook   apache.yaml  --tags=conf_index
+
+PLAY [web] ********************************************************************************
+
+TASK [Gathering Facts] ********************************************************************
+ok: [Va4]
+ok: [Va2]
+
+TASK [copy] *******************************************************************************
+changed: [Va4]
+changed: [Va2]
+
+PLAY RECAP ********************************************************************************
+Va2                        : ok=2    changed=1    unreachable=0    failed=0   
+Va4                        : ok=2    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  web  -m  shell -a  "elinks  -dump   127.0.0.1"
+Va2 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+                                  add Va1 test
+
+Va4 | SUCCESS | rc=0 >>
+                        Va1--ansible web Va2 Va4 apache
+
+                                  add Va1 test
+
+[root@Va1 ~]# ansible-playbook   apache.yaml  --syntax-check
+
+playbook: apache.yaml
+[root@Va1 ~]# echo  $?
+0
+[root@Va1 ~]# ansible-playbook   apache.yaml  -C
+
+(1) 检测语法 
+ansible-playbook –syntax-check /path/to/playbook.yaml 
+(2) 测试运行 
+ansible-playbook -C /path/to/playbook.yaml 
 
 
 

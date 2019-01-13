@@ -2163,6 +2163,51 @@ Va6                        : ok=6    changed=2    unreachable=0    failed=0
 
 [root@Va1 ~]# 
 
+sub(/要替换的内容/,"替换成什么内容") # 局部替换
+sub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+
+gsub(/要替换的内容/,"替换成什么内容")  #全局替换
+gsub(/要替换的内容/,"替换成什么内容",指定字段如$7)
+
+[root@Va2 ~]# cat wenjian.txt
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3        #sub(/要替换的内容/,"替换成什么内容") #sub()  局部替换
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{sub(/a/,"x");print $0}'  wenjian.txt x1#a2#a3
+b1#b2#b3
+c1#c2#c3                       #gsub() 全局替换
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{gsub(/a/,"x");print $0}'  wenjian.txt 
+x1#x2#x3
+b1#b2#b3
+c1#c2#c3
+              #gsub() 全局替换# gsub(/要替换的内容/,"替换成什么内容",指定字段 $2)
+
+[root@Va2 ~]# awk   'BEGIN{FS="#"}{gsub(/a/,"x",$2);print }'  wenjian.txt 
+a1 x2 a3
+b1#b2#b3
+c1#c2#c3
+                   #sub()  局部替换 # sub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+[root@Va2 ~]# uptime  |awk  '{sub(/,/,"",$(NF-2));print  $(NF-2)}'
+0.00
+               #gsub(/要替换的内容/,"替换成什么内容",指定字段如$3)
+[root@Va2 ~]# uptime  |awk  '{gsub(/,/,"",$(NF-2));print  $(NF-2)}'
+0.00
+[root@Va2 ~]# uptime 
+ 15:20:33 up  2:21,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va2 ~]# uptime |awk  '{printf("%.2f",$(NF-2))}'
+0.00[root@Va2 ~]# 
+
+[root@Va2 ~]# uptime 
+ 15:14:57 up  2:15,  1 user,  load average: 0.00, 0.01, 0.05
+
+[root@Va2 ~]# uptime |awk  '{print $(NF-2)}'
+0.00,
+
+       # 0为假非0为真,1为true,循环条件为true 则会一直执行循环体, 死循环
+[root@Va2 ~]# awk  'BEGIN{while(1){}}'  &
+[1] 7337
+
 
 
 
