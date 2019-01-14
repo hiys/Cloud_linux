@@ -1,0 +1,154 @@
+1 ELK 是一个实时分布式的日志分析平台
+   ELK 是一整套的解决方案
+   （E）lasticsearch  --  数据库
+   （L）ogstash        --  收集日志、标准化的程序
+   （K）ibana            --  图形的展示工具
+
+2 数据批量导入
+-X 导入使用的方法 POST
+--data-binary  导入数据的格式
+@urfile   导入数据的文件名
+_bulk  导入关键字
+curl -X "POST" "http://192.168.1.13:9200/_bulk" --data-binary @shakespeare.json
+
+如果没有 index 和 type ，我们需要自己指定一下 index 和 type
+curl -X "POST" "http://192.168.1.13:9200/haha/xixi/_bulk" --data-binary @accounts.json
+
+3 批量查询数据
+查询一条数据
+curl -X "GET" "http://192.168.1.12:9200/haha/xixi/1"
+
+查询多条数据，使用 _mget
+curl -XGET 'http://192.168.1.11:9200/_mget?pretty' -d '{ 
+    "docs":[
+        {
+            "_index": "haha",
+            "_type:": "xixi",
+            "_id": 1
+        },
+        {
+            "_index": "haha",
+            "_type:": "xixi",
+            "_id": 2
+        },
+        {
+            "_index": "shakespeare",
+            "_type:": "act",
+            "_id": 91400
+        }
+    ]
+}'
+
+logstash 的安装
+安装依赖包 openjdk
+yum install java-1.8.0-openjdk -y
+yum install logstash-2.3.4-1.noarch.rpm -y
+
+ELK 工作结构模型
+
+                    +-----------------logstash-------------------+
++--------+    | +--------+     +---------+     +-----------+ |     +---------+     +----------+
+ | 数据源 | --->| INPUT | -->| FILTER | --> | OUTPUT | ---> | ES 集群 | -->| KIBANA |
++--------+    | +--------+     +---------+     +-----------+ |     +---------+     +----------+
+                    +----------------------------------------------+
+
+logstash.conf 初始配置
+input{
+    stdin{}
+}
+
+filter{
+}
+
+output{
+    stdout{}
+}
+
+插件文档的位置
+https://github.com/logstash-plugins
+
+codec 插件
+    stdout{ codec => "rubydebug" }
+
+file 插件
+    file{
+        sincedb_path => "/var/lib/logstash/since.db"
+        start_position => "beginning"
+        path => ["/var/tmp/a.log", "/tmp/b.log"]
+        type => "filelog"
+    }
+
+
+# python 客户端，发送 tcp 数据
+import socket
+def  tcpmsg(msg):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+    s.connect(("192.168.1.10", 8888))
+    s.sendall(msg+'\n')
+    s.close()
+
+def  udpmsg(msg):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    s.sendto(msg+'\n', ("192.168.1.10", 9999))
+
+# syslog 的配置
+logstash.conf  配置
+    syslog{
+        host => "192.168.1.10"
+        port => 514
+        type => "syslog"
+    }
+    
+写 syslog 日志的命令
+logger -p local0.info -t mylog "hello world"
+
+配置 /etc/rsyslog.conf 
+local0.info				@192.168.1.10:514
+authpriv.info				@@192.168.1.10:514
+
+正则宏路径
+/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+
+filter 配置，解析标准 apache 日志    grok{
+        match => ["message","%{COMBINEDAPACHELOG}"]
+    }
+
+
+
+output 配置写入  ES 集群
+    if [type] == "filelog"{
+    elasticsearch {
+        hosts => ["192.168.1.14:9200"]
+        index => "weblog"
+        flush_size => 2000
+        idle_flush_time => 10
+    }}
+
+
+完整的 logstash.conf  配置
+input{
+    file{
+        sincedb_path => "/var/lib/logstash/since.db"
+        start_position => "beginning"
+        path => ["/var/tmp/a.log"]
+        type => "filelog"
+        codec => "json"
+    }   
+}   
+
+filter{
+}   
+
+output{
+    if [type] == "filelog"{
+    elasticsearch {
+        hosts => ["192.168.1.14:9200"]
+        index => "weblog"
+        flush_size => 2000
+        idle_flush_time => 10
+    }}  
+} 
+
+
+
+

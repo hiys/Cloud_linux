@@ -1,0 +1,966 @@
+
+[root@hiys ~]# virsh autostart  Va2
+域 Va2标记为自动开始
+
+[root@hiys ~]# virsh autostart  Va2  --disable
+域 Va2取消标记为自动开始
+
+[root@hiys ~]# ls /etc/libvirt/qemu/
+autostart  nova01.xml     Va1.xml  Va3.xml  Va5.xml  Va7.xml  Va9.xml
+networks   openstack.xml  Va2.xml  Va4.xml  Va6.xml  Va8.xml  Va.xml.txt
+[root@hiys ~]# ls /etc/libvirt/qemu/autostart/
+[root@hiys ~]# 
+
+ ttyS0   区别 pts 
+[root@localhost ~]# ps -ef |grep virsh
+root      2269  1369  0 21:36 ttyS0    00:00:00 grep --color=auto virsh
+
+[root@hiys ~]# ls  /dev/ttyS  ##//dev/ttyS范围ttyS0~ttyS3 共4个
+ttyS0  ttyS1  ttyS2  ttyS3  
+
+[root@hiys ~]# ls  /dev/ttyS0
+/dev/ttyS0
+
+[root@hiys ~]# ls  /dev/tty    ##//dev/tty范围tty0~tty63 加上tty 共 65个
+tty    tty12  tty17  tty21  tty26  tty30  tty35  tty4   tty44  tty49  tty53  tty58  tty62  ttyS0  
+tty0   tty13  tty18  tty22  tty27  tty31  tty36  tty40  tty45  tty5   tty54  tty59  tty63  ttyS1  
+tty1   tty14  tty19  tty23  tty28  tty32  tty37  tty41  tty46  tty50  tty55  tty6   tty7   ttyS2  
+tty10  tty15  tty2   tty24  tty29  tty33  tty38  tty42  tty47  tty51  tty56  tty60  tty8   ttyS3  
+tty11  tty16  tty20  tty25  tty3   tty34  tty39  tty43  tty48  tty52  tty57  tty61  tty9 
+
+[root@hiys ~]# tty   ##使用命令”tty”可以查看自己具体对应哪个实际终端设备./dev/tty有些类似于到实际所使用终端设备的一个联接
+/dev/pts/0
+
+[root@hiys ~]# which tty
+/usr/bin/tty
+/****tty 是teletype，原来指的是电传打字机
+/dev/pts是远程登陆(telnet,ssh等)后创建的控制台设备文件所在的目录。由于可能有好几千个用户登陆，
+所以/dev/pts其实是动态生成的，不象其他设备文件是构建系统时就已经产生的硬盘节点.
+
+1> tty(终端设备的统称):
+tty一词源于Teletypes，或者teletypewriters，原来指的是电传打字机，是通过串行线用打印机键盘通过阅读和发送信息的东西，后来这东西被键盘与显示器取代，所以现在叫终端比较合适。
+终端是一种字符型设备，它有多种类型，通常使用tty来简称各种类型的终端设备。
+
+2> pty（虚拟终端):
+但是如果我们远程telnet到主机或使用xterm时不也需要一个终端交互么？是的，这就是虚拟终端pty(pseudo-tty)
+
+
+1、串行端口终端(/dev/ttySn)
+串 行端口终端(Serial Port Terminal)是使用计算机串行端口连接的终端设备。计算机把每个串行端口都看作是一个字符设备。有段时间这些串行端口设备通常被称为终端设备，因为 那时它的最大用途就是用来连接终端。这些串行端口所对应的设备名称是/dev/tts/0(或/dev/ttyS0), /dev/tts/1(或/dev/ttyS1)等，设备号分别是(4,0), (4,1)等，分别对应于DOS系统下的COM1、COM2等。若要向一个端口发送数据，可以在命令行上把标准输出重定向到这些特殊文件名上即可。例如， 在命令行提示符下键入：echo test > /dev/ttyS1会把单词”test”发送到连接在ttyS1(COM2)端口的设备上。可接串口来实验。
+**/
+[root@hiys ~]# tty  ##/dev/pts其实是动态生成的
+/dev/pts/9
+[root@hiys ~]# 
+
+[root@hiys ~]# virsh console Va1
+连接到域 Va1
+换码符为 ^]
+              ## 回车
+            
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va1 login: root
+Password: a ##输入密码a
+Last login: Sat Nov 24 15:00:21 from 192.168.1.254
+[root@Va1 ~]# tty
+/dev/ttyS0
+[root@Va1 ~]# 
+
+[root@Va1 ~]# ll /dev/console
+crw------- 1 root root 5, 1 Nov 26 08:49 /dev/console
+[root@Va1 ~]# ls  /dev/tty
+tty    tty14  tty20  tty27  tty33  tty4   tty46  tty52  tty59  tty8   
+tty0   tty15  tty21  tty28  tty34  tty40  tty47  tty53  tty6   tty9   
+tty1   tty16  tty22  tty29  tty35  tty41  tty48  tty54  tty60  ttyS0  
+tty10  tty17  tty23  tty3   tty36  tty42  tty49  tty55  tty61  ttyS1  
+tty11  tty18  tty24  tty30  tty37  tty43  tty5   tty56  tty62  ttyS2  
+tty12  tty19  tty25  tty31  tty38  tty44  tty50  tty57  tty63  ttyS3  
+tty13  tty2   tty26  tty32  tty39  tty45  tty51  tty58  tty7   
+[root@Va1 ~]# ll  /dev/tty
+crw-rw-rw- 1 root tty 5, 0 Nov 26 08:49 /dev/tty
+[root@Va1 ~]# 
+
+
+/***
+.控制终端（/dev/tty） 这是个在应用程序中的一个概念，前台进程有个控制终端，就对应这个。
+不过它并不指任何物理意义上的终端，其实/dev/tty会映射到当前的设备（通过tty命令可以看到），
+比如你如果在控制台界面下(即字符界面下）
+那么dev/tty就是映射到dev/tty1-6之间的一个（取决于你当前的控制台号），
+
+但是如果你现在是在图形界面（Xwindows），那么你会发现现在的/dev/tty映射到的 
+是/dev/pts的伪终端上。
+[root@hiys ~]# echo tty-test 
+tty-test
+[root@hiys ~]# echo tty-test > /dev/tty
+tty-test
+[root@hiys ~]# tty
+/dev/pts/4
+[root@hiys ~]# 
+
+比如你可以输入命令 #tty 那么将显示当前映射终端如：
+/dev/tty1或者/dev/pts/0等。
+*******/
+[root@hiys ~]# tty
+/dev/pts/1
+[root@hiys ~]# 
+[root@hiys ~]# ls  /dev/pts/
+0  1  2  3  4  ptmx
+[root@hiys ~]# tty
+/dev/pts/4
+[root@hiys ~]# 
+
+
+
+[root@hiys ~]# tty
+/dev/pts/1
+[root@hiys ~]# virsh console  Va8
+连接到域 Va8
+换码符为 ^]
+
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va8 login: root
+Password: 
+Last login: Sat Nov 24 15:07:53 from 192.168.1.11
+[root@Va8 ~]# ll /dev/tty
+crw-rw-rw- 1 root tty 5, 0 Nov 26 09:00 /dev/tty
+[root@Va8 ~]# tty
+/dev/ttyS0
+
+[root@Va8 ~]# who
+root     ttyS0        2018-11-26 09:06
+[root@Va8 ~]# whoami
+root
+[root@Va8 ~]# 
+ 
+
+
+
+
+
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va9 login: root
+Password: 
+Last login: Sat Nov 24 15:08:07 from 192.168.1.11
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# whoami
+root
+[root@Va9 ~]# who
+root     ttyS0        2018-11-26 09:07
+[root@Va9 ~]# 
+
+------------------------------------------------
+
+[root@hiys ~]# tty
+/dev/pts/2
+[root@hiys ~]# virsh console Va9
+连接到域 Va9
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# 
+--------------------------------------------------
+[root@Va9 ~]# exit
+logout
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va9 login: root
+Password: 
+Last login: Mon Nov 26 09:07:29 on ttyS0
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+
+
+[root@hiys ~]# man  stty
+
+[root@hiys ~]# tty
+/dev/pts/5
+[root@hiys ~]# virsh console Va1
+连接到域 Va1
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# virsh console Va8
+连接到域 Va8
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# 
+[root@Va8 ~]# whoami
+root
+[root@Va8 ~]# ctrl + shift + ] 退出当前窗口
+[root@hiys ~]# 
+[root@hiys ~]# virsh console Va8  ## 第二次登陆
+连接到域 Va8
+换码符为 ^]
+
+
+[root@Va8 ~]# tty
+/dev/ttyS0
+[root@Va8 ~]# whoami 
+root
+[root@Va8 ~]# 
+
+-----------------------------------------------------------------
+[root@hiys ~]# ll /dev/tty  # 控制终端(/dev/tty) 
+crw-rw-rw- 1 root tty 5, 0 11月 26 08:08 /dev/tty
+[root@hiys ~]# echo test > /dev/tty  
+test
+[root@hiys ~]# echo test2
+test2
+[root@hiys ~]# echo test2 > /dev/tty0
+[root@hiys ~]# vim  /dev/tty0
+[root@hiys ~]# cat  /dev/tty0
+
+使用Ctrl + Alt+[F1—F6]组合键时，我们就可以切换到tty2、tty3等上面去。tty1–tty6等 称为虚拟终端，而tty0则是当前所使用虚拟终端的一个别名，系统所产生的信息会发送到该终端上（这时也叫控制台终端）。因此不管当前正在使用哪个虚拟终端，系统信息都会发送到控制台终端上。
+
+“Ctrl”+“Alt”+“Fx”。这就是控制台，算是Linux的本来面目。
+至于使用方法，除了多出登录注销外，
+其它操作和我们在linux图形界面（X—window）下的终端操作是一样的，
+在X-Window出问题或不运行X-Window的时候，操作主要在这里完成。
+　　Linux在控制台下提供了不止一个（字符哑）终端，支持多用户同时登录，包括在本机同时登录。
+控制台“Alt”+“Fx”能够切换到第x个（字符哑）终端。如果需要从X-Window里跳到第（字符哑）终端，
+需要“Ctrl”+“Alt”+“Fx”。一般情况下如果要从控制台返回Xwindow可用““Alt”+7”来返回到Xwind的图形界面。
+（Linux发行版提供7个虚拟屏幕，1~6号是控制台终端（（字符哑）终端），第7个上面跑X-Window。）
+--------------------- 
+.控制终端（/dev/tty） 这是个在应用程序中的一个概念，前台进程有个控制终端，就对应这个。
+不过它并不指任何物理意义上的终端，其实/dev/tty会映射到当前的设备（通过tty命令可以看到），
+比如你如果在控制台界面下(即字符界面下）
+那么dev/tty就是映射到dev/tty1-6之间的一个（取决于你当前的控制台号），
+
+但是如果你现在是在图形界面（Xwindows），那么你会发现现在的/dev/tty映射到的是/dev/pts的伪终端上。
+比如你可以输入命令 #tty 那么将显示当前映射终端如：
+/dev/tty1或者/dev/pts/0等。
+
+--------------------- 
+
+
+[root@Va9 ~]# echo test 
+test
+[root@Va9 ~]# echo test  >/dev/tty
+test
+
+tty设备包括虚拟控制台，串口以及伪终端设备。
+/dev/tty代表当前tty设备，在当前的终端中输入 echo “hello” > /dev/tty ，都会直接显示在当前的终端中。
+
+/dev/ttyS*是串行终端设备
+
+
+[root@Va9 ~]# echo test  >/dev/tty0
+[root@Va9 ~]# echo test1  >/dev/tty1
+[root@Va9 ~]# 
+
+使用Ctrl + Alt + [F1—F6]组合键时 可以切换到tty2、tty6
+
+[root@hiys ~]# cat a.txt 
+echo tty6-test > /dev/tty6 
+ tty6-test
+tty          # 使用Ctrl + Alt + F6 组合键进入字符终端/dev/tty6   
+/dev/tty6
+[root@hiys ~]# 
+[root@hiys ~]# echo test-tty6 >/dev/tty6
+[root@hiys ~]# tty
+/dev/pts/4
+[root@hiys ~]# echo test-tty > /dev/tty
+test-tty
+[root@hiys ~]# echo test-tty 
+test-tty
+[root@hiys ~]# 
+
+使用Ctrl + Alt + F6 组合键  查看
+
+[root@hiys ~]# cat a.txt
+echo  tty2-tty6 > /dev/tty6
+[root@hiys ~]# 
+[root@hiys ~]# echo tty-test 
+tty-test
+[root@hiys ~]# echo tty-test > /dev/tty
+tty-test
+[root@hiys ~]# tty
+/dev/pts/4
+[root@hiys ~]# 
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+
+[root@hiys ~]# systemctl  isolate  --help
+.....................
+  -h --help           Show this help
+     --version        Show package version
+     --system         Connect to system manager
+............................
+  -t --type=TYPE      List units of a particular type
+     --state=STATE    List units with particular LOAD or SUB or ACTIVE state
+  -p --property=NAME  Show only properties by this name
+  -a --all            Show all loaded units/properties, including dead/empty
+                      ones. To list all units installed on the system, use
+                      the 'list-unit-files' command instead.
+  -l --full           Don't ellipsize unit names on output
+
+Unit Commands:
+.............................................
+  stop NAME...                    Stop (deactivate) one or more units
+  reload NAME...                  Reload one or more units
+  restart NAME...                 Start or restart one or more units
+  try-restart NAME...             Restart one or more units if active
+  reload-or-restart NAME...       Reload one or more units if possible,
+                                  otherwise start or restart
+  reload-or-try-restart NAME...   Reload one or more units if possible,
+                                  otherwise restart if active
+  isolate NAME                    Start one unit and stop all others
+  kill NAME...                    Send signal to processes of a unit
+  is-active PATTERN...            Check whether units are active
+  is-failed PATTERN...            Check whether units are failed
+  status [PATTERN...|PID...]      Show runtime status of one or more units
+.........................................
+
+Unit File Commands:
+  list-unit-files [PATTERN...]    List installed unit files
+  enable NAME...                  Enable one or more unit files
+  disable NAME...                 Disable one or more unit files
+  reenable NAME...                Reenable one or more unit files
+......................
+  edit NAME...                    Edit one or more unit files
+  get-default                     Get the name of the default target
+  set-default NAME                Set the default target
+
+Machine Commands:
+  list-machines [PATTERN...]      List local containers and host
+
+......................
+[root@hiys ~]# 
+
+[root@hiys ~]# systemctl get-default 
+graphical.target
+[root@hiys ~]# systemctl set-default 
+bluetooth.target            multi-user.target           runlevel6.target
+......................................
+[root@hiys ~]# systemctl  isolate  graphical.target 
+
+[root@hiys ~]# systemctl  isolate  multi-user.target 
+
+[root@hiys ~]# tty   ##使用命令”tty”可以查看自己具体对应哪个实际终端设备./dev/tty有些类似于到实际所使用终端设备的一个联接
+/dev/pts/0
+
+[root@hiys ~]# tty  ## 在图形界面的显示结果
+/dev/pts/1
+[root@hiys ~]# ls /dev/tty
+tty    tty12  tty17  tty21  tty26  tty30  tty35  tty4   tty44  tty49  tty53  tty58  tty62  ttyS0  
+tty0   tty13  tty18  tty22  tty27  tty31  tty36  tty40  tty45  tty5   tty54  tty59  tty63  ttyS1  
+tty1   tty14  tty19  tty23  tty28  tty32  tty37  tty41  tty46  tty50  tty55  tty6   tty7   ttyS2  
+tty10  tty15  tty2   tty24  tty29  tty33  tty38  tty42  tty47  tty51  tty56  tty60  tty8   ttyS3  
+tty11  tty16  tty20  tty25  tty3   tty34  tty39  tty43  tty48  tty52  tty57  tty61  tty9   
+[root@hiys ~]# 
+[root@hiys ~]# cat a.txt 
+echo  tty2-tty6 > /dev/tty6
+
+[root@hiys ~]# tty   ##使用命令”tty”可以查看自己具体对应哪个实际终端设备./dev/tty有些类似于到实际所使用终端设备的一个联接
+/dev/pts/0
+
+[root@hiys ~]# tty  ## 在图形界面的显示结果
+/dev/pts/1
+
+[root@hiys ~]# tty  ## 在字符界面显示的结果
+/dev/tty1 
+
+[root@hiys ~]# echo haha > /dev/tty1  
+haha
+[root@hiys ~]# 
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# echo hahavaVa9 > /dev/ttyS0
+hahavaVa9
+[root@Va9 ~]# echo hahavaVa9 
+hahavaVa9
+[root@Va9 ~]# 
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+
+[root@hiys ~]# tty  ## 在字符界面显示的结果
+/dev/tty1 
+[root@hiys ~]# tty  ## 在图形界面的显示结果
+/dev/pts/1
+------------------------------------------------
+[root@hiys ~]# ssh -X  192.168.1.19
+root@192.168.1.19's password: 
+.....................
+[root@Va9 ~]# tty
+/dev/pts/0
+[root@Va9 ~]# 
+[root@Va9 ~]# tty
+/dev/pts/0
+[root@Va9 ~]# echo ahaha pts/0  > /dev/pts/0
+ahaha pts/0
+[root@Va9 ~]# echo ahaha pts/0  > /dev/pts/1 # 发给 终端 /dev/pts1 的信息
+
+[root@Va9 ~]# pts/1 xixix
+
+[root@Va9 ~]# 
+----------------------------------------------------------------
+
+[root@hiys ~]# tty                                                                         ★ --虚拟机--★ 
+/dev/pts/2
+[root@hiys ~]# ssh -X  192.168.1.19
+root@192.168.1.19's password: 
+............................
+[root@Va9 ~]# tty
+/dev/pts/1
+[root@Va9 ~]# 
+[root@Va9 ~]# ahaha pts/0   ## 收到pts/0 发给本终端 /dev/pts/1 的信息
+
+[root@Va9 ~]# echo pts/1 xixix > /dev/pts/1
+pts/1 xixix
+[root@Va9 ~]# echo pts/1 xixix > /dev/pts/0
+[root@Va9 ~]# 
+
+--------------------------------
+[root@Va9 ~]# tty
+/dev/pts/0
+[root@Va9 ~]# echo -e  "00000--->>>/dev/pts/1"  > /dev/pts/1
+[root@Va9 ~]# 
+--------------------------------------------------------------------
+[root@Va9 ~]# 00000--->>>/dev/pts/1   ## 收到pts/0 发给本终端 /dev/pts/1 的信息
+
+[root@Va9 ~]# tty
+/dev/pts/1
+[root@Va9 ~]# echo  "11111 ----> /dev/pts/0" > /dev/pts/0
+[root@Va9 ~]# 
+
+---------------------------------------
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# echo "ttyS0 --->>>>> /dev/pts/0"  > /dev/pts/0
+
+----------------------------------------------
+
+[root@Va9 ~]# 11111 ----> /dev/pts/0
+ttyS0 --->>>>> /dev/pts/0
+
+[root@Va9 ~]# tty
+/dev/pts/0
+[root@Va9 ~]# echo  "0000---->ttyS0" > /dev/ttyS0
+[root@Va9 ~]# 
+-------------------------
+[root@Va9 ~]# 0000---->ttyS0   ## 收到pts/0 发给本终端 /dev/ttyS0 的信息
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+---------------------------------------------------
+
+tty一词源于Teletypes，或者teletypewriters，原来指的是电传打字机，是通过串行线用打印机键盘通过阅读和发送信息的东西，后来这东西被键盘与显示器取代，所以现在叫终端比较合适。 
+但是如果我们远程telnet到主机或使用xterm时不也需要一个终端交互么？是的，这就是虚拟终端pty(pseudo-tty)
+
+pts(pseudo-terminal slave)是pty的实现方法，与ptmx(pseudo-terminal master)配合使用实现pty。 
+终端是一种字符型设备，它有多种类型，通常使用tty来简称各种类型的终端设备。tty是Teletype的缩写。Teletype是最早出现的一种终端设备，很象电传打字机(或者说就是?)，是由Teletype公司生产的。
+
+
+FAQ: 终端和控制台 
+Q：/dev/console 是什么？ 
+A：/dev/console即控制台，是与操作系统交互的设备，系统将一些信息直接输出到控制台上。目前只有在单用户模式下，才允许用户登录控制台。
+-------------------------------------- 
+Q:/dev/tty是什么？ 
+A：tty设备包括虚拟控制台，串口以及伪终端设备。
+/dev/tty代表当前tty设备，在当前的终端中输入 echo “hello” > /dev/tty ，都会直接显示在当前的终端中。
+ --------------------------------------------------
+Q:/dev/ttyS*是什么？ 
+A:/dev/ttyS*是串行终端设备。 
+------------------------------------------------------------
+Q:/dev/pty*是什么？ 
+A:/dev/pty*即伪终端，所谓伪终端是逻辑上的终端设备，多用于模拟终端程序。
+例如，我们在X Window下打开的终端，以及我们在Windows使用telnet 或ssh等方式登录Linux主机，此时均在使用pty设备(准确的说应该pty从设备)。
+--------------------------------------------------
+ 
+Q：/dev/tty0与/dev/tty1 …/dev/tty63是什么？它们之间有什么区别？ 
+A：/dev/tty0代表当前虚拟控制台，而/dev/tty1等代表第一个虚拟控制台，
+例如当使用ALT+F2进行切换时，系统的虚拟控制台为/dev/tty2 ，当前的控制台则指向/dev/tty2 
+---------------------------------------------------------
+
+Q：如何确定当前所在的终端（或控制台）？ 
+A：使用tty命令可以确定当前的终端或者控制台。 
+
+---------------------------------------
+[root@Va9 ~]# ll  /dev/console
+crw------- 1 root root 5, 1 11月 26 11:24 /dev/console
+[root@Va9 ~]# 
+
+Q：/dev/console是到/dev/tty0的符号链接吗？ 
+A: 目前的大多数文本中都称/dev/console是到/dev/tty0的链接（包括《Linux内核源代码情景分析》）， 但是这样说是不确切的。
+根据内核文档，在2.1.71之前，/dev/console根据不同系统的设定可以链接到/dev/tty0或者其他tty＊ 上，
+在2.1.71版本之后则完全由内核控制。
+目前，只有在单用户模式下可以登录/dev/console（可以在单用户模式下输入tty命令进行确 认）。 
+
+-------------------------------------------------
+Q：/dev/tty0与/dev/fb*有什么区别？ 
+A: 在Framebuffer设备没有启用的系统中，可以使用/dev/tty0访问显卡。 
+
+------------------------------------
+[root@hiys ~]# virsh console Va8
+连接到域 Va8
+换码符为 ^]
+..........................
+[  OK  ] Started OpenSSH server daemon.
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va8 login: root
+Password: a
+Last login: Mon Nov 26 09:06:36 on ttyS0
+[root@Va8 ~]# [   67.353386] random: crng init done
+ 
+[root@Va8 ~]# 
+
+
+
+
+
+
+
+[root@hiys ~]# tty
+/dev/pts/3
+[root@hiys ~]# virsh start Va9  && virsh  console Va9
+域 Va9 已开始
+
+连接到域 Va9
+换码符为 ^]
+
+Google, Inc.
+Serial Graphics Adapter 06/09/14
+SGABIOS $Id: sgabios.S 8 2010-04-22 00:03:40Z nlaredo $ (mockbuild@) Mon Jun  9 21:33:48 UTC 2014
+Term: 106x20
+4 0
+
+SeaBIOS (version 1.10.2-3.el7)
+Machine UUID 7686e34f-d271-4a07-ad1b-a1db995471b7
+
+iPXE (http://ipxe.org) 00:03.0 C100 PCI2.10 PnP PMM+BFF951B0+BFEF51B0 C100
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+      Uress 'e' to edit the selected item, or 'c' for a command prompt.   
+       s
+        e
+          
+          t
+           h
+            e
+              
+              ^
+                
+                a
+                 n
+                  d
+                    
+                    v
+                      
+                      k
+                       e
+                        y
+                         s
+
+.................
+[  OK  ] Started OpenSSH server daemon.
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va9 login: root
+Password: a
+Last login: Mon Nov 26 11:25:54 from 192.168.1.254
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+[root@hiys ~]# tty
+/dev/pts/4
+[root@hiys ~]# virsh start Va1  &&  virsh console Va1
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va1 login: [   25.517500] random: crng init done
+
+CentOS Linux 7 (Core)
+Kernel 3.10.0-693.el7.x86_64 on an x86_64
+
+Va1 login: root
+Password: a
+Last login: Mon Nov 26 08:50:44 on ttyS0
+[root@Va1 ~]# tty
+/dev/ttyS0
+[root@Va1 ~]# 
+
+[root@Va9 ~]# cat  /etc/securetty
+console
+vc/1
+vc/2
+vc/3
+vc/4
+vc/5
+vc/6
+vc/7
+vc/8
+vc/9
+vc/10
+vc/11
+tty1
+tty2
+tty3
+tty4
+tty5
+tty6
+tty7
+tty8
+tty9
+tty10
+tty11
+ttyS0
+ttysclp0
+sclp_line0
+3270/tty1
+hvc0
+hvc1
+hvc2
+hvc3
+hvc4
+hvc5
+hvc6
+hvc7
+hvsi0
+hvsi1
+hvsi2
+xvc0
+[root@Va9 ~]# cat  /etc/securetty |grep ttyS0
+ttyS0
+[root@Va9 ~]# 
+[root@Va9 ~]#   按 ctrl+] 组合键退出virsh console 
+[root@hiys ~]# tty
+/dev/pts/3
+[root@hiys ~]# 
+
+[root@Va9 ~]# cat  /etc/default/grub
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL="serial console"
+GRUB_SERIAL_COMMAND="serial --speed=115200"
+GRUB_CMDLINE_LINUX="crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8"
+GRUB_DISABLE_RECOVERY="true"
+GRUB_DISABLE_LINUX_UUID="true"
+GRUB_ENABLE_LINUX_LABEL="true"
+
+[root@Va9 ~]# ls /etc/inittab 
+/etc/inittab
+[root@Va9 ~]# cat  /etc/inittab
+# inittab is no longer used when using systemd.
+#
+# ADDING CONFIGURATION HERE WILL HAVE NO EFFECT ON YOUR SYSTEM.
+#
+# Ctrl-Alt-Delete is handled by /usr/lib/systemd/system/ctrl-alt-del.target
+#
+# systemd uses 'targets' instead of runlevels. By default, there are two main targets:
+#
+# multi-user.target: analogous to runlevel 3
+# graphical.target: analogous to runlevel 5
+#
+# To view current default target, run:
+# systemctl get-default
+#
+# To set a default target, run:
+# systemctl set-default TARGET.target
+#
+[root@Va9 ~]# 
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# 
+
+[root@hiys ~]# virsh --help |grep reboot
+    reboot                         重新启动一个域
+[root@hiys ~]# 
+
+[root@hiys ~]# virsh reboot  Va9  && virsh console Va9
+域 Va9 正在被重新启动
+
+连接到域 Va9
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# virsh console  Va9
+连接到域 Va9
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# virsh  shutdown  Va9  && sleep 3
+域 Va9 被关闭
+
+[root@hiys ~]# virsh start Va9  && sleep  7  && virsh console Va9
+域 Va9 已开始
+
+连接到域 Va9
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# virsh destroy  Va0  && sleep 3
+错误：获得域 'Va0' 失败
+错误：未找到域: 没有与名称 'Va0' 匹配的域
+
+[root@hiys ~]# virsh destroy  Va9  && sleep 3
+域 Va9 被删除
+
+[root@hiys ~]# virsh start Va9  && sleep  7  && virsh console Va9
+域 Va9 已开始
+
+连接到域 Va9
+换码符为 ^]
+
+错误：操作失败: 这个域有活跃控制台会话
+
+[root@hiys ~]# 
+
+[root@Va9 ~]# tty
+/dev/ttyS0
+[root@Va9 ~]# ps  -ef |grep virsh
+root       807   789  0 13:16 ttyS0    00:00:00 grep --color=auto virsh
+[root@Va9 ~]# cat -n  /etc/securetty |grep ttyS0
+    24	ttyS0
+[root@Va9 ~]# head  -3   /etc/securetty 
+console
+vc/1
+vc/2
+[root@Va9 ~]# tail -2  /etc/securetty
+hvsi2
+xvc0
+[root@Va9 ~]# echo "ttyS0"  >> /etc/securetty   ##
+[root@Va9 ~]# tail -2  /etc/securetty
+xvc0
+ttyS0
+[root@Va9 ~]# 
+
+[root@Va9 ~]# vim /etc/inittab    ###??/sbin/agetty 二进制 文件
+
+[root@Va9 ~]# tail -3 /etc/inittab
+# systemctl set-default TARGET.target
+#
+S0:12345:respawn:/sbin/agetty ttyS0 115200
+[root@Va9 ~]# 
+
+
+[root@Va9 ~]# ll  /etc/grub2.cfg
+lrwxrwxrwx. 1 root root 22 5月  29 03:47 /etc/grub2.cfg -> ../boot/grub2/grub.cfg
+[root@Va9 ~]# ll  /boot/grub2/grub.cfg 
+-rw-r--r--. 1 root root 4225 5月  28 19:53 /boot/grub2/grub.cfg
+[root@Va9 ~]# vim   /etc/grub2.cfg 
+[root@Va9 ~]# cat -n   /etc/grub2.cfg  |grep kernel
+    97		linux16 /boot/vmlinuz-3.10.0-693.el7.x86_64 root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+   111		linux16 /boot/vmlinuz-0-rescue-ca1b99ed73b54ac2ad4802a3584a439a root=/dev/vda1 ro crashkernel=auto biosdevname=0 net.ifnames=0 console=ttyS0,115200n8 
+[root@Va9 ~]# 
+
+/***
+很多都是centos6的配置 centos7中
+没有/etc/grub.conf文件
+
+[root@h4 ~]# virsh console linux1
+Connected to domain linux1
+Escape character is ^]
+
+[root@ungeolinux ~]# cat /etc/securetty | tail -n 1  ##在该文件中添加一行即可
+ttyS0
+
+[root@ungeolinux ~]# cat /etc/inittab | grep ttyS0   ##在该文件中加入如下一行，我把该行放到了
+S0:12345:respawn:/sbin/agetty ttyS0 115200
+
+[root@ungeolinux ~]# cat /etc/grub2.cfg | grep ttyS0 ##修改grub.conf文件，在kernel所在的行最后添加 console=ttyS0 ，我是随便找了一个修改的 7中有好几个kernel
+kernel /vmlinuz-2.6.18-308.el5 ro root=/dev/VolGroup00/LogVol00 rhgb quiet console=ttyS0
+修改完成后，重启虚拟机！
+问题即可解决！
+***/
+
+
+
+
+
+
+新安装一台虚拟机后，是无法通过virsh console 命令连入虚拟机中的，这时我们需要开启虚拟机的console功能。
+
+一、添加ttyS0的许可，允许root登陆
+[root@localhost ~]# echo "ttyS0" >> /etc/securetty
+
+二、编辑/etc/grub.conf中加入console=ttyS0
+[root@localhost ~]# less /etc/grub.conf 
+# grub.conf generated by anaconda
+#
+# Note that you do not have to rerun grub after making changes to this file
+# NOTICE:  You have a /boot partition.  This means that
+#          all kernel and initrd paths are relative to /boot/, eg.
+#          root (hd0,0)
+#          kernel /vmlinuz-version ro root=/dev/mapper/VolGroup-lv_root
+#          initrd /initrd-[generic-]version.img
+#boot=/dev/sda
+default=0
+timeout=5
+splashimage=(hd0,0)/grub/splash.xpm.gz
+hiddenmenu
+title CentOS (2.6.32-431.el6.x86_64)
+        root (hd0,0)
+        kernel /vmlinuz-2.6.32-431.el6.x86_64 ro root=/dev/mapper/VolGroup-lv_root rd_NO_LUKS LANG=en_US.UTF-8 rd_NO_MD rd_LVM_LV=VolGroup/lv_swap SYSFONT=latarcyrheb-sun16 crashkernel=128M rd_LVM_LV=VolGroup/lv_root  KEYBOARDTYPE=pc KEYTABLE=us rd_NO_DM rhgb quiet console=ttyS0
+        initrd /initramfs-2.6.32-431.el6.x86_64.img
+[root@localhost ~]#
+
+三、编辑/etc/inittab，在最后一行加入内容 S0:12345:respawn:/sbin/agetty ttyS0 115200
+[root@localhost ~]# less /etc/inittab 
+# inittab is only used by upstart for the default runlevel.
+#
+# ADDING OTHER CONFIGURATION HERE WILL HAVE NO EFFECT ON YOUR SYSTEM.
+#
+# System initialization is started by /etc/init/rcS.conf
+#
+# Individual runlevels are started by /etc/init/rc.conf
+#
+# Ctrl-Alt-Delete is handled by /etc/init/control-alt-delete.conf
+#
+# Terminal gettys are handled by /etc/init/tty.conf and /etc/init/serial.conf,
+# with configuration in /etc/sysconfig/init.
+#
+# For information on how to write upstart event handlers, or how
+# upstart works, see init(5), init(8), and initctl(8).
+#
+# Default runlevel. The runlevels used are:
+#  0 - halt (Do NOT set initdefault to this)
+#  1 - Single user mode
+#  2 - Multiuser, without NFS (The same as 3, if you do not have networking)
+#  3 - Full multiuser mode
+#  4 - unused
+#  5 - X11
+#  6 - reboot (Do NOT set initdefault to this)
+# 
+id:5:initdefault:
+
+S0:12345:respawn:/sbin/agetty ttyS0 115200
+[root@localhost ~]#
+
+四、重启服务器
+[root@localhost ~]# reboot
+
+五、在宿主机上测试连接
+[root@study ~]# virsh list
+ Id    Name                          State
+----------------------------------------------------
+ 4    centos                        running
+
+[root@study ~]# virsh console 4
+Connected to domain centos
+Escape character is ^]
+
+CentOS release 6.5 (Final)
+Kernel 2.6.32-431.el6.x86_64 on an x86_64
+
+localhost.localdomain login: root
+Password: 
+Last login: Thu Oct 13 02:51:30 on ttyS0
+[root@localhost ~]#
+
+注：按 ctrl+] 组合键退出virsh console
+
+对于centos 7
+
+在虚机里运行
+[root@localhost ~]# grubby --update-kernel=ALL --args="console=ttyS0"
+
+then
+[root@localhost ~]# reboot
+
+即可
+
+本文永久更新链接地址：http://www.linuxidc.com/Linux/2017-02/140796.htm
+
+
+linux下tty, ttyn, pts, pty, ttySn, console理解
+	https://blog.csdn.net/u013401853/article/details/54915853
+        这一下涉及很多概念：终端，伪终端，虚拟终端，控制终端，串行终端，控制台，……。历史原因这些概念有些模糊，我也理不太清楚。就我直观对dev下设备而言来稍微解释下：
+
+/dev/tty
+控制终端，即当前用户正在使用的终端，是一个映射，指向当前所使用的终端（例如/dev/tty1,/dev/pts/0）。往/dev/tty下写数据总是写到当前终端。
+
+/dev/ttyn
+虚拟终端，例如ubuntu不启动图形界面时，那么就会默认连接到/dev/tty1这个虚拟终端。
+
+/dev/pts/n
+伪终端，例如网络登录的telnet就是使用伪终端。这是UNIX98的实现风格，slave为/dev/pts/n是，master一般为/dev/ptmx。
+
+/dev/pty[p-za-e][0-9a-f]
+伪终端，这是BSD的实现风格，slave一般使用/dev/tty[p-za-e][0-9a-f]这种格式，而master一般使用/dev/pty[p-za-e][0-9a-f]这种格式。
+
+/dev/ttySn
+串行终端，串口设备对应的终端。
+
+/dev/console
+应用层的控制台，一些进程的打印信息会输出到控制台。在用户层和内核都有一个console，分别对应printf和printk的输出。kernel下的console是输入输出设备driver中实现的简单的输出console，只实现write函数，并且是直接输出到设备。user空间下的console，实际就是tty的一个特殊实现，大多数操作函数都继承tty，所以对于console的读写，都是由kernel的tty层来最终发送到设备。
+
+往/dev下各个终端设备写数据测试：
+往/dev/ttyn, /dev/pts/n, /dev/ptyn, /dev/ttySn会写到对应的终端上去。
+往/dev/tty上写则会写到当前终端。
+往/dev/console写情况则不太一样，在ubuntu上测试时（没启动图像界面，启动的/dev/tty1)会写到/dev/tty1。板子上则会写到/dev/ttyS0。
+
+实际的驱动比如串口对一个物理设备会注册两次，一个是tty，一个是console，并通过在console的结构中记录tty的主次设备号建立了联系。
+在 内核中，tty和console都可以注册多个。当内核命令行上指定console=ttyS0之类的参数时，首先确定了printk实际使用那个 console作为输出，其次由于console和tty之间的对应关系，打开/dev/console时，就会映射到相应的tty上。用一句话说： /dev/console将映射到默认console对应的tty上。
+顺便说一句，console=ttyS0和/dev/ttyS0包含相同的设备名字完全是巧合，不同也没事。
+
+
+centos 下 KVM虚拟机的创建、管理与迁移
+2015年08月17日 18:27:45 傻呆 阅读数：1899 标签： kvm centos 虚拟机 管理 迁移  更多
+个人分类： KVM
+版权声明：本文为博主原创文章，未经博主允许不得转载。	https://blog.csdn.net/qq_21398167/article/details/47728875
+kvm虚拟机管理
+一、环境
+role         hostname    ip                  OS
+kvm_server   target      192.168.32.40/24    rhel6.0_x64
+vir_guest1   node4       192.168.32.34/24    rhel5.5_i386
+vir_guest2   node5       192.168.32.35/24    rhel5.5_i386
+manager      manager     192.168.32.33/24    rhel5.5_i386
+ESXi         ESXi        192.168.2.251/24    ESXi 3.5
+二、安裝kvm
+[root@target ~]# yum install -y qemu-kvm.x86_64 qemu-kvm-tools.x86_64  #安装kvm内核
+[root@target ~]# yum install libvirt.x86_64 libvirt-cim.x86_64 libvirt-client.x86_64 libvirt-java.noarch  libvirt-python.x86_64 #安装virt管理工具
+[root@target ~]# modprobe kvm         #加载kvm内核
+[root@target ~]# modprobe kvm-intel   #intel cpu加载kvm-intel内核，要支持全虚拟化，必须开启；要求cpu支持，通过bios可设置。
+[root@target ~]# modprobe kvm-amd     #amd cpu加载kvm-intel
+
+[root@target ~]# modprobe -ls | grep kvm   #查看内核是否开启
+
+
+
