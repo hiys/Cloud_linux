@@ -1,153 +1,1155 @@
-1 ELK ��һ��ʵʱ�ֲ�ʽ����־����ƽ̨
-   ELK ��һ���׵Ľ������
-   ��E��lasticsearch  --  ���ݿ�
-   ��L��ogstash        --  �ռ���־����׼���ĳ���
-   ��K��ibana            --  ͼ�ε�չʾ����
+ 关系型   --------  非关系型
+MySQL    ?--?  NoSQL
+Database  ---->   Index
+Table        ---->   Type
+Row          ---->   Document
+Column    ---->   Filed
 
-2 ������������
--X ����ʹ�õķ��� POST
---data-binary  �������ݵĸ�ʽ
-@urfile   �������ݵ��ļ���
-_bulk  ����ؼ���
-curl -X "POST" "http://192.168.1.13:9200/_bulk" --data-binary @shakespeare.json
+ELK组成：
+    - E：是指Elasticsearch，完成数据的存储和检索
+    - L：是Logstash，完成数据的采集、过滤及解析
+    - K：Kibana，以WEB方式展示
 
-���û�� index �� type ��������Ҫ�Լ�ָ��һ�� index �� type
-curl -X "POST" "http://192.168.1.13:9200/haha/xixi/_bulk" --data-binary @accounts.json
+curl 命令
 
-3 ������ѯ����
-��ѯһ������
-curl -X "GET" "http://192.168.1.12:9200/haha/xixi/1"
+访问一个网页
+curl http://www.baidu.com
 
-��ѯ�������ݣ�ʹ�� _mget
-curl -XGET 'http://192.168.1.11:9200/_mget?pretty' -d '{ 
+显示头信息
+curl -I http://www.baidu.com
+
+显示详细的交互信息
+curl -v http://www.baidu.com
+
+把网页内存保存为文件
+curl -o urfile http://www.baidu.com
+
+禁用 防火墙，禁用 selinux
+
+elasticsearch 安装
+1、安装 openjdk 包
+yum install -y java-1.8.0-openjdk-devel
+
+验证
+java -version
+jps
+
+安装 elasticsearch 
+rpm -ivh elasticsearch-2.3.4.rpm
+
+修改配置文件启动服务
+network.host: ip.xx.xx.xx
+systemctl start elasticsearch
+
+验证
+systemctl status elasticsearch
+netstat -ltunp
+
+通过浏览器访问
+http://192.168.4.11:9200/
+
+elasticsearch 集群安装
+在多台机器上安装部署 java-1.8.0-openjdk-devel，elasticsearch-2.3.4.rpm
+修改 hosts 文件，保证所有机器通过名称能 ping 通集群中的其他机器
+
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+
+在所有节点修改配置文件 /etc/elasticsearch/elasticsearch.yml 
+cluster.name: my-elk01
+node.name: node5
+network.host: 0.0.0.0
+discovery.zen.ping.unicast.hosts: ["node1", "node2", "node3", "node5"]
+
+启动所有节点的 elasticsearch 服务
+通过浏览器可以访问任意节点的 http://ip.xx.xx.xx:9200/
+
+验证集群是否正常，访问
+http://192.168.4.15:9200/_cluster/health?pretty
+
+{
+  "cluster_name" : "my-elk01", #集群名称
+  "status" : "green", # 表示正常
+  "timed_out" : false,
+  "number_of_nodes" : 5, #当前节点数量
+  "number_of_data_nodes" : 5,
+  "active_primary_shards" : 0,
+  "active_shards" : 0,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+
+插件的安装 head  kopf  bigdesk
+1 拷贝插件 zip 包到一个目录
+2 /usr/share/elasticsearch/bin/plugin install file:///插件的位置/插件包.zip 安装
+
+3 验证：
+安装完成以后可以通过
+/usr/share/elasticsearch/bin/plugin list 看到我们已经安装的插件的名称
+
+4 访问head 插件
+它展现ES集群的拓扑结构
+可以通过它来进行索引（Index）和节点（Node）级别的操作
+它提供一组针对集群的查询API，并将结果以json和表格形式返回
+它提供一些快捷菜单，用以展现集群的各种状态
+http://192.168.4.11:9200/_plugin/head/
+
+
+5 kopf 插件安装
+kopf是一个ElasticSearch的管理工具，它提供了对ES集群操作的API。
+/usr/share/elasticsearch/bin/plugin install file:///xxx-kopf.zip
+
+访问地址
+http://192.168.4.11:9200/_plugin/kopf/
+
+6 bigdesk 插件安装
+bigdesk是elasticsearch的一个集群监控工具
+可以通过它来查看es集群的各种状态，
+如：cpu、内存使用情况，索引数据、搜索情况，http连接数等。
+/usr/share/elasticsearch/bin/plugin install file:///bigdesk-xxx.zip
+
+访问地址
+http://192.168.4.11:9200/_plugin/bigdesk/
+
+使用RESTful API操作elasticsearch
+curl -XPUT 'http://192.168.4.11:9200/school/' -d '{
+    "settings":{
+        "index":{
+            "number_of_shards": 5,
+            "number_of_replicas": 1
+        }
+    }
+}'
+
+获取索引配置信息：
+curl -XGET 'http://192.168.4.11:9200/school/_settings/'
+curl -XGET 'http://192.168.4.11:9200/_all/_settings/'
+
+创建文档
+curl -XPUT 'http://192.168.4.11:9200/school/students/1' -d '{
+    "title": "devops",
+    "name":{
+        "first": "guzhang",
+        "last": "wu"
+    },
+    "age": 25
+}'
+
+查询文档信息
+curl -XGET 'http://192.168.4.11:9200/school/students/1'
+curl -XGET 'http://192.168.4.11:9200/school/students/1?_source=name,age'
+
+更新文档信息
+curl -XPOST 'http://192.168.4.11:9200/school/students/1/_update' -d '{
+    "doc":{
+        "age": 30
+    }
+}'
+
+删除文档信息
+curl -XDELETE 'http://192.168.4.14:9200/school/students/1'
+
+批量导入数据
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @shakespeare.json
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @logs.jsonl
+curl -XPOST 'http://192.168.4.14:9200/accounts/act/_bulk?pretty' --data-binary @accounts.json
+
+批量查询数据
+curl -XGET 'http://192.168.4.11:9200/_mget?pretty' -d '{ 
     "docs":[
         {
-            "_index": "haha",
-            "_type:": "xixi",
+            "_index": "accounts",
+            "_type:": "act",
             "_id": 1
         },
         {
-            "_index": "haha",
-            "_type:": "xixi",
+            "_index": "accounts",
+            "_type:": "act",
             "_id": 2
         },
         {
             "_index": "shakespeare",
-            "_type:": "act",
-            "_id": 91400
+            "_type:": "scene",
+            "_id": 1
         }
     ]
 }'
 
-logstash �İ�װ
-��װ������ openjdk
-yum install java-1.8.0-openjdk -y
-yum install logstash-2.3.4-1.noarch.rpm -y
+json 是什么，格式怎么书写
 
-ELK �����ṹģ��
+[root@Va2 ~]# ls  /etc/httpd/
+conf  conf.d  conf.modules.d  logs  modules  run
 
-                    +-----------------logstash-------------------+
-+--------+    | +--------+     +---------+     +-----------+ |     +---------+     +----------+
- | ����Դ | --->| INPUT | -->| FILTER | --> | OUTPUT | ---> | ES ��Ⱥ | -->| KIBANA |
-+--------+    | +--------+     +---------+     +-----------+ |     +---------+     +----------+
-                    +----------------------------------------------+
+[root@Va2 ~]# grep  -Evn  "#|^$"   /etc/httpd/conf/httpd.conf
+31:ServerRoot "/etc/httpd"
+42:Listen  80
+56:Include conf.modules.d/*.conf
+66:User apache
+67:Group apache
+86:ServerAdmin root@localhost
+95:ServerName  127.0.0.1
+102:<Directory />
+103:    AllowOverride none
+104:    Require all denied
+105:</Directory>
+119:DocumentRoot "/var/www/html"
+124:<Directory "/var/www">
+125:    AllowOverride None
+127:    Require all granted
+128:</Directory>
+131:<Directory "/var/www/html">
+144:    Options Indexes FollowSymLinks
+151:    AllowOverride None
+156:    Require all granted
+157:</Directory>
+163:<IfModule dir_module>
+164:    DirectoryIndex index.html
+165:</IfModule>
+171:<Files ".ht*">
+172:    Require all denied
+173:</Files>
+182:ErrorLog "logs/error_log"
+189:LogLevel warn
+191:<IfModule log_config_module>
+196:    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+197:    LogFormat "%h %l %u %t \"%r\" %>s %b" common
+199:    <IfModule logio_module>
+201:      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+...............
+255:<Directory "/var/www/cgi-bin">
+256:    AllowOverride None
+257:    Options None
+258:    Require all granted
+259:</Directory>
+...............
+348:EnableSendfile on
+353:IncludeOptional conf.d/*.conf
+[root@Va2 ~]# 
 
-logstash.conf ��ʼ����
-input{
-    stdin{}
+
+[root@Va2 ~]# ls  /etc/httpd/logs/
+access_log  access_log-20190113  error_log  error_log-20190113
+
+[root@Va2 ~]# ll  /etc/httpd/logs/
+.................
+
+[root@Va2 ~]# 
+127.0.0.1 - - [13/Jan/2019:17:42:41 +0800] "GET / HTTP/1.1" 200 43 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+1     2     3
+12   0-9   0-9
+
+1   \d   \d
+2    0-5
+      5    0-5
+    0-4  \d
+
+非单词字符：\W
+\W 匹配任何非单词字符。\W 语言元素等效于以下字符类：
+[^\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}\p{Pc}\p{Lm}]
+
+单词字符：\w
+\w 与任何单词字符匹配。单词字符是下表中列出的任何 Unicode 类别的成员。
+类别	描述
+Ll	字母，小写
+Lu	字母，大写
+Lt	字母，首字母大写
+Lo	字母，其他
+Lm	字母，修饰符
+Nd	数字，十进制数
+Pc	标点，连接符。 此类别包含 10 个字符，最常用的字符是 LOWLINE 字符 (_)，u+005F。
+如果指定了符合 ECMAScript 的行为，则 \w 等效于 [a-zA-Z_0-9]。
+
+正则表达式构造：
+\p{名称}
+匹配属于 Unicode 常规类别或命名块的任何字符，其中，名称是类别缩写或命名块的名称。
+负 Unicode 类别或 Unicode 块：\P {}
+Unicode 标准为每个常规类别分配一个字符。
+例如，特定字符可以是大写字母（由 Lu 类别表示），
+十进制数字（Nd 类别）、数学符号（Sm 类别）或段落分隔符（Zl 类别）。
+Unicode 标准中的特定字符集也占据连续码位的特定区域或块。
+例如，可在 \u0000 和 \u007F 之间找到基本拉丁字符集，
+并可在 \u0600 和 \u06FF 之间找到阿拉伯语字符集。
+
+正则表达式构造：
+\P{名称}
+匹配不属于 Unicode 常规类别或命名块的任何字符，其中，名称是类别缩写或命名块的名称。
+
+正则表达式常用通配符
+（1）'^'匹配以该字符后面的字符开头的字符串
+（2）'$'匹配以该字符后面的字符结尾的字符串
+（3）'.'匹配任何一个单字符
+（4）'[...]'匹配在方括号内的任何字符。例如，“[abc]" 匹配a、b或c。
+字符的范围可以使用一个'-'，“[a-z]”匹配任何字母，而“[0-9]”匹配任何数字
+正字符组：[ ]
+正字符组指定一个字符列表，其中的任何一个字符可出现在输入字符串中以便进行匹配。
+此字符列表可以单独指定和/或作为范围指定。
+
+（5）'*' 匹配零个或多个在他前面的字符。例如，“x*”匹配任何数量的'*'字符，“[0-9]*”匹配任何数量的数字，
+而“.*”匹配任何数量的任何字符。
+
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+通配符类型：
+. 表示任意字符
+? 表示出现0次或1次
+* 表示 出现0次或多次
++ 表示出现1次或 多次
+{m,n} 表示出现至少m次，最多n次
+{m,} 表示出现最少m次，最多不限
+{m}表示就出现m次
+      *：匹配任意长度的任意字符
+       ？：匹配 零个或 任意单个字符
+       [ ]：匹配指定范围内的任意单个字符
+       [^]：匹配指定范围之外的任意单个字符
+       [:space:]：空白字符
+       [:punct:]：标点符号
+  [:lower:]：小写字母
+ [:upper:]：大写字母
+ [:alpha:]：大小写字母
+ [:digit:]：数字
+   [:alnum:]：数字和大小写字母
+
+标点符号
+[计]punctuation; 
+  interpunction
+
+punctuation
+标点符号,
+
+interpunction
+标点，标点符号
+
+alphabet n. 字母表;字母系统;入门，初步
+ 
+==============================
+
+正则表达式构造
+
+\p{名称}
+匹配属于 Unicode 常规类别或命名块的任何字符
+
+\P{名称}
+匹配不属于 Unicode 常规类别或命名块的任何字符
+
+非单词字符：\W
+\W 匹配任何非单词字符。\W 语言元素等效于以下字符类：
+[^\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}\p{Pc}\p{Lm}]
+
+单词字符：\w
+\w 与任何单词字符匹配
+
+类别	描述
+Ll	字母，小写
+Lu	字母，大写
+Lt	字母，首字母大写
+Lo	字母，其他
+Lm	字母，修饰符
+Nd	数字，十进制数
+Pc	标点，连接符。 此类别包含 10 个字符，最常用的字符是 LOWLINE 字符 (_)，u+005F。
+如果指定了符合 ECMAScript 的行为，则 \w 等效于 [a-zA-Z_0-9]。
+
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+
+通配符类型：
+. 表示任意字符
+? 表示出现0次或1次   ？：匹配 零个或 任意单个字符
+* 表示 出现0次或多次    *：匹配任意长度的任意字符
++ 表示出现1次或 多次
+{m,n} 表示出现至少m次，最多n次
+{m,} 表示出现最少m次，最多不限
+{m}表示就出现m次
+分组
+基本正则表达式中支持分组，而在扩展正则表达式中，分组的功能更加强大，也可以说才是真正的分组，用法如下：
+()：分组，后面可以使用\1 \2 \3...引用前面的分组
+
+   [ ]：匹配指定范围内的任意单个字符
+   [^]：匹配指定范围之外的任意单个字符
+
+\w : 字母数字 对应大写是非 \W 非字母数字
+\b: 空白 \B
+\<,> : 单词的首尾
+
+  [:space:]：空白字符
+  [:punct:]：标点符号
+  [:lower:]：小写字母
+ [:upper:]：大写字母
+ [:alpha:]：大小写字母
+ [:digit:]：数字
+   [:alnum:]：数字和大小写字母
+
+
+2 正则表达式中的字符类
+ 正字符组：[ ]
+ 负字符组：[^]
+ 任意字符： .
+  Unicode类别或Unicode块：\p{}
+  负 Unicode 类别或 Unicode 块：\P {}
+ 单词字符：\w
+ 非单词字符：\W
+  空白字符：\s
+  非空白字符：\S
+  十进制数字字符：\d
+  非数字字符：\D
+
+
+标点符号
+[计]punctuation; 
+  interpunction
+
+punctuation 标点符号
+interpunction 标点，标点符号
+alphabet n. 字母表;字母系统;入门，初步
+
+显示所有以a或者m开头的文件： 
+  ls -l [am]*
+显示所有文件名中包含了数字的文件：
+ ls -l *[0-9]* 或者ls -l *[[:digit:]]*
+
+
+1     2     3
+12   0-9   0-9
+
+1   \d   \d
+2    0-5
+      5    0-5
+    0-4  \d
+
+25[0-5]|2[0-4]\d|1?\d?\d
+
+?\d
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+精确匹配ip地址
+((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)
+
+模糊匹配ip地址
+([12]?\d?\d\.){3}[12]?\d?\d
+模糊匹配ip地址
+([12](?\d){2}\.){3}[12](?\d){2}
+模糊匹配ip地址
+[0-9.]+
+
+[root@Va2 ~]# cat  /etc/httpd/logs/access_log
+127.0.0.1 - - [13/Jan/2019:17:42:41 +0800] "GET / HTTP/1.1" 200 43 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+127.0.0.1 - - [13/Jan/2019:17:45:00 +0800] "GET / HTTP/1.1" 200 67 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+()  ()  ()  \1   \2   \3  分组匹配 组名函数名
+
+(?<ip>[0-9]+).*[(?<time>.+)\]  [A-Z]+
+
+
+重定向stdin 0  stdout 1 stderr 2
+内核启动的时候默认打开这三个I/O设备文件：
+标准输入文件stdin，得到文件描述符 0
+标准输出文件stdout，得到文件描述符 1
+标准错误输出文件stderr，得到文件描述符 2。
+
+Linux重定向操作符 功能描述
+> 将命令输出写入文件或设备，而不是命令提示符或句柄
+< 从文件而不是从键盘或句柄读入命令输入
+>> 将命令输出添加到文件末尾而不删除文件中已有的信息
+>& 将一个句柄的输出写入到另一个句柄的输入中
+
+<& 从一个句柄读取输入并将其写入到另一个句柄输出中
+
+| 从一个命令中读取输出并将其写入另一个命令的输入中;也称为管道操作符
+
+使用"2>&1" 把标准错误stderr重定向到标准输出stdout；
+2、使用"&>"把标准正确和错误stderr重定向到标准输出stdout；
+
+
+一个文件描述符 是文件系统为了跟踪这个打开的文件而分配给它的一个数字. 
+也可以的将其理解为文件指针的一个简单版本. 与C语言中文件句柄的概念很相似.
+
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+
+2>&1 也就是 FD2＝FD1 ，
+这里并不是说FD2 的值等于FD1的值，
+因为 > 是改变送出的数据信道，
+也就是说把 FD2 的 “数据输出通道” 改为 FD1 的 “数据输出通道”
+
+linux exec与重定向
+exec和source都属于bash内部命令（builtins commands），
+在bash下输入man exec
+或man source可以查看所有的内部命令信息。
+source命令，不再产生新的shell，而在当前shell下执行一切命令
+
+exec
+在bash下输入man exec，找到exec命令解释处，可以看到
+”No new process is created.”这样的解释，
+这就是说exec命令不产生新的子进程。
+
+exec与source的区别
+
+exec命令在执行时会把当前的shell process关闭，然后换到后面的命令继续执行。
+
+系统调用exec是以新的进程去代替原来的进程，但进程的PID保持不变。
+因此，可以这样认为，exec系统调用并没有创建新的进程，
+只是替换了原来进程上下文的内容。
+原进程的代码段，数据段，堆栈段被新的进程所代替。
+
+一个进程主要包括以下几个方面的内容:
+
+一个可以执行的程序
+与进程相关联的全部数据(包括变量，内存，缓冲区)
+程序上下文(程序计数器PC,保存程序执行的位置)
+exec是一个函数簇，由6个函数组成，分别是以excl和execv打头的。
+
+执行exec系统调用，一般都是这样，
+用fork()函数新建立一个进程，
+然后让进程去执行exec调用。
+在fork()建立新进程之后，父进各与子进程共享代码段，但数据空间是分开的，
+
+但父进程会把自己数据空间的内容copy到子进程中去，
+还有上下文也会copy到子进程中去。
+
+而为了提高效率，采用一种写时copy的策略，
+即创建子进程的时候，并不copy父进程的地址空间，父子进程拥有共同的地址空间，
+
+只有当子进程需要写入数据时(如向缓冲区写入数据),
+这时候会复制地址空间，复制缓冲区到子进程中去。
+从而父子进程拥有独立的地址空间。
+而对于fork()之后执行exec后，这种策略能够很好的提高效率，
+如果一开始就copy,那么exec之后，子进程的数据会被放弃，被新的进程所代替。
+
+
+fork是linux的系统调用，
+用来创建子进程（child process）。
+子进程是父进程(parent process)的一个副本，
+从父进程那里获得一定的资源分配以及继承父进程的环境。
+子进程与父进程唯一不同的地方在于pid（process id）。
+
+环境变量（传给子进程的变量，遗传性是本地变量和环境变量的根本区别）
+只能单向从父进程传给子进程。
+不管子进程的环境变量如何变化，
+都不会影响父进程的环境变量。
+
+bash shell的命令分为两类：
+外部命令和内部命令。
+外部命令是通过系统调用或独立的程序实现的，如sed、awk等等。
+内部命令是由特殊的文件格式（.def）所实现，
+如cd、history、exec等等。
+
+执行一个shell命令行时通常会自动打开三个标准文件，
+即标准输入文件（stdin），通常对应终端的键盘；
+标准输出文件（stdout）
+和标准错误输出文件（stderr），这两个文件都对应终端的屏幕。
+
+进程将从标准输入文件中得到输入数据，
+将正常输出数据输出到标准输出文件，
+而将错误信息送到标准错误文件中
+
+[root@Va2 ~]# ll  whileawk.txt  
+-rw-r--r-- 1 root root 14995005440 1月  13 15:34 whileawk.txt
+[root@Va2 ~]# >  whileawk.txt
+[root@Va2 ~]# ll  whileawk.txt
+-rw-r--r-- 1 root root 0 1月  14 15:41 whileawk.txt
+[root@Va2 ~]# cat  whileawk.txt 
+[root@Va2 ~]# cat  wenjian.txt 
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+[root@Va2 ~]# 
+命令wc统计指定文件 以空格 或 回车换行符号 作为 单词分隔符
+命令wc统计指定文件包含的 行数 3行、单词数 6个 和 字符总数23(包含空格和回车键符号)
+[root@Va2 ~]# wc
+ab abc
+abcd
+123 ctrl d
+      3       6      23
+从键盘键入的所有文本都出现在屏幕上，但并没有什么结果，
+直至按下ctrl+d，wc才将命令结果写在屏幕上
+
+[root@Va2 ~]# wc  <  wenjian.txt
+ 3  3 27
+命令wc统计指定文件包含的 行数 3行、单词数 3个 和 字符总数27(包含空格和回车键符号)
+
+Linux重定向操作符 功能描述
+> 将命令输出写入文件或设备，而不是命令提示符或句柄
+< 从文件而不是从键盘或句柄读入命令输入
+>> 将命令输出添加到文件末尾而不删除文件中已有的信息
+>& 将一个句柄的输出写入到另一个句柄的输入中
+
+<& 从一个句柄读取输入并将其写入到另一个句柄输出中
+
+| 从一个命令中读取输出并将其写入另一个命令的输入中;也称为管道操作符
+
+使用"2>&1" 把标准错误stderr重定向到标准输出stdout；
+2、使用"&>"把标准正确和错误stderr重定向到标准输出stdout；
+
+[root@Va2 ~]# sed  -i  3d   new.txt 
+
+[root@Va2 ~]# cat  new.txt 
+
+[root@Va2 ~]# id  lily2 > new.txt
+id: lily2: no such user
+
+[root@Va2 ~]# cat  new.txt 
+
+[root@Va2 ~]# id  lily2 > new.txt  2>&1 #把标准错误stderr重定向到标准输出stdout
+
+[root@Va2 ~]# cat  new.txt 
+id: lily2: no such user
+
+[root@Va2 ~]# id  lily3  2> new.txt 
+[root@Va2 ~]# cat  new.txt 
+id: lily3: no such user
+
+
+exec 4<&1          # 备份当前stdout
+exec 1>1.txt
+ 
+while read line;do echo $line; done < 1
+ 
+exec 1<&4          # 恢复stdout
+exec 4>&-
+
+重定向stdin 0  stdout 1 stderr 2
+内核启动的时候默认打开这三个I/O设备文件：
+标准输入文件stdin，得到文件描述符 0
+标准输出文件stdout，得到文件描述符 1
+标准错误输出文件stderr，得到文件描述符 2。
+
+-------------------另外一个终端窗口  pts/1-------------------
+[root@Va1 ~]# tty
+/dev/pts/1
+[root@Va1 ~]# echo  hi pts/0 I am pts/1 > /dev/pts/0
+[root@Va1 ~]# tty
+/dev/pts/1
+
+--------------------第一个终端窗口  pts/0-------------------
+
+[root@Va1 ~]# hi pts/0 I am pts/1   ## 收到pts/1 发给本终端 /dev/pts/0 的信息
+
+[root@Va1 ~]# tty
+/dev/pts/0
+[root@Va1 ~]# echo  yes  pts/0  > /dev/pts/1
+[root@Va1 ~]# who
+root     pts/0        2019-01-14 13:13 (192.168.0.254)
+root     pts/1        2019-01-14 16:17 (192.168.0.254)
+
+-----------------另外一个终端窗口  pts/1---------------
+[root@Va1 ~]# tty
+/dev/pts/1
+[root@Va1 ~]# yes pts/0  # 收到pts/0 发给本终端 /dev/pts/1 的信息
+
+[root@Va1 ~]# man  bash  |grep  -EnA3  "\/dev\/tcp\/host\/port"
+...................
+[root@Va1 ~]# man  bash  |grep  -EnA1  "\/dev\/std"
+...................
+[root@Va1 ~]# man  bash  |grep  -EnA3  "/dev/tcp/host/port"
+1192:              /dev/tcp/host/port
+1193-                     如果 host 是一个合法的主机名或 Internet  地址，并且  port
+1194-                     是  一个整数端口号或服务名，bash  试图建立与相应的 socket
+1195-                     (套接字) 的 TCP 连接。
+
+[root@Va1 ~]# man  bash  |grep  -EnA1  "/dev/std"
+1186:              /dev/stdin
+1187-                     文件描述符 0 被复制。
+1188:              /dev/stdout
+1189-                     文件描述符 1 被复制。
+1190:              /dev/stderr
+1191-                     文件描述符 2 被复制。
+--
+1437:       n。如果某操作的  file  参数是 /dev/stdin， /dev/stdout 或者 /dev/stderr
+1438-       之一，将分别检查文件描述符 0，1 和 2。
+
+[root@Va1 ~]# man  bash  |grep  -EnA3  "/dev/udp/host/port"
+1196:              /dev/udp/host/port
+1197-                     如果 host 是一个合法的主机名或 Internet  地址，并且  port
+1198-                     是  一个整数端口号或服务名，bash  试图建立与相应的 socket
+1199-                     (套接字) 的 UDP 连接。
+[root@Va1 ~]# 
+
+重定向stdin 0  stdout 1 stderr 2
+内核启动的时候默认打开这三个I/O设备文件：
+标准输入文件stdin，得到文件描述符 0
+标准输出文件stdout，得到文件描述符 1
+标准错误输出文件stderr，得到文件描述符 2。
+
+一个文件描述符 是文件系统为了跟踪这个打开的文件而分配给它的一个数字. 
+也可以的将其理解为文件指针的一个简单版本. 与C语言中文件句柄的概念很相似.
+
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+
+2>&1 也就是 FD2＝FD1 ，
+这里并不是说FD2 的值等于FD1的值，
+因为 > 是改变送出的数据信道，
+也就是说把 FD2 的 “数据输出通道” 改为 FD1 的 “数据输出通道”
+
+表头文件 #include<unistd.h>
+#include<fcntl.h>
+定义函数 int fcntl(int fd , int cmd);
+int fcntl(int fd,int cmd,long arg);
+int fcntl(int fd,int cmd,struct flock * lock);
+函数说明 fcntl()用来操作文件描述词的一些特性。
+参数fd代表欲设置的文件描述词，参数cmd代表欲操作的指令。
+
+close（关闭文件）
+相关函数 open，fcntl，shutdown，unlink，fclose
+表头文件 #include<unistd.h>
+定义函数 int close(int fd);
+函数说明 当使用完文件后若已不再需要则可使用close()关闭该文件，
+二close()会让数据写回磁盘，并释放该文件所占用的资源。
+参数fd为先前由open()或creat()所返回的文件描述词。
+返回值 若文件顺利关闭则返回0，发生错误时返回-1。
+错误代码 EBADF 参数fd 非有效的文件描述词或该文件已关闭
+
+定义函数 int flock(int fd,int operation);
+函数说明 
+flock()会依参数operation所指定的方式对参数fd所指的文件做各种锁定或解除锁定的动作。
+此函数只能锁定整个文件，无法锁定文件的某一区域。
+参数 operation有下列四种情况:
+LOCK_SH 建立共享锁定。多个进程可同时对同一个文件作共享锁定。
+LOCK_EX 建立互斥锁定。一个文件同时只有一个互斥锁定。
+LOCK_UN 解除文件锁定状态。
+LOCK_NB 无法建立锁定时，此操作可不被阻断，马上返回进程。
+通常与LOCK_SH或LOCK_EX 做OR(|)组合。
+单一文件无法同时建立共享锁定和互斥锁定，
+而当使用dup()或fork()时文件描述词不会继承此种锁定。
+返回值 返回0表示成功，若有错误则返回-1，
+错误代码存于errno。
+
+关于fcntl(fd, F_SETFD, FD_CLOEXEC)设置exec时close的属性
+
+snd_ctl_hw_open
+#define SNDRV_FILE_CONTROL    ALSA_DEVICE_DIRECTORY "controlC%i"
+sprintf(filename, SNDRV_FILE_CONTROL, card); // 路径/dev/snd/controlC0
+
+fd = snd_open_device(filename, fmode);
+
+fcntl(fd, F_SETFD, FD_CLOEXEC); // 这里设置为FD_CLOEXEC表示
+当程序执行exec函数时本fd将被系统自动关闭,
+表示不传递给exec创建的新进程, 
+如果设置为fcntl(fd, F_SETFD, 0);
+那么本fd将保持打开状态复制到exec创建的新进程中[luther.gliethttp].
+进入内核系统调用
+sys_fcntl
+do_fcntl
+    case F_SETFD:
+        err = 0;
+        set_close_on_exec(fd, arg & FD_CLOEXEC);
+
+void fastcall set_close_on_exec(unsigned int fd, int flag)
+{
+    struct files_struct *files = current->files;
+    struct fdtable *fdt;
+    spin_lock(&files->file_lock);
+    fdt = files_fdtable(files);
+    if (flag)
+        FD_SET(fd, fdt->close_on_exec);
+    else
+        FD_CLR(fd, fdt->close_on_exec);
+    spin_unlock(&files->file_lock);
 }
 
-filter{
-}
+man fcntl看到的对FD_CLOEXEC解释
 
-output{
-    stdout{}
-}
+find  进一步的操作，这个时候exec的作用就显现出来了。
+　　-exec  参数后面跟的是 command 命令，它的终止是以“；”为结束标志的，
+所以这句命令后面的分号" ; "是不可缺少的，
+考虑到各个系统中分号" ; "会有不同的意义，
+所以前面加反斜杠" / "。　　
 
-����ĵ���λ��
-https://github.com/logstash-plugins
+　{} 花括号代表前面find查找出来的文件名
 
-codec ���
-    stdout{ codec => "rubydebug" }
+　find . -type f -exec ls -l {} \; 　　
+## find 命令匹配到了当前目录下的所有普通文件，并在 -exec 选项中使用 ls -l 命令将它们列出
 
-file ���
-    file{
-        sincedb_path => "/var/lib/logstash/since.db"
-        start_position => "beginning"
-        path => ["/var/tmp/a.log", "/tmp/b.log"]
-        type => "filelog"
-    }
+[root@Va2 ~]# find  /root/  -type  f  -iname  "we*"  -exec  cat   {} \;
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
 
+[root@Va2 ~]# find  /root/  -type  f  -name  "w*"  -exec  ls  -l  {} \;
+-rw-r--r-- 1 root root 27 1月  12 17:36 /root/wenjian.txt
 
-# python �ͻ��ˣ����� tcp ����
-import socket
-def  tcpmsg(msg):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
-    s.connect(("192.168.1.10", 8888))
-    s.sendall(msg+'\n')
-    s.close()
+[root@Va2 ~]# find  /root/  -type  f  -name  "wenj*"  -exec  cp  -f  {}  new.txt \;
 
-def  udpmsg(msg):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    s.sendto(msg+'\n', ("192.168.1.10", 9999))
-
-# syslog ������
-logstash.conf  ����
-    syslog{
-        host => "192.168.1.10"
-        port => 514
-        type => "syslog"
-    }
-    
-д syslog ��־������
-logger -p local0.info -t mylog "hello world"
-
-���� /etc/rsyslog.conf 
-local0.info				@192.168.1.10:514
-authpriv.info				@@192.168.1.10:514
-
-�����·��
-/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
-
-filter ���ã�������׼ apache ��־    grok{
-        match => ["message","%{COMBINEDAPACHELOG}"]
-    }
+[root@Va2 ~]# find  /root/  -type  f  -iname  "Ne*"  -exec  cat  {} \;
+a1#a2#a3
+b1#b2#b3
+c1#c2#c3
+[root@Va2 ~]# find  /root/  -type  f  -iname  "Ne*"  -exec  ls  -l  {} \;
+-rw-r--r-- 1 root root 27 1月  14 17:55 /root/new.txt
 
 
 
-output ����д��  ES ��Ⱥ
-    if [type] == "filelog"{
-    elasticsearch {
-        hosts => ["192.168.1.14:9200"]
-        index => "weblog"
-        flush_size => 2000
-        idle_flush_time => 10
-    }}
+常用命令语法及范例
+ 
+exec 0
+exec 1>outfilename # 打开文件outfilename作为stdout
+exec 2>errfilename # 打开文件errfilename作为 stderr
+exec 1&-           # 关闭 FD1
+exec 5>&-          # 关闭 FD5
+ 
+exec 4<&1          # 备份当前stdout至FD4
+exec 1>1.txt       # stdout重定向至1.txt
+exec 1<&4          # 恢复stdout
+exec 4>&-          # 关闭 FD4
+ 
+exec 3<&0:这个命令就是将操作符3也指向标准输入
+
+# 重定向操作范例
+cat > 1 <<EOF
+11 22 33 44 55
+66 22 33 11 33
+324 25 63 634 745
+EOF
+cat > 2 <<EOF
+> 1.txt
+EOF
+ 
+exec 4<&1          # 备份当前stdout至FD4
+exec 1>1.txt       # stdout重定向至1.txt
+exec 1<&4          # 恢复stdout
+exec 4>&-          # 关闭 FD4
+ 
+http://xstarcd.github.io/wiki/shell/exec_redirect.html
+
+while read line;do echo $line; done < 1
+ 
+exec 1<&4          # 恢复stdout
+exec 4>&-
+ 
+sh ./2
+cat 1.txt
+
+[root@Va2 ~]# echo   012345  > new.txt 
+[root@Va2 ~]# cat  new.txt
+012345
+[root@Va2 ~]# exec  3<>  new.txt  # 打开"File"并且给它分配fd 3
+[root@Va2 ~]# read  -n  4 <&3   # 只读4个字符
+[root@Va2 ~]# echo  -n  ..xx  >&3
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# exec  3>&-  # 关闭fd 3
+[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# 
+
+[root@Va2 ~]# echo  -e  "..xx\nwww "
+..xx
+www 
+[root@Va2 ~]# echo  -e  ..xx\nwww 
+..xxnwww
+[root@Va2 ~]# 
+
+~]# exec  3<>  new.txt  # 打开"new.txt"并且给它分配fd 3
+
+n<&-
+关闭输入文件描述符 n.
+21 exec 0<&6 6<&-
+22 # 现在将stdin从fd #6中恢复, 因为刚才我们把stdin重定向到#6了,
+23 #+ 然后关闭fd #6 ( 6<&- ), 好让这个描述符继续被其他进程所使用
+
+exec 1&-           # 关闭 FD1
+exec 5>&-          # 关闭 FD5
+
+[root@Va2 ~]# ll  new2.txt 
+-rw-r--r-- 1 root root 15 1月  14 18:59 new2.txt
+[root@Va2 ~]# cat  new2.txt
+add test  word
+[root@Va2 ~]# >  new2.txt
+
+[root@Va2 ~]# cat  new2.txt
+
+[root@Va2 ~]# cat  > new2.txt  <<eof
+add test  word
+eof
+
+[root@Va2 ~]# cat  >> new2.txt  <<eof
+add test2  test2
+eof
+
+[root@Va2 ~]# cat   new2.txt 
+add test  word
+add test2  test2
+[root@Va2 ~]# 
+
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+
+~]# exec  3<>  new.txt  # 打开"new.txt"并且给它分配fd 3
+
+[root@Va2 ~]# echo   012345  > new.txt 
+[root@Va2 ~]# cat  new.txt
+012345
+[root@Va2 ~]# exec  3<>  new.txt  # 打开"File"并且给它分配fd 3
+[root@Va2 ~]# read  -n  4 <&3   # 只读4个字符
+[root@Va2 ~]# echo  -n  ..xx  >&3
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# exec  3>&-  # 关闭fd 3
+[root@Va2 ~]# ll  new.txt
+-rw-r--r-- 1 root root 8 1月  14 18:46 new.txt
+[root@Va2 ~]# cat   new.txt
+0123..xx[root@Va2 ~]# 
 
 
-������ logstash.conf  ����
-input{
-    file{
-        sincedb_path => "/var/lib/logstash/since.db"
-        start_position => "beginning"
-        path => ["/var/tmp/a.log"]
-        type => "filelog"
-        codec => "json"
-    }   
-}   
+[root@Va2 ~]# cat new2.txt 
+add test  word
+add test2  test2
 
-filter{
-}   
+[root@Va2 ~]# exec  4<  > new2.txt
+-bash: 未预期的符号 `>' 附近有语法错误
 
-output{
-    if [type] == "filelog"{
-    elasticsearch {
-        hosts => ["192.168.1.14:9200"]
-        index => "weblog"
-        flush_size => 2000
-        idle_flush_time => 10
-    }}  
-} 
+[root@Va2 ~]# exec  4<> new2.txt  # 打开"文件new2.txt"并且给它分配fd 4 (输入文件描述符4)
+
+[root@Va2 ~]# cat  new2.txt 
+add test  word
+add test2  test2
+
+[root@Va2 ~]# read  -n  3  <&4  # 只读 3 个字符
+
+[root@Va2 ~]# echo  -e  "test3\ntest4444" >&4  ##重定向写入fd(输入文件描述符4)
+
+[root@Va2 ~]# cat  new2.txt 
+addtest3
+test4444
+ test2  test2
+
+[root@Va2 ~]# exec  4> new2.txt 
+
+[root@Va2 ~]# cat  new2.txt 
+
+[root@Va2 ~]# cat  new2.txt >&4
+cat: new2.txt：输入文件是输出文件
+
+[root@Va2 ~]# exec  3>&-  # 关闭fd 3
+
+[root@Va2 ~]# exec  4>&-
+[root@Va2 ~]# cat  new2.txt 
+=======================
+
+[root@Va2 ~]# cat  new2.txt   ## 注意 new2.txt 是空文件
+[root@Va2 ~]# touch    new3.txt  ## 创建新文件new3.txt
+[root@Va2 ~]# cat  new3.txt
+
+[root@Va2 ~]# exec  5<> new2.txt   打开"文件new2.txt"并且给它分配fd(输入文件描述符5)
+
+[root@Va2 ~]# echo -e "haha55\nHixixi" >&5 ##重定向写入fd(输入文件描述符5)
+
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# exec  6> new3.txt  ##设置fd(输出文件描述符 6)
+[root@Va2 ~]# ll  new3.txt
+-rw-r--r-- 1 root root 0 1月  14 20:03 new3.txt
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# cat   new2.txt  >&6 ## 重定向输出到达 自定义fd 文件
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# cat   new3.txt  ##结果{ >&6 重定向输出}
+haha55
+Hixixi
+[root@Va2 ~]# 
+关闭文件描述符
+
+&- 关闭标准输出
+n&- 表示将 n 号输出关闭
+
+n<&-
+关闭输入文件描述符 n.
+0<&-, <&-
+关闭 stdin.
+n>&-
+关闭输出文件描述符 n.
+1>&-, >&-
+关闭 stdout.
+/***********
+[root@Va2 ~]# exec  5<> new2.txt   打开"文件new2.txt"并且给它分配fd(输入文件描述符5)
+[root@Va2 ~]# echo -e "haha55\nHixixi" >&5 ##重定向写入fd(输入文件描述符5)
+
+[root@Va2 ~]# exec  6> new3.txt  ##设置fd(输出文件描述符 6)
+[root@Va2 ~]# cat   new2.txt  >&6 ## 重定向输出到达 自定义fd 文件
+*********/
+[root@Va2 ~]# exec  5<&-  && echo  $?  关闭输入文件描述符 5
+0
+[root@Va2 ~]# exec  6>&-  && echo  $?  关闭输出文件描述符 6
+0
+[root@Va2 ~]# cat   new2.txt 
+haha55
+Hixixi
+[root@Va2 ~]# cat   new3.txt 
+haha55
+Hixixi
+/***********
+read [-ers] [-a aname] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]
+参数说明:
+-a 后跟一个变量，该变量会被认为是个数组，然后给其赋值，默认是以空格为分割符。
+-d 后面跟一个标志符，其实只有其后的第一个字符有用，作为结束的标志。
+-p 后面跟提示信息，即在输入前打印提示信息。
+
+-e 在输入的时候可以使用命令补全功能。
+
+-n 后跟一个数字，定义输入文本的长度，很实用。
+
+-r 屏蔽\，如果没有该选项，则\作为一个转义字符，有的话 \就是个正常的字符了。
+-s 安静模式，在输入字符时不再屏幕上显示，例如login时输入密码。
+-t 后面跟秒数，定义输入字符的等待时间。
+-u 后面跟fd，从文件描述符中读入，该文件描述符可以是exec新开启的。
+*********/
+-t 参数指定 read 命令等待输入的秒数，当计时满时，read命令返回一个非零退出状态。
+
+#!/bin/bash
+if read -t 5 -p "输入网站名:" name
+then
+    echo "你输入的网站名是 $website"
+else
+    echo "\n抱歉，你输入超时了。"
+fi
+
+[root@Va1 ~]# vim  baidu.sh
+
+[root@Va1 ~]# cat  baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/www.baidu.com/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: www.baidu.com\r\n"  >&9
+echo  -ne  "User-Agent: curl" >&9
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+
+[root@Va1 ~]# .  baidu.sh  
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: private, no-cache, no-store, proxy-revalidate, no-transform
+Connection: Keep-Alive
+Content-Length: 2381
+Content-Type: text/html
+Date: Mon, 14 Jan 2019 13:16:51 GMT
+Etag: "588604dd-94d"
+Last-Modified: Mon, 23 Jan 2017 13:27:57 GMT
+Pragma: no-cache
+Server: bfe/1.0.8.18
+Set-Cookie: BDORZ=27315; max-age=86400; domain=.baidu.com; path=/
+
+<!DOCTYPE html>
+<!--STATUS OK--><html> <head><meta http-equiv=content-type content=text/................_...............u.com/duty/>使用百度前必读</a>&nbsp; <a href=http://jianyi.baidu.com/ class=cp-feedback>意见反馈</a>&nbsp;京ICP证030173号&nbsp; <img src=//www.baidu.com/img/gs.gif> </p> </div> </div> </div> </body> </html>
+^C
+[root@Va1 ~]# vim  baidu.sh
+
+[root@Va1 ~]# cat  baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: $1\r\n"  >&9
+echo  -ne  "User-Agent: curl" >&9   ##注意空格 curl
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+[root@Va1 ~]# . baidu.sh  www.sohu.com
+
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 211469
+Connection: keep-alive
+Server: nginx
+Date: Mon, 14 Jan 2019 13:20:34 GMT
+Cache-Control: max-age=60
+X-From-Sohu: X-SRC-Cached
+FSS-Cache: HIT from 3963534.5929624.5300396
+Accept-Ranges: bytes
+FSS-Proxy: Powered by 4356756.6716062.5693624
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>搜狐</title>
+<meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
+<meta name="Description" content="搜狐网为用户提供24小时不间断的最新资讯，及搜索、邮件等网络服务。内容包括全球热点事件、突发新闻、时事评论、热播影视剧、体育赛事、行业动态、生活服务信息，以及论坛、博客、微博、我的搜狐等互动空间。" />
+...................
+
+
+
+
+
+[root@Va1 ~]# vim  baidu.sh 
+[root@Va1 ~]# cat   baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: $1\r\n"  >&9
+echo  -ne  "User-Agent: elinks" >&9  ##注意空格 elinks
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+[root@Va1 ~]# . baidu.sh  www.sohu.com 
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 211854
+Connection: keep-alive
+Server: nginx
+Date: Mon, 14 Jan 2019 13:29:12 GMT
+Cache-Control: max-age=60
+X-From-Sohu: X-SRC-Cached
+FSS-Cache: HIT from 4160145.6322843.5497010
+Accept-Ranges: bytes
+FSS-Proxy: Powered by 4356756.6716062.5693624
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>搜狐</title>
+<meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
+
 
 
 

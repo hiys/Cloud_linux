@@ -1,5 +1,4 @@
-
-
+ 
 标准Http协议支持六种请求方法，即：
 1、GET  发送一个请求来取得服务器上的某一资源
 
@@ -13,48 +12,6 @@
 
 6、Options 用于获取当前URL所支持的方法,若请求成功，则会在HTTP头中包含一个名为“Allow”的头，
              值是所支持的方法，如“GET, POST”。
-
-1，GET：GET可以说是最常见的了，它本质就是发送一个请求来取得服务器上的某一资源。
-资源通过一组HTTP头和呈现据（如HTML文本，或者图片或者视频等）返回给客户端。
-GET请求中，永远不会包含呈现数据。
-
- 2，HEAD：HEAD和GET本质是一样的，区别在于HEAD不含有呈现数据，而仅仅是HTTP头信息。
-欲判断某个资源是否存在，我们通常使用GET，
-但这里用HEAD则意义更加明确。
-
-       3，PUT：这个方法比较少见。HTML表单也不支持这个。本质上来讲， PUT和POST极为相似，都是向服务器发送数据，但它们之间有一个重要区别，PUT通常指定了资源的存放位置，而POST则没有，POST的数据存放位置由服务器自己决定。
-
-       举个例子：如一个用于提交博文的URL，/addBlog。如果用PUT，则提交的URL会是像这样的”/addBlog/abc123”，其中abc123就是这个博文的地址。而如果用POST，则这个地址会在提交后由服务器告知客户端。目前大部分博客都是这样的。显然，PUT和POST用途是不一样的。具体用哪个还取决于当前的业务场景。
-
-      4，DELETE：删除某一个资源。基本上这个也很少见，不过还是有一些地方比如amazon的S3云服务里面就用的这个方法来删除资源。
-
-      5，POST：向服务器提交数据。这个方法用途广泛，几乎目前所有的提交操作都是靠这个完成。
-
-      6，OPTIONS：这个方法 极少使用。它用于获取当前URL所支持的方法。若请求成功，则它会在HTTP头中包含一个名为“Allow”的头，值是所支持的方法，如“GET, POST”。
-
-其实还有一个 TRACE方法，不过这个基本上不会用到，这里就不介绍了。
-
-       以上的六种方法，我们可以跟数据库的CRUD增删改查操作对应起来： CREATE ：PUT READ：GET UPDATE：POST DELETE：DELETE 这样一来就实现了HTTP和数据库操作（其实不光是数据库，任何数据如文件图表都是这样）的完美统一，这也是REST的精髓之一
-
-
-
- 关系型   --------  非关系型
-MySQL    ?--?  NoSQL
-Database  ---->   Index
-Table        ---->   Type
-Row          ---->   Document
-Column    ---->   Filed
-
-ELK组成：
-    - E：是指Elasticsearch [非关系型数据库,最重要]，完成数据的存储和检索
-    - L：是Logstash[可使用 docker 容器技术,数据次重要]，完成数据的采集、过滤及解析
-    - K：Kibana [与 apache 作用相同 ] ，以WEB方式展示 
-
-Linux  apache    mysql[关系型]       php[处理后台程序]
-L        A         M                  P
-L        K         E                  L
-Linux  kibana elasticsearch[非关系型] logstash[处理日志的工作[ java开发的 ]]
-
 
 ELK是一整套解决方案，是三个软件产品的首字母缩写，很多公司都在使用，
  如：Sina、携程、华为、美团等
@@ -79,6 +36,430 @@ Elasticsearch主要特点
 4、高可用性，易扩展，支持集群（Cluster） 、 分片和复制（Shards 和 Replicas）
 5、接口友好，支持JSON
 
+
+
+关系型   --------  非关系型
+MySQL    ?--?  NoSQL
+Database  ---->   Index
+Table        ---->   Type
+Row          ---->   Document
+Column    ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch，完成数据的存储和检索
+    - L：是Logstash，完成数据的采集、过滤及解析
+    - K：Kibana，以WEB方式展示
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+stash
+英 [stæʃ]   美 [stæʃ]  
+n. 隐（贮）藏物;（旧）藏身处
+v. 贮藏;隐藏，藏匿;〈英〉停止
+
+elasticsearch 弹性搜索
+
+logstash 原木
+
+log stash 原木充填
+
+curl 命令
+
+访问一个网页
+curl http://www.baidu.com
+
+显示头信息
+curl -I http://www.baidu.com
+
+显示详细的交互信息
+curl -v http://www.baidu.com
+
+把网页内存保存为文件
+curl -o urfile http://www.baidu.com
+
+
+Elasticsearch基本概念及核心配置文件详解
+
+ 　　Elasticsearch5.X,下列的是Elasticsearch2.X系类配置，其实很多配置都是相互兼容的
+
+1. 配置文件
+
+config/elasticsearch.yml   主配置文件
+config/jvm.options         jvm参数配置文件
+cofnig/log4j2.properties   日志配置文件
+2. 基本概念
+
+接近实时（NRT）
+
+Elasticsearch 是一个接近实时的搜索平台。
+这意味着，从索引一个文档直到这个文档能够被搜索到有一个很小的延迟（通常是 1 秒）。
+集群（cluster）
+
+代表一个集群，集群中有多个节点（node），
+其中有一个为主节点，这个主节点是可以通过选举产生的，
+主从节点是对于集群内部来说的。
+es的一个概念就是去中心化，
+字面上理解就是无中心节点，这是对于集群外部来说的，
+因为从外部来看es集群，在逻辑上是个整体，
+你与任何一个节点的通信和与整个es集群通信是等价的。
+
+索引（index）
+ElasticSearch将它的数据存储在一个或多个索引（index）中。
+用SQL领域的术语来类比，索引就像数据库，
+可以向索引写入文档或者从索引中读取文档，
+并通过ElasticSearch内部使用Lucene将数据写入索引或从索引中检索数据。
+
+文档（document）
+文档（document）是ElasticSearch中的主要实体。
+对所有使用ElasticSearch的案例来说，他们最终都可以归结为对文档的搜索。文档由字段构成。
+
+映射（mapping）
+所有文档写进索引之前都会先进行分析，
+如何将输入的文本分割为词条、哪些词条又会被过滤，这种行为叫做映射（mapping）。
+一般由用户自己定义规则。
+
+类型（type）
+每个文档都有与之对应的类型（type）定义。
+这允许用户在一个索引中存储多种文档类型，并为不同文档提供类型提供不同的映射。
+
+分片（shards）
+代表索引分片，es可以把一个完整的索引分成多个分片，
+这样的好处是可以把一个大的索引拆分成多个，
+分布到不同的节点上。
+
+构成分布式搜索。
+分片的数量只能在索引创建前指定，并且索引创建后不能更改。
+5.X默认不能通过配置文件定义分片
+
+副本（replicas）
+代表索引副本，
+es可以设置多个索引的副本，
+副本的作用一是提高系统的容错性，
+当个某个节点某个分片损坏或丢失时可以从副本中恢复。
+二是提高es的查询效率，
+es会自动对搜索请求进行负载均衡。
+
+数据恢复（recovery）
+代表数据恢复或叫数据重新分布，
+es在有节点加入或退出时会根据机器的负载对索引分片进行重新分配，
+挂掉的节点重新启动时也会进行数据恢复。
+
+GET /_cat/health?v   #可以看到集群状态
+
+数据源（River）
+代表es的一个数据源，
+也是其它存储方式（如：数据库）同步数据到es的一个方法。
+它是以插件方式存在的一个es服务，
+通过读取river中的数据并把它索引到es中，
+官方的river有
+couchDB的，
+RabbitMQ的，
+Twitter的，
+Wikipedia的，
+river这个功能将会在后面的文件中重点说到。
+
+网关（gateway）
+代表es索引的持久化存储方式，
+es默认是先把索引存放到内存中，
+当内存满了时再持久化到硬盘。
+当这个es集群关闭再重新启动时就会从gateway中读取索引数据。
+es支持多种类型的gateway，
+有本地文件系统（默认），分布式文件系统，
+Hadoop的HDFS和amazon的s3云存储服务。
+
+自动发现（discovery.zen）
+代表es的自动发现节点机制，es是一个基于p2p的系统，
+它先通过广播寻找存在的节点，
+再通过多播协议来进行节点之间的通信，
+同时也支持点对点的交互。
+
+5.X关闭广播，需要自定义
+
+通信（Transport）
+代表es内部节点或集群与客户端的交互方式，
+默认内部是使用tcp协议进行交互，
+同时它支持http协议（json格式）、
+thrift、servlet、memcached、zeroMQ等的传输协议（通过插件方式集成）。
+节点间通信端口默认：9300-9400
+
+分片和复制（shards and replicas）
+
+　　一个索引可以存储超出单个结点硬件限制的大量数据。
+比如，一个具有10亿文档的索引占据1TB的磁盘空间，
+而任一节点可能没有这样大的磁盘空间来存储或者单个节点处理搜索请求，
+响应会太慢。
+
+为了解决这个问题，Elasticsearch提供了将索引划分成多片的能力，这些片叫做分片。
+当你创建一个索引的时候，你可以指定你想要的分片的数量。
+每个分片本身也是一个功能完善并且独立的“索引”，
+这个“索引” 可以被放置到集群中的任何节点上。
+
+分片之所以重要，主要有两方面的原因：
+
+允许你水平分割/扩展你的内容容量
+允许你在分片（位于多个节点上）之上进行分布式的、并行的操作，
+进而提高性能/吞吐量 
+至于一个分片怎样分布，
+它的文档怎样聚合回搜索请求，
+是完全由Elasticsearch管理的，
+对于作为用户的你来说，
+这些都是透明的。
+在一个网络/云的环境里，失败随时都可能发生。
+在某个分片/节点因为某些原因处于离线状态或者消失的情况下，
+故障转移机制是非常有用且强烈推荐的。
+为此， Elasticsearch允许你创建分片的一份或多份拷贝，
+这些拷贝叫做复制分片，或者直接叫复制。
+
+复制之所以重要，有两个主要原因：
+
+在分片/节点失败的情况下，复制提供了高可用性。
+复制分片不与原/主要分片置于同一节点上是非常重要的。
+因为搜索可以在所有的复制上并行运行，复制可以扩展你的搜索量/吞吐量
+总之，每个索引可以被分成多个分片。
+一个索引也可以被复制0次（即没有复制） 或多次。
+一旦复制了，每个索引就有了主分片（作为复制源的分片）和复制分片（主分片的拷贝）。
+分片和复制的数量可以在索引创建的时候指定。
+在索引创建之后，你可以在任何时候动态地改变复制的数量，但是你不能再改变分片的数量。
+
+5.X默认5:1   5个主分片，1个复制分片
+默认情况下，Elasticsearch中的每个索引分配5个主分片和1个复制。
+这意味着，如果你的集群中至少有两个节点，你的索引将会有5个主分片和另外5个复制分片（1个完全拷贝），这样每个索引总共就有10个分片。
+
+elasticsearch . yml 详解
+
+
+##################### Elasticsearch Configuration Example ##################### 
+#
+# 只是挑些重要的配置选项进行注释,其实自带的已经有非常细致的英文注释了!
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/modules.html
+#
+################################### Cluster ################################### 
+# 代表一个集群,集群中有多个节点,其中有一个为主节点,这个主节点是可以通过选举产生的,主从节点是对于集群内部来说的. 
+# es的一个概念就是去中心化,字面上理解就是无中心节点,这是对于集群外部来说的,因为从外部来看es集群,在逻辑上是个整体,你与任何一个节点的通信和与整个es集群通信是等价的。 
+# cluster.name可以确定你的集群名称,当你的elasticsearch集群在同一个网段中elasticsearch会自动的找到具有相同cluster.name的elasticsearch服务. 
+# 所以当同一个网段具有多个elasticsearch集群时cluster.name就成为同一个集群的标识. 
+
+# cluster.name: elasticsearch 
+
+#################################### Node ##################################### 
+# https://www.elastic.co/guide/en/elasticsearch/reference/5.1/modules-node.html#master-node
+# 节点名称同理,可自动生成也可手动配置. 
+# node.name: node-1
+
+# 允许一个节点是否可以成为一个master节点,es是默认集群中的第一台机器为master,如果这台机器停止就会重新选举master. 
+# node.master: true 
+
+# 允许该节点存储数据(默认开启) 
+# node.data: true 
+
+# 配置文件中给出了三种配置高性能集群拓扑结构的模式,如下： 
+# 1. 如果你想让节点从不选举为主节点,只用来存储数据,可作为负载器 
+# node.master: false 
+# node.data: true 
+# node.ingest: true  #默认true
+
+# 2. 如果想让节点成为主节点,且不存储任何数据,并保有空闲资源,可作为协调器 
+# node.master: true 
+# node.data: false
+# node.ingest: true
+
+# 3. 如果想让节点既不称为主节点,又不成为数据节点,那么可将他作为搜索器,从节点中获取数据,生成搜索结果等 
+# node.master: false 
+# node.data: false 
+# node.ingest: true
+#
+
+# 4. 仅作为协调器 
+# node.master: false 
+# node.data: false
+# node.ingest: false
+
+# 监控集群状态有一下插件和API可以使用: 
+# Use the Cluster Health API [http://localhost:9200/_cluster/health], the 
+# Node Info API [http://localhost:9200/_nodes] or GUI tools # such as <http://www.elasticsearch.org/overview/marvel/>, 
+
+
+# A node can have generic attributes associated with it, which can later be used 
+# for customized shard allocation filtering, or allocation awareness. An attribute 
+# is a simple key value pair, similar to node.key: value, here is an example: 
+# 每个节点都可以定义一些与之关联的通用属性，用于后期集群进行碎片分配时的过滤
+# node.rack: rack314 
+
+# 默认情况下，多个节点可以在同一个安装路径启动，如果你想让你的es只启动一个节点，可以进行如下设置
+# node.max_local_storage_nodes: 1 
+
+#################################### Index #################################### 
+# 设置索引的分片数,默认为5 
+#index.number_of_shards: 5 
+
+# 设置索引的副本数,默认为1: 
+#index.number_of_replicas: 1 
+
+# 配置文件中提到的最佳实践是,如果服务器够多,可以将分片提高,尽量将数据平均分布到大集群中去
+# 同时,如果增加副本数量可以有效的提高搜索性能 
+# 需要注意的是,"number_of_shards" 是索引创建后一次生成的,后续不可更改设置 
+# "number_of_replicas" 是可以通过API去实时修改设置的 
+
+#################################### Paths #################################### 
+# 配置文件存储位置 
+# path.conf: /path/to/conf 
+
+# 数据存储位置(单个目录设置) 
+# path.data: /path/to/data 
+# 多个数据存储位置,有利于性能提升 
+# path.data: /path/to/data1,/path/to/data2 
+
+# 临时文件的路径 
+# path.work: /path/to/work 
+
+# 日志文件的路径 
+# path.logs: /path/to/logs 
+
+# 插件安装路径 
+# path.plugins: /path/to/plugins 
+
+#################################### Plugin ################################### 
+# 设置插件作为启动条件,如果一下插件没有安装,则该节点服务不会启动 
+# plugin.mandatory: mapper-attachments,lang-groovy 
+
+################################### Memory #################################### 
+# 当JVM开始写入交换空间时（swapping）ElasticSearch性能会低下,你应该保证它不会写入交换空间 
+# 设置这个属性为true来锁定内存,同时也要允许elasticsearch的进程可以锁住内存,linux下可以通过 `ulimit -l unlimited` 命令 
+# bootstrap.mlockall: true 
+
+# 确保 ES_MIN_MEM 和 ES_MAX_MEM 环境变量设置为相同的值,以及机器有足够的内存分配给Elasticsearch 
+# 注意:内存也不是越大越好,一般64位机器,最大分配内存别才超过32G 
+
+############################## Network And HTTP ############################### 
+# 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+# network.bind_host: 192.168.0.1   #只有本机可以访问http接口
+
+# 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+# network.publish_host: 192.168.0.1 
+
+# 同时设置bind_host和publish_host上面两个参数 
+# network.host: 192.168.0.1    #绑定监听IP
+
+# 设置节点间交互的tcp端口,默认是9300 
+# transport.tcp.port: 9300 
+
+# 设置是否压缩tcp传输时的数据，默认为false,不压缩
+# transport.tcp.compress: true 
+
+# 设置对外服务的http端口,默认为9200 
+# http.port: 9200 
+
+# 设置请求内容的最大容量,默认100mb 
+# http.max_content_length: 100mb 
+
+# 使用http协议对外提供服务,默认为true,开启 
+# http.enabled: false 
+
+###################### 使用head等插件监控集群信息，需要打开以下配置项 ###########
+# http.cors.enabled: true
+# http.cors.allow-origin: "*"
+# http.cors.allow-credentials: true
+
+################################### Gateway ################################### 
+# gateway的类型,默认为local即为本地文件系统,可以设置为本地文件系统 
+# gateway.type: local 
+
+# 下面的配置控制怎样以及何时启动一整个集群重启的初始化恢复过程 
+# (当使用shard gateway时,是为了尽可能的重用local data(本地数据)) 
+
+# 一个集群中的N个节点启动后,才允许进行恢复处理 
+# gateway.recover_after_nodes: 1 
+
+# 设置初始化恢复过程的超时时间,超时时间从上一个配置中配置的N个节点启动后算起 
+# gateway.recover_after_time: 5m 
+
+# 设置这个集群中期望有多少个节点.一旦这N个节点启动(并且recover_after_nodes也符合), 
+# 立即开始恢复过程(不等待recover_after_time超时) 
+# gateway.expected_nodes: 2
+
+ ############################# Recovery Throttling ############################# 
+# 下面这些配置允许在初始化恢复,副本分配,再平衡,或者添加和删除节点时控制节点间的分片分配 
+# 设置一个节点的并行恢复数 
+# 1.初始化数据恢复时,并发恢复线程的个数,默认为4 
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4 
+
+# 2.添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
+# cluster.routing.allocation.node_concurrent_recoveries: 2 
+
+# 设置恢复时的吞吐量(例如:100mb,默认为0无限制.如果机器还有其他业务在跑的话还是限制一下的好) 
+# indices.recovery.max_bytes_per_sec: 20mb 
+
+# 设置来限制从其它分片恢复数据时最大同时打开并发流的个数,默认为5 
+# indices.recovery.concurrent_streams: 5 
+# 注意: 合理的设置以上参数能有效的提高集群节点的数据恢复以及初始化速度 
+
+################################## Discovery ################################## 
+# 设置这个参数来保证集群中的节点可以知道其它N个有master资格的节点.默认为1,对于大的集群来说,可以设置大一点的值(2-4) 
+# discovery.zen.minimum_master_nodes: 1 
+# 探查的超时时间,默认3秒,提高一点以应对网络不好的时候,防止脑裂 
+# discovery.zen.ping.timeout: 3s 
+
+# For more information, see 
+# <http://elasticsearch.org/guide/en/elasticsearch/reference/current/modules-discovery-zen.html> 
+
+# 设置是否打开多播发现节点.默认是true. 
+# 当多播不可用或者集群跨网段的时候集群通信还是用单播吧 
+# discovery.zen.ping.multicast.enabled: false 
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+# discovery.zen.ping.unicast.hosts: ["host1", "host2:port"] 
+
+# Slow Log部分与GC log部分略,不过可以通过相关日志优化搜索查询速度 
+
+################  X-Pack ###########################################
+# 官方插件 相关设置请查看此处
+# https://www.elastic.co/guide/en/x-pack/current/xpack-settings.html
+# 
+############## Memory(重点需要调优的部分) ################ 
+# Cache部分: 
+# es有很多种方式来缓存其内部与索引有关的数据.其中包括filter cache 
+
+# filter cache部分: 
+# filter cache是用来缓存filters的结果的.默认的cache type是node type.node type的机制是所有的索引内部的分片共享filter cache.node type采用的方式是LRU方式.即:当缓存达到了某个临界值之后，es会将最近没有使用的数据清除出filter cache.使让新的数据进入es. 
+
+# 这个临界值的设置方法如下：indices.cache.filter.size 值类型：eg.:512mb 20%。默认的值是10%。 
+
+# out of memory错误避免过于频繁的查询时集群假死 
+# 1.设置es的缓存类型为Soft Reference,它的主要特点是据有较强的引用功能.只有当内存不够的时候,才进行回收这类内存,因此在内存足够的时候,它们通常不被回收.另外,这些引用对象还能保证在Java抛出OutOfMemory异常之前,被设置为null.它可以用于实现一些常用图片的缓存,实现Cache的功能,保证最大限度的使用内存而不引起OutOfMemory.在es的配置文件加上index.cache.field.type: soft即可. 
+
+# 2.设置es最大缓存数据条数和缓存失效时间,通过设置index.cache.field.max_size: 50000来把缓存field的最大值设置为50000,设置index.cache.field.expire: 10m把过期时间设置成10分钟. 
+# index.cache.field.max_size: 50000 
+# index.cache.field.expire: 10m 
+# index.cache.field.type: soft 
+
+# field data部分&&circuit breaker部分： 
+# 用于fielddata缓存的内存数量,主要用于当使用排序,faceting操作时,elasticsearch会将一些热点数据加载到内存中来提供给客户端访问,但是这种缓存是比较珍贵的,所以对它进行合理的设置. 
+
+# 可以使用值：eg:50mb 或者 30％(节点 node heap内存量),默认是：unbounded #indices.fielddata.cache.size： unbounded 
+# field的超时时间.默认是-1,可以设置的值类型: 5m #indices.fielddata.cache.expire: -1 
+
+# circuit breaker部分: 
+# 断路器是elasticsearch为了防止内存溢出的一种操作,每一种circuit breaker都可以指定一个内存界限触发此操作,这种circuit breaker的设定有一个最高级别的设定:indices.breaker.total.limit 默认值是JVM heap的70%.当内存达到这个数量的时候会触发内存回收
+
+# 另外还有两组子设置： 
+#indices.breaker.fielddata.limit:当系统发现fielddata的数量达到一定数量时会触发内存回收.默认值是JVM heap的70% 
+#indices.breaker.fielddata.overhead:在系统要加载fielddata时会进行预先估计,当系统发现要加载进内存的值超过limit * overhead时会进行进行内存回收.默认是1.03 
+#indices.breaker.request.limit:这种断路器是elasticsearch为了防止OOM(内存溢出),在每次请求数据时设定了一个固定的内存数量.默认值是40% 
+#indices.breaker.request.overhead:同上,也是elasticsearch在发送请求时设定的一个预估系数,用来防止内存溢出.默认值是1 
+
+# Translog部分: 
+# 每一个分片(shard)都有一个transaction log或者是与它有关的预写日志,(write log),在es进行索引(index)或者删除(delete)操作时会将没有提交的数据记录在translog之中,当进行flush 操作的时候会将tranlog中的数据发送给Lucene进行相关的操作.一次flush操作的发生基于如下的几个配置 
+#index.translog.flush_threshold_ops:当发生多少次操作时进行一次flush.默认是 unlimited #index.translog.flush_threshold_size:当translog的大小达到此值时会进行一次flush操作.默认是512mb 
+#index.translog.flush_threshold_period:在指定的时间间隔内如果没有进行flush操作,会进行一次强制flush操作.默认是30m #index.translog.interval:多少时间间隔内会检查一次translog,来进行一次flush操作.es会随机的在这个值到这个值的2倍大小之间进行一次操作,默认是5s 
+#index.gateway.local.sync:多少时间进行一次的写磁盘操作,默认是5s 
+
+# 以上的translog配置都可以通过API进行动态的设置 - See more at: http://bigbo.github.io/pages/2015/04/10/elasticsearch_config/#sthash.AvOSUcQ4.dpuf
+
+
+
  关系型   --------  非关系型
 MySQL    ?--?  NoSQL
 Database  ---->   Index
@@ -96,84 +477,6 @@ L        A         M                  P
 L        K         E                  L
 Linux  kibana elasticsearch[非关系型] logstash[处理日志的工作[ java开发的 ]]
 
-
-curl 命令
-
-curl命令的使用
-
-http的请求方法：
-常用方法 GET，POST，HEAD
-其他方法 OPTIONS，PUT，DELETE，TRACE和CONNECT
-ES常用：
-PUT --增
-DELETE --删
-POST --改
-GET --查
-系统命令curl：
-是一个利用URL规则在命令行下工作的文件传输工具,可以说是一款很强大的http命令行工具。
-它支持多种请求模式,自定义请求头等强大功能,是一款综合工具
-curl 常用参数介绍：
--A 修改请求 agent
--X 设置请求方法
--i 显示返回头信息
-
-curl常用用法
-
--v显示请求详细信息
-curl www.baidu.com -v
-
--X 指定请求方式
-
-GET请求
-curl -X GET http://localhost:8080/search?data=123  # -X GET是可选的
-
-POST请求
-curl -X POST -d "data=123&key=456" http://localhost:8080/search -v 
-
-由于-d选项为使用POST方式向server发送数据，因此在使用-d的时候，可以省略-X POST。
-使用-d时，将使用Content-type:application/x-www-form-urlencoded方式发送数据。
-
--H增加头部信息
-如果想使用JSON形式post数据，可以使用-H指定头部类型
-curl -H "Content-Type:application/json" -d '{"data":"123","key":"456"}' http://localhost:8080/search -v
-
-如果想在请求的时候带上Cookie，可以这样
-curl -H "Cookie:username=XXX" {URL}
-
-Cookie相关
-
--c 存储cookie到文件
-
-curl -d"name=zhangsan&password=123" http://localhost:8080/login -c ./cookie
-1
-使用用户名和密码登录系统，并将cookie信息存储在当前目录的cookie文件中
-
--b 携带cookie文件
-curl http://localhost:8080/login -b ./cookie
-
-‘-cookie’直接指定cookie
-curl --cookie "name=zhangsan" http://localhost:8080/login
-
--F表单提交操作
-curl可以通过 -F 命令来以Content-Type:multipart/form-data的形式向server post数据，
-该命令允许提交二进制文件等。
-可以使用@前缀来制定提交的内容为一个文件，也可以使用<符号来提交文件中的内容
-
-curl -F prefile=@portrait.jpg https://example.com/upload.cgi
-
-向服务器上传一个图片，图片的表单域名为profile，内容为protrait.jpg的二进制
-访问一个网页
-
-curl http://www.baidu.com
-
-显示头信息
-curl -I http://www.baidu.com
-
-显示详细的交互信息
-curl -v http://www.baidu.com
-
-把网页内存保存为文件
-curl -o urfile http://www.baidu.com
 
 禁用 防火墙，禁用 selinux
 
@@ -198,6 +501,14 @@ netstat -ltunp
 
 通过浏览器访问
 http://192.168.4.11:9200/
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+elasticsearch
+弹性搜索
 
 elasticsearch 集群安装
 在多台机器上安装部署 java-1.8.0-openjdk-devel，elasticsearch-2.3.4.rpm
@@ -785,10 +1096,6 @@ exec 4>&-
 标准输出文件stdout，得到文件描述符 1
 标准错误输出文件stderr，得到文件描述符 2。
 
-[root@Va1 ~]# sed  -n  100p  /etc/grub2.cfg
-	linux16 /vmlinuz-3.10.0-693.el7.x86_64 root=/dev/mapper/rhel-root ro rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet LANG=zh_CN.UTF-8 console=ttyS0
-[root@Va1 ~]# 
-
 -------------------另外一个终端窗口  pts/1-------------------
 [root@Va1 ~]# tty
 /dev/pts/1
@@ -811,6 +1118,22 @@ root     pts/1        2019-01-14 16:17 (192.168.0.254)
 [root@Va1 ~]# tty
 /dev/pts/1
 [root@Va1 ~]# yes pts/0  # 收到pts/0 发给本终端 /dev/pts/1 的信息
+
+[root@Va1 ~]# man  bash  |grep  -EnA3  "/dev/fd"
+978:       /dev/fd    方式为打开的文件命名的系统中才可用。   
+                         它的形式是   <(list)   或者是   >(list)。 
+          进程   list   运行时的输入或输出被连接到一个   FIFO   或者   /dev/fd  中的文件。
+          文件的名称作为一个参数被传递到当前命令，作为扩展的结果。   
+     如果使用   >(list)    形式，向文件写入相当于为     list     提供输入。
+     如果使用  <(list)    形式，可以读作为参数传递 的文件来获得 list 的输出。
+1105:              /dev/fd/fd
+1106-                     如果 fd 是一个合法的整数，文件描述符 fd 将被复制。
+
+1347:       如果某操作的任何    file    参数的形式是    /dev/fd/n，
+      那么将检查    文件描述符  n。
+     如果某操作的  file  参数是   /dev/stdin，   /dev/stdout   或者   /dev/stderr
+1349-       之一，将分别检查文件描述符 0，1 和 2。
+
 
 [root@Va1 ~]# man  bash  |grep  -EnA3  "\/dev\/tcp\/host\/port"
 ...................
@@ -1305,10 +1628,235 @@ FSS-Proxy: Powered by 4356756.6716062.5693624
 <title>搜狐</title>
 <meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
 
-[root@Va1 ~]# sed  -n  100p  /etc/grub2.cfg
-	linux16 /vmlinuz-3.10.0-693.el7.x86_64 root=/dev/mapper/rhel-root ro rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet LANG=zh_CN.UTF-8 console=ttyS0
-[root@Va1 ~]# 
+
+elasticsearch . yml 详解
 
 
+##################### Elasticsearch Configuration Example ##################### 
+#
+# 只是挑些重要的配置选项进行注释,其实自带的已经有非常细致的英文注释了!
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/modules.html
+#
+################################### Cluster ################################### 
+# 代表一个集群,集群中有多个节点,其中有一个为主节点,这个主节点是可以通过选举产生的,主从节点是对于集群内部来说的. 
+# es的一个概念就是去中心化,字面上理解就是无中心节点,这是对于集群外部来说的,因为从外部来看es集群,在逻辑上是个整体,你与任何一个节点的通信和与整个es集群通信是等价的。 
+# cluster.name可以确定你的集群名称,当你的elasticsearch集群在同一个网段中elasticsearch会自动的找到具有相同cluster.name的elasticsearch服务. 
+# 所以当同一个网段具有多个elasticsearch集群时cluster.name就成为同一个集群的标识. 
+
+# cluster.name: elasticsearch 
+
+#################################### Node ##################################### 
+# https://www.elastic.co/guide/en/elasticsearch/reference/5.1/modules-node.html#master-node
+# 节点名称同理,可自动生成也可手动配置. 
+# node.name: node-1
+
+# 允许一个节点是否可以成为一个master节点,es是默认集群中的第一台机器为master,如果这台机器停止就会重新选举master. 
+# node.master: true 
+
+# 允许该节点存储数据(默认开启) 
+# node.data: true 
+
+# 配置文件中给出了三种配置高性能集群拓扑结构的模式,如下： 
+# 1. 如果你想让节点从不选举为主节点,只用来存储数据,可作为负载器 
+# node.master: false 
+# node.data: true 
+# node.ingest: true  #默认true
+
+# 2. 如果想让节点成为主节点,且不存储任何数据,并保有空闲资源,可作为协调器 
+# node.master: true 
+# node.data: false
+# node.ingest: true
+
+# 3. 如果想让节点既不称为主节点,又不成为数据节点,那么可将他作为搜索器,从节点中获取数据,生成搜索结果等 
+# node.master: false 
+# node.data: false 
+# node.ingest: true
+#
+
+# 4. 仅作为协调器 
+# node.master: false 
+# node.data: false
+# node.ingest: false
+
+# 监控集群状态有一下插件和API可以使用: 
+# Use the Cluster Health API [http://localhost:9200/_cluster/health], the 
+# Node Info API [http://localhost:9200/_nodes] or GUI tools # such as <http://www.elasticsearch.org/overview/marvel/>, 
+
+
+# A node can have generic attributes associated with it, which can later be used 
+# for customized shard allocation filtering, or allocation awareness. An attribute 
+# is a simple key value pair, similar to node.key: value, here is an example: 
+# 每个节点都可以定义一些与之关联的通用属性，用于后期集群进行碎片分配时的过滤
+# node.rack: rack314 
+
+# 默认情况下，多个节点可以在同一个安装路径启动，如果你想让你的es只启动一个节点，可以进行如下设置
+# node.max_local_storage_nodes: 1 
+
+#################################### Index #################################### 
+# 设置索引的分片数,默认为5 
+#index.number_of_shards: 5 
+
+# 设置索引的副本数,默认为1: 
+#index.number_of_replicas: 1 
+
+# 配置文件中提到的最佳实践是,如果服务器够多,可以将分片提高,尽量将数据平均分布到大集群中去
+# 同时,如果增加副本数量可以有效的提高搜索性能 
+# 需要注意的是,"number_of_shards" 是索引创建后一次生成的,后续不可更改设置 
+# "number_of_replicas" 是可以通过API去实时修改设置的 
+
+#################################### Paths #################################### 
+# 配置文件存储位置 
+# path.conf: /path/to/conf 
+
+# 数据存储位置(单个目录设置) 
+# path.data: /path/to/data 
+# 多个数据存储位置,有利于性能提升 
+# path.data: /path/to/data1,/path/to/data2 
+
+# 临时文件的路径 
+# path.work: /path/to/work 
+
+# 日志文件的路径 
+# path.logs: /path/to/logs 
+
+# 插件安装路径 
+# path.plugins: /path/to/plugins 
+
+#################################### Plugin ################################### 
+# 设置插件作为启动条件,如果一下插件没有安装,则该节点服务不会启动 
+# plugin.mandatory: mapper-attachments,lang-groovy 
+
+################################### Memory #################################### 
+# 当JVM开始写入交换空间时（swapping）ElasticSearch性能会低下,你应该保证它不会写入交换空间 
+# 设置这个属性为true来锁定内存,同时也要允许elasticsearch的进程可以锁住内存,linux下可以通过 `ulimit -l unlimited` 命令 
+# bootstrap.mlockall: true 
+
+# 确保 ES_MIN_MEM 和 ES_MAX_MEM 环境变量设置为相同的值,以及机器有足够的内存分配给Elasticsearch 
+# 注意:内存也不是越大越好,一般64位机器,最大分配内存别才超过32G 
+
+############################## Network And HTTP ############################### 
+# 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+# network.bind_host: 192.168.0.1   #只有本机可以访问http接口
+
+# 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+# network.publish_host: 192.168.0.1 
+
+# 同时设置bind_host和publish_host上面两个参数 
+# network.host: 192.168.0.1    #绑定监听IP
+
+# 设置节点间交互的tcp端口,默认是9300 
+# transport.tcp.port: 9300 
+
+# 设置是否压缩tcp传输时的数据，默认为false,不压缩
+# transport.tcp.compress: true 
+
+# 设置对外服务的http端口,默认为9200 
+# http.port: 9200 
+
+# 设置请求内容的最大容量,默认100mb 
+# http.max_content_length: 100mb 
+
+# 使用http协议对外提供服务,默认为true,开启 
+# http.enabled: false 
+
+###################### 使用head等插件监控集群信息，需要打开以下配置项 ###########
+# http.cors.enabled: true
+# http.cors.allow-origin: "*"
+# http.cors.allow-credentials: true
+
+################################### Gateway ################################### 
+# gateway的类型,默认为local即为本地文件系统,可以设置为本地文件系统 
+# gateway.type: local 
+
+# 下面的配置控制怎样以及何时启动一整个集群重启的初始化恢复过程 
+# (当使用shard gateway时,是为了尽可能的重用local data(本地数据)) 
+
+# 一个集群中的N个节点启动后,才允许进行恢复处理 
+# gateway.recover_after_nodes: 1 
+
+# 设置初始化恢复过程的超时时间,超时时间从上一个配置中配置的N个节点启动后算起 
+# gateway.recover_after_time: 5m 
+
+# 设置这个集群中期望有多少个节点.一旦这N个节点启动(并且recover_after_nodes也符合), 
+# 立即开始恢复过程(不等待recover_after_time超时) 
+# gateway.expected_nodes: 2
+
+ ############################# Recovery Throttling ############################# 
+# 下面这些配置允许在初始化恢复,副本分配,再平衡,或者添加和删除节点时控制节点间的分片分配 
+# 设置一个节点的并行恢复数 
+# 1.初始化数据恢复时,并发恢复线程的个数,默认为4 
+# cluster.routing.allocation.node_initial_primaries_recoveries: 4 
+
+# 2.添加删除节点或负载均衡时并发恢复线程的个数,默认为2 
+# cluster.routing.allocation.node_concurrent_recoveries: 2 
+
+# 设置恢复时的吞吐量(例如:100mb,默认为0无限制.如果机器还有其他业务在跑的话还是限制一下的好) 
+# indices.recovery.max_bytes_per_sec: 20mb 
+
+# 设置来限制从其它分片恢复数据时最大同时打开并发流的个数,默认为5 
+# indices.recovery.concurrent_streams: 5 
+# 注意: 合理的设置以上参数能有效的提高集群节点的数据恢复以及初始化速度 
+
+################################## Discovery ################################## 
+# 设置这个参数来保证集群中的节点可以知道其它N个有master资格的节点.默认为1,对于大的集群来说,可以设置大一点的值(2-4) 
+# discovery.zen.minimum_master_nodes: 1 
+# 探查的超时时间,默认3秒,提高一点以应对网络不好的时候,防止脑裂 
+# discovery.zen.ping.timeout: 3s 
+
+# For more information, see 
+# <http://elasticsearch.org/guide/en/elasticsearch/reference/current/modules-discovery-zen.html> 
+
+# 设置是否打开多播发现节点.默认是true. 
+# 当多播不可用或者集群跨网段的时候集群通信还是用单播吧 
+# discovery.zen.ping.multicast.enabled: false 
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+# discovery.zen.ping.unicast.hosts: ["host1", "host2:port"] 
+
+# Slow Log部分与GC log部分略,不过可以通过相关日志优化搜索查询速度 
+
+################  X-Pack ###########################################
+# 官方插件 相关设置请查看此处
+# https://www.elastic.co/guide/en/x-pack/current/xpack-settings.html
+# 
+############## Memory(重点需要调优的部分) ################ 
+# Cache部分: 
+# es有很多种方式来缓存其内部与索引有关的数据.其中包括filter cache 
+
+# filter cache部分: 
+# filter cache是用来缓存filters的结果的.默认的cache type是node type.node type的机制是所有的索引内部的分片共享filter cache.node type采用的方式是LRU方式.即:当缓存达到了某个临界值之后，es会将最近没有使用的数据清除出filter cache.使让新的数据进入es. 
+
+# 这个临界值的设置方法如下：indices.cache.filter.size 值类型：eg.:512mb 20%。默认的值是10%。 
+
+# out of memory错误避免过于频繁的查询时集群假死 
+# 1.设置es的缓存类型为Soft Reference,它的主要特点是据有较强的引用功能.只有当内存不够的时候,才进行回收这类内存,因此在内存足够的时候,它们通常不被回收.另外,这些引用对象还能保证在Java抛出OutOfMemory异常之前,被设置为null.它可以用于实现一些常用图片的缓存,实现Cache的功能,保证最大限度的使用内存而不引起OutOfMemory.在es的配置文件加上index.cache.field.type: soft即可. 
+
+# 2.设置es最大缓存数据条数和缓存失效时间,通过设置index.cache.field.max_size: 50000来把缓存field的最大值设置为50000,设置index.cache.field.expire: 10m把过期时间设置成10分钟. 
+# index.cache.field.max_size: 50000 
+# index.cache.field.expire: 10m 
+# index.cache.field.type: soft 
+
+# field data部分&&circuit breaker部分： 
+# 用于fielddata缓存的内存数量,主要用于当使用排序,faceting操作时,elasticsearch会将一些热点数据加载到内存中来提供给客户端访问,但是这种缓存是比较珍贵的,所以对它进行合理的设置. 
+
+# 可以使用值：eg:50mb 或者 30％(节点 node heap内存量),默认是：unbounded #indices.fielddata.cache.size： unbounded 
+# field的超时时间.默认是-1,可以设置的值类型: 5m #indices.fielddata.cache.expire: -1 
+
+# circuit breaker部分: 
+# 断路器是elasticsearch为了防止内存溢出的一种操作,每一种circuit breaker都可以指定一个内存界限触发此操作,这种circuit breaker的设定有一个最高级别的设定:indices.breaker.total.limit 默认值是JVM heap的70%.当内存达到这个数量的时候会触发内存回收
+
+# 另外还有两组子设置： 
+#indices.breaker.fielddata.limit:当系统发现fielddata的数量达到一定数量时会触发内存回收.默认值是JVM heap的70% 
+#indices.breaker.fielddata.overhead:在系统要加载fielddata时会进行预先估计,当系统发现要加载进内存的值超过limit * overhead时会进行进行内存回收.默认是1.03 
+#indices.breaker.request.limit:这种断路器是elasticsearch为了防止OOM(内存溢出),在每次请求数据时设定了一个固定的内存数量.默认值是40% 
+#indices.breaker.request.overhead:同上,也是elasticsearch在发送请求时设定的一个预估系数,用来防止内存溢出.默认值是1 
+
+# Translog部分: 
+# 每一个分片(shard)都有一个transaction log或者是与它有关的预写日志,(write log),在es进行索引(index)或者删除(delete)操作时会将没有提交的数据记录在translog之中,当进行flush 操作的时候会将tranlog中的数据发送给Lucene进行相关的操作.一次flush操作的发生基于如下的几个配置 
+#index.translog.flush_threshold_ops:当发生多少次操作时进行一次flush.默认是 unlimited #index.translog.flush_threshold_size:当translog的大小达到此值时会进行一次flush操作.默认是512mb 
+#index.translog.flush_threshold_period:在指定的时间间隔内如果没有进行flush操作,会进行一次强制flush操作.默认是30m #index.translog.interval:多少时间间隔内会检查一次translog,来进行一次flush操作.es会随机的在这个值到这个值的2倍大小之间进行一次操作,默认是5s 
+#index.gateway.local.sync:多少时间进行一次的写磁盘操作,默认是5s 
+
+# 以上的translog配置都可以通过API进行动态的设置 - See more at: http://bigbo.github.io/pages/2015/04/10/elasticsearch_config/#sthash.AvOSUcQ4.dpuf
 
 

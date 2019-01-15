@@ -1,78 +1,78 @@
- ¹ØÏµÐÍ   --------  ·Ç¹ØÏµÐÍ
+ å…³ç³»åž‹   --------  éžå…³ç³»åž‹
 MySQL    ?--?  NoSQL
 Database  ---->   Index
 Table        ---->   Type
 Row          ---->   Document
 Column    ---->   Filed
 
-ELK×é³É£º
-    - E£ºÊÇÖ¸Elasticsearch£¬Íê³ÉÊý¾ÝµÄ´æ´¢ºÍ¼ìË÷
-    - L£ºÊÇLogstash£¬Íê³ÉÊý¾ÝµÄ²É¼¯¡¢¹ýÂË¼°½âÎö
-    - K£ºKibana£¬ÒÔWEB·½Ê½Õ¹Ê¾
+ELKç»„æˆï¼š
+    - Eï¼šæ˜¯æŒ‡Elasticsearchï¼Œå®Œæˆæ•°æ®çš„å­˜å‚¨å’Œæ£€ç´¢
+    - Lï¼šæ˜¯Logstashï¼Œå®Œæˆæ•°æ®çš„é‡‡é›†ã€è¿‡æ»¤åŠè§£æž
+    - Kï¼šKibanaï¼Œä»¥WEBæ–¹å¼å±•ç¤º
 
-curl ÃüÁî
+curl å‘½ä»¤
 
-·ÃÎÊÒ»¸öÍøÒ³
+è®¿é—®ä¸€ä¸ªç½‘é¡µ
 curl http://www.baidu.com
 
-ÏÔÊ¾Í·ÐÅÏ¢
+æ˜¾ç¤ºå¤´ä¿¡æ¯
 curl -I http://www.baidu.com
 
-ÏÔÊ¾ÏêÏ¸µÄ½»»¥ÐÅÏ¢
+æ˜¾ç¤ºè¯¦ç»†çš„äº¤äº’ä¿¡æ¯
 curl -v http://www.baidu.com
 
-°ÑÍøÒ³ÄÚ´æ±£´æÎªÎÄ¼þ
+æŠŠç½‘é¡µå†…å­˜ä¿å­˜ä¸ºæ–‡ä»¶
 curl -o urfile http://www.baidu.com
 
-½ûÓÃ ·À»ðÇ½£¬½ûÓÃ selinux
+ç¦ç”¨ é˜²ç«å¢™ï¼Œç¦ç”¨ selinux
 
-elasticsearch °²×°
-1¡¢°²×° openjdk °ü
+elasticsearch å®‰è£…
+1ã€å®‰è£… openjdk åŒ…
 yum install -y java-1.8.0-openjdk-devel
 
-ÑéÖ¤
+éªŒè¯
 java -version
 jps
 
-°²×° elasticsearch 
+å®‰è£… elasticsearch 
 rpm -ivh elasticsearch-2.3.4.rpm
 
-ÐÞ¸ÄÅäÖÃÎÄ¼þÆô¶¯·þÎñ
+ä¿®æ”¹é…ç½®æ–‡ä»¶å¯åŠ¨æœåŠ¡
 network.host: ip.xx.xx.xx
 systemctl start elasticsearch
 
-ÑéÖ¤
+éªŒè¯
 systemctl status elasticsearch
 netstat -ltunp
 
-Í¨¹ýä¯ÀÀÆ÷·ÃÎÊ
+é€šè¿‡æµè§ˆå™¨è®¿é—®
 http://192.168.4.11:9200/
 
-elasticsearch ¼¯Èº°²×°
-ÔÚ¶àÌ¨»úÆ÷ÉÏ°²×°²¿Êð java-1.8.0-openjdk-devel£¬elasticsearch-2.3.4.rpm
-ÐÞ¸Ä hosts ÎÄ¼þ£¬±£Ö¤ËùÓÐ»úÆ÷Í¨¹ýÃû³ÆÄÜ ping Í¨¼¯ÈºÖÐµÄÆäËû»úÆ÷
+elasticsearch é›†ç¾¤å®‰è£…
+åœ¨å¤šå°æœºå™¨ä¸Šå®‰è£…éƒ¨ç½² java-1.8.0-openjdk-develï¼Œelasticsearch-2.3.4.rpm
+ä¿®æ”¹ hosts æ–‡ä»¶ï¼Œä¿è¯æ‰€æœ‰æœºå™¨é€šè¿‡åç§°èƒ½ ping é€šé›†ç¾¤ä¸­çš„å…¶ä»–æœºå™¨
 
-½ûÓÃ·À»ðÇ½ ºÍ selinux
-½ûÓÃ·À»ðÇ½ ºÍ selinux
-½ûÓÃ·À»ðÇ½ ºÍ selinux
+ç¦ç”¨é˜²ç«å¢™ å’Œ selinux
+ç¦ç”¨é˜²ç«å¢™ å’Œ selinux
+ç¦ç”¨é˜²ç«å¢™ å’Œ selinux
 
-ÔÚËùÓÐ½ÚµãÐÞ¸ÄÅäÖÃÎÄ¼þ /etc/elasticsearch/elasticsearch.yml 
+åœ¨æ‰€æœ‰èŠ‚ç‚¹ä¿®æ”¹é…ç½®æ–‡ä»¶ /etc/elasticsearch/elasticsearch.yml 
 cluster.name: my-elk01
 node.name: node5
 network.host: 0.0.0.0
 discovery.zen.ping.unicast.hosts: ["node1", "node2", "node3", "node5"]
 
-Æô¶¯ËùÓÐ½ÚµãµÄ elasticsearch ·þÎñ
-Í¨¹ýä¯ÀÀÆ÷¿ÉÒÔ·ÃÎÊÈÎÒâ½ÚµãµÄ http://ip.xx.xx.xx:9200/
+å¯åŠ¨æ‰€æœ‰èŠ‚ç‚¹çš„ elasticsearch æœåŠ¡
+é€šè¿‡æµè§ˆå™¨å¯ä»¥è®¿é—®ä»»æ„èŠ‚ç‚¹çš„ http://ip.xx.xx.xx:9200/
 
-ÑéÖ¤¼¯ÈºÊÇ·ñÕý³££¬·ÃÎÊ
+éªŒè¯é›†ç¾¤æ˜¯å¦æ­£å¸¸ï¼Œè®¿é—®
 http://192.168.4.15:9200/_cluster/health?pretty
 
 {
-  "cluster_name" : "my-elk01", #¼¯ÈºÃû³Æ
-  "status" : "green", # ±íÊ¾Õý³£
+  "cluster_name" : "my-elk01", #é›†ç¾¤åç§°
+  "status" : "green", # è¡¨ç¤ºæ­£å¸¸
   "timed_out" : false,
-  "number_of_nodes" : 5, #µ±Ç°½ÚµãÊýÁ¿
+  "number_of_nodes" : 5, #å½“å‰èŠ‚ç‚¹æ•°é‡
   "number_of_data_nodes" : 5,
   "active_primary_shards" : 0,
   "active_shards" : 0,
@@ -86,39 +86,39 @@ http://192.168.4.15:9200/_cluster/health?pretty
   "active_shards_percent_as_number" : 100.0
 }
 
-²å¼þµÄ°²×° head  kopf  bigdesk
-1 ¿½±´²å¼þ zip °üµ½Ò»¸öÄ¿Â¼
-2 /usr/share/elasticsearch/bin/plugin install file:///²å¼þµÄÎ»ÖÃ/²å¼þ°ü.zip °²×°
+æ’ä»¶çš„å®‰è£… head  kopf  bigdesk
+1 æ‹·è´æ’ä»¶ zip åŒ…åˆ°ä¸€ä¸ªç›®å½•
+2 /usr/share/elasticsearch/bin/plugin install file:///æ’ä»¶çš„ä½ç½®/æ’ä»¶åŒ….zip å®‰è£…
 
-3 ÑéÖ¤£º
-°²×°Íê³ÉÒÔºó¿ÉÒÔÍ¨¹ý
-/usr/share/elasticsearch/bin/plugin list ¿´µ½ÎÒÃÇÒÑ¾­°²×°µÄ²å¼þµÄÃû³Æ
+3 éªŒè¯ï¼š
+å®‰è£…å®Œæˆä»¥åŽå¯ä»¥é€šè¿‡
+/usr/share/elasticsearch/bin/plugin list çœ‹åˆ°æˆ‘ä»¬å·²ç»å®‰è£…çš„æ’ä»¶çš„åç§°
 
-4 ·ÃÎÊhead ²å¼þ
-ËüÕ¹ÏÖES¼¯ÈºµÄÍØÆË½á¹¹
-¿ÉÒÔÍ¨¹ýËüÀ´½øÐÐË÷Òý£¨Index£©ºÍ½Úµã£¨Node£©¼¶±ðµÄ²Ù×÷
-ËüÌá¹©Ò»×éÕë¶Ô¼¯ÈºµÄ²éÑ¯API£¬²¢½«½á¹ûÒÔjsonºÍ±í¸ñÐÎÊ½·µ»Ø
-ËüÌá¹©Ò»Ð©¿ì½Ý²Ëµ¥£¬ÓÃÒÔÕ¹ÏÖ¼¯ÈºµÄ¸÷ÖÖ×´Ì¬
+4 è®¿é—®head æ’ä»¶
+å®ƒå±•çŽ°ESé›†ç¾¤çš„æ‹“æ‰‘ç»“æž„
+å¯ä»¥é€šè¿‡å®ƒæ¥è¿›è¡Œç´¢å¼•ï¼ˆIndexï¼‰å’ŒèŠ‚ç‚¹ï¼ˆNodeï¼‰çº§åˆ«çš„æ“ä½œ
+å®ƒæä¾›ä¸€ç»„é’ˆå¯¹é›†ç¾¤çš„æŸ¥è¯¢APIï¼Œå¹¶å°†ç»“æžœä»¥jsonå’Œè¡¨æ ¼å½¢å¼è¿”å›ž
+å®ƒæä¾›ä¸€äº›å¿«æ·èœå•ï¼Œç”¨ä»¥å±•çŽ°é›†ç¾¤çš„å„ç§çŠ¶æ€
 http://192.168.4.11:9200/_plugin/head/
 
 
-5 kopf ²å¼þ°²×°
-kopfÊÇÒ»¸öElasticSearchµÄ¹ÜÀí¹¤¾ß£¬ËüÌá¹©ÁË¶ÔES¼¯Èº²Ù×÷µÄAPI¡£
+5 kopf æ’ä»¶å®‰è£…
+kopfæ˜¯ä¸€ä¸ªElasticSearchçš„ç®¡ç†å·¥å…·ï¼Œå®ƒæä¾›äº†å¯¹ESé›†ç¾¤æ“ä½œçš„APIã€‚
 /usr/share/elasticsearch/bin/plugin install file:///xxx-kopf.zip
 
-·ÃÎÊµØÖ·
+è®¿é—®åœ°å€
 http://192.168.4.11:9200/_plugin/kopf/
 
-6 bigdesk ²å¼þ°²×°
-bigdeskÊÇelasticsearchµÄÒ»¸ö¼¯Èº¼à¿Ø¹¤¾ß
-¿ÉÒÔÍ¨¹ýËüÀ´²é¿´es¼¯ÈºµÄ¸÷ÖÖ×´Ì¬£¬
-Èç£ºcpu¡¢ÄÚ´æÊ¹ÓÃÇé¿ö£¬Ë÷ÒýÊý¾Ý¡¢ËÑË÷Çé¿ö£¬httpÁ¬½ÓÊýµÈ¡£
+6 bigdesk æ’ä»¶å®‰è£…
+bigdeskæ˜¯elasticsearchçš„ä¸€ä¸ªé›†ç¾¤ç›‘æŽ§å·¥å…·
+å¯ä»¥é€šè¿‡å®ƒæ¥æŸ¥çœ‹esé›†ç¾¤çš„å„ç§çŠ¶æ€ï¼Œ
+å¦‚ï¼šcpuã€å†…å­˜ä½¿ç”¨æƒ…å†µï¼Œç´¢å¼•æ•°æ®ã€æœç´¢æƒ…å†µï¼Œhttpè¿žæŽ¥æ•°ç­‰ã€‚
 /usr/share/elasticsearch/bin/plugin install file:///bigdesk-xxx.zip
 
-·ÃÎÊµØÖ·
+è®¿é—®åœ°å€
 http://192.168.4.11:9200/_plugin/bigdesk/
 
-Ê¹ÓÃRESTful API²Ù×÷elasticsearch
+ä½¿ç”¨RESTful APIæ“ä½œelasticsearch
 curl -XPUT 'http://192.168.4.11:9200/school/' -d '{
     "settings":{
         "index":{
@@ -128,11 +128,11 @@ curl -XPUT 'http://192.168.4.11:9200/school/' -d '{
     }
 }'
 
-»ñÈ¡Ë÷ÒýÅäÖÃÐÅÏ¢£º
+èŽ·å–ç´¢å¼•é…ç½®ä¿¡æ¯ï¼š
 curl -XGET 'http://192.168.4.11:9200/school/_settings/'
 curl -XGET 'http://192.168.4.11:9200/_all/_settings/'
 
-´´½¨ÎÄµµ
+åˆ›å»ºæ–‡æ¡£
 curl -XPUT 'http://192.168.4.11:9200/school/students/1' -d '{
     "title": "devops",
     "name":{
@@ -142,26 +142,26 @@ curl -XPUT 'http://192.168.4.11:9200/school/students/1' -d '{
     "age": 25
 }'
 
-²éÑ¯ÎÄµµÐÅÏ¢
+æŸ¥è¯¢æ–‡æ¡£ä¿¡æ¯
 curl -XGET 'http://192.168.4.11:9200/school/students/1'
 curl -XGET 'http://192.168.4.11:9200/school/students/1?_source=name,age'
 
-¸üÐÂÎÄµµÐÅÏ¢
+æ›´æ–°æ–‡æ¡£ä¿¡æ¯
 curl -XPOST 'http://192.168.4.11:9200/school/students/1/_update' -d '{
     "doc":{
         "age": 30
     }
 }'
 
-É¾³ýÎÄµµÐÅÏ¢
+åˆ é™¤æ–‡æ¡£ä¿¡æ¯
 curl -XDELETE 'http://192.168.4.14:9200/school/students/1'
 
-ÅúÁ¿µ¼ÈëÊý¾Ý
+æ‰¹é‡å¯¼å…¥æ•°æ®
 curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @shakespeare.json
 curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @logs.jsonl
 curl -XPOST 'http://192.168.4.14:9200/accounts/act/_bulk?pretty' --data-binary @accounts.json
 
-ÅúÁ¿²éÑ¯Êý¾Ý
+æ‰¹é‡æŸ¥è¯¢æ•°æ®
 curl -XGET 'http://192.168.4.11:9200/_mget?pretty' -d '{ 
     "docs":[
         {
@@ -182,86 +182,86 @@ curl -XGET 'http://192.168.4.11:9200/_mget?pretty' -d '{
     ]
 }'
 
-json ÊÇÊ²Ã´£¬¸ñÊ½ÔõÃ´ÊéÐ´
+json æ˜¯ä»€ä¹ˆï¼Œæ ¼å¼æ€Žä¹ˆä¹¦å†™
 
 
 ==============================
 
-ÕýÔò±í´ïÊ½¹¹Ôì
+æ­£åˆ™è¡¨è¾¾å¼æž„é€ 
 
-\p{Ãû³Æ}
-Æ¥ÅäÊôÓÚ Unicode ³£¹æÀà±ð»òÃüÃû¿éµÄÈÎºÎ×Ö·û
+\p{åç§°}
+åŒ¹é…å±žäºŽ Unicode å¸¸è§„ç±»åˆ«æˆ–å‘½åå—çš„ä»»ä½•å­—ç¬¦
 
-\P{Ãû³Æ}
-Æ¥Åä²»ÊôÓÚ Unicode ³£¹æÀà±ð»òÃüÃû¿éµÄÈÎºÎ×Ö·û
+\P{åç§°}
+åŒ¹é…ä¸å±žäºŽ Unicode å¸¸è§„ç±»åˆ«æˆ–å‘½åå—çš„ä»»ä½•å­—ç¬¦
 
-·Çµ¥´Ê×Ö·û£º\W
-\W Æ¥ÅäÈÎºÎ·Çµ¥´Ê×Ö·û¡£\W ÓïÑÔÔªËØµÈÐ§ÓÚÒÔÏÂ×Ö·ûÀà£º
+éžå•è¯å­—ç¬¦ï¼š\W
+\W åŒ¹é…ä»»ä½•éžå•è¯å­—ç¬¦ã€‚\W è¯­è¨€å…ƒç´ ç­‰æ•ˆäºŽä»¥ä¸‹å­—ç¬¦ç±»ï¼š
 [^\p{Ll}\p{Lu}\p{Lt}\p{Lo}\p{Nd}\p{Pc}\p{Lm}]
 
-µ¥´Ê×Ö·û£º\w
-\w ÓëÈÎºÎµ¥´Ê×Ö·ûÆ¥Åä
+å•è¯å­—ç¬¦ï¼š\w
+\w ä¸Žä»»ä½•å•è¯å­—ç¬¦åŒ¹é…
 
-Àà±ð	ÃèÊö
-Ll	×ÖÄ¸£¬Ð¡Ð´
-Lu	×ÖÄ¸£¬´óÐ´
-Lt	×ÖÄ¸£¬Ê××ÖÄ¸´óÐ´
-Lo	×ÖÄ¸£¬ÆäËû
-Lm	×ÖÄ¸£¬ÐÞÊÎ·û
-Nd	Êý×Ö£¬Ê®½øÖÆÊý
-Pc	±êµã£¬Á¬½Ó·û¡£ ´ËÀà±ð°üº¬ 10 ¸ö×Ö·û£¬×î³£ÓÃµÄ×Ö·ûÊÇ LOWLINE ×Ö·û (_)£¬u+005F¡£
-Èç¹ûÖ¸¶¨ÁË·ûºÏ ECMAScript µÄÐÐÎª£¬Ôò \w µÈÐ§ÓÚ [a-zA-Z_0-9]¡£
+ç±»åˆ«	æè¿°
+Ll	å­—æ¯ï¼Œå°å†™
+Lu	å­—æ¯ï¼Œå¤§å†™
+Lt	å­—æ¯ï¼Œé¦–å­—æ¯å¤§å†™
+Lo	å­—æ¯ï¼Œå…¶ä»–
+Lm	å­—æ¯ï¼Œä¿®é¥°ç¬¦
+Nd	æ•°å­—ï¼Œåè¿›åˆ¶æ•°
+Pc	æ ‡ç‚¹ï¼Œè¿žæŽ¥ç¬¦ã€‚ æ­¤ç±»åˆ«åŒ…å« 10 ä¸ªå­—ç¬¦ï¼Œæœ€å¸¸ç”¨çš„å­—ç¬¦æ˜¯ LOWLINE å­—ç¬¦ (_)ï¼Œu+005Fã€‚
+å¦‚æžœæŒ‡å®šäº†ç¬¦åˆ ECMAScript çš„è¡Œä¸ºï¼Œåˆ™ \w ç­‰æ•ˆäºŽ [a-zA-Z_0-9]ã€‚
 
-?\d  Æ¥ÅäÁã¸ö»òÒ»¸ö Ê®½øÖÆÊý×Ö×Ö·û  ## ×¢Òâ . µãºÍ ? ÎÊºÅµÄÇø±ð
-.\d  Æ¥Åä Ò»¸ö  Ê®½øÖÆÊý×Ö×Ö·û
-
-
-Í¨Åä·ûÀàÐÍ£º
-. ±íÊ¾ÈÎÒâ×Ö·û
-? ±íÊ¾³öÏÖ0´Î»ò1´Î   £¿£ºÆ¥Åä Áã¸ö»ò ÈÎÒâµ¥¸ö×Ö·û
-* ±íÊ¾ ³öÏÖ0´Î»ò¶à´Î    *£ºÆ¥ÅäÈÎÒâ³¤¶ÈµÄÈÎÒâ×Ö·û
-+ ±íÊ¾³öÏÖ1´Î»ò ¶à´Î
-{m,n} ±íÊ¾³öÏÖÖÁÉÙm´Î£¬×î¶àn´Î
-{m,} ±íÊ¾³öÏÖ×îÉÙm´Î£¬×î¶à²»ÏÞ
-{m}±íÊ¾¾Í³öÏÖm´Î
-( )    ·Ö×é
-   [ ]£ºÆ¥ÅäÖ¸¶¨·¶Î§ÄÚµÄÈÎÒâµ¥¸ö×Ö·û
-   [^]£ºÆ¥ÅäÖ¸¶¨·¶Î§Ö®ÍâµÄÈÎÒâµ¥¸ö×Ö·û
-  [:space:]£º¿Õ°××Ö·û
-  [:punct:]£º±êµã·ûºÅ
-  [:lower:]£ºÐ¡Ð´×ÖÄ¸
- [:upper:]£º´óÐ´×ÖÄ¸
- [:alpha:]£º´óÐ¡Ð´×ÖÄ¸
- [:digit:]£ºÊý×Ö
-   [:alnum:]£ºÊý×ÖºÍ´óÐ¡Ð´×ÖÄ¸
+?\d  åŒ¹é…é›¶ä¸ªæˆ–ä¸€ä¸ª åè¿›åˆ¶æ•°å­—å­—ç¬¦  ## æ³¨æ„ . ç‚¹å’Œ ? é—®å·çš„åŒºåˆ«
+.\d  åŒ¹é… ä¸€ä¸ª  åè¿›åˆ¶æ•°å­—å­—ç¬¦
 
 
-2 ÕýÔò±í´ïÊ½ÖÐµÄ×Ö·ûÀà
- Õý×Ö·û×é£º[ ]
- ¸º×Ö·û×é£º[^]
- ÈÎÒâ×Ö·û£º .
-  UnicodeÀà±ð»òUnicode¿é£º\p{}
-  ¸º Unicode Àà±ð»ò Unicode ¿é£º\P {}
- µ¥´Ê×Ö·û£º\w
- ·Çµ¥´Ê×Ö·û£º\W
-  ¿Õ°××Ö·û£º\s
-  ·Ç¿Õ°××Ö·û£º\S
-  Ê®½øÖÆÊý×Ö×Ö·û£º\d
-  ·ÇÊý×Ö×Ö·û£º\D
+é€šé…ç¬¦ç±»åž‹ï¼š
+. è¡¨ç¤ºä»»æ„å­—ç¬¦
+? è¡¨ç¤ºå‡ºçŽ°0æ¬¡æˆ–1æ¬¡   ï¼Ÿï¼šåŒ¹é… é›¶ä¸ªæˆ– ä»»æ„å•ä¸ªå­—ç¬¦
+* è¡¨ç¤º å‡ºçŽ°0æ¬¡æˆ–å¤šæ¬¡    *ï¼šåŒ¹é…ä»»æ„é•¿åº¦çš„ä»»æ„å­—ç¬¦
++ è¡¨ç¤ºå‡ºçŽ°1æ¬¡æˆ– å¤šæ¬¡
+{m,n} è¡¨ç¤ºå‡ºçŽ°è‡³å°‘mæ¬¡ï¼Œæœ€å¤šnæ¬¡
+{m,} è¡¨ç¤ºå‡ºçŽ°æœ€å°‘mæ¬¡ï¼Œæœ€å¤šä¸é™
+{m}è¡¨ç¤ºå°±å‡ºçŽ°mæ¬¡
+( )    åˆ†ç»„
+   [ ]ï¼šåŒ¹é…æŒ‡å®šèŒƒå›´å†…çš„ä»»æ„å•ä¸ªå­—ç¬¦
+   [^]ï¼šåŒ¹é…æŒ‡å®šèŒƒå›´ä¹‹å¤–çš„ä»»æ„å•ä¸ªå­—ç¬¦
+  [:space:]ï¼šç©ºç™½å­—ç¬¦
+  [:punct:]ï¼šæ ‡ç‚¹ç¬¦å·
+  [:lower:]ï¼šå°å†™å­—æ¯
+ [:upper:]ï¼šå¤§å†™å­—æ¯
+ [:alpha:]ï¼šå¤§å°å†™å­—æ¯
+ [:digit:]ï¼šæ•°å­—
+   [:alnum:]ï¼šæ•°å­—å’Œå¤§å°å†™å­—æ¯
 
 
-±êµã·ûºÅ
-[¼Æ]punctuation; 
+2 æ­£åˆ™è¡¨è¾¾å¼ä¸­çš„å­—ç¬¦ç±»
+ æ­£å­—ç¬¦ç»„ï¼š[ ]
+ è´Ÿå­—ç¬¦ç»„ï¼š[^]
+ ä»»æ„å­—ç¬¦ï¼š .
+  Unicodeç±»åˆ«æˆ–Unicodeå—ï¼š\p{}
+  è´Ÿ Unicode ç±»åˆ«æˆ– Unicode å—ï¼š\P {}
+ å•è¯å­—ç¬¦ï¼š\w
+ éžå•è¯å­—ç¬¦ï¼š\W
+  ç©ºç™½å­—ç¬¦ï¼š\s
+  éžç©ºç™½å­—ç¬¦ï¼š\S
+  åè¿›åˆ¶æ•°å­—å­—ç¬¦ï¼š\d
+  éžæ•°å­—å­—ç¬¦ï¼š\D
+
+
+æ ‡ç‚¹ç¬¦å·
+[è®¡]punctuation; 
   interpunction
 
-punctuation ±êµã·ûºÅ
-interpunction ±êµã£¬±êµã·ûºÅ
-alphabet n. ×ÖÄ¸±í;×ÖÄ¸ÏµÍ³;ÈëÃÅ£¬³õ²½
+punctuation æ ‡ç‚¹ç¬¦å·
+interpunction æ ‡ç‚¹ï¼Œæ ‡ç‚¹ç¬¦å·
+alphabet n. å­—æ¯è¡¨;å­—æ¯ç³»ç»Ÿ;å…¥é—¨ï¼Œåˆæ­¥
 
-ÏÔÊ¾ËùÓÐÒÔa»òÕßm¿ªÍ·µÄÎÄ¼þ£º 
+æ˜¾ç¤ºæ‰€æœ‰ä»¥aæˆ–è€…må¼€å¤´çš„æ–‡ä»¶ï¼š 
   ls -l [am]*
-ÏÔÊ¾ËùÓÐÎÄ¼þÃûÖÐ°üº¬ÁËÊý×ÖµÄÎÄ¼þ£º
- ls -l *[0-9]* »òÕßls -l *[[:digit:]]*
+æ˜¾ç¤ºæ‰€æœ‰æ–‡ä»¶åä¸­åŒ…å«äº†æ•°å­—çš„æ–‡ä»¶ï¼š
+ ls -l *[0-9]* æˆ–è€…ls -l *[[:digit:]]*
 
 
 1     2     3
@@ -275,349 +275,349 @@ alphabet n. ×ÖÄ¸±í;×ÖÄ¸ÏµÍ³;ÈëÃÅ£¬³õ²½
 25[0-5]|2[0-4]\d|1?\d?\d
 
 ?\d
-?\d  Æ¥ÅäÁã¸ö»òÒ»¸ö Ê®½øÖÆÊý×Ö×Ö·û  ## ×¢Òâ . µãºÍ ? ÎÊºÅµÄÇø±ð
-.\d  Æ¥Åä Ò»¸ö  Ê®½øÖÆÊý×Ö×Ö·û
+?\d  åŒ¹é…é›¶ä¸ªæˆ–ä¸€ä¸ª åè¿›åˆ¶æ•°å­—å­—ç¬¦  ## æ³¨æ„ . ç‚¹å’Œ ? é—®å·çš„åŒºåˆ«
+.\d  åŒ¹é… ä¸€ä¸ª  åè¿›åˆ¶æ•°å­—å­—ç¬¦
 
-¾«È·Æ¥ÅäipµØÖ·
+ç²¾ç¡®åŒ¹é…ipåœ°å€
 ((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)
 
-Ä£ºýÆ¥ÅäipµØÖ·
+æ¨¡ç³ŠåŒ¹é…ipåœ°å€
 ([12]?\d?\d\.){3}[12]?\d?\d
-Ä£ºýÆ¥ÅäipµØÖ·
+æ¨¡ç³ŠåŒ¹é…ipåœ°å€
 ([12](?\d){2}\.){3}[12](?\d){2}
 
-³£¼ûÕýÔò±í´ïÊ½
-¡¡¡¡Æ¥ÅäÖÐÎÄ×Ö·ûµÄÕýÔò±í´ïÊ½£º [u4e00-u9fa5]   
-¡¡¡¡
-¡¡¡¡Æ¥ÅäË«×Ö½Ú×Ö·û(°üÀ¨ºº×ÖÔÚÄÚ)£º[^x00-xff] 
-¡¡¡¡ÆÀ×¢£º¿ÉÒÔÓÃÀ´¼ÆËã×Ö·û´®µÄ³¤¶È£¨Ò»¸öË«×Ö½Ú×Ö·û³¤¶È¼Æ2£¬ASCII×Ö·û¼Æ1£© 
-¡¡¡¡Æ¥Åä¿Õ°×ÐÐµÄÕýÔò±í´ïÊ½£ºns*r 
-¡¡¡¡ÆÀ×¢£º¿ÉÒÔÓÃÀ´É¾³ý¿Õ°×ÐÐ 
-¡¡¡¡Æ¥ÅäHTML±ê¼ÇµÄÕýÔò±í´ïÊ½£º<(S*?)[^>]*>.*?|<.*? /> 
-¡¡¡¡ÆÀ×¢£ºÍøÉÏÁ÷´«µÄ°æ±¾Ì«Ôã¸â£¬ÉÏÃæÕâ¸öÒ²½ö½öÄÜÆ¥Åä²¿·Ö£¬¶ÔÓÚ¸´ÔÓµÄÇ¶Ì×±ê¼ÇÒÀ¾ÉÎÞÄÜÎªÁ¦ 
-¡¡¡¡Æ¥ÅäÊ×Î²¿Õ°××Ö·ûµÄÕýÔò±í´ïÊ½£º^s*|s*$ 
-¡¡¡¡ÆÀ×¢£º¿ÉÒÔÓÃÀ´É¾³ýÐÐÊ×ÐÐÎ²µÄ¿Õ°××Ö·û(°üÀ¨¿Õ¸ñ¡¢ÖÆ±í·û¡¢»»Ò³·ûµÈµÈ)£¬·Ç³£ÓÐÓÃµÄ±í´ïÊ½ 
-¡¡¡¡Æ¥ÅäEmailµØÖ·µÄÕýÔò±í´ïÊ½£ºw+([-+.]w+)*@w+([-.]w+)*.w+([-.]w+)* 
-¡¡¡¡ÆÀ×¢£º±íµ¥ÑéÖ¤Ê±ºÜÊµÓÃ 
-¡¡¡¡Æ¥ÅäÍøÖ·URLµÄÕýÔò±í´ïÊ½£º^(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?$
-¡¡¡¡ÆÀ×¢£ºÍøÉÏÁ÷´«µÄ°æ±¾¹¦ÄÜºÜÓÐÏÞ£¬ÉÏÃæÕâ¸ö»ù±¾¿ÉÒÔÂú×ãÐèÇó 
-¡¡¡¡
+å¸¸è§æ­£åˆ™è¡¨è¾¾å¼
+ã€€ã€€åŒ¹é…ä¸­æ–‡å­—ç¬¦çš„æ­£åˆ™è¡¨è¾¾å¼ï¼š [u4e00-u9fa5]   
+ã€€ã€€
+ã€€ã€€åŒ¹é…åŒå­—èŠ‚å­—ç¬¦(åŒ…æ‹¬æ±‰å­—åœ¨å†…)ï¼š[^x00-xff] 
+ã€€ã€€è¯„æ³¨ï¼šå¯ä»¥ç”¨æ¥è®¡ç®—å­—ç¬¦ä¸²çš„é•¿åº¦ï¼ˆä¸€ä¸ªåŒå­—èŠ‚å­—ç¬¦é•¿åº¦è®¡2ï¼ŒASCIIå­—ç¬¦è®¡1ï¼‰ 
+ã€€ã€€åŒ¹é…ç©ºç™½è¡Œçš„æ­£åˆ™è¡¨è¾¾å¼ï¼šns*r 
+ã€€ã€€è¯„æ³¨ï¼šå¯ä»¥ç”¨æ¥åˆ é™¤ç©ºç™½è¡Œ 
+ã€€ã€€åŒ¹é…HTMLæ ‡è®°çš„æ­£åˆ™è¡¨è¾¾å¼ï¼š<(S*?)[^>]*>.*?|<.*? /> 
+ã€€ã€€è¯„æ³¨ï¼šç½‘ä¸Šæµä¼ çš„ç‰ˆæœ¬å¤ªç³Ÿç³•ï¼Œä¸Šé¢è¿™ä¸ªä¹Ÿä»…ä»…èƒ½åŒ¹é…éƒ¨åˆ†ï¼Œå¯¹äºŽå¤æ‚çš„åµŒå¥—æ ‡è®°ä¾æ—§æ— èƒ½ä¸ºåŠ› 
+ã€€ã€€åŒ¹é…é¦–å°¾ç©ºç™½å­—ç¬¦çš„æ­£åˆ™è¡¨è¾¾å¼ï¼š^s*|s*$ 
+ã€€ã€€è¯„æ³¨ï¼šå¯ä»¥ç”¨æ¥åˆ é™¤è¡Œé¦–è¡Œå°¾çš„ç©ºç™½å­—ç¬¦(åŒ…æ‹¬ç©ºæ ¼ã€åˆ¶è¡¨ç¬¦ã€æ¢é¡µç¬¦ç­‰ç­‰)ï¼Œéžå¸¸æœ‰ç”¨çš„è¡¨è¾¾å¼ 
+ã€€ã€€åŒ¹é…Emailåœ°å€çš„æ­£åˆ™è¡¨è¾¾å¼ï¼šw+([-+.]w+)*@w+([-.]w+)*.w+([-.]w+)* 
+ã€€ã€€è¯„æ³¨ï¼šè¡¨å•éªŒè¯æ—¶å¾ˆå®žç”¨ 
+ã€€ã€€åŒ¹é…ç½‘å€URLçš„æ­£åˆ™è¡¨è¾¾å¼ï¼š^(http|https):\/\/[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?$
+ã€€ã€€è¯„æ³¨ï¼šç½‘ä¸Šæµä¼ çš„ç‰ˆæœ¬åŠŸèƒ½å¾ˆæœ‰é™ï¼Œä¸Šé¢è¿™ä¸ªåŸºæœ¬å¯ä»¥æ»¡è¶³éœ€æ±‚ 
+ã€€ã€€
 
-     Æ¥ÅäÕÊºÅÊÇ·ñºÏ·¨(×ÖÄ¸¿ªÍ·£¬ÔÊÐí5-16×Ö½Ú£¬ÔÊÐí×ÖÄ¸Êý×ÖÏÂ»®Ïß)£º^[a-zA-Z][a-zA-Z0-9_]{4,15}$ 
-¡¡¡¡ÆÀ×¢£º±íµ¥ÑéÖ¤Ê±ºÜÊµÓÃ 
-¡¡¡¡Æ¥Åä¹úÄÚµç»°ºÅÂë£ºd{3}-d{8}|d{4}-d{7} 
-¡¡¡¡ÆÀ×¢£ºÆ¥ÅäÐÎÊ½Èç 0511-4405222 »ò 021-87888822 
-¡¡¡¡Æ¥ÅäÌÚÑ¶QQºÅ£º[1-9][0-9]{4,} 
-¡¡¡¡ÆÀ×¢£ºÌÚÑ¶QQºÅ´Ó10000¿ªÊ¼ 
-¡¡¡¡Æ¥ÅäÖÐ¹úÓÊÕþ±àÂë£º[1-9]d{5}(?!d) 
-¡¡¡¡ÆÀ×¢£ºÖÐ¹úÓÊÕþ±àÂëÎª6Î»Êý×Ö 
-¡¡¡¡Æ¥ÅäÉí·ÝÖ¤£ºd{15}|d{18} 
-¡¡¡¡ÆÀ×¢£ºÖÐ¹úµÄÉí·ÝÖ¤Îª15Î»»ò18Î» 
-¡¡¡¡Æ¥ÅäipµØÖ·£ºd+.d+.d+.d+ 
-¡¡¡¡ÆÀ×¢£ºÌáÈ¡ipµØÖ·Ê±ÓÐÓÃ 
-¡¡¡¡Æ¥ÅäÌØ¶¨Êý×Ö£º 
-¡¡¡¡^[1-9]d*$¡¡ ¡¡ //Æ¥ÅäÕýÕûÊý 
-¡¡¡¡^-[1-9]d*$ ¡¡ //Æ¥Åä¸ºÕûÊý 
-¡¡¡¡^-?[1-9]d*$¡¡¡¡ //Æ¥ÅäÕûÊý 
-¡¡¡¡^[1-9]d*|0$¡¡ //Æ¥Åä·Ç¸ºÕûÊý£¨ÕýÕûÊý + 0£© 
-¡¡¡¡^-[1-9]d*|0$¡¡¡¡ //Æ¥Åä·ÇÕýÕûÊý£¨¸ºÕûÊý + 0£© 
-¡¡¡¡^[1-9]d*.d*|0.d*[1-9]d*$¡¡¡¡ //Æ¥ÅäÕý¸¡µãÊý 
-¡¡¡¡^-([1-9]d*.d*|0.d*[1-9]d*)$¡¡ //Æ¥Åä¸º¸¡µãÊý 
-¡¡¡¡^-?([1-9]d*.d*|0.d*[1-9]d*|0?.0+|0)$¡¡ //Æ¥Åä¸¡µãÊý 
-¡¡¡¡^[1-9]d*.d*|0.d*[1-9]d*|0?.0+|0$¡¡¡¡ //Æ¥Åä·Ç¸º¸¡µãÊý£¨Õý¸¡µãÊý + 0£© 
-¡¡¡¡^(-([1-9]d*.d*|0.d*[1-9]d*))|0?.0+|0$¡¡¡¡//Æ¥Åä·ÇÕý¸¡µãÊý£¨¸º¸¡µãÊý + 0£© 
-¡¡¡¡ÆÀ×¢£º´¦Àí´óÁ¿Êý¾ÝÊ±ÓÐÓÃ£¬¾ßÌåÓ¦ÓÃÊ±×¢ÒâÐÞÕý 
-¡¡¡¡Æ¥ÅäÌØ¶¨×Ö·û´®£º 
-¡¡¡¡^[A-Za-z]+$¡¡¡¡//Æ¥ÅäÓÉ26¸öÓ¢ÎÄ×ÖÄ¸×é³ÉµÄ×Ö·û´® 
-¡¡¡¡^[A-Z]+$¡¡¡¡//Æ¥ÅäÓÉ26¸öÓ¢ÎÄ×ÖÄ¸µÄ´óÐ´×é³ÉµÄ×Ö·û´® 
-¡¡¡¡^[a-z]+$¡¡¡¡//Æ¥ÅäÓÉ26¸öÓ¢ÎÄ×ÖÄ¸µÄÐ¡Ð´×é³ÉµÄ×Ö·û´® 
-¡¡¡¡^[A-Za-z0-9]+$¡¡¡¡//Æ¥ÅäÓÉÊý×ÖºÍ26¸öÓ¢ÎÄ×ÖÄ¸×é³ÉµÄ×Ö·û´® 
-¡¡¡¡^w+$¡¡¡¡//Æ¥ÅäÓÉÊý×Ö¡¢26¸öÓ¢ÎÄ×ÖÄ¸»òÕßÏÂ»®Ïß×é³ÉµÄ×Ö·û´® 
-¡¡¡¡ÔÚÊ¹ÓÃRegularExpressionValidatorÑéÖ¤¿Ø¼þÊ±µÄÑéÖ¤¹¦ÄÜ¼°ÆäÑéÖ¤±í´ïÊ½½éÉÜÈçÏÂ: 
-¡¡¡¡Ö»ÄÜÊäÈëÊý×Ö£º¡°^[0-9]*$¡± 
-¡¡¡¡Ö»ÄÜÊäÈënÎ»µÄÊý×Ö£º¡°^d{n}$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÖÁÉÙnÎ»Êý×Ö£º¡°^d{n,}$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëm-nÎ»µÄÊý×Ö£º¡°^d{m,n}$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÁãºÍ·ÇÁã¿ªÍ·µÄÊý×Ö£º¡°^(0|[1-9][0-9]*)$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÐÁ½Î»Ð¡ÊýµÄÕýÊµÊý£º¡°^[0-9]+(.[0-9]{2})?$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÐ1-3Î»Ð¡ÊýµÄÕýÊµÊý£º¡°^[0-9]+(.[0-9]{1,3})?$¡± 
-¡¡¡¡Ö»ÄÜÊäÈë·ÇÁãµÄÕýÕûÊý£º¡°^+?[1-9][0-9]*$¡± 
-¡¡¡¡Ö»ÄÜÊäÈë·ÇÁãµÄ¸ºÕûÊý£º¡°^-[1-9][0-9]*$¡± 
-¡¡¡¡Ö»ÄÜÊäÈë³¤¶ÈÎª3µÄ×Ö·û£º¡°^.{3}$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÉ26¸öÓ¢ÎÄ×ÖÄ¸×é³ÉµÄ×Ö·û´®£º¡°^[A-Za-z]+$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÉ26¸ö´óÐ´Ó¢ÎÄ×ÖÄ¸×é³ÉµÄ×Ö·û´®£º¡°^[A-Z]+$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÉ26¸öÐ¡Ð´Ó¢ÎÄ×ÖÄ¸×é³ÉµÄ×Ö·û´®£º¡°^[a-z]+$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÉÊý×ÖºÍ26¸öÓ¢ÎÄ×ÖÄ¸×é³ÉµÄ×Ö·û´®£º¡°^[A-Za-z0-9]+$¡± 
-¡¡¡¡Ö»ÄÜÊäÈëÓÉÊý×Ö¡¢26¸öÓ¢ÎÄ×ÖÄ¸»òÕßÏÂ»®Ïß×é³ÉµÄ×Ö·û´®£º¡°^w+$¡± 
-¡¡¡¡ÑéÖ¤ÓÃ»§ÃÜÂë:¡°^[a-zA-Z]w{5,17}$¡±ÕýÈ·¸ñÊ½Îª£ºÒÔ×ÖÄ¸¿ªÍ·£¬³¤¶ÈÔÚ6-18Ö®¼ä£¬ Ö»ÄÜ°üº¬×Ö·û¡¢Êý×ÖºÍÏÂ»®Ïß¡£ 
-¡¡¡¡ÑéÖ¤ÊÇ·ñº¬ÓÐ^%&'',;=?$"µÈ×Ö·û£º¡°[^%&'',;=?$x22]+¡± 
-¡¡¡¡Ö»ÄÜÊäÈëºº×Ö£º¡°^[u4e00-u9fa5],{0,}$¡± 
-¡¡¡¡ÑéÖ¤EmailµØÖ·£º¡°^w+[-+.]w+)*@w+([-.]w+)*.w+([-.]w+)*$¡± 
-¡¡¡¡ÑéÖ¤µç»°ºÅÂë£º¡°^((d{3,4})|d{3,4}-)?d{7,8}$¡± 
-¡¡¡¡ÕýÈ·¸ñÊ½Îª£º¡°XXXX-XXXXXXX¡±£¬¡°XXXX-XXXXXXXX¡±£¬¡°XXX-XXXXXXX¡±£¬ 
-¡¡¡¡¡°XXX-XXXXXXXX¡±£¬¡°XXXXXXX¡±£¬¡°XXXXXXXX¡±¡£ 
-¡¡¡¡ÑéÖ¤Éí·ÝÖ¤ºÅ£¨15Î»»ò18Î»Êý×Ö£©£º¡°^d{15}|d{}18$¡± 
-¡¡¡¡ÑéÖ¤Ò»ÄêµÄ12¸öÔÂ£º¡°^(0?[1-9]|1[0-2])$¡±ÕýÈ·¸ñÊ½Îª£º¡°01¡±-¡°09¡±ºÍ¡°1¡±¡°12¡± 
-¡¡¡¡ÑéÖ¤Ò»¸öÔÂµÄ31Ìì£º¡°^((0?[1-9])|((1|2)[0-9])|30|31)$¡± 
-¡¡¡¡ÕýÈ·¸ñÊ½Îª£º¡°01¡±¡°09¡±ºÍ¡°1¡±¡°31¡±¡£ 
-¡¡¡¡Æ¥ÅäÖÐÎÄ×Ö·ûµÄÕýÔò±í´ïÊ½£º [u4e00-u9fa5] 
-¡¡¡¡Æ¥ÅäË«×Ö½Ú×Ö·û(°üÀ¨ºº×ÖÔÚÄÚ)£º[^x00-xff] 
-¡¡¡¡Æ¥Åä¿ÕÐÐµÄÕýÔò±í´ïÊ½£ºn[s| ]*r 
-¡¡¡¡Æ¥ÅäHTML±ê¼ÇµÄÕýÔò±í´ïÊ½£º/<(.*)>.*|<(.*) />/ 
-¡¡¡¡Æ¥ÅäÊ×Î²¿Õ¸ñµÄÕýÔò±í´ïÊ½£º(^s*)|(s*$)  
-¡¡¡¡
+     åŒ¹é…å¸å·æ˜¯å¦åˆæ³•(å­—æ¯å¼€å¤´ï¼Œå…è®¸5-16å­—èŠ‚ï¼Œå…è®¸å­—æ¯æ•°å­—ä¸‹åˆ’çº¿)ï¼š^[a-zA-Z][a-zA-Z0-9_]{4,15}$ 
+ã€€ã€€è¯„æ³¨ï¼šè¡¨å•éªŒè¯æ—¶å¾ˆå®žç”¨ 
+ã€€ã€€åŒ¹é…å›½å†…ç”µè¯å·ç ï¼šd{3}-d{8}|d{4}-d{7} 
+ã€€ã€€è¯„æ³¨ï¼šåŒ¹é…å½¢å¼å¦‚ 0511-4405222 æˆ– 021-87888822 
+ã€€ã€€åŒ¹é…è…¾è®¯QQå·ï¼š[1-9][0-9]{4,} 
+ã€€ã€€è¯„æ³¨ï¼šè…¾è®¯QQå·ä»Ž10000å¼€å§‹ 
+ã€€ã€€åŒ¹é…ä¸­å›½é‚®æ”¿ç¼–ç ï¼š[1-9]d{5}(?!d) 
+ã€€ã€€è¯„æ³¨ï¼šä¸­å›½é‚®æ”¿ç¼–ç ä¸º6ä½æ•°å­— 
+ã€€ã€€åŒ¹é…èº«ä»½è¯ï¼šd{15}|d{18} 
+ã€€ã€€è¯„æ³¨ï¼šä¸­å›½çš„èº«ä»½è¯ä¸º15ä½æˆ–18ä½ 
+ã€€ã€€åŒ¹é…ipåœ°å€ï¼šd+.d+.d+.d+ 
+ã€€ã€€è¯„æ³¨ï¼šæå–ipåœ°å€æ—¶æœ‰ç”¨ 
+ã€€ã€€åŒ¹é…ç‰¹å®šæ•°å­—ï¼š 
+ã€€ã€€^[1-9]d*$ã€€ ã€€ //åŒ¹é…æ­£æ•´æ•° 
+ã€€ã€€^-[1-9]d*$ ã€€ //åŒ¹é…è´Ÿæ•´æ•° 
+ã€€ã€€^-?[1-9]d*$ã€€ã€€ //åŒ¹é…æ•´æ•° 
+ã€€ã€€^[1-9]d*|0$ã€€ //åŒ¹é…éžè´Ÿæ•´æ•°ï¼ˆæ­£æ•´æ•° + 0ï¼‰ 
+ã€€ã€€^-[1-9]d*|0$ã€€ã€€ //åŒ¹é…éžæ­£æ•´æ•°ï¼ˆè´Ÿæ•´æ•° + 0ï¼‰ 
+ã€€ã€€^[1-9]d*.d*|0.d*[1-9]d*$ã€€ã€€ //åŒ¹é…æ­£æµ®ç‚¹æ•° 
+ã€€ã€€^-([1-9]d*.d*|0.d*[1-9]d*)$ã€€ //åŒ¹é…è´Ÿæµ®ç‚¹æ•° 
+ã€€ã€€^-?([1-9]d*.d*|0.d*[1-9]d*|0?.0+|0)$ã€€ //åŒ¹é…æµ®ç‚¹æ•° 
+ã€€ã€€^[1-9]d*.d*|0.d*[1-9]d*|0?.0+|0$ã€€ã€€ //åŒ¹é…éžè´Ÿæµ®ç‚¹æ•°ï¼ˆæ­£æµ®ç‚¹æ•° + 0ï¼‰ 
+ã€€ã€€^(-([1-9]d*.d*|0.d*[1-9]d*))|0?.0+|0$ã€€ã€€//åŒ¹é…éžæ­£æµ®ç‚¹æ•°ï¼ˆè´Ÿæµ®ç‚¹æ•° + 0ï¼‰ 
+ã€€ã€€è¯„æ³¨ï¼šå¤„ç†å¤§é‡æ•°æ®æ—¶æœ‰ç”¨ï¼Œå…·ä½“åº”ç”¨æ—¶æ³¨æ„ä¿®æ­£ 
+ã€€ã€€åŒ¹é…ç‰¹å®šå­—ç¬¦ä¸²ï¼š 
+ã€€ã€€^[A-Za-z]+$ã€€ã€€//åŒ¹é…ç”±26ä¸ªè‹±æ–‡å­—æ¯ç»„æˆçš„å­—ç¬¦ä¸² 
+ã€€ã€€^[A-Z]+$ã€€ã€€//åŒ¹é…ç”±26ä¸ªè‹±æ–‡å­—æ¯çš„å¤§å†™ç»„æˆçš„å­—ç¬¦ä¸² 
+ã€€ã€€^[a-z]+$ã€€ã€€//åŒ¹é…ç”±26ä¸ªè‹±æ–‡å­—æ¯çš„å°å†™ç»„æˆçš„å­—ç¬¦ä¸² 
+ã€€ã€€^[A-Za-z0-9]+$ã€€ã€€//åŒ¹é…ç”±æ•°å­—å’Œ26ä¸ªè‹±æ–‡å­—æ¯ç»„æˆçš„å­—ç¬¦ä¸² 
+ã€€ã€€^w+$ã€€ã€€//åŒ¹é…ç”±æ•°å­—ã€26ä¸ªè‹±æ–‡å­—æ¯æˆ–è€…ä¸‹åˆ’çº¿ç»„æˆçš„å­—ç¬¦ä¸² 
+ã€€ã€€åœ¨ä½¿ç”¨RegularExpressionValidatoréªŒè¯æŽ§ä»¶æ—¶çš„éªŒè¯åŠŸèƒ½åŠå…¶éªŒè¯è¡¨è¾¾å¼ä»‹ç»å¦‚ä¸‹: 
+ã€€ã€€åªèƒ½è¾“å…¥æ•°å­—ï¼šâ€œ^[0-9]*$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥nä½çš„æ•°å­—ï¼šâ€œ^d{n}$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥è‡³å°‘nä½æ•°å­—ï¼šâ€œ^d{n,}$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥m-nä½çš„æ•°å­—ï¼šâ€œ^d{m,n}$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥é›¶å’Œéžé›¶å¼€å¤´çš„æ•°å­—ï¼šâ€œ^(0|[1-9][0-9]*)$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥æœ‰ä¸¤ä½å°æ•°çš„æ­£å®žæ•°ï¼šâ€œ^[0-9]+(.[0-9]{2})?$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥æœ‰1-3ä½å°æ•°çš„æ­£å®žæ•°ï¼šâ€œ^[0-9]+(.[0-9]{1,3})?$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥éžé›¶çš„æ­£æ•´æ•°ï¼šâ€œ^+?[1-9][0-9]*$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥éžé›¶çš„è´Ÿæ•´æ•°ï¼šâ€œ^-[1-9][0-9]*$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥é•¿åº¦ä¸º3çš„å­—ç¬¦ï¼šâ€œ^.{3}$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥ç”±26ä¸ªè‹±æ–‡å­—æ¯ç»„æˆçš„å­—ç¬¦ä¸²ï¼šâ€œ^[A-Za-z]+$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥ç”±26ä¸ªå¤§å†™è‹±æ–‡å­—æ¯ç»„æˆçš„å­—ç¬¦ä¸²ï¼šâ€œ^[A-Z]+$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥ç”±26ä¸ªå°å†™è‹±æ–‡å­—æ¯ç»„æˆçš„å­—ç¬¦ä¸²ï¼šâ€œ^[a-z]+$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥ç”±æ•°å­—å’Œ26ä¸ªè‹±æ–‡å­—æ¯ç»„æˆçš„å­—ç¬¦ä¸²ï¼šâ€œ^[A-Za-z0-9]+$â€ 
+ã€€ã€€åªèƒ½è¾“å…¥ç”±æ•°å­—ã€26ä¸ªè‹±æ–‡å­—æ¯æˆ–è€…ä¸‹åˆ’çº¿ç»„æˆçš„å­—ç¬¦ä¸²ï¼šâ€œ^w+$â€ 
+ã€€ã€€éªŒè¯ç”¨æˆ·å¯†ç :â€œ^[a-zA-Z]w{5,17}$â€æ­£ç¡®æ ¼å¼ä¸ºï¼šä»¥å­—æ¯å¼€å¤´ï¼Œé•¿åº¦åœ¨6-18ä¹‹é—´ï¼Œ åªèƒ½åŒ…å«å­—ç¬¦ã€æ•°å­—å’Œä¸‹åˆ’çº¿ã€‚ 
+ã€€ã€€éªŒè¯æ˜¯å¦å«æœ‰^%&'',;=?$"ç­‰å­—ç¬¦ï¼šâ€œ[^%&'',;=?$x22]+â€ 
+ã€€ã€€åªèƒ½è¾“å…¥æ±‰å­—ï¼šâ€œ^[u4e00-u9fa5],{0,}$â€ 
+ã€€ã€€éªŒè¯Emailåœ°å€ï¼šâ€œ^w+[-+.]w+)*@w+([-.]w+)*.w+([-.]w+)*$â€ 
+ã€€ã€€éªŒè¯ç”µè¯å·ç ï¼šâ€œ^((d{3,4})|d{3,4}-)?d{7,8}$â€ 
+ã€€ã€€æ­£ç¡®æ ¼å¼ä¸ºï¼šâ€œXXXX-XXXXXXXâ€ï¼Œâ€œXXXX-XXXXXXXXâ€ï¼Œâ€œXXX-XXXXXXXâ€ï¼Œ 
+ã€€ã€€â€œXXX-XXXXXXXXâ€ï¼Œâ€œXXXXXXXâ€ï¼Œâ€œXXXXXXXXâ€ã€‚ 
+ã€€ã€€éªŒè¯èº«ä»½è¯å·ï¼ˆ15ä½æˆ–18ä½æ•°å­—ï¼‰ï¼šâ€œ^d{15}|d{}18$â€ 
+ã€€ã€€éªŒè¯ä¸€å¹´çš„12ä¸ªæœˆï¼šâ€œ^(0?[1-9]|1[0-2])$â€æ­£ç¡®æ ¼å¼ä¸ºï¼šâ€œ01â€-â€œ09â€å’Œâ€œ1â€â€œ12â€ 
+ã€€ã€€éªŒè¯ä¸€ä¸ªæœˆçš„31å¤©ï¼šâ€œ^((0?[1-9])|((1|2)[0-9])|30|31)$â€ 
+ã€€ã€€æ­£ç¡®æ ¼å¼ä¸ºï¼šâ€œ01â€â€œ09â€å’Œâ€œ1â€â€œ31â€ã€‚ 
+ã€€ã€€åŒ¹é…ä¸­æ–‡å­—ç¬¦çš„æ­£åˆ™è¡¨è¾¾å¼ï¼š [u4e00-u9fa5] 
+ã€€ã€€åŒ¹é…åŒå­—èŠ‚å­—ç¬¦(åŒ…æ‹¬æ±‰å­—åœ¨å†…)ï¼š[^x00-xff] 
+ã€€ã€€åŒ¹é…ç©ºè¡Œçš„æ­£åˆ™è¡¨è¾¾å¼ï¼šn[s| ]*r 
+ã€€ã€€åŒ¹é…HTMLæ ‡è®°çš„æ­£åˆ™è¡¨è¾¾å¼ï¼š/<(.*)>.*|<(.*) />/ 
+ã€€ã€€åŒ¹é…é¦–å°¾ç©ºæ ¼çš„æ­£åˆ™è¡¨è¾¾å¼ï¼š(^s*)|(s*$)  
+ã€€ã€€
 
-¶þ¡¢ÕýÔò±í´ïÊ½Ó¦ÓÃ
-(1)Ó¦ÓÃ£º¼ÆËã×Ö·û´®µÄ³¤¶È£¨Ò»¸öË«×Ö½Ú×Ö·û³¤¶È¼Æ2£¬ASCII×Ö·û¼Æ1£© 
-¡¡¡¡String.prototype.len=function(){return this.replace([^x00-xff]/g,"aa").length;} 
-¡¡¡¡
+äºŒã€æ­£åˆ™è¡¨è¾¾å¼åº”ç”¨
+(1)åº”ç”¨ï¼šè®¡ç®—å­—ç¬¦ä¸²çš„é•¿åº¦ï¼ˆä¸€ä¸ªåŒå­—èŠ‚å­—ç¬¦é•¿åº¦è®¡2ï¼ŒASCIIå­—ç¬¦è®¡1ï¼‰ 
+ã€€ã€€String.prototype.len=function(){return this.replace([^x00-xff]/g,"aa").length;} 
+ã€€ã€€
 
-(2)Ó¦ÓÃ£ºjavascriptÖÐÃ»ÓÐÏñvbscriptÄÇÑùµÄtrimº¯Êý£¬ÎÒÃÇ¾Í¿ÉÒÔÀûÓÃÕâ¸ö±í´ïÊ½À´ÊµÏÖ 
-¡¡¡¡String.prototype.trim = function() 
-¡¡¡¡{ 
-¡¡¡¡¡¡¡¡return this.replace(/(^s*)|(s*$)/g, ""); 
-¡¡¡¡} 
+(2)åº”ç”¨ï¼šjavascriptä¸­æ²¡æœ‰åƒvbscripté‚£æ ·çš„trimå‡½æ•°ï¼Œæˆ‘ä»¬å°±å¯ä»¥åˆ©ç”¨è¿™ä¸ªè¡¨è¾¾å¼æ¥å®žçŽ° 
+ã€€ã€€String.prototype.trim = function() 
+ã€€ã€€{ 
+ã€€ã€€ã€€ã€€return this.replace(/(^s*)|(s*$)/g, ""); 
+ã€€ã€€} 
 
-(3)Ó¦ÓÃ£ºÀûÓÃÕýÔò±í´ïÊ½·Ö½âºÍ×ª»»IPµØÖ· 
-¡¡¡¡
+(3)åº”ç”¨ï¼šåˆ©ç”¨æ­£åˆ™è¡¨è¾¾å¼åˆ†è§£å’Œè½¬æ¢IPåœ°å€ 
+ã€€ã€€
 
-¸´ÖÆ´úÂë
-function IP2V(ip) //IPµØÖ·×ª»»³É¶ÔÓ¦ÊýÖµ 
+å¤åˆ¶ä»£ç 
+function IP2V(ip) //IPåœ°å€è½¬æ¢æˆå¯¹åº”æ•°å€¼ 
 { 
-¡¡¡¡re=/(d+).(d+).(d+).(d+)/g //Æ¥ÅäIPµØÖ·µÄÕýÔò±í´ïÊ½ 
-¡¡¡¡if(re.test(ip)) 
-¡¡¡¡{ 
-¡¡¡¡    return RegExp.$1*Math.pow(255,3))+RegExp.$2*Math.pow(255,2))+RegExp.$3*255+RegExp.$4*1 
-¡¡¡¡} 
-¡¡¡¡else 
-¡¡¡¡{ 
-¡¡¡¡    throw new Error("Not a valid IP address!") 
-¡¡¡¡} 
+ã€€ã€€re=/(d+).(d+).(d+).(d+)/g //åŒ¹é…IPåœ°å€çš„æ­£åˆ™è¡¨è¾¾å¼ 
+ã€€ã€€if(re.test(ip)) 
+ã€€ã€€{ 
+ã€€ã€€    return RegExp.$1*Math.pow(255,3))+RegExp.$2*Math.pow(255,2))+RegExp.$3*255+RegExp.$4*1 
+ã€€ã€€} 
+ã€€ã€€else 
+ã€€ã€€{ 
+ã€€ã€€    throw new Error("Not a valid IP address!") 
+ã€€ã€€} 
 } 
-¸´ÖÆ´úÂë
-¡¡¡¡
+å¤åˆ¶ä»£ç 
+ã€€ã€€
 
-(4)Ó¦ÓÃ£º´ÓURLµØÖ·ÖÐÌáÈ¡ÎÄ¼þÃûµÄjavascript³ÌÐò 
-¡¡¡¡s="http://www.9499.net/page1.htm"; 
-¡¡¡¡s=s.replace(/(.*/){0,}([^.]+).*/ig,"$2") ;//Page1.htm 
-¡¡¡¡
+(4)åº”ç”¨ï¼šä»ŽURLåœ°å€ä¸­æå–æ–‡ä»¶åçš„javascriptç¨‹åº 
+ã€€ã€€s="http://www.9499.net/page1.htm"; 
+ã€€ã€€s=s.replace(/(.*/){0,}([^.]+).*/ig,"$2") ;//Page1.htm 
+ã€€ã€€
 
-(5)Ó¦ÓÃ£ºÀûÓÃÕýÔò±í´ïÊ½ÏÞÖÆÍøÒ³±íµ¥ÀïµÄÎÄ±¾¿òÊäÈëÄÚÈÝ 
-¡¡¡¡
-ÓÃÕýÔò±í´ïÊ½ÏÞÖÆÖ»ÄÜÊäÈëÖÐÎÄ£ºonkeyup="value=value.replace(/[^u4E00-u9FA5]/g,'') "onbeforepaste="clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^u4E00-u9FA5]/g,''))" 
-¡¡¡¡
-ÓÃÕýÔò±í´ïÊ½ÏÞÖÆÖ»ÄÜÊäÈëÈ«½Ç×Ö·û£º onkeyup="value=value.replace(/[^uFF00-uFFFF]/g,'') "onbeforepaste="clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^uFF00-uFFFF]/g,''))" 
-¡¡¡¡
-ÓÃÕýÔò±í´ïÊ½ÏÞÖÆÖ»ÄÜÊäÈëÊý×Ö£ºonkeyup="value=value.replace(/[^d]/g,'') "onbeforepaste= "clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^d]/g,''))" 
-¡¡¡¡
-ÓÃÕýÔò±í´ïÊ½ÏÞÖÆÖ»ÄÜÊäÈëÊý×ÖºÍÓ¢ÎÄ£ºonkeyup="value=value.replace(/[W]/g,'') "onbeforepaste="clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^d]/g,''
+(5)åº”ç”¨ï¼šåˆ©ç”¨æ­£åˆ™è¡¨è¾¾å¼é™åˆ¶ç½‘é¡µè¡¨å•é‡Œçš„æ–‡æœ¬æ¡†è¾“å…¥å†…å®¹ 
+ã€€ã€€
+ç”¨æ­£åˆ™è¡¨è¾¾å¼é™åˆ¶åªèƒ½è¾“å…¥ä¸­æ–‡ï¼šonkeyup="value=value.replace(/[^u4E00-u9FA5]/g,'') "onbeforepaste="clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^u4E00-u9FA5]/g,''))" 
+ã€€ã€€
+ç”¨æ­£åˆ™è¡¨è¾¾å¼é™åˆ¶åªèƒ½è¾“å…¥å…¨è§’å­—ç¬¦ï¼š onkeyup="value=value.replace(/[^uFF00-uFFFF]/g,'') "onbeforepaste="clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^uFF00-uFFFF]/g,''))" 
+ã€€ã€€
+ç”¨æ­£åˆ™è¡¨è¾¾å¼é™åˆ¶åªèƒ½è¾“å…¥æ•°å­—ï¼šonkeyup="value=value.replace(/[^d]/g,'') "onbeforepaste= "clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^d]/g,''))" 
+ã€€ã€€
+ç”¨æ­£åˆ™è¡¨è¾¾å¼é™åˆ¶åªèƒ½è¾“å…¥æ•°å­—å’Œè‹±æ–‡ï¼šonkeyup="value=value.replace(/[W]/g,'') "onbeforepaste="clipboardData.setData(''text'',clipboardData.getData(''text'').replace(/[^d]/g,''
 
  
 
-Èý¡¢/i,/g,/ig,/gi,/m
-ÕýÔò±í´ïÊ½ÖÐ/i,/g,/ig,/gi,/mµÄÇø±ðºÍº¬Òå
+ä¸‰ã€/i,/g,/ig,/gi,/m
+æ­£åˆ™è¡¨è¾¾å¼ä¸­/i,/g,/ig,/gi,/mçš„åŒºåˆ«å’Œå«ä¹‰
 
-/i (ºöÂÔ´óÐ¡Ð´)
-/g (È«ÎÄ²éÕÒ³öÏÖµÄËùÓÐÆ¥Åä×Ö·û)
-/m (¶àÐÐ²éÕÒ)
-/gi(È«ÎÄ²éÕÒ¡¢ºöÂÔ´óÐ¡Ð´)
-/ig(È«ÎÄ²éÕÒ¡¢ºöÂÔ´óÐ¡Ð´)
+/i (å¿½ç•¥å¤§å°å†™)
+/g (å…¨æ–‡æŸ¥æ‰¾å‡ºçŽ°çš„æ‰€æœ‰åŒ¹é…å­—ç¬¦)
+/m (å¤šè¡ŒæŸ¥æ‰¾)
+/gi(å…¨æ–‡æŸ¥æ‰¾ã€å¿½ç•¥å¤§å°å†™)
+/ig(å…¨æ–‡æŸ¥æ‰¾ã€å¿½ç•¥å¤§å°å†™)
 
 
- awkÊµÏÖgroup by ,Í³¼Ælog×î´ó·ÃÎÊµÄip
+ awkå®žçŽ°group by ,ç»Ÿè®¡logæœ€å¤§è®¿é—®çš„ip
 awk '{a[$2]+=1}END{for (i in a)print i,a[i]}' file  
 
-awkµÄÊý×é 
-ÆäÏÂ±ê¿ÉÒÔÊÇÈÎÒâ×Ö·û»òÕß×Ö·û´®¡£±ÈÈça[bob]£¬±íÊ¾Êý×éaµÄÒ»¸öÔªËØ£¬ËüµÄÏÂ±êÊÇ"bob"¡£ 
-ÉÏÃæÀý×ÓÖÐ¾ÍÊÇ°Ñ$2µ±Êý×éÏÂ±ê£¬valueÊÇ´ÎÊý¡£ 
+awkçš„æ•°ç»„ 
+å…¶ä¸‹æ ‡å¯ä»¥æ˜¯ä»»æ„å­—ç¬¦æˆ–è€…å­—ç¬¦ä¸²ã€‚æ¯”å¦‚a[bob]ï¼Œè¡¨ç¤ºæ•°ç»„açš„ä¸€ä¸ªå…ƒç´ ï¼Œå®ƒçš„ä¸‹æ ‡æ˜¯"bob"ã€‚ 
+ä¸Šé¢ä¾‹å­ä¸­å°±æ˜¯æŠŠ$2å½“æ•°ç»„ä¸‹æ ‡ï¼Œvalueæ˜¯æ¬¡æ•°ã€‚ 
 
-È»ºóÔÙÓÃsortÅÅÐò 
--k Ê¹ÓÃÄÄ¸ö×Ö¶ÎÅÅÐò 
--n °´ÕÕÊýÖµÀ´ÅÅÐò  9 < 10 
--r µ¹Ðò 
--t<·Ö¸ô×Ö·û>  Ö¸¶¨ÅÅÐòÊ±ËùÓÃµÄÀ¸Î»·Ö¸ô×Ö·û 
+ç„¶åŽå†ç”¨sortæŽ’åº 
+-k ä½¿ç”¨å“ªä¸ªå­—æ®µæŽ’åº 
+-n æŒ‰ç…§æ•°å€¼æ¥æŽ’åº  9 < 10 
+-r å€’åº 
+-t<åˆ†éš”å­—ç¬¦>  æŒ‡å®šæŽ’åºæ—¶æ‰€ç”¨çš„æ ä½åˆ†éš”å­—ç¬¦ 
 
-sort -n -k 2 filename > Êä³ö½á¹ûfilename  
+sort -n -k 2 filename > è¾“å‡ºç»“æžœfilename  
 
-³ýÁËÒÔÉÏ·½·¨Íâ£¬»¹¿ÉÒÔÊ¹ÓÃuniq 
-uniqÈ¥ÖØ¸´ 
-uniq -c ÔÚÊä³öÐÐÇ°Ãæ¼ÓÉÏÃ¿ÐÐÔÚÊäÈëÎÄ¼þÖÐ³öÏÖµÄ´ÎÊý¡£ 
+é™¤äº†ä»¥ä¸Šæ–¹æ³•å¤–ï¼Œè¿˜å¯ä»¥ä½¿ç”¨uniq 
+uniqåŽ»é‡å¤ 
+uniq -c åœ¨è¾“å‡ºè¡Œå‰é¢åŠ ä¸Šæ¯è¡Œåœ¨è¾“å…¥æ–‡ä»¶ä¸­å‡ºçŽ°çš„æ¬¡æ•°ã€‚ 
 
-Java´úÂë  ÊÕ²Ø´úÂë
+Javaä»£ç   æ”¶è—ä»£ç 
 awk '{print $2}'filename| sort | uniq -c | sort -n  
 
 
 
 
-I/OÖØ¶¨ÏòÏê½â
-1¡¢ »ù±¾¸ÅÄî(ÕâÊÇÀí½âºóÃæµÄÖªÊ¶µÄÇ°Ìá£¬ÇëÎñ±ØÀí½â)
-a¡¢ I/OÖØ¶¨ÏòÍ¨³£Óë FDÓÐ¹Ø£¬shellµÄFDÍ¨³£Îª10¸ö£¬¼´ 0¡«9;
-b¡¢ ³£ÓÃFDÓÐ3¸ö£¬Îª0(stdin£¬±ê×¼ÊäÈë)¡¢1(stdout£¬±ê×¼Êä³ö)¡¢2(stderr£¬±ê×¼´íÎóÊä³ö)£¬Ä¬ÈÏÓëkeyboard¡¢monitor¡¢monitorÓÐ¹Ø;
-c¡¢ ÓÃ < À´¸Ä±ä¶Á½øµÄÊý¾ÝÐÅµÀ(stdin)£¬Ê¹Ö®´ÓÖ¸¶¨µÄµµ°¸¶Á½ø;
-d¡¢ ÓÃ > À´¸Ä±äËÍ³öµÄÊý¾ÝÐÅµÀ(stdout, stderr)£¬Ê¹Ö®Êä³öµ½Ö¸¶¨µÄµµ°¸;
-e¡¢ 0 ÊÇ < µÄÄ¬ÈÏÖµ£¬Òò´Ë < Óë 0<ÊÇÒ»ÑùµÄ;Í¬Àí£¬> Óë 1> ÊÇÒ»ÑùµÄ;
-f¡¢ ÔÚIOÖØ¶¨Ïò ÖÐ£¬stdout Óë stderr µÄ¹ÜµÀ»áÏÈ×¼±¸ºÃ£¬²Å»á´Ó stdin ¶Á½ø×ÊÁÏ;
-g¡¢ ¹ÜµÀ¡°|¡±(pipe line):ÉÏÒ»¸öÃüÁîµÄ stdout ½Óµ½ÏÂÒ»¸öÃüÁîµÄ stdin;
-h¡¢ tee ÃüÁîÊÇÔÚ²»Ó°ÏìÔ­±¾ I/O µÄÇé¿öÏÂ£¬½« stdout ¸´ÖÆÒ»·Ýµ½µµ°¸È¥;
-i¡¢ bash(ksh)Ö´ÐÐÃüÁîµÄ¹ý³Ì£º·ÖÎöÃüÁî-±äÁ¿ÇóÖµ-ÃüÁîÌæ´ú(``ºÍ$( ))-ÖØ¶¨Ïò-Í¨Åä·ûÕ¹¿ª-È·¶¨Â·¾¶-Ö´ÐÐÃüÁî;
-j¡¢ ( ) ½« command group ÖÃÓÚ sub-shell È¥Ö´ÐÐ£¬Ò²³Æ nested sub-shell£¬ËüÓÐÒ»µã·Ç³£ÖØÒªµÄÌØÐÔÊÇ£º¼Ì³Ð¸¸shellµÄStandard input, output, and error plus any other open file descriptors¡£
-k¡¢ exec ÃüÁî£º³£ÓÃÀ´Ìæ´úµ±Ç° shell ²¢ÖØÐÂÆô¶¯Ò»¸ö shell£¬»»¾ä»°Ëµ£¬²¢Ã»ÓÐÆô¶¯×Ó shell¡£Ê¹ÓÃÕâÒ»ÃüÁîÊ±ÈÎºÎÏÖÓÐ»·¾³¶¼½«»á±»Çå³ý¡£exec ÔÚ¶ÔÎÄ¼þÃèÊö·û½øÐÐ²Ù×÷µÄÊ±ºò£¬Ò²Ö»ÓÐÔÚÕâÊ±£¬exec ²»»á¸²¸ÇÄãµ±Ç°µÄ shell »·¾³¡£
-2¡¢ »ù±¾IO
-cmd > file °Ñ stdout ÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ;
-cmd >> file °Ñ stdout ÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ(×·¼Ó);
-cmd 1> fiel °Ñ stdout ÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ;
-cmd > file 2>&1 °Ñ stdout ºÍ stderr Ò»ÆðÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ;
-cmd 2> file °Ñ stderr ÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ;
-cmd 2>> file °Ñ stderr ÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ(×·¼Ó);
-cmd >> file 2>&1 °Ñ stderr ºÍ stderr Ò»ÆðÖØ¶¨Ïòµ½ file ÎÄ¼þÖÐ(×·¼Ó);
-cmd < file >file2 cmd ÃüÁîÒÔ file ÎÄ¼þ×÷Îª stdin£¬ÒÔ file2 ÎÄ¼þ×÷Îª stdout;
-cat <>file ÒÔ¶ÁÐ´µÄ·½Ê½´ò¿ª file;
-cmd < file cmd ÃüÁîÒÔ file ÎÄ¼þ×÷Îª stdin;
-cmd << delimiter Here document£¬´Ó stdin ÖÐ¶ÁÈë£¬Ö±ÖÁÓöµ½ delimiter ·Ö½ç·û¡£
-3¡¢ ½ø½×IO
->&n Ê¹ÓÃÏµÍ³µ÷ÓÃ dup (2) ¸´ÖÆÎÄ¼þÃèÊö·û n ²¢°Ñ½á¹ûÓÃ×÷±ê×¼Êä³ö;
-<&n ±ê×¼ÊäÈë¸´ÖÆ×ÔÎÄ¼þÃèÊö·û n;
-<&- ¹Ø±Õ±ê×¼ÊäÈë(¼üÅÌ);
->&- ¹Ø±Õ±ê×¼Êä³ö;
-n<&- ±íÊ¾½« n ºÅÊäÈë¹Ø±Õ;
-n>&- ±íÊ¾½« n ºÅÊä³ö¹Ø±Õ;
-ÉÏÊöËùÓÐÐÎÊ½¶¼¿ÉÒÔÇ°µ¼Ò»¸öÊý×Ö£¬´ËÊ±½¨Á¢µÄÎÄ¼þÃèÊö·ûÓÉÕâ¸öÊý×ÖÖ¸¶¨¶ø²»ÊÇÈ±Ê¡µÄ 0 »ò 1¡£Èç£º
-... 2>file ÔËÐÐÒ»¸öÃüÁî²¢°Ñ´íÎóÊä³ö(ÎÄ¼þÃèÊö·û 2)¶¨Ïòµ½ file¡£
-... 2>&1 ÔËÐÐÒ»¸öÃüÁî²¢°ÑËüµÄ±ê×¼Êä³öºÍÊä³öºÏ²¢¡£(ÑÏ¸ñµÄËµÊÇÍ¨¹ý¸´ÖÆÎÄ¼þÃèÊö·û 1 À´½¨Á¢ÎÄ¼þÃèÊö·û 2 £¬µ«Ð§¹ûÍ¨³£ÊÇºÏ²¢ÁËÁ½¸öÁ÷¡£)
-ÎÒÃÇ¶Ô 2>&1ÏêÏ¸ËµÃ÷Ò»ÏÂ £º2>&1 Ò²¾ÍÊÇ FD2=FD1 £¬ÕâÀï²¢²»ÊÇËµFD2 µÄÖµ µÈÓÚFD1µÄÖµ£¬ÒòÎª > ÊÇ¸Ä±äËÍ³öµÄÊý¾ÝÐÅµÀ£¬Ò²¾ÍÊÇËµ°Ñ FD2 µÄ ¡°Êý¾ÝÊä³öÍ¨µÀ¡± ¸ÄÎª FD1 µÄ ¡°Êý¾ÝÊä³öÍ¨µÀ¡±¡£Èç¹û½ö½öÕâÑù£¬Õâ¸ö¸Ä±äºÃÏñÃ»ÓÐÊ²Ã´×÷ÓÃ£¬ÒòÎª FD2 µÄÄ¬ÈÏÊä³öºÍ FD1µÄÄ¬ÈÏÊä³ö±¾À´¶¼ÊÇ monitor£¬Ò»ÑùµÄ!µ«ÊÇ£¬µ± FD1 ÊÇÆäËûÎÄ¼þ£¬ÉõÖÁÊÇÆäËû FD Ê±£¬Õâ¸ö¾Í¾ßÓÐÌØÊâµÄÓÃÍ¾ÁË¡£Çë´ó¼ÒÎñ±ØÀí½âÕâÒ»µã¡£
-exec 0exec 1>outfilename # ´ò¿ªÎÄ¼þoutfilename×÷Îªstdout¡£
-exec 2>errfilename # ´ò¿ªÎÄ¼þ errfilename×÷Îª stderr¡£
-exec 0<&- # ¹Ø±Õ FD0¡£
-exec 1>&- # ¹Ø±Õ FD1¡£
-exec 5>&- # ¹Ø±Õ FD5¡£
+I/Oé‡å®šå‘è¯¦è§£
+1ã€ åŸºæœ¬æ¦‚å¿µ(è¿™æ˜¯ç†è§£åŽé¢çš„çŸ¥è¯†çš„å‰æï¼Œè¯·åŠ¡å¿…ç†è§£)
+aã€ I/Oé‡å®šå‘é€šå¸¸ä¸Ž FDæœ‰å…³ï¼Œshellçš„FDé€šå¸¸ä¸º10ä¸ªï¼Œå³ 0ï½ž9;
+bã€ å¸¸ç”¨FDæœ‰3ä¸ªï¼Œä¸º0(stdinï¼Œæ ‡å‡†è¾“å…¥)ã€1(stdoutï¼Œæ ‡å‡†è¾“å‡º)ã€2(stderrï¼Œæ ‡å‡†é”™è¯¯è¾“å‡º)ï¼Œé»˜è®¤ä¸Žkeyboardã€monitorã€monitoræœ‰å…³;
+cã€ ç”¨ < æ¥æ”¹å˜è¯»è¿›çš„æ•°æ®ä¿¡é“(stdin)ï¼Œä½¿ä¹‹ä»ŽæŒ‡å®šçš„æ¡£æ¡ˆè¯»è¿›;
+dã€ ç”¨ > æ¥æ”¹å˜é€å‡ºçš„æ•°æ®ä¿¡é“(stdout, stderr)ï¼Œä½¿ä¹‹è¾“å‡ºåˆ°æŒ‡å®šçš„æ¡£æ¡ˆ;
+eã€ 0 æ˜¯ < çš„é»˜è®¤å€¼ï¼Œå› æ­¤ < ä¸Ž 0<æ˜¯ä¸€æ ·çš„;åŒç†ï¼Œ> ä¸Ž 1> æ˜¯ä¸€æ ·çš„;
+fã€ åœ¨IOé‡å®šå‘ ä¸­ï¼Œstdout ä¸Ž stderr çš„ç®¡é“ä¼šå…ˆå‡†å¤‡å¥½ï¼Œæ‰ä¼šä»Ž stdin è¯»è¿›èµ„æ–™;
+gã€ ç®¡é“â€œ|â€(pipe line):ä¸Šä¸€ä¸ªå‘½ä»¤çš„ stdout æŽ¥åˆ°ä¸‹ä¸€ä¸ªå‘½ä»¤çš„ stdin;
+hã€ tee å‘½ä»¤æ˜¯åœ¨ä¸å½±å“åŽŸæœ¬ I/O çš„æƒ…å†µä¸‹ï¼Œå°† stdout å¤åˆ¶ä¸€ä»½åˆ°æ¡£æ¡ˆåŽ»;
+iã€ bash(ksh)æ‰§è¡Œå‘½ä»¤çš„è¿‡ç¨‹ï¼šåˆ†æžå‘½ä»¤-å˜é‡æ±‚å€¼-å‘½ä»¤æ›¿ä»£(``å’Œ$( ))-é‡å®šå‘-é€šé…ç¬¦å±•å¼€-ç¡®å®šè·¯å¾„-æ‰§è¡Œå‘½ä»¤;
+jã€ ( ) å°† command group ç½®äºŽ sub-shell åŽ»æ‰§è¡Œï¼Œä¹Ÿç§° nested sub-shellï¼Œå®ƒæœ‰ä¸€ç‚¹éžå¸¸é‡è¦çš„ç‰¹æ€§æ˜¯ï¼šç»§æ‰¿çˆ¶shellçš„Standard input, output, and error plus any other open file descriptorsã€‚
+kã€ exec å‘½ä»¤ï¼šå¸¸ç”¨æ¥æ›¿ä»£å½“å‰ shell å¹¶é‡æ–°å¯åŠ¨ä¸€ä¸ª shellï¼Œæ¢å¥è¯è¯´ï¼Œå¹¶æ²¡æœ‰å¯åŠ¨å­ shellã€‚ä½¿ç”¨è¿™ä¸€å‘½ä»¤æ—¶ä»»ä½•çŽ°æœ‰çŽ¯å¢ƒéƒ½å°†ä¼šè¢«æ¸…é™¤ã€‚exec åœ¨å¯¹æ–‡ä»¶æè¿°ç¬¦è¿›è¡Œæ“ä½œçš„æ—¶å€™ï¼Œä¹Ÿåªæœ‰åœ¨è¿™æ—¶ï¼Œexec ä¸ä¼šè¦†ç›–ä½ å½“å‰çš„ shell çŽ¯å¢ƒã€‚
+2ã€ åŸºæœ¬IO
+cmd > file æŠŠ stdout é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­;
+cmd >> file æŠŠ stdout é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­(è¿½åŠ );
+cmd 1> fiel æŠŠ stdout é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­;
+cmd > file 2>&1 æŠŠ stdout å’Œ stderr ä¸€èµ·é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­;
+cmd 2> file æŠŠ stderr é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­;
+cmd 2>> file æŠŠ stderr é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­(è¿½åŠ );
+cmd >> file 2>&1 æŠŠ stderr å’Œ stderr ä¸€èµ·é‡å®šå‘åˆ° file æ–‡ä»¶ä¸­(è¿½åŠ );
+cmd < file >file2 cmd å‘½ä»¤ä»¥ file æ–‡ä»¶ä½œä¸º stdinï¼Œä»¥ file2 æ–‡ä»¶ä½œä¸º stdout;
+cat <>file ä»¥è¯»å†™çš„æ–¹å¼æ‰“å¼€ file;
+cmd < file cmd å‘½ä»¤ä»¥ file æ–‡ä»¶ä½œä¸º stdin;
+cmd << delimiter Here documentï¼Œä»Ž stdin ä¸­è¯»å…¥ï¼Œç›´è‡³é‡åˆ° delimiter åˆ†ç•Œç¬¦ã€‚
+3ã€ è¿›é˜¶IO
+>&n ä½¿ç”¨ç³»ç»Ÿè°ƒç”¨ dup (2) å¤åˆ¶æ–‡ä»¶æè¿°ç¬¦ n å¹¶æŠŠç»“æžœç”¨ä½œæ ‡å‡†è¾“å‡º;
+<&n æ ‡å‡†è¾“å…¥å¤åˆ¶è‡ªæ–‡ä»¶æè¿°ç¬¦ n;
+<&- å…³é—­æ ‡å‡†è¾“å…¥(é”®ç›˜);
+>&- å…³é—­æ ‡å‡†è¾“å‡º;
+n<&- è¡¨ç¤ºå°† n å·è¾“å…¥å…³é—­;
+n>&- è¡¨ç¤ºå°† n å·è¾“å‡ºå…³é—­;
+ä¸Šè¿°æ‰€æœ‰å½¢å¼éƒ½å¯ä»¥å‰å¯¼ä¸€ä¸ªæ•°å­—ï¼Œæ­¤æ—¶å»ºç«‹çš„æ–‡ä»¶æè¿°ç¬¦ç”±è¿™ä¸ªæ•°å­—æŒ‡å®šè€Œä¸æ˜¯ç¼ºçœçš„ 0 æˆ– 1ã€‚å¦‚ï¼š
+... 2>file è¿è¡Œä¸€ä¸ªå‘½ä»¤å¹¶æŠŠé”™è¯¯è¾“å‡º(æ–‡ä»¶æè¿°ç¬¦ 2)å®šå‘åˆ° fileã€‚
+... 2>&1 è¿è¡Œä¸€ä¸ªå‘½ä»¤å¹¶æŠŠå®ƒçš„æ ‡å‡†è¾“å‡ºå’Œè¾“å‡ºåˆå¹¶ã€‚(ä¸¥æ ¼çš„è¯´æ˜¯é€šè¿‡å¤åˆ¶æ–‡ä»¶æè¿°ç¬¦ 1 æ¥å»ºç«‹æ–‡ä»¶æè¿°ç¬¦ 2 ï¼Œä½†æ•ˆæžœé€šå¸¸æ˜¯åˆå¹¶äº†ä¸¤ä¸ªæµã€‚)
+æˆ‘ä»¬å¯¹ 2>&1è¯¦ç»†è¯´æ˜Žä¸€ä¸‹ ï¼š2>&1 ä¹Ÿå°±æ˜¯ FD2=FD1 ï¼Œè¿™é‡Œå¹¶ä¸æ˜¯è¯´FD2 çš„å€¼ ç­‰äºŽFD1çš„å€¼ï¼Œå› ä¸º > æ˜¯æ”¹å˜é€å‡ºçš„æ•°æ®ä¿¡é“ï¼Œä¹Ÿå°±æ˜¯è¯´æŠŠ FD2 çš„ â€œæ•°æ®è¾“å‡ºé€šé“â€ æ”¹ä¸º FD1 çš„ â€œæ•°æ®è¾“å‡ºé€šé“â€ã€‚å¦‚æžœä»…ä»…è¿™æ ·ï¼Œè¿™ä¸ªæ”¹å˜å¥½åƒæ²¡æœ‰ä»€ä¹ˆä½œç”¨ï¼Œå› ä¸º FD2 çš„é»˜è®¤è¾“å‡ºå’Œ FD1çš„é»˜è®¤è¾“å‡ºæœ¬æ¥éƒ½æ˜¯ monitorï¼Œä¸€æ ·çš„!ä½†æ˜¯ï¼Œå½“ FD1 æ˜¯å…¶ä»–æ–‡ä»¶ï¼Œç”šè‡³æ˜¯å…¶ä»– FD æ—¶ï¼Œè¿™ä¸ªå°±å…·æœ‰ç‰¹æ®Šçš„ç”¨é€”äº†ã€‚è¯·å¤§å®¶åŠ¡å¿…ç†è§£è¿™ä¸€ç‚¹ã€‚
+exec 0exec 1>outfilename # æ‰“å¼€æ–‡ä»¶outfilenameä½œä¸ºstdoutã€‚
+exec 2>errfilename # æ‰“å¼€æ–‡ä»¶ errfilenameä½œä¸º stderrã€‚
+exec 0<&- # å…³é—­ FD0ã€‚
+exec 1>&- # å…³é—­ FD1ã€‚
+exec 5>&- # å…³é—­ FD5ã€‚
 1 COMMAND_OUTPUT >
-2 # ÖØ¶¨Ïòstdoutµ½Ò»¸öÎÄ¼þ.
-3 # Èç¹ûÃ»ÓÐÕâ¸öÎÄ¼þ¾Í´´½¨, ·ñÔò¾Í¸²¸Ç.
+2 # é‡å®šå‘stdoutåˆ°ä¸€ä¸ªæ–‡ä»¶.
+3 # å¦‚æžœæ²¡æœ‰è¿™ä¸ªæ–‡ä»¶å°±åˆ›å»º, å¦åˆ™å°±è¦†ç›–.
 4
 5 ls -lR > dir-tree.list
-6 # ´´½¨Ò»¸ö°üº¬Ä¿Â¼Ê÷ÁÐ±íµÄÎÄ¼þ.
+6 # åˆ›å»ºä¸€ä¸ªåŒ…å«ç›®å½•æ ‘åˆ—è¡¨çš„æ–‡ä»¶.
 7
 8 : > filename
-9 # > »á°ÑÎÄ¼þ"filename"½Ø¶ÏÎª0³¤¶È.
-10 # Èç¹ûÎÄ¼þ²»´æÔÚ, ÄÇÃ´¾Í´´½¨Ò»¸ö0³¤¶ÈµÄÎÄ¼þ(Óë'touch'µÄÐ§¹ûÏàÍ¬).
-11 # : ÊÇÒ»¸öÕ¼Î»·û, ²»²úÉúÈÎºÎÊä³ö.
+9 # > ä¼šæŠŠæ–‡ä»¶"filename"æˆªæ–­ä¸º0é•¿åº¦.
+10 # å¦‚æžœæ–‡ä»¶ä¸å­˜åœ¨, é‚£ä¹ˆå°±åˆ›å»ºä¸€ä¸ª0é•¿åº¦çš„æ–‡ä»¶(ä¸Ž'touch'çš„æ•ˆæžœç›¸åŒ).
+11 # : æ˜¯ä¸€ä¸ªå ä½ç¬¦, ä¸äº§ç”Ÿä»»ä½•è¾“å‡º.
 12
 13 > filename
-14 # > »á°ÑÎÄ¼þ"filename"½Ø¶ÏÎª0³¤¶È.
-15 # Èç¹ûÎÄ¼þ²»´æÔÚ, ÄÇÃ´¾Í´´½¨Ò»¸ö0³¤¶ÈµÄÎÄ¼þ(Óë'touch'µÄÐ§¹ûÏàÍ¬).
-16 # (ÓëÉÏ±ßµÄ": >"Ð§¹ûÏàÍ¬, µ«ÊÇÔÚÄ³Ð©shellÏÂ¿ÉÄÜ²»ÄÜ¹¤×÷.)
+14 # > ä¼šæŠŠæ–‡ä»¶"filename"æˆªæ–­ä¸º0é•¿åº¦.
+15 # å¦‚æžœæ–‡ä»¶ä¸å­˜åœ¨, é‚£ä¹ˆå°±åˆ›å»ºä¸€ä¸ª0é•¿åº¦çš„æ–‡ä»¶(ä¸Ž'touch'çš„æ•ˆæžœç›¸åŒ).
+16 # (ä¸Žä¸Šè¾¹çš„": >"æ•ˆæžœç›¸åŒ, ä½†æ˜¯åœ¨æŸäº›shellä¸‹å¯èƒ½ä¸èƒ½å·¥ä½œ.)
 17
 18 COMMAND_OUTPUT >>
-19 # ÖØ¶¨Ïòstdoutµ½Ò»¸öÎÄ¼þ.
-20 # Èç¹ûÎÄ¼þ²»´æÔÚ, ÄÇÃ´¾Í´´½¨Ëü, Èç¹û´æÔÚ, ÄÇÃ´¾Í×·¼Óµ½ÎÄ¼þºó±ß.
+19 # é‡å®šå‘stdoutåˆ°ä¸€ä¸ªæ–‡ä»¶.
+20 # å¦‚æžœæ–‡ä»¶ä¸å­˜åœ¨, é‚£ä¹ˆå°±åˆ›å»ºå®ƒ, å¦‚æžœå­˜åœ¨, é‚£ä¹ˆå°±è¿½åŠ åˆ°æ–‡ä»¶åŽè¾¹.
 21
 22
-23 # µ¥ÐÐÖØ¶¨ÏòÃüÁî(Ö»»áÓ°ÏìËüÃÇËùÔÚµÄÐÐ):
+23 # å•è¡Œé‡å®šå‘å‘½ä»¤(åªä¼šå½±å“å®ƒä»¬æ‰€åœ¨çš„è¡Œ):
 24 # --------------------------------------------------------------------
 25
 26 1>filename
-27 # ÖØ¶¨Ïòstdoutµ½ÎÄ¼þ"filename".
+27 # é‡å®šå‘stdoutåˆ°æ–‡ä»¶"filename".
 28 1>>filename
-29 # ÖØ¶¨Ïò²¢×·¼Óstdoutµ½ÎÄ¼þ"filename".
+29 # é‡å®šå‘å¹¶è¿½åŠ stdoutåˆ°æ–‡ä»¶"filename".
 30 2>filename
-31 # ÖØ¶¨Ïòstderrµ½ÎÄ¼þ"filename".
+31 # é‡å®šå‘stderråˆ°æ–‡ä»¶"filename".
 32 2>>filename
-33 # ÖØ¶¨Ïò²¢×·¼Óstderrµ½ÎÄ¼þ"filename".
+33 # é‡å®šå‘å¹¶è¿½åŠ stderråˆ°æ–‡ä»¶"filename".
 34 &>filename
-35 # ½«stdoutºÍstderr¶¼ÖØ¶¨Ïòµ½ÎÄ¼þ"filename".
+35 # å°†stdoutå’Œstderréƒ½é‡å®šå‘åˆ°æ–‡ä»¶"filename".
 36
 37 #==============================================================================
-38 # ÖØ¶¨Ïòstdout, Ò»´ÎÒ»ÐÐ.
+38 # é‡å®šå‘stdout, ä¸€æ¬¡ä¸€è¡Œ.
 39 LOGFILE=script.log
 40
 41 echo "This statement is sent to the log file, "$LOGFILE"." 1>$LOGFILE
 42 echo "This statement is appended to "$LOGFILE"." 1>>$LOGFILE
 43 echo "This statement is also appended to "$LOGFILE"." 1>>$LOGFILE
 44 echo "This statement is echoed to stdout, and will not appear in "$LOGFILE"."
-45 # Ã¿ÐÐ¹ýºó, ÕâÐ©ÖØ¶¨ÏòÃüÁî»á×Ô¶¯"reset".
+45 # æ¯è¡Œè¿‡åŽ, è¿™äº›é‡å®šå‘å‘½ä»¤ä¼šè‡ªåŠ¨"reset".
 
-49 # ÖØ¶¨Ïòstderr, Ò»´ÎÒ»ÐÐ.
+49 # é‡å®šå‘stderr, ä¸€æ¬¡ä¸€è¡Œ.
 50 ERRORFILE=script.errors
 51
-52 bad_command1 2>$ERRORFILE # ´íÎóÏûÏ¢·¢µ½$ERRORFILEÖÐ.
-53 bad_command2 2>>$ERRORFILE # ´íÎóÏûÏ¢Ìí¼Óµ½$ERRORFILEÖÐ.
-54 bad_command3 # ´íÎóÏûÏ¢echoµ½stderr,
-55 #+ ²¢ÇÒ²»³öÏÖÔÚ$ERRORFILEÖÐ.
-56 # Ã¿ÐÐ¹ýºó, ÕâÐ©ÖØ¶¨ÏòÃüÁîÒ²»á×Ô¶¯"reset".
+52 bad_command1 2>$ERRORFILE # é”™è¯¯æ¶ˆæ¯å‘åˆ°$ERRORFILEä¸­.
+53 bad_command2 2>>$ERRORFILE # é”™è¯¯æ¶ˆæ¯æ·»åŠ åˆ°$ERRORFILEä¸­.
+54 bad_command3 # é”™è¯¯æ¶ˆæ¯echoåˆ°stderr,
+55 #+ å¹¶ä¸”ä¸å‡ºçŽ°åœ¨$ERRORFILEä¸­.
+56 # æ¯è¡Œè¿‡åŽ, è¿™äº›é‡å®šå‘å‘½ä»¤ä¹Ÿä¼šè‡ªåŠ¨"reset".
 57 #==============================================================================
 
 61 2>&1
-62 # ÖØ¶¨Ïòstderrµ½stdout.
-63 # µÃµ½µÄ´íÎóÏûÏ¢ÓëstdoutÒ»Ñù, ·¢ËÍµ½Ò»¸öµØ·½.
+62 # é‡å®šå‘stderråˆ°stdout.
+63 # å¾—åˆ°çš„é”™è¯¯æ¶ˆæ¯ä¸Žstdoutä¸€æ ·, å‘é€åˆ°ä¸€ä¸ªåœ°æ–¹.
 64
 65 i>&j
-66 # ÖØ¶¨ÏòÎÄ¼þÃèÊö·ûi µ½ j.
-67 # Ö¸ÏòiÎÄ¼þµÄËùÓÐÊä³ö¶¼·¢ËÍµ½jÖÐÈ¥.
+66 # é‡å®šå‘æ–‡ä»¶æè¿°ç¬¦i åˆ° j.
+67 # æŒ‡å‘iæ–‡ä»¶çš„æ‰€æœ‰è¾“å‡ºéƒ½å‘é€åˆ°jä¸­åŽ».
 68
 69 >&j
-70 # Ä¬ÈÏµÄ, ÖØ¶¨ÏòÎÄ¼þÃèÊö·û1(stdout)µ½ j.
-71 # ËùÓÐ´«µÝµ½stdoutµÄÊä³ö¶¼ËÍµ½jÖÐÈ¥.
+70 # é»˜è®¤çš„, é‡å®šå‘æ–‡ä»¶æè¿°ç¬¦1(stdout)åˆ° j.
+71 # æ‰€æœ‰ä¼ é€’åˆ°stdoutçš„è¾“å‡ºéƒ½é€åˆ°jä¸­åŽ».
 72
 73 0< FILENAME
 74 < FILENAME
-75 # ´ÓÎÄ¼þÖÐ½ÓÊÜÊäÈë.
-76 # Óë">"ÊÇ³É¶ÔÃüÁî, ²¢ÇÒÍ¨³£¶¼ÊÇ½áºÏÊ¹ÓÃ.
+75 # ä»Žæ–‡ä»¶ä¸­æŽ¥å—è¾“å…¥.
+76 # ä¸Ž">"æ˜¯æˆå¯¹å‘½ä»¤, å¹¶ä¸”é€šå¸¸éƒ½æ˜¯ç»“åˆä½¿ç”¨.
 77 #
 78 # grep search-word
 79
 80
 81 [j]<>filename
-82 # ÎªÁË¶ÁÐ´"filename", °ÑÎÄ¼þ"filename"´ò¿ª, ²¢ÇÒ·ÖÅäÎÄ¼þÃèÊö·û"j"¸øËü.
-83 # Èç¹ûÎÄ¼þ"filename"²»´æÔÚ, ÄÇÃ´¾Í´´½¨Ëü.
-84 # Èç¹ûÎÄ¼þÃèÊö·û"j"Ã»Ö¸¶¨, ÄÇÄ¬ÈÏÊÇfd 0, stdin.
+82 # ä¸ºäº†è¯»å†™"filename", æŠŠæ–‡ä»¶"filename"æ‰“å¼€, å¹¶ä¸”åˆ†é…æ–‡ä»¶æè¿°ç¬¦"j"ç»™å®ƒ.
+83 # å¦‚æžœæ–‡ä»¶"filename"ä¸å­˜åœ¨, é‚£ä¹ˆå°±åˆ›å»ºå®ƒ.
+84 # å¦‚æžœæ–‡ä»¶æè¿°ç¬¦"j"æ²¡æŒ‡å®š, é‚£é»˜è®¤æ˜¯fd 0, stdin.
 85 #
-86 # ÕâÖÖÓ¦ÓÃÍ¨³£ÊÇÎªÁËÐ´µ½Ò»¸öÎÄ¼þÖÐÖ¸¶¨µÄµØ·½.
-87 echo 1234567890 > File # Ð´×Ö·û´®µ½"File".
-88 exec 3<> File # ´ò¿ª"File"²¢ÇÒ¸øËü·ÖÅäfd 3.
-89 read -n 4 <&3 # Ö»¶Á4¸ö×Ö·û.
-90 echo -n . >&3 # Ð´Ò»¸öÐ¡Êýµã.
-91 exec 3>&- # ¹Ø±Õfd 3.
+86 # è¿™ç§åº”ç”¨é€šå¸¸æ˜¯ä¸ºäº†å†™åˆ°ä¸€ä¸ªæ–‡ä»¶ä¸­æŒ‡å®šçš„åœ°æ–¹.
+87 echo 1234567890 > File # å†™å­—ç¬¦ä¸²åˆ°"File".
+88 exec 3<> File # æ‰“å¼€"File"å¹¶ä¸”ç»™å®ƒåˆ†é…fd 3.
+89 read -n 4 <&3 # åªè¯»4ä¸ªå­—ç¬¦.
+90 echo -n . >&3 # å†™ä¸€ä¸ªå°æ•°ç‚¹.
+91 exec 3>&- # å…³é—­fd 3.
 92 cat File # ==> 1234.67890
 
 
-93 # Ëæ»ú´æ´¢.
+93 # éšæœºå­˜å‚¨.
 
-98 # ¹ÜµÀ.
-99 # Í¨ÓÃÄ¿µÄµÄ´¦ÀíºÍÃüÁîÁ´¹¤¾ß.
-100 # Óë">"ºÜÏàËÆ, µ«ÊÇÊµ¼ÊÉÏ¸üÍ¨ÓÃ.
-101 # ¶ÔÓÚÏë½«ÃüÁî, ½Å±¾, ÎÄ¼þºÍ³ÌÐò´®Á¬ÆðÀ´µÄÊ±ºòºÜÓÐÓÃ.
+98 # ç®¡é“.
+99 # é€šç”¨ç›®çš„çš„å¤„ç†å’Œå‘½ä»¤é“¾å·¥å…·.
+100 # ä¸Ž">"å¾ˆç›¸ä¼¼, ä½†æ˜¯å®žé™…ä¸Šæ›´é€šç”¨.
+101 # å¯¹äºŽæƒ³å°†å‘½ä»¤, è„šæœ¬, æ–‡ä»¶å’Œç¨‹åºä¸²è¿žèµ·æ¥çš„æ—¶å€™å¾ˆæœ‰ç”¨.
 102 cat *.txt | sort | uniq > result-file
-103 # ¶ÔËùÓÐµÄ.txtÎÄ¼þµÄÊä³ö½øÐÐÅÅÐò, ²¢ÇÒÉ¾³ýÖØ¸´ÐÐ,
-104 # ×îºó½«½á¹û±£´æµ½"result-file"ÖÐ.
-¿ÉÒÔ½«ÊäÈëÊä³öÖØ¶¨ÏòºÍ(»ò)¹ÜµÀµÄ¶à¸öÊµÀý½áºÏµ½Ò»ÆðÐ´ÔÚÒ»ÐÐÉÏ.
+103 # å¯¹æ‰€æœ‰çš„.txtæ–‡ä»¶çš„è¾“å‡ºè¿›è¡ŒæŽ’åº, å¹¶ä¸”åˆ é™¤é‡å¤è¡Œ,
+104 # æœ€åŽå°†ç»“æžœä¿å­˜åˆ°"result-file"ä¸­.
+å¯ä»¥å°†è¾“å…¥è¾“å‡ºé‡å®šå‘å’Œ(æˆ–)ç®¡é“çš„å¤šä¸ªå®žä¾‹ç»“åˆåˆ°ä¸€èµ·å†™åœ¨ä¸€è¡Œä¸Š.
 1 command < input-file > output-file
 2
 3 command1 | command2 | command3 > output-file
-¿ÉÒÔ½«¶à¸öÊä³öÁ÷ÖØ¶¨Ïòµ½Ò»¸öÎÄ¼þÉÏ.
+å¯ä»¥å°†å¤šä¸ªè¾“å‡ºæµé‡å®šå‘åˆ°ä¸€ä¸ªæ–‡ä»¶ä¸Š.
 1 ls -yz >> command.log 2>&1
-2 # ½«´íÎóÑ¡Ïî"yz"µÄ½á¹û·Åµ½ÎÄ¼þ"command.log"ÖÐ.
-3 # ÒòÎªstderr±»ÖØ¶¨Ïòµ½Õâ¸öÎÄ¼þÖÐ,
-4 #+ ËùÓÐµÄ´íÎóÏûÏ¢Ò²¾Í¶¼Ö¸ÏòÄÇÀïÁË.
+2 # å°†é”™è¯¯é€‰é¡¹"yz"çš„ç»“æžœæ”¾åˆ°æ–‡ä»¶"command.log"ä¸­.
+3 # å› ä¸ºstderrè¢«é‡å®šå‘åˆ°è¿™ä¸ªæ–‡ä»¶ä¸­,
+4 #+ æ‰€æœ‰çš„é”™è¯¯æ¶ˆæ¯ä¹Ÿå°±éƒ½æŒ‡å‘é‚£é‡Œäº†.
 5
-6 # ×¢Òâ, ÏÂ±ßÕâ¸öÀý×Ó¾Í²»»á¸ø³öÏàÍ¬µÄ½á¹û.
+6 # æ³¨æ„, ä¸‹è¾¹è¿™ä¸ªä¾‹å­å°±ä¸ä¼šç»™å‡ºç›¸åŒçš„ç»“æžœ.
 7 ls -yz 2>&1 >> command.log
-8 # Êä³öÒ»¸ö´íÎóÏûÏ¢, µ«ÊÇ²¢²»Ð´µ½ÎÄ¼þÖÐ.
+8 # è¾“å‡ºä¸€ä¸ªé”™è¯¯æ¶ˆæ¯, ä½†æ˜¯å¹¶ä¸å†™åˆ°æ–‡ä»¶ä¸­.
 9
-10 # Èç¹û½«stdoutºÍstderr¶¼ÖØ¶¨Ïò,
-11 #+ ÃüÁîµÄË³Ðò»áÓÐÐ©²»Í¬.
+10 # å¦‚æžœå°†stdoutå’Œstderréƒ½é‡å®šå‘,
+11 #+ å‘½ä»¤çš„é¡ºåºä¼šæœ‰äº›ä¸åŒ.
 exec
-Ê¹ÓÃexecÖØ¶¨Ïò±ê×¼ÊäÈë
+ä½¿ç”¨execé‡å®šå‘æ ‡å‡†è¾“å…¥
 1 #!/bin/bash
-2 # Ê¹ÓÃ'exec'ÖØ¶¨Ïò±ê×¼ÊäÈë.
+2 # ä½¿ç”¨'exec'é‡å®šå‘æ ‡å‡†è¾“å…¥.
 3
 4
-5 exec 6<&0 # ½«ÎÄ¼þÃèÊö·û#6ÓëstdinÁ´½ÓÆðÀ´.
-6 # ±£´æÁËstdin.
+5 exec 6<&0 # å°†æ–‡ä»¶æè¿°ç¬¦#6ä¸Žstdiné“¾æŽ¥èµ·æ¥.
+6 # ä¿å­˜äº†stdin.
 7
-8 exec < data-file # stdin±»ÎÄ¼þ"data-file"Ëù´úÌæ.
+8 exec < data-file # stdinè¢«æ–‡ä»¶"data-file"æ‰€ä»£æ›¿.
 9
-10 read a1 # ¶ÁÈ¡ÎÄ¼þ"data-file"µÄµÚÒ»ÐÐ.
-11 read a2 # ¶ÁÈ¡ÎÄ¼þ"data-file"µÄµÚ¶þÐÐ.
+10 read a1 # è¯»å–æ–‡ä»¶"data-file"çš„ç¬¬ä¸€è¡Œ.
+11 read a2 # è¯»å–æ–‡ä»¶"data-file"çš„ç¬¬äºŒè¡Œ.
 12
 13 echo
 14 echo "Following lines read from file."
@@ -628,13 +628,13 @@ exec
 19 echo; echo; echo
 20
 21 exec 0<&6 6<&-
-22 # ÏÖÔÚ½«stdin´Ófd #6ÖÐ»Ö¸´, ÒòÎª¸Õ²ÅÎÒÃÇ°ÑstdinÖØ¶¨Ïòµ½#6ÁË,
-23 #+ È»ºó¹Ø±Õfd #6 ( 6<&- ), ºÃÈÃÕâ¸öÃèÊö·û¼ÌÐø±»ÆäËû½ø³ÌËùÊ¹ÓÃ.
+22 # çŽ°åœ¨å°†stdinä»Žfd #6ä¸­æ¢å¤, å› ä¸ºåˆšæ‰æˆ‘ä»¬æŠŠstdiné‡å®šå‘åˆ°#6äº†,
+23 #+ ç„¶åŽå…³é—­fd #6 ( 6<&- ), å¥½è®©è¿™ä¸ªæè¿°ç¬¦ç»§ç»­è¢«å…¶ä»–è¿›ç¨‹æ‰€ä½¿ç”¨.
 24 #
-25 # <&6 6<&- ÕâÃ´×öÒ²¿ÉÒÔ.
+25 # <&6 6<&- è¿™ä¹ˆåšä¹Ÿå¯ä»¥.
 26
 27 echo -n "Enter data "
-28 read b1 # ÏÖÔÚ"read"ÒÑ¾­»Ö¸´Õý³£ÁË, ¾ÍÊÇ´ÓstdinÖÐ¶ÁÈ¡.
+28 read b1 # çŽ°åœ¨"read"å·²ç»æ¢å¤æ­£å¸¸äº†, å°±æ˜¯ä»Žstdinä¸­è¯»å–.
 29 echo "Input read from stdin."
 30 echo "----------------------"
 31 echo "b1 = $b1"
@@ -642,20 +642,20 @@ exec
 33 echo
 34
 35 exit 0
-Ê¹ÓÃexecÀ´ÖØ¶¨Ïòstdout
+ä½¿ç”¨execæ¥é‡å®šå‘stdout
 
 1 #!/bin/bash 
 2 # reassign-stdout.sh 
 3 
 4 LOGFILE=logfile.txt 
 5 
-6 exec 6>&1 # ½«fd #6ÓëstdoutÏàÁ¬½Ó. 
-7 # ±£´æstdout. 
+6 exec 6>&1 # å°†fd #6ä¸Žstdoutç›¸è¿žæŽ¥. 
+7 # ä¿å­˜stdout. 
 8 
-9 exec > $LOGFILE # stdout¾Í±»ÎÄ¼þ"logfile.txt"Ëù´úÌæÁË. 
+9 exec > $LOGFILE # stdoutå°±è¢«æ–‡ä»¶"logfile.txt"æ‰€ä»£æ›¿äº†. 
 10 
 11 # ----------------------------------------------------------- # 
-12 # ÔÚÕâ¿éÖÐËùÓÐÃüÁîµÄÊä³ö¾Í¶¼·¢ÏòÎÄ¼þ $LOGFILE. 
+12 # åœ¨è¿™å—ä¸­æ‰€æœ‰å‘½ä»¤çš„è¾“å‡ºå°±éƒ½å‘å‘æ–‡ä»¶ $LOGFILE. 
 13 
 14 echo -n "Logfile: " 
 15 date 
@@ -672,7 +672,7 @@ exec
 26 
 27 # ----------------------------------------------------------- # 
 28 
-29 exec 1>&6 6>&- # »Ö¸´stdout, È»ºó¹Ø±ÕÎÄ¼þÃèÊö·û#6. 
+29 exec 1>&6 6>&- # æ¢å¤stdout, ç„¶åŽå…³é—­æ–‡ä»¶æè¿°ç¬¦#6. 
 30 
 31 echo 
 32 echo "== stdout now restored to default == " 
@@ -681,20 +681,20 @@ exec
 35 echo 
 36 
 37 exit 0
-Ê¹ÓÃexecÔÚÍ¬Ò»½Å±¾ÖÐÖØ¶¨ÏòstdinºÍstdout
+ä½¿ç”¨execåœ¨åŒä¸€è„šæœ¬ä¸­é‡å®šå‘stdinå’Œstdout
 
 1 #!/bin/bash 
 2 # upperconv.sh 
-3 # ½«Ò»¸öÖ¸¶¨µÄÊäÈëÎÄ¼þ×ª»»Îª´óÐ´. 
+3 # å°†ä¸€ä¸ªæŒ‡å®šçš„è¾“å…¥æ–‡ä»¶è½¬æ¢ä¸ºå¤§å†™. 
 5 E_FILE_ACCESS=70 
 6 E_WRONG_ARGS=71  
-8 if [ ! -r "$1" ] # ÅÐ¶ÏÖ¸¶¨µÄÊäÈëÎÄ¼þÊÇ·ñ¿É¶Á? 
+8 if [ ! -r "$1" ] # åˆ¤æ–­æŒ‡å®šçš„è¾“å…¥æ–‡ä»¶æ˜¯å¦å¯è¯»? 
 9 then 
 10 echo "Can't read from input file!" 
 11 echo "Usage: $0 input-file output-file" 
 12 exit $E_FILE_ACCESS 
-13 fi # ¼´Ê¹ÊäÈëÎÄ¼þ($1)Ã»±»Ö¸¶¨ 
-14 #+ Ò²»¹ÊÇ»áÒÔÏàÍ¬µÄ´íÎóÍË³ö(ÎªÊ²Ã´?). 
+13 fi # å³ä½¿è¾“å…¥æ–‡ä»¶($1)æ²¡è¢«æŒ‡å®š 
+14 #+ ä¹Ÿè¿˜æ˜¯ä¼šä»¥ç›¸åŒçš„é”™è¯¯é€€å‡º(ä¸ºä»€ä¹ˆ?). 
 
 16 if [ -z "$2" ] 
 17 then 
@@ -704,27 +704,27 @@ exec
 21 fi 
 
 24 exec 4<&0 
-25 exec < $1 # ½«»á´ÓÊäÈëÎÄ¼þÖÐ¶ÁÈ¡. 
+25 exec < $1 # å°†ä¼šä»Žè¾“å…¥æ–‡ä»¶ä¸­è¯»å–. 
 26 
 27 exec 7>&1 
-28 exec > $2 # ½«Ð´µ½Êä³öÎÄ¼þÖÐ.
- 29 # ¼ÙÉèÊä³öÎÄ¼þÊÇ¿ÉÐ´µÄ(Ìí¼Ó¼ì²é?). 
+28 exec > $2 # å°†å†™åˆ°è¾“å‡ºæ–‡ä»¶ä¸­.
+ 29 # å‡è®¾è¾“å‡ºæ–‡ä»¶æ˜¯å¯å†™çš„(æ·»åŠ æ£€æŸ¥?). 
 30 
 31 # ----------------------------------------------- 
-32 cat - | tr a-z A-Z # ×ª»»Îª´óÐ´. 
-33 # ^^^^^ # ´ÓstdinÖÐ¶ÁÈ¡.Reads from stdin. 
-34 # ^^^^^^^^^^ # Ð´µ½stdoutÉÏ. 
-35 # È»¶ø, stdinºÍstdout¶¼±»ÖØ¶¨ÏòÁË. 
+32 cat - | tr a-z A-Z # è½¬æ¢ä¸ºå¤§å†™. 
+33 # ^^^^^ # ä»Žstdinä¸­è¯»å–.Reads from stdin. 
+34 # ^^^^^^^^^^ # å†™åˆ°stdoutä¸Š. 
+35 # ç„¶è€Œ, stdinå’Œstdoutéƒ½è¢«é‡å®šå‘äº†. 
 36 # ----------------------------------------------- 
 37 
-38 exec 1>&7 7>&- # »Ö¸´ stout. 
-39 exec 0<&4 4<&- # »Ö¸´ stdin. 
+38 exec 1>&7 7>&- # æ¢å¤ stout. 
+39 exec 0<&4 4<&- # æ¢å¤ stdin. 
 40 
-41 # »Ö¸´Ö®ºó, ÏÂ±ßÕâÐÐ´úÂë½«»áÈçÆÚÍûµÄÒ»Ñù´òÓ¡µ½stdoutÉÏ. 
+41 # æ¢å¤ä¹‹åŽ, ä¸‹è¾¹è¿™è¡Œä»£ç å°†ä¼šå¦‚æœŸæœ›çš„ä¸€æ ·æ‰“å°åˆ°stdoutä¸Š. 
 42 echo "File "$1" written to "$2" as uppercase conversion." 
 43 
 44 exit 0
-I/OÖØ¶¨ÏòÊÇÒ»ÖÖ±ÜÃâ¿ÉÅÂµÄ×ÓshellÖÐ²»¿É´æÈ¡±äÁ¿ÎÊÌâµÄ·½·¨.
+I/Oé‡å®šå‘æ˜¯ä¸€ç§é¿å…å¯æ€•çš„å­shellä¸­ä¸å¯å­˜å–å˜é‡é—®é¢˜çš„æ–¹æ³•.
 
 
 
