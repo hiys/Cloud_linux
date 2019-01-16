@@ -1860,3 +1860,263 @@ elasticsearch . yml 详解
 # 以上的translog配置都可以通过API进行动态的设置 - See more at: http://bigbo.github.io/pages/2015/04/10/elasticsearch_config/#sthash.AvOSUcQ4.dpuf
 
 
+lftp命令详解
+
+lftp.sh自动上传脚本：
+
+复制代码
+#!/bin/bash
+echo -e "\nScript start at \033[43;35m `date "+%H:%M:%S"` \033[0m"
+echo -e "\033[1;34m-----------------------------------------------------------------------\033[0m"
+cd /root/upload ; rm -fr /root/upload/*
+git clone git@10.35.33.29:xiaoban/server-api/xiaoban-server.git
+mv /root/upload/xiaoban-server/* /root/upload/ ; rm -fr /root/upload/xiaoban-server
+tar zcvf code.tar.gz ./* >/dev/null
+
+
+lftp << EOF
+open ftp://xiaoban:xiaoban@2018@ftp.wjoyxt.ren
+cd
+put /root/upload/code.tar.gz
+close 
+bye
+EOF
+rm -fr /root/upload/*
+echo -e "\033[1;34m-----------------------------------------------------------------------\033[0m"
+echo -e "Script end at \033[43;35m `date "+%H:%M:%S"` \033[0m \n "
+
+复制代码
+ 
+
+使用lftp相比使用ftp的优势较多，可以显示上传下载的百分比进度以及可以上传下载文件夹。
+
+-----------------------------------------------------------------------------
+
+1、登录ftp
+代码:
+lftp 用户名:密码@ftp地址:传送端口（默认21）
+用法
+(1)lftp username:password@127.0.0.1:21
+(2)lftp username@127.0.0.1 回车     ##默认21端口 回车后输入密码
+(3)lftp 127.0.0.1 回车   ##回车后 login 登录
+(4)lftp 回车 --> open 127.0.0.1 --> login 登录
+
+2、lftp中文乱码问题
+登录后看到的都是中文乱码(因为一般本地都是utf-8的编码),怎么半呢，用 set 命令来解决
+
+set ftp:charset gbk(或者 gb2312 或 utf-8) ##设置ftp端的编码格式
+set file:charset utf-8 (...同上) ##设置本地编码格式
+
+附:set命令的技巧 (1)输入set 查看已经设置好的命令 (2)set -a 查看所有可以设置的命令清晰网
+
+3、查找ftp端文件
+
+ls *.txt ##查找当前目录下的所有txt文件
+ls ./123/ ##列出123目录下所有文件
+find . -name "*.txt"   ##递归查找站点上所有的txt文件
+find ./xx -name "*.txt" ##查找xx目录下所有的txt文件
+
+附1: ls第二次读取的是本地缓存,可以用 rels 代替 ls 或者catch off / catch on 来开关catch,catch flush清空本地catch
+附2: 浏览本地目录的命令可用 !ls , 如 !ls /usr/local/bin/
+
+4、下载文件
+
+下载文件之前要先设置好本地的目录，用来存放下载的文件
+lcd /home/123/web   ##设置本地存放目录 默认为 /home/usr
+
+get 123.txt     ##下载123.txt文件到 /home/123/web 中
+get -c 123.txt ##断点续传下载
+mget *.txt     ##批量下载所有txt文件
+mget -c *.txt ##断点续传
+mget -c ./123/aaa/*.txt   ##断点续传、批量下载ftp端aaa目录下的所有txt文件
+
+pget -c -n 10 file.dat
+##以最多10个线程以允许断点续传的方式下载file.dat
+##可以通过设置 set pget:default-n 5 的值而使用默认值。
+
+mirror aaa/
+##将aaa目录整个的下载下来，子目录也会自动复制 本地自动建立目录
+
+5、上传文件
+
+put 123.txt     ##同下载
+mput *.txt     ##同下载
+
+mirror -R aaa/ ##同下载
+
+6、设置被动/非被动模式
+
+set ftp:passive-mode 1 ## 1 被动 0非主动
+
+多任务处理
+
+ctrl+z ##将当前进行的任务移交后台处理
+wait   ##将后台处理任务调至前台查看
+jobs   ##查看后台进行的任务列表
+kill all 或者 job_no ##删除所有任务 或 指定的任务
+
+##将任务加入任务列表
+queue get 123.txt
+queue put 234.txt
+queue mirror aaa/ 
+
+queue ##查看任务列表
+jobs   ##查看后台任务列表
+
+queue start ##开始任务列表
+queue stop ##停止任务列表
+
+其他命令清晰网 
+
+alias []
+定义别名
+alias less more
+alias reconnect "close; cd ."
+直接输入 alias 即可看到目前定义了那些别名。如果只输入 alias name 的话, 则是取消 name 这个别名。
+
+bookmark SUBCMD
+设定书签, 可将目前站台及所在目录设成书签, 下次可直接进来, 不用再 cd 来 cd 去的
+
+bookmark add name 用来新增名称为 name 的书签
+bookmark del name 删除名称为 name 的书签
+bookmark list 显示目前有设定那些书签(另外直接打 bookmark 和 bookmark list 的结果一样)
+bookmark edit 呼叫编辑器修改书签 (~/.lftp/bookmarks)
+
+cd 切换远端目录
+
+cache SUBCMD
+管理 lftp 的 cache
+
+rels []
+从 cache 中显示远端档案列表
+rels 则不会从 cache 中读取
+
+recls opts [path/]pattern
+从 cache 中显示远端的档案列表, 应该算是 ls 的加强版, 有很多参数可用,应该是可用来产生各种不同>的档案列表以供其他程式使用。
+recls 则不会从 cache 中读取
+
+du options
+计算远端整个目录占用容量
+
+get OPTS -o
+抓取远端档案 清晰网 
+
+get rfile -o lfile
+抓 rfile 到本地改名为 lfile
+-c 为续传
+-E 抓档完成后, 将远端的档案砍了
+-a 为 ascii mode, 预设为 binary mode
+-O 设定 base directory 为本地端放档案的目录
+
+mget OPTS
+下载远端档案(可用 wildcard expansion 也就是 *)
+
+pget OPTS -o
+使用多个连结来下载档案, 预设为五个。
+-n 3 为叁个连结
+
+jobs -v
+显示目前有那些程序在背景执行
+-v 显示详细的资讯(-v 可多加几个来显示更详细的资讯)
+
+lcd
+切换本地端的目录
+
+mirror OPTS remote [local]
+下载整个目录(楼上的 get 只能用来抓档案)
+-c 续传
+-e 这个要小心一些, 比较远端和本地端的档案, 假如远端没有的, 就将本地端的档案删除, 也就是将本地端和远端资料同步。
+-R 上传整个目录
+-n 只下载较新的档案
+-r 不用递回到目录中
+--parallel=n 同时下载 n 个档案(预设一次只下载一个)清晰网 
+
+module name args
+载入模组
+
+put OPTS -o
+上传档案
+
+mput OPTS
+上传档案(可用 wildcard expansion 也就是 *)
+
+mv
+将远端的 file1 改名为 file2
+
+mrm
+用 wildcard expansion 方式来删除远端档案
+
+open OPTS
+开启某个站台
+open -u , -p site
+
+queue OPTS []
+将 cmd 放到伫列中等待执行
+-d index 将编号为 index 的 job 删除
+-m index new_index 将编号为 index 的 job 移至编号 new_index, 插队专用。
+-n index 在编号 index 之前新增一个 job
+
+wait []
+将背景执行中的程序移至前景(也可用 fg)
+
+kill all|
+删除全部的 jobs 或 job_no
+
+repeat delay command
+每隔 delay 秒, 重覆执行 command, 预设是每隔一秒
+
+rm -r -f
+移除远端档案
+
+mkdir -p
+建立远端目录
+
+rmdir -f
+移除远端目录
+
+set OPT []
+设定变数
+直接键入 set 可看目前定义了那些变数
+
+source
+读取 file, 并执行 file 中的命令(应该是和 bash 中的 source 命令是一样的吧)
+
+debug [|off] -o
+设定 debug level 为 level
+-o 将输出导向至 file
+
+exit [|bg]
+结束 lftp
+此时若还有 jobs, 则会将 lftp 放至背景执行, 继续未完成的工作
+
+history -w file-r file-c|-l cnt
+和 bash 中的 history 功能一样
+
+renlist []
+只显示远端的档名
+
+pwd -p
+显示目前远端所在目录
+-p 连登入密码也显示
+
+scache []
+只打 scache 显示目前所有的 session, 加上 session_no 可切换至其他的 session,
+对於同时开启多个站台或同个站台不同目录间切换。
+
+国内的大多数ftp服务器使用的中文编码是gbk，而linxu大多数版本（包括debian，redhat，centOS，fc等版本）默认的编码是utf-8,于是会出现访问ftp服务器是出现中文乱码的问题，解决办法有两种：
+1、临时解决
+用lftp登录到ftp服务器上，设置远程服务器编码为gbk，而设置本地编码为utf-8，做法为：输入下面两个命令：
+set ftp:charset gbk
+set file:charset utf8
+
+2、永久解决
+在目录$HOME/.lftp编辑文件（如果没有则建立）rc,输入下面两行，设置远程编码为gbk，本地编码为utf-8：
+set ftp:charset gbk
+set file:charset utf8
+这种方法会导致访问utf8编码的服务器时出现中文乱码，不过就目前国内环境来说机会比较少。如果出现乱码时则临时输入下面两行就可以了：
+set ftp:charset utf8
+set file:charset utf8
+
+另外一个用的很多的图形界面的ftp客户端是gftp，在选项中可以选择编码，用惯了win下客户端的人应该能够很快的早到编码选择的地方，选择服务器端的编码为gbk就可以了。
+
+

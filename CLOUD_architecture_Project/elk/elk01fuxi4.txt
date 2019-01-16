@@ -1,0 +1,1522 @@
+ 
+标准Http协议支持六种请求方法，即：
+1、GET  发送一个请求来取得服务器上的某一资源
+
+2、POST 向服务器发送数据,数据存放位置由服务器自己决定
+
+3、PUT  向服务器发送数据,指定了数据资源的在服务器中存放的位置
+
+4、Delete 删除服务器中的某一个资源
+
+5、HEAD  发送一个请求,不含有呈现数据，仅含有HTTP头信息
+
+6、Options 用于获取当前URL所支持的方法,若请求成功，则会在HTTP头中包含一个名为“Allow”的头，
+             值是所支持的方法，如“GET, POST”。
+
+ELK是一整套解决方案，是三个软件产品的首字母缩写，很多公司都在使用，
+ 如：Sina、携程、华为、美团等
+
+ELK分别代表的意思
+Elasticsearch：负责日志检索和储存
+Logstash：负责日志的收集和分析、处理
+Kibana：负责日志的可视化
+这三款软件都是开源软件，通常是配合使用，而且又先后归于Elastic.co公司名下，故被简称为ELK
+
+ ELK可以实现什么功能
+
+在海量日志系统的运维中，
+可用于解决分布式日志数据集中式查询和管理、系统监控，
+包含系统硬件和应用各个组件的监控、故障排查、安全信息和事件管理、报表功能
+
+Elasticsearch主要特点
+
+1、实时分析
+2、分布式实时文件存储，并将每一个字段都编入索引
+3、文档导向，所有的对象全部是文档
+4、高可用性，易扩展，支持集群（Cluster） 、 分片和复制（Shards 和 Replicas）
+5、接口友好，支持JSON
+
+
+
+关系型   --------  非关系型
+MySQL    ?--?  NoSQL
+Database  ---->   Index
+Table        ---->   Type
+Row          ---->   Document
+Column    ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch，完成数据的存储和检索
+    - L：是Logstash，完成数据的采集、过滤及解析
+    - K：Kibana，以WEB方式展示
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+stash
+英 [stæʃ]   美 [stæʃ]  
+n. 隐（贮）藏物;（旧）藏身处
+v. 贮藏;隐藏，藏匿;〈英〉停止
+
+elasticsearch 弹性搜索
+
+logstash 原木
+
+log stash 原木充填
+
+curl 命令
+
+访问一个网页
+curl http://www.baidu.com
+
+显示头信息
+curl -I http://www.baidu.com
+
+显示详细的交互信息
+curl -v http://www.baidu.com
+
+把网页内存保存为文件
+curl -o urfile http://www.baidu.com
+
+配置文件
+
+config/elasticsearch.yml   主配置文件
+config/jvm.options         jvm参数配置文件
+cofnig/log4j2.properties   日志配置文件
+
+概念
+1. 配置文件
+
+config/elasticsearch.yml   主配置文件
+config/jvm.options         jvm参数配置文件
+cofnig/log4j2.properties   日志配置文件
+2. 基本概念
+
+接近实时（NRT）
+
+Elasticsearch 是一个接近实时的搜索平台。
+这意味着，从索引一个文档直到这个文档能够被搜索到有一个很小的延迟（通常是 1 秒）。
+集群（cluster）
+
+代表一个集群，集群中有多个节点（node），
+其中有一个为主节点，这个主节点是可以通过选举产生的，
+主从节点是对于集群内部来说的。
+es的一个概念就是去中心化，
+字面上理解就是无中心节点，这是对于集群外部来说的，
+因为从外部来看es集群，在逻辑上是个整体，
+你与任何一个节点的通信和与整个es集群通信是等价的。
+
+索引（index）
+ElasticSearch将它的数据存储在一个或多个索引（index）中。
+用SQL领域的术语来类比，索引就像数据库，
+可以向索引写入文档或者从索引中读取文档，
+并通过ElasticSearch内部使用Lucene将数据写入索引或从索引中检索数据。
+
+文档（document）
+文档（document）是ElasticSearch中的主要实体。
+对所有使用ElasticSearch的案例来说，他们最终都可以归结为对文档的搜索。文档由字段构成。
+
+映射（mapping）
+所有文档写进索引之前都会先进行分析，
+如何将输入的文本分割为词条、哪些词条又会被过滤，这种行为叫做映射（mapping）。
+一般由用户自己定义规则。
+
+类型（type）
+每个文档都有与之对应的类型（type）定义。
+这允许用户在一个索引中存储多种文档类型，并为不同文档提供类型提供不同的映射。
+
+shard  英 [ʃɑ:d]   美 [ʃɑ:rd]  
+n. （玻璃、金属或其他硬物的）尖利的碎片
+
+分片（shards）
+代表索引分片，es可以把一个完整的索引分成多个分片，
+这样的好处是可以把一个大的索引拆分成多个，
+分布到不同的节点上。
+
+构成分布式搜索。
+分片的数量只能在索引创建前指定，并且索引创建后不能更改。
+5.X默认不能通过配置文件定义分片
+
+/****************
+MongoDB是一个基于分布式文件存储的数据库。
+由C++语言编写。
+旨在为WEB应用提供可扩展的高性能数据存储解决方案。
+
+MongoDB是一个介于关系数据库和非关系数据库之间的产品，
+是非关系数据库当中功能最丰富，
+最像关系数据库的。
+它支持的数据结构非常松散，是类似json的bson格式，
+因此可以存储比较复杂的数据类型。
+Mongo最大的特点是它支持的查询语言非常强大，其语法有点类似于面向对象的查询语言，
+几乎可以实现类似关系数据库单表查询的绝大部分功能，而且还支持对数据建立索引。
+
+************/
+replica
+英 [ˈreplɪkə]   美 [ˈrɛplɪkə]  
+n. 复制品
+replicas
+n. 复制品( replica的名词复数 )
+
+副本（replicas）
+代表索引副本，
+es可以设置多个索引的副本，
+副本的作用一是提高系统的容错性，
+当个某个节点某个分片损坏或丢失时可以从副本中恢复。
+二是提高es的查询效率，
+es会自动对搜索请求进行负载均衡。
+
+数据恢复（recovery）
+代表数据恢复或叫数据重新分布，
+es在有节点加入或退出时会根据机器的负载对索引分片进行重新分配，
+挂掉的节点重新启动时也会进行数据恢复。
+
+Elasticsearch中存储数据的行为就叫做索引(indexing)： 
+在Elasticsearch中，
+文档归属于一种类型(type),
+
+而这些类型存在于索引(index)中，
+
+我们可以画一些简单的对比图来类比传统关系型数据库： 
+Relational DB -> Databases -> Tables -> Rows -> Columns 
+Elasticsearch -> Indexs -> Types -> Documents -> Fields
+
+索引（index）
+ElasticSearch将它的数据存储在一个或多个索引（index）中。
+用SQL领域的术语来类比，索引就像数据库，
+可以向索引写入文档或者从索引中读取文档，
+并通过ElasticSearch内部使用Lucene将数据写入索引或从索引中检索数据。
+
+Elasticsearch中的概念与关系型数据库对比
+
+Relational DB  Databases Tables   Rows   Columns
+关系型数据库        数据库       表         行         列
+
+Elasticsearch  Indices   Types  Documents  Fields
+搜索引擎             索引        类型      文档       域(字段)
+
+Elasticsearch没有典型意义的事务.
+Elasticsearch是一种面向文档的数据库。
+Elasticsearch没有提供授权和认证特性
+
+标准Http协议支持六种请求方法，即：
+1、GET  发送一个请求来取得服务器上的某一资源
+
+2、POST 向服务器发送数据,数据存放位置由服务器自己决定
+
+3、PUT  向服务器发送数据,指定了数据资源的在服务器中存放的位置
+
+4、Delete 删除服务器中的某一个资源
+
+5、HEAD  发送一个请求,不含有呈现数据，仅含有HTTP头信息
+
+6、Options 用于获取当前URL所支持的方法,若请求成功，则会在HTTP头中包含一个名为“Allow”的头，
+             值是所支持的方法，如“GET, POST”。
+
+Elasticsearch中的概念与关系型数据库对比
+
+关系型数据库   select  *  from  table...;     update  table  set....;
+
+Elasticsearch  GET  http://...                PUT  http://......
+
+
+ 关系型    --------  非关系型
+MySQL    ?--?   NoSQL
+Database  ---->   Index
+Table     ---->   Type
+Row       ---->   Document
+Column    ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch [非关系型数据库,最重要]，完成数据的存储和检索
+    - L：是Logstash[可使用 docker 容器技术,数据次重要]，完成数据的采集、过滤及解析
+    - K：Kibana [与 apache 作用相同 ] ，以WEB方式展示 
+
+Linux  apache    mysql[关系型]       php[处理后台程序]
+L        A         M                  P
+L        K         E                  L
+Linux  kibana elasticsearch[非关系型] logstash[处理日志的工作[ java开发的 ]]
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+stash
+英 [stæʃ]   美 [stæʃ]  
+n. 隐（贮）藏物;（旧）藏身处
+v. 贮藏;隐藏，藏匿;〈英〉停止
+
+elasticsearch 弹性搜索
+
+禁用 防火墙，禁用 selinux
+
+elasticsearch 安装
+1、安装 openjdk 包
+yum install -y java-1.8.0-openjdk-devel
+
+验证
+java -version
+jps
+
+安装 elasticsearch 
+rpm -ivh elasticsearch-2.3.4.rpm
+
+修改配置文件启动服务
+network.host: ip.xx.xx.xx
+systemctl start elasticsearch
+
+验证
+systemctl status elasticsearch
+netstat -ltunp
+
+通过浏览器访问
+http://192.168.4.11:9200/
+
+elastic
+英 [ɪˈlæstɪk]   美 [ɪˈlæstɪk]  
+adj. 有弹力的;可伸缩的;灵活的
+n. 松紧带，橡皮圈
+
+elasticsearch
+弹性搜索
+
+elasticsearch 集群安装
+在多台机器上安装部署 java-1.8.0-openjdk-devel，elasticsearch-2.3.4.rpm
+修改 hosts 文件，保证所有机器通过名称能 ping 通集群中的其他机器
+
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+禁用防火墙 和 selinux
+
+[root@room9pc01 ~]# ll  /var/git/elk.tar
+-rwxrwxrwx 1 root root 161884160 11月 21 13:20 /var/git/elk.tar
+[root@room9pc01 ~]# du  -sh   /var/git/elk.tar
+155M	/var/git/elk.tar
+
+[root@room9pc01 ~]# tar  -xf  /var/git/elk.tar  -C  /var/ftp/
+
+[root@room9pc01 ~]# mkdir  /var/ftp/elk
+[root@room9pc01 ~]# mv   /var/ftp/*.{gz,zip}  /var/ftp/elk/
+
+[root@room9pc01 ~]# ls   /var/ftp/elk/
+accounts.json.gz    elasticsearch-head-master.zip  shakespeare.json.gz
+alog.gz             elasticsearch-kopf-master.zip
+bigdesk-master.zip  logs.jsonl.gz
+
+[root@room9pc01 ~]# ls   /var/ftp/
+ansible                  filebeat-1.2.3-x86_64.rpm    rhel7
+CentOS7-1708             kibana-4.5.2-1.x86_64.rpm    share
+elasticsearch-2.3.4.rpm  logstash-2.3.4-1.noarch.rpm
+elk                      pub
+
+/** ~]# tar  -xf  /var/git/elk.tar  -C  /var/ftp/ansible/   ***/
+
+[root@room9pc01 ~]# mv  /var/ftp/*.rpm   /var/ftp/ansible/
+
+[root@room9pc01 ~]# ls   /var/ftp/
+ansible  CentOS7-1708  elk  pub  rhel7  share
+
+[root@room9pc01 ~]# ls   /var/ftp/ansible/
+ansible-2.4.2.0-2.el7.noarch.rpm         python-httplib2-0.9.2-1.el7.noarch.rpm
+elasticsearch-2.3.4.rpm                  python-paramiko-2.1.1-4.el7.noarch.rpm
+filebeat-1.2.3-x86_64.rpm                python-passlib-1.6.5-2.el7.noarch.rpm
+kibana-4.5.2-1.x86_64.rpm                repodata
+logstash-2.3.4-1.noarch.rpm              sshpass-1.06-2.el7.x86_64.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm
+
+[root@room9pc01 ~]# createrepo   --update  /var/ftp/ansible/
+Spawning worker 0 with 1 pkgs
+Spawning worker 1 with 1 pkgs
+Spawning worker 2 with 1 pkgs
+Spawning worker 3 with 1 pkgs
+Workers Finished
+Saving Primary metadata
+Saving file lists metadata
+Saving other metadata
+Generating sqlite DBs
+Sqlite DBs complete
+
+[root@Va1 ~]# ifconfig  |awk  '/inet /{print $2}'
+192.168.0.11
+192.168.1.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@Va1 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+[root@Va1 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+/**********
+[root@room9pc01 ~]# ls   /var/ftp/ansible/
+ansible-2.4.2.0-2.el7.noarch.rpm         python-httplib2-0.9.2-1.el7.noarch.rpm
+elasticsearch-2.3.4.rpm                  python-paramiko-2.1.1-4.el7.noarch.rpm
+filebeat-1.2.3-x86_64.rpm                python-passlib-1.6.5-2.el7.noarch.rpm
+kibana-4.5.2-1.x86_64.rpm                repodata
+logstash-2.3.4-1.noarch.rpm              sshpass-1.06-2.el7.x86_64.rpm
+python2-jmespath-0.9.0-3.el7.noarch.rpm
+*********/
+
+[root@Va1 ~]# yum  clean all >/dev/null  && yum repolist  |tail  -4
+源标识                               源名称                                状态
+CentOS7-1708                         CentOS7-1708                          9,591
+ansible                              ansible                                  10
+repolist: 9,601
+[root@Va1 ~]# cat  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+
+[root@Va1 ~]# yum list  |grep  openjdk^C
+[root@Va1 ~]# yum list  |grep  java-1.8.0-openjdk
+java-1.8.0-openjdk.x86_64                1:1.8.0.131-11.b12.el7    @anaconda/7.4
+java-1.8.0-openjdk-headless.x86_64       1:1.8.0.131-11.b12.el7    @anaconda/7.4
+java-1.8.0-openjdk.i686                  1:1.8.0.131-11.b12.el7    CentOS7-1708 
+..........................
+java-1.8.0-openjdk-src-debug.x86_64      1:1.8.0.131-11.b12.el7    CentOS7-1708 
+
+[root@Va1 ~]# yum  -y  install   java-1.8.0-openjdk  
+..............
+软件包 1:java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@Va1 ~]# rpm  -qa  |grep  java-1.8.0-openjdk
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+
+[root@Va1 ~]# java -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+/************
+[root@room9pc01 ~]# ls   /var/ftp/
+ansible                  filebeat-1.2.3-x86_64.rpm    rhel7
+CentOS7-1708             kibana-4.5.2-1.x86_64.rpm    share
+elasticsearch-2.3.4.rpm  logstash-2.3.4-1.noarch.rpm
+elk                      pub
+*********/
+
+[root@Va1 ~]# yum  search  elasticsearch
+.................
+elasticsearch.noarch : Distribution: RPM
+filebeat.x86_64 : Sends log files to Logstash or directly to Elasticsearch.
+kibana.x86_64 : Explore and visualize your Elasticsearch data.
+
+  名称和简介匹配 only，使用“search all”试试。
+
+[root@Va1 ~]# yum   -y  install  elasticsearch   ##安装非关系型数据库es
+................
+已安装:
+  elasticsearch.noarch 0:2.3.4-1                                                               
+
+完毕！
+[root@Va1 ~]# rpm  -qa  |grep   elasticsearch
+elasticsearch-2.3.4-1.noarch
+
+[root@Va1 elasticsearch]# systemctl   start  elasticsearch  &&  systemctl  enable  elasticsearch
+
+[root@Va1 ~]# ls   /etc/elasticsearch/
+elasticsearch.yml  logging.yml  scripts
+
+[root@Va1 ~]# cd   /etc/elasticsearch/
+
+在所有节点修改配置文件 /etc/elasticsearch/elasticsearch.yml 
+
+[root@Va1 elasticsearch]# vim   elasticsearch.yml 
+
+ 17 cluster.name: elk-cluster # 设置集群名称{elasticsearch服务器识别集群的唯一方式}
+
+ 23 node.name: Va1  # 节点名称,可自动生成也可手动配置(本主机名).
+
+ 50 # ---------------------------------- Network -----------------------------------
+    # 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+ 51 network.bind_host: 192.168.0.11
+
+ 52 # Set the bind address to a specific IP (IPv4 or IPv6):
+  # 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+ 53 network.publish_host: 192.168.0.11
+
+ # # 同时设置bind_host和publish_host上面两个参数 
+ 54 network.host: 192.168.0.11  # 绑定监听IP特定的网络地址
+
+ # 设置节点间交互的tcp端口,默认是9300 
+ 55 transport.tcp.port: 9300
+
+ 56 # Set a custom port for HTTP:
+ 57 #
+# # 设置对外服务的http端口,默认为9200 
+ 58 http.port: 9200
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+ 68 discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va1 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va1
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va1 ~]# systemctl   restart   elasticsearch
+
+[root@Va1 ~]# elinks  -dump  192.168.0.11:9200
+   { "name" : "Va1", "cluster_name" : "elk-cluster", "version" : { "number" :
+   "2.3.4", "build_hash" : "e455fd0c13dceca8dbbdbb1665d068ae55dabe3f",
+   "build_timestamp" : "2016-06-30T11:24:31Z", "build_snapshot" : false,
+   "lucene_version" : "5.5.0" }, "tagline" : "You Know, for Search" }
+
+[root@Va1 ~]# ansible app  -m  authorized_key  -a  "user=root  exclusive=true  \
+manage_dir=true  key='$(< /root/.ssh/id_rsa.pub)'"  -k 
+SSH password: 1
+.........
+Va2 | SUCCESS => {
+..............
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         443        1122           8         417        1353
+Swap:          2047           0        2047
+
+[root@Va1 ~]# vim  hosts.yml
+
+[root@Va1 ~]# cat  hosts.yml
+---
+- hosts: app
+  remote_user: root
+  tasks:
+    - copy:
+        src: /etc/hosts
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: 0644
+    - copy:
+        src: /etc/yum.repos.d/local.repo
+        dest: /etc/yum.repos.d/local.repo
+        owner: root
+        group: root
+        mode: 0644
+
+[root@Va1 ~]# ansible-playbook  -i  /etc/ansible/hosts   hosts.yml
+......................
+
+[root@Va1 ~]# file /etc/ansible/hosts
+/etc/ansible/hosts: ASCII text
+
+[root@Va1 ~]# vim   hosts
+[root@Va1 ~]# cat   hosts
+[elas]
+Va[2:5]
+
+[root@Va1 ~]# ansible  elas  -i  /root/hosts  -m  shell   -a  "yum clean all >/dev/null && yum repolist  |tail   -4"
+
+[root@Va1 ~]# vim  setelk.yaml
+[root@Va1 ~]# cat  setelk.yaml
+---
+- hosts: elas
+  remote_user: root
+  tasks:
+    - yum:
+        name: java-1.8.0-openjdk,elasticsearch
+        state: latest
+    - service:
+        name: elasticsearch
+        enabled: yes
+
+[root@Va1 ~]# ansible-playbook  -i  /root/hosts  setelk.yaml  #剧本批量安装软件
+
+[root@Va1 ~]# ansible elas -i /root/hosts -m shell -a "rpm -q  elasticsearch"
+
+                        ## 在覆盖之前将原文件备份，备份文件包含时间信息 backup=yes
+ ~]# ansible  other  -m  copy  -a  'src=/root/index.html  dest=/var/www/html/index.html backup=yes'
+ ~]# ansible all -m copy -a "src=/home/test.sh dest=/tmp/ owner=root group=root mode=0755"    
+#src 主控端文件位置
+#dest 被控端目标位置
+#owner 文件复制过去后的所有者
+#group 文件复制过去后的所属组
+#mode  文件的权限设定，执行a+x这种方式
+
+[root@Va1 ~]# cat  hosts
+[elas]
+Va[2:5]
+[root@Va1 ~]# ansible elas -i  /root/hosts -m  copy  -a "src=/etc/elasticsearch/elasticsearch.yml  dest=/etc/elasticsearch/  backup=yes  owner=root  group=root  mode=0644"  ##backup备份yes 
+
+[root@Va1 ~]# cat  /root/hosts
+[elas]
+Va[2:5]
+[root@Va1 ~]# ansible  elas  -i  /root/hosts  -m copy  -a "src=/etc/elasticsearch/elasticsearch.yml dest=/etc/elasticsearch/ owner=root group=root  mode=0644  backup=no"  ##backup备份no  批量修改es数据库配置文件
+
+Va5 | SUCCESS => {
+.........
+}
+Va3 | SUCCESS => {
+    "changed": true, 
+    "checksum": "d94c47780c6384f030796ba89613a8423a28adce", 
+    "dest": "/etc/elasticsearch/elasticsearch.yml", 
+    "gid": 0, 
+    "group": "root", 
+    "md5sum": "689905ca4ae748bd247a72557f680e1f", 
+    "mode": "0644", 
+    "owner": "root", 
+    "size": 3263, 
+    "src": "/root/.ansible/tmp/ansible-tmp-1547622907.94-213612461592594/source", 
+    "state": "file", 
+    "uid": 0
+}
+[root@Va1 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va1
+   ## 注意也可以这样写节点名  node.name: {{ansible_hostname}}
+
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+
+
+[root@Va1 ~]# ansible elas -i  /root/hosts -m  shell  -a  'sed  -i  "s,^\(node.name:\).*,\1 ${HOSTNAME},"  /etc/elasticsearch/elasticsearch.yml' ##注意必须  外面是单引号 "sed 双引号"#执行成功
+
+[root@Va1 ~]# ansible elas  -i  /root/hosts -m  shell  -a  'sed  -i  "s/^\(node.name:\).*/\1 ${HOSTNAME}/"  /etc/elasticsearch/elasticsearch.yml'  ##修改es数据库配置文件节点名称
+
+ [WARNING]: Consider using template or lineinfile module rather than running
+sed
+Va2 | SUCCESS | rc=0 >>
+
+Va3 | SUCCESS | rc=0 >>
+
+Va4 | SUCCESS | rc=0 >>
+
+Va5 | SUCCESS | rc=0 >>
+
+
+[root@Va1 ~]# 
+
+[root@Va1 ~]# grep  -n  "192.168.0.11"  /etc/elasticsearch/elasticsearch.yml 
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+
+[root@Va1 ~]# ifconfig eth0 |awk  '/inet /{print  $2}'
+192.168.0.11
+
+[root@Va1 ~]# ansible elas  -i  /root/hosts -m  shell  -a  'sed  -i "s/192.168.0.11/$(ifconfig eth0 |awk '/inet /{print $2}')/"  /etc/elasticsearch/elasticsearch.yml'
+                                             ##好像不支持复杂的shell命令??
+Define and run a single task 'playbook' against a set of hosts
+针对一组主机定义并运行单个任务“剧本”
+..............
+ERROR! Extraneous options or arguments
+无关选项或论据
+
+[root@Va1 ~]# cat  /root/hosts
+[elas]
+Va[2:5]
+[root@Va1 ~]# vim  ip.yaml
+[root@Va1 ~]# cat  ip.yaml
+---
+- hosts: elas
+  remote_user: root
+  tasks:
+    - shell: sed  -i "s/192.168.0.1.*/$(ifconfig eth0 |awk '/inet /{print $2}')/"  /etc/elasticsearch/elasticsearch.yml     # 注意这是一行
+
+[root@Va1 ~]# ansible-playbook -i  /root/hosts  ip.yaml  ##使用剧本修改es配置文件ip地址
+
+PLAY [elas] *********************************************************************
+
+TASK [Gathering Facts] **********************************************************
+ok: [Va4]
+ok: [Va2]
+ok: [Va5]
+ok: [Va3]
+
+TASK [command] ******************************************************************
+ [WARNING]: Consider using template or lineinfile module rather than running sed
+
+changed: [Va3]
+changed: [Va4]
+changed: [Va5]
+changed: [Va2]
+
+PLAY RECAP **********************************************************************
+Va2                        : ok=2    changed=1    unreachable=0    failed=0   
+Va3                        : ok=2    changed=1    unreachable=0    failed=0   
+Va4                        : ok=2    changed=1    unreachable=0    failed=0   
+Va5                        : ok=2    changed=1    unreachable=0    failed=0   
+
+[root@Va1 ~]# ansible  elas  -i  /root/hosts  -m  shell  -a "systemctl restart elasticsearch"         
+                   #批量重启动 非关系型数据库elasticsearch 服务
+Va5 | SUCCESS | rc=0 >>
+Va2 | SUCCESS | rc=0 >>
+Va4 | SUCCESS | rc=0 >>
+Va3 | SUCCESS | rc=0 >>
+
+      # ## "number_of_data_nodes" : 5,注意是5个节点 # 启动验证 集群状态 成功
+
+[root@Va1 ~]# elinks  -dump   192.168.0.11:9200/_cluster/health?pretty
+
+   { "cluster_name" : "elk-cluster", "status" : "green", "timed_out" : false,
+   "number_of_nodes" : 5, "number_of_data_nodes" : 5, "active_primary_shards"
+   : 0, "active_shards" : 0, "relocating_shards" : 0, "initializing_shards" :
+   0, "unassigned_shards" : 0, "delayed_unassigned_shards" : 0,
+   "number_of_pending_tasks" : 0, "number_of_in_flight_fetch" : 0,
+   "task_max_waiting_in_queue_millis" : 0, "active_shards_percent_as_number"
+   : 100.0 }
+
+[root@Va1 ~]# elinks  -dump  192.168.0.12:9200/_cluser/health?pretty
+
+   { "error" : { "root_cause" : [ { "type" : "illegal_argument_exception",
+   "reason" : "No feature for name [health]" } ], "type" :
+   "illegal_argument_exception", "reason" : "No feature for name [health]" },
+   "status" : 400 }
+[root@Va1 ~]# 
+
+http://192.168.0.11:9200/
+{
+  "name" : "Va1",
+  "cluster_name" : "elk-cluster",
+  "version" : {
+    "number" : "2.3.4",
+    "build_hash" : "e455fd0c13dceca8dbbdbb1665d068ae55dabe3f",
+    "build_timestamp" : "2016-06-30T11:24:31Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.5.0"
+  },
+  "tagline" : "You Know, for Search"
+}
+
+http://192.168.0.12:9200/
+{
+  "name" : "Va2",
+  "cluster_name" : "elk-cluster",
+  "version" : {
+    "number" : "2.3.4",
+    "build_hash" : "e455fd0c13dceca8dbbdbb1665d068ae55dabe3f",
+    "build_timestamp" : "2016-06-30T11:24:31Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.5.0"
+  },
+  "tagline" : "You Know, for Search"
+}
+
+http://192.168.0.13:9200/
+{
+  "name" : "Va3",
+  "cluster_name" : "elk-cluster",
+  "version" : {
+    "number" : "2.3.4",
+    "build_hash" : "e455fd0c13dceca8dbbdbb1665d068ae55dabe3f",
+    "build_timestamp" : "2016-06-30T11:24:31Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.5.0"
+  },
+  "tagline" : "You Know, for Search"
+}
+--------------------------------------------------------------------------------
+http://192.168.0.11:9200/_cluster/health?pretty  # 启动验证成功
+{
+  "cluster_name" : "elk-cluster",
+  "status" : "green",
+  "timed_out" : false,
+  "number_of_nodes" : 5,  # ## 注意是5个节点
+  "number_of_data_nodes" : 5,
+  "active_primary_shards" : 0,
+  "active_shards" : 0,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+
+正常情况下，集群得健康状态分为三种：
+
+green 
+最健康得状态，说明所有的分片包括备份都可用
+yellow 
+基本的分片可用，但是备份不可用（或者是没有备份）
+red 
+部分的分片可用，表明分片有一部分损坏。此时执行查询部分数据仍然可以查到，遇到这种情况，还是赶快解决比较好
+
+
+[root@Va1 elasticsearch]# cat  elasticsearch.yml 
+
+ 17 cluster.name: elk-cluster # 设置集群名称{elasticsearch服务器识别集群的唯一方式}
+
+ 23 node.name: Va1  # 节点名称,可自动生成也可手动配置(本主机名).
+
+ 50 # ---------------------------------- Network -----------------------------------
+    # 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+ 51 network.bind_host: 192.168.0.11
+
+ 52 # Set the bind address to a specific IP (IPv4 or IPv6):
+  # 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+ 53 network.publish_host: 192.168.0.11
+
+ # # 同时设置bind_host和publish_host上面两个参数 
+ 54 network.host: 192.168.0.11  # 绑定监听IP特定的网络地址
+
+ # 设置节点间交互的tcp端口,默认是9300 
+ 55 transport.tcp.port: 9300
+
+ 56 # Set a custom port for HTTP:
+ 57 #
+# # 设置对外服务的http端口,默认为9200 
+ 58 http.port: 9200
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+ 68 discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va1 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va1
+   ## 注意也可以这样写节点名  node.name: {{ansible_hostname}}
+
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+
+[root@Va1 ~]# systemctl   restart   elasticsearch
+
+[root@Va1 ~]# elinks  -dump  192.168.0.11:9200/_cluser/health?pretty
+   { "error" : { "root_cause" : [ { "type" : "illegal_argument_exception",
+   "reason" : "No feature for name [health]" } ], "type" :
+   "illegal_argument_exception", "reason" : "No feature for name [health]" },
+   "status" : 400 }
+
+[root@Va1 ~]# curl   192.168.0.11:9200/_cluser/health?pretty
+{
+  "error" : {
+    "root_cause" : [ {
+      "type" : "illegal_argument_exception",
+      "reason" : "No feature for name [health]"
+    } ],
+    "type" : "illegal_argument_exception",
+    "reason" : "No feature for name [health]"
+  },
+  "status" : 400
+}
+[root@Va1 ~]# 
+“根本原因”：[
+“type”：“非法\参数\异常”，
+“reason”：“name[health]没有功能”
+}
+“type”：“非法\参数\异常”，
+“reason”：“name[health]没有功能”
+
+[root@Va1 ~]# systemctl   restart   elasticsearch.service 
+
+pretty  英 [ˈprɪti]   美 [ˈprɪti]  
+adj. 漂亮的;机灵的，聪明的
+adv. 相当，颇
+n. 漂亮的人（或东西）
+
+[root@Va1 ~]# curl http://192.168.0.11:9200/_cluster/health?pretty
+{
+  "cluster_name" : "elk-cluster",
+  "status" : "green",
+  "timed_out" : false,
+  "number_of_nodes" : 5,
+  "number_of_data_nodes" : 5,
+  "active_primary_shards" : 0,
+  "active_shards" : 0,
+  "relocating_shards" : 0,
+  "initializing_shards" : 0,
+  "unassigned_shards" : 0,
+  "delayed_unassigned_shards" : 0,
+  "number_of_pending_tasks" : 0,
+  "number_of_in_flight_fetch" : 0,
+  "task_max_waiting_in_queue_millis" : 0,
+  "active_shards_percent_as_number" : 100.0
+}
+
+/**********************************************
+[root@Va1 ~]# ansible  elas  -i  /root/hosts  -m  setup  |grep  hostname
+        "ansible_hostname": "Va2", 
+        "ansible_hostname": "Va3", 
+        "ansible_hostname": "Va4", 
+        "ansible_hostname": "Va5", 
+
+[root@Va1 ~]# ansible  elas  -i  /root/hosts  -m setup  -a  "filter=ansible_hostname"
+Va5 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_hostname": "Va5"
+    }, 
+    "changed": false
+................
+
+Va3 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_hostname": "Va3"
+    }, 
+    "changed": false
+}
+[root@Va1 ~]# 
+/*************
+[root@Va1 ~]# vim  test.yml
+[root@Va1 ~]# cat  test.yml   #ansible可以传递变量
+node.name: {{ansible_hostname}}
+
+[root@Va1 ~]# vim  template.yml
+[root@Va1 ~]# cat  template.yml
+---
+- hosts: elas
+  remote_user: root
+  tasks:
+    - template:  # template模块可以从主机信息模块setup中提取变量来替换src: test.yml文件中的变量
+        src: /root/test.yml
+        dest: /root/test.yml
+        owner: root
+        group: root
+        mode: 0644
+[root@Va1 ~]# cat  /root/hosts
+[elas]
+Va[2:5]
+
+[root@Va1 ~]# ansible-playbook    -i /root/hosts  template.yml
+
+PLAY [elas] *********************************************************************
+....................
+PLAY RECAP **********************************************************************
+Va2                        : ok=2    changed=1    unreachable=0    failed=0   
+Va3                        : ok=2    changed=1    unreachable=0    failed=0   
+Va4                        : ok=2    changed=1    unreachable=0    failed=0   
+Va5                        : ok=2    changed=1    unreachable=0    failed=0   
+
+[root@Va2 ~]# cat  test.yml 
+node.name: Va2
+[root@Va3 ~]# cat  test.yml 
+node.name: Va3
+[root@Va1 ~]# cat  /root/test.yml 
+node.name: {{ansible_hostname}}
+
+************************************************/
+https://blog.csdn.net/zxf_668899/article/details/54582849
+https://blog.csdn.net/futudeniaodan/article/details/52798950
+
+正常情况下，集群得健康状态分为三种：
+
+green 
+最健康得状态，说明所有的分片包括备份都可用
+yellow 
+基本的分片可用，但是备份不可用（或者是没有备份）
+red 
+部分的分片可用，表明分片有一部分损坏。此时执行查询部分数据仍然可以查到，遇到这种情况，还是赶快解决比较好
+
+
+[root@Va1 elasticsearch]# cat  elasticsearch.yml 
+
+ 17 cluster.name: elk-cluster # 设置集群名称{elasticsearch服务器识别集群的唯一方式}
+
+ 23 node.name: Va1  # 节点名称,可自动生成也可手动配置(本主机名).
+
+ 50 # ---------------------------------- Network -----------------------------------
+    # 设置绑定的ip地址,可以是ipv4或ipv6的,默认为0.0.0.0 
+ 51 network.bind_host: 192.168.0.11
+
+ 52 # Set the bind address to a specific IP (IPv4 or IPv6):
+  # 设置其它节点和该节点交互的ip地址,如果不设置它会自动设置,值必须是个真实的ip地址 
+ 53 network.publish_host: 192.168.0.11
+
+ # # 同时设置bind_host和publish_host上面两个参数 
+ 54 network.host: 192.168.0.11  # 绑定监听IP特定的网络地址
+
+ # 设置节点间交互的tcp端口,默认是9300 
+ 55 transport.tcp.port: 9300
+
+ 56 # Set a custom port for HTTP:
+ 57 #
+# # 设置对外服务的http端口,默认为9200 
+ 58 http.port: 9200
+
+# 这是一个集群中的主节点的初始列表,当节点(主节点或者数据节点)启动时使用这个列表进行探测 
+ 68 discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va1 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va1
+   ## 注意也可以这样写节点名  node.name: {{ansible_hostname}}
+
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+55:transport.tcp.port: 9300
+58:http.port: 9200      ## 注意必须有Va1,Va2,Va3其中至少一台服务器运行正常
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"] 
+
+标准Http协议支持六种请求方法，即：
+1、GET  发送一个请求来取得服务器上的某一资源
+
+2、POST 向服务器发送数据,数据存放位置由服务器自己决定
+
+3、PUT  向服务器发送数据,指定了数据资源的在服务器中存放的位置
+
+4、Delete 删除服务器中的某一个资源
+
+5、HEAD  发送一个请求,不含有呈现数据，仅含有HTTP头信息
+
+6、Options 用于获取当前URL所支持的方法,若请求成功，则会在HTTP头中包含一个名为“Allow”的头，
+             值是所支持的方法，如“GET, POST”。
+
+HTTP报文格式 HTTP报文分为两类:
+请求报文request, 响应报文response 
+
+1，请求行
+由3部分组成，分别为：请求方法、URL（见备注1）以及协议版本，之间由空格分隔
+
+http请求方法（GET、POST、HEAD、OPTIONS、PUT、DELETE、TRACE、CONNECT）
+请求方法包括GET、HEAD、PUT、POST、TRACE、OPTIONS、DELETE以及扩展方法，
+当然并不是所有的服务器都实现了所有的方法，部分方法即便支持，处于安全性的考虑也是不可用的
+
+HTTP/1.0  单次连接(不常用)
+HTTP的1.0版本中只有三种请求方法： GET, POST 和 HEAD方法。
+
+GET 
+请求指定的页面信息，并返回实体主体。
+GET请求请提交的数据放置在HTTP请求协议头中，
+GET方法通过URL请求来传递用户的输入，
+GET方式的提交你需要用Request.QueryString来取得变量的值。
+GET方法提交数据，可能会带来安全性的问题，数据被浏览器缓存。
+GET请求有长度限制。
+
+DELETE
+请求服务器删除指定的页面。
+DELETE请求一般返回3种码
+200（OK）——删除成功，同时返回已经删除的资源。
+202（Accepted）——删除请求已经接受，但没有被立即执行（资源也许已经被转移到了待删除区域）。
+204（No Content）——删除请求已经被执行，但是没有返回资源（也许是请求删除不存在的资源造成的）。
+
+CONNECT
+HTTP/1.1协议中预留给能够将连接改为管道方式的代理服务器。
+
+OPTIONS
+允许客户端查看服务器的性能。
+
+TRACE
+回显服务器收到的请求，主要用于测试或诊断。
+
+HTTP/1.1  多次连接
+到了1.1版本时，新增加了五种请求方法：OPTIONS, PUT, DELETE, TRACE 和 CONNECT 方法。
+
+协议版本的格式为：HTTP/主版本号.次版本号，常用的有HTTP/1.0和HTTP/1.1
+
+请求行 由3部分组成，分别为：
+请求方法、URL（见备注1）以及协议版本，之间由空格分隔
+
+  GET   /index.html     HTTP/1.1           \r\n
+请求方法   Request-URI     协议/主版本号.次版本号  分隔符
+
+URI：统一资源标识符，用来唯一的标识一个资源。
+URI一般由三部分组成：
+(1)访问资源的命名机制；
+(2)存放资源的主机名；
+(3)资源自身的名称，由路径表示，着重强调于资源。
+
+URL由三部分组成：
+(1)协议(或称为服务方式)；
+(2)存有该资源的主机IP地址(有时也包括端口号)；
+(3)主机资源的具体地址。如目录或文件名等。
+
+ES常用：
+PUT --增
+DELETE --删
+POST --改
+GET --查
+系统命令curl：
+是一个利用URL规则在命令行下工作的文件传输工具, 强大的http命令行工具。
+它支持多种请求模式,自定义请求头等强大功能,是一款综合工具
+curl 常用参数介绍：
+-A 修改请求 agent
+-X 设置请求方法
+-i 显示返回头信息 (响应头支持网页跳转)
+
+[root@Va1 ~]# curl  -i  http://www.baidu.com  |grep -A12 "HTTP/1.1 " # 显示返回头信息
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  2381  100  2381    0     0   102k      0 --:--:-- --:--:-- --:--:--  105k
+
+HTTP/1.1 200 OK 
+Accept-Ranges: bytes
+Cache-Control: private, no-cache, no-store, proxy-revalidate, no-transform
+Connection: Keep-Alive  #表示长连接(对应版本1.1)
+Content-Length: 2381
+Content-Type: text/html
+Date: Wed, 16 Jan 2019 11:18:36 GMT
+Etag: "588604dc-94d"
+Last-Modified: Mon, 23 Jan 2017 13:27:56 GMT
+Pragma: no-cache
+Server: bfe/1.0.8.18   ##服务器名
+Set-Cookie: BDORZ=27315; max-age=86400; domain=.baidu.com; path=/
+
+[root@Va1 ~]# 
+[root@Va1 ~]# curl  -i  http://www.taobao.com/ 
+HTTP/1.1 302 Found
+Server: Tengine   ##基于nginx 二次开发的服务器应用软件
+Date: Wed, 16 Jan 2019 11:25:47 GMT
+Content-Type: text/html
+Content-Length: 258
+Connection: keep-alive
+Location: https://www.taobao.com/
+Set-Cookie: thw=cn; Path=/; Domain=.taobao.com; Expires=Thu, 16-Jan-20 11:25:47 GMT;
+Strict-Transport-Security: max-age=31536000
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html>
+<head><title>302 Found</title></head>
+<body bgcolor="white">
+<h1>302 Found</h1>
+<p>The requested resource resides temporarily under a different URI.</p>
+<hr/>Powered by Tengine</body>
+</html>
+
+
+[root@Va1 ~]# curl  -I  http://www.taobao.com/ 
+HTTP/1.1 302 Found
+Server: Tengine
+Date: Wed, 16 Jan 2019 11:26:09 GMT
+Content-Type: text/html
+Content-Length: 258
+Connection: keep-alive
+Location: https://www.taobao.com/
+Set-Cookie: thw=cn; Path=/; Domain=.taobao.com; Expires=Thu, 16-Jan-20 11:26:09 GMT;
+Strict-Transport-Security: max-age=31536000
+
+[root@Va1 ~]# curl  -I  http://www.ip138.com/ 
+HTTP/1.1 200 OK
+Date: Tue, 15 Jan 2019 20:16:19 GMT
+Content-Length: 19691
+Content-Type: text/html
+Content-Location: http://www.ip138.com/index.htm
+Last-Modified: Thu, 10 Jan 2019 14:02:51 GMT
+Accept-Ranges: bytes
+ETag: "e8c0a92ceda8d41:16e8"
+Server: Microsoft-IIS/6.0
+X-Powered-By: ASP.NET
+Age: 55666
+X-Via: 1.1 anxin234:2 (Cdn Cache Server V2.0), 1.1 xxxz58:7 (Cdn Cache Server V2.0), 1.1 zhj170:11 (Cdn Cache Server V2.0)
+Connection: keep-alive
+
+[root@Va1 ~]# 
+
+-X 设置请求方法
+      curl  -i  -X  HEAD  发送一个请求,不含有呈现数据，仅含有HTTP头信息
+[root@Va1 ~]# curl  -i  -X HEAD  http://www.taobao.com/ 
+HTTP/1.1 302 Found
+Server: Tengine
+Date: Wed, 16 Jan 2019 11:31:06 GMT
+Content-Type: text/html
+Content-Length: 258
+Connection: keep-alive
+Location: https://www.taobao.com/
+Set-Cookie: thw=cn; Path=/; Domain=.taobao.com; Expires=Thu, 16-Jan-20 11:31:06 GMT;
+Strict-Transport-Security: max-age=31536000
+^C
+[root@Va1 ~]# 
+
+ 使用 -L 跟随链接重定向 
+6. 使用 -A 自定义 User-Agent 
+7. 使用 -H 自定义 header 
+8. 使用 -c 保存 Cookie 
+9. 使用 -b 读取 Cookie 
+10. 使用 -d 发送 POST 请求
+-X 指定请求方式
+
+GET请求
+
+curl -X GET http://localhost:8080/search?data=123  # -X GET是可选的
+1
+POST请求
+curl -X POST -d  file.txt   http://localhost:8080/search -v
+curl -X POST -d "data=123&key=456" http://localhost:8080/search -v 
+
+由于-d选项为使用POST方式向server发送数据，
+因此在使用-d的时候，可以省略-X POST。
+使用-d时，将使用Content-type:application/x-www-form-urlencoded方式发送数据。
+
+如果想使用JSON形式post数据，可以使用-H指定头部类型
+curl -H "Content-Type:application/json" -d '{"data":"123","key":"456"}' http://localhost:8080/search -v
+1
+如果想在请求的时候带上Cookie，可以这样
+curl -H "Cookie:username=XXX" {URL}
+
+使用 -A 自定义 User-Agent
+我们可以使用 -A 来自定义用户代理，例如下面的命令将伪装成安卓火狐浏览器对网页进行请求： 
+curl -A “Mozilla/5.0 (Android; Mobile; rv:35.0) Gecko/35.0 Firefox/35.0” http://www.baidu.com 
+
+ 关系型    --------  非关系型
+MySQL    ?--?  NoSQL
+Database ---->   Index
+Table    ---->   Type
+Row      ---->   Document
+Column   ---->   Filed
+
+ELK组成：
+    - E：是指Elasticsearch [非关系型数据库,最重要]，完成数据的存储和检索
+    - L：是Logstash[可使用 docker 容器技术,数据次重要]，完成数据的采集、过滤及解析
+    - K：Kibana [与 apache 作用相同 ] ，以WEB方式展示 
+
+Linux  apache    mysql[关系型]       php[处理后台程序]
+L        A         M                  P
+L        K         E                  L
+Linux  kibana elasticsearch[非关系型] logstash[处理日志的工作[ java开发的 ]]
+
+ filebeat-1.2.3-x86_64.rpm
+
+ kibana-4.5.2-1.x86_64.rpm
+ logstash-2.3.4-1.noarch.rpm
+ elasticsearch-2.3.4.rpm
+
+ELK5.1.2+centos 7.4 安装配置
+
+http://www.sohu.com/a/191293473_255462
+
+ES与数据库同步工具——ElasticSearch-JDBC
+
+ES内容管理工具——head
+http://127.0.0.1:9200/_plugin/head/
+
+ES服务器监控工具——bigdesk
+http://127.0.0.1:9200/_plugin/bigdesk
+
+ES集群操作的API工具——Kopf
+http://127.0.0.1:9200/_plugin/kopf/
+
+1. hq 监控，管理elasticsearch集群以及通过web界面来进行查询操作 
+
+2. analysis-ik ik分词器，中文分词 
+
+3. bigdesk 统计分析和图表化elasticsearch集群状态信息 [ cpu 内存信息]
+
+4. head 最实用的通过web界面来查看elasticsearch集群状态信息 
+
+5. inquisitor 一个帮助调试查询语句细节的工具 
+
+6. marvel 超赞的一个通过json查询的工具,可惜是收费项目,非开源 
+
+7. sql 一款国人写的通过类似sql语法进行查询的工具 
+
+8. kopf 一个通过web界面来管理和监控elasticsearch集群状态信息 
+
+elasticsearch-head是一个界面化的集群操作和管理工具，可以对集群进行傻瓜式操作。你可以通过插件把它集成到es（首选方式）,也可以安装成一个独立webapp。
+
+es-head主要有三个方面的操作：
+
+显示集群的拓扑,
+并且能够执行索引和节点级别操作
+搜索接口
+能够查询集群中原始json或表格格式的检索数据
+能够快速访问并显示集群的状态
+有一个输入窗口,
+允许任意调用RESTful API。
+这个接口包含几个选项,可以组合在一起以产生有趣的结果;
+
+1. 请求方法(get、put、post、delete),查询json数据,节点和路径
+
+2. 支持JSON验证器
+
+3. 支持重复请求计时器
+
+4. 支持使用javascript表达式变换结果
+
+５. 收集结果的能力随着时间的推移(使用定时器),或比较的结果
+
+6. 能力图表转换后的结果在一个简单的条形图(包括时间序列)
+
+官方的文档：
+https://github.com/mobz/elasticsearch-head
+
+ filebeat-1.2.3-x86_64.rpm
+ kibana-4.5.2-1.x86_64.rpm
+ logstash-2.3.4-1.noarch.rpm
+ elasticsearch-2.3.4.rpm
+
+[root@room9pc01 ~]# ls /var/ftp/elk/
+accounts.json.gz    elasticsearch-head-master.zip  shakespeare.json.gz
+alog.gz             elasticsearch-kopf-master.zip
+bigdesk-master.zip  logs.jsonl.gz
+
+[root@Va1 ~]# mkdir elk
+[root@Va1 ~]# ls  elk/
+[root@Va1 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> ls  elk/
+-rw-r--r--    1 0        0           57105 Mar 05  2014 accounts.json.gz
+-rw-r--r--    1 0        0           82792 Jul 11  2017 alog.gz
+-rw-r--r--    1 0        0          274341 Jul 04  2017 bigdesk-master.zip
+-rw-r--r--    1 0        0          899857 Jul 04  2017 elasticsearch-head-master.zip
+-rw-r--r--    1 0        0         2228148 Jul 04  2017 elasticsearch-kopf-master.zip
+-rw-r--r--    1 0        0         8705693 Jul 04  2017 logs.jsonl.gz
+-rw-r--r--    1 0        0         3597121 Jul 04  2017 shakespeare.json.gz
+lftp 192.168.0.254:/> lcd  /root/elk/   ##设置本地存放目录
+lcd 成功, 本地目录=/root/elk
+
+lftp 192.168.0.254:/> mget elk/*  ##批量下载所有 文件
+15845057 bytes transferred                                         
+Total 7 files transferred
+共传输7个文件
+lftp 192.168.0.254:/> quit
+[root@Va1 ~]# ls  el
+elasticsearch-head-master.zip  elk/
+elasticsearch-kopf-master.zip  
+[root@Va1 ~]# ls  elk/
+accounts.json.gz    elasticsearch-head-master.zip  shakespeare.json.gz
+alog.gz             elasticsearch-kopf-master.zip
+bigdesk-master.zip  logs.jsonl.gz
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va2 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va2
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+sed中执行外部命令
+ 
+1.sed命令使用单引号的情况下使用 `shell command`或者 $(shell command) 引用命令执行的结果
+
+[root@Va2 ~]# sed  -i "s/192.168.0.11/$(ifconfig eth0 |awk '/inet /{print $2}')/"  /etc/elasticsearch/elasticsearch.yml
+
+[root@Va2 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml17:cluster.name: elk-cluster
+23:node.name: Va2
+51:network.bind_host: 192.168.0.12
+53:network.publish_host: 192.168.0.12
+54:network.host: 192.168.0.12
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+[root@Va2 ~]# 
+
+
+
+
+
+
+[root@Va3 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va3
+51:network.bind_host: 192.168.0.11
+53:network.publish_host: 192.168.0.11
+54:network.host: 192.168.0.11
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va3 ~]# sed  -i "s/192.168.0.1.*/$(ifconfig eth0 |awk '/inet /{print $2}')/"  /etc/elasticsearch/elasticsearch.yml  ##注意.* 代表所有任意字符
+
+[root@Va3 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml17:cluster.name: elk-cluster
+23:node.name: Va3
+51:network.bind_host: 192.168.0.13
+53:network.publish_host: 192.168.0.13
+54:network.host: 192.168.0.13
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va3 ~]# 
+
+
+[root@Va4 ~]# ls  /etc/elasticsearch/
+elasticsearch.yml                            logging.yml
+elasticsearch.yml.6437.2019-01-15@20:29:56~  scripts
+
+[root@Va4 ~]# egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+
+17:cluster.name: elk-cluster
+23:node.name: Va4
+51:network.bind_host: 192.168.0.14
+53:network.publish_host: 192.168.0.14
+54:network.host: 192.168.0.14
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va4 ~]# 
+
+
+
+[root@Va5 ~]# ls  /etc/elasticsearch/
+elasticsearch.yml  elasticsearch.yml.6471.2019-01-15@20:29:56~  logging.yml  scripts
+
+[root@Va5 ~]#  egrep   -nv  "^#|^$"   /etc/elasticsearch/elasticsearch.yml
+17:cluster.name: elk-cluster
+23:node.name: Va5
+51:network.bind_host: 192.168.0.15
+53:network.publish_host: 192.168.0.15
+54:network.host: 192.168.0.15
+55:transport.tcp.port: 9300
+58:http.port: 9200
+68:discovery.zen.ping.unicast.hosts: ["Va1", "Va2", "Va3"]
+
+[root@Va5 ~]# yum  provides  lftp
+.......................
+lftp-4.4.8-8.el7_3.2.x86_64 : A sophisticated file transfer program
+源    ：CentOS7-1708
+
+[root@Va5 ~]# yum  -y  install   lftp
+.......
+已安装:
+  lftp.x86_64 0:4.4.8-8.el7_3.2                                                   
+
+完毕！
+[root@Va5 ~]# which  lftp
+/usr/bin/lftp
+[root@Va5 ~]# rpm  -q  lftp
+lftp-4.4.8-8.el7_3.2.x86_64
+
+[root@Va5 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> ls
+drwxr-xr-x    8 0        0            2048 Sep 05  2017 CentOS7-1708
+drwxr-xr-x    3 0        0            4096 Jan 15 09:00 ansible
+drwxr-xr-x    2 0        0            4096 Jan 15 08:46 elk
+............................
+lftp 192.168.0.254:/> pwd
+ftp://192.168.0.254/
+lftp 192.168.0.254:/> cd  elk/
+lftp 192.168.0.254:/elk> ls
+........................
+-rw-r--r--    1 0        0          274341 Jul 04  2017 bigdesk-master.zip
+..................
+lftp 192.168.0.254:/elk> get  bigdesk-master.zip 
+274341 bytes transferred
+lftp 192.168.0.254:/elk> bye 
+
+[root@Va5 ~]# ls
+anaconda-ks.cfg     initial-setup-ks.cfg  test.yml  模板  图片  下载  桌面
+bigdesk-master.zip  ip.sh                 公共      视频  文档  音乐
+
+[root@Va5 ~]# rpm  -ql  elasticsearch  |grep bin
+/usr/share/elasticsearch/bin
+/usr/share/elasticsearch/bin/elasticsearch
+/usr/share/elasticsearch/bin/elasticsearch-systemd-pre-exec
+/usr/share/elasticsearch/bin/elasticsearch.in.sh
+/usr/share/elasticsearch/bin/plugin
+ 
+[root@Va5 ~]# cd  /usr/share/elasticsearch/
+[root@Va5 elasticsearch]# ls
+bin  lib  LICENSE.txt  modules  NOTICE.txt  plugins  README.textile
+
+[root@Va5 elasticsearch]# cd  /usr/share/elasticsearch/bin/
+[root@Va5 bin]# ls
+elasticsearch  elasticsearch.in.sh  elasticsearch-systemd-pre-exec  plugin
+
+[root@Va5 bin]# ll   /usr/share/elasticsearch/bin/plugin 
+-rwxr-xr-x 1 root root 3048 6月  30 2016 /usr/share/elasticsearch/bin/plugin
+
+[root@Va5 bin]# file  /usr/share/elasticsearch/bin/plugin
+/usr/share/elasticsearch/bin/plugin: POSIX shell script, ASCII text executable
+
+[root@Va5 bin]# ./plugin   --help |grep  -i  "commands"
+COMMANDS
+    [*] For usage help on specific commands please type "plugin <command> -h"
+[root@Va5 bin]# ./plugin   --help |grep  -A6  "COMMANDS"
+COMMANDS
+
+    install    Install a plugin
+
+    remove     Remove a plugin
+
+    list       List installed plugins
+
+[root@Va5 bin]# ./plugin  list
+Installed plugins in /usr/share/elasticsearch/plugins:
+    - No plugin detected
+
+[root@Va5 bin]# ./plugin  install  --help |egrep  "plugin install (http|file)"
+        plugin install http://some.domain.name//my-plugin-1.0.0.zip
+        plugin install file:/path/to/my-plugin-1.0.0.zip
+
+[root@Va5 bin]# ./plugin  install  file:///root/bigdesk-master.zip  ##安装插件
+-> Installing from file:/root/bigdesk-master.zip...
+Trying file:/root/bigdesk-master.zip ...
+Downloading ...DONE
+Verifying file:/root/bigdesk-master.zip checksums if available ...
+NOTE: Unable to verify checksum for downloaded plugin (unable to find .sha1 or .md5 file to verify)
+Installed bigdesk into /usr/share/elasticsearch/plugins/bigdesk
+
+ES服务器监控工具——bigdesk
+http://127.0.0.1:9200/_plugin/bigdesk
+
+ES集群操作的API工具——Kopf
+http://127.0.0.1:9200/_plugin/kopf/
+
+3. bigdesk 统计分析和图表化elasticsearch集群状态信息 [ cpu 内存信息]
+
+[root@Va5 bin]# ./plugin  list
+Installed plugins in /usr/share/elasticsearch/plugins:
+    - bigdesk
+[root@Va5 bin]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
