@@ -695,7 +695,7 @@ Va3 | SUCCESS | rc=0 >>
    "task_max_waiting_in_queue_millis" : 0, "active_shards_percent_as_number"
    : 100.0 }
 
-[root@Va1 ~]# elinks  -dump  192.168.0.12:9200/_cluser/health?pretty
+[root@Va1 ~]# elinks  -dump  192.168.0.12:9200/_cluser/health?pretty  # 注意写错单词了cluster
 
    { "error" : { "root_cause" : [ { "type" : "illegal_argument_exception",
    "reason" : "No feature for name [health]" } ], "type" :
@@ -817,13 +817,13 @@ red
 
 [root@Va1 ~]# systemctl   restart   elasticsearch
 
-[root@Va1 ~]# elinks  -dump  192.168.0.11:9200/_cluser/health?pretty
+[root@Va1 ~]# elinks  -dump  192.168.0.11:9200/_cluser/health?pretty  # 注意写错单词了cluster
    { "error" : { "root_cause" : [ { "type" : "illegal_argument_exception",
    "reason" : "No feature for name [health]" } ], "type" :
    "illegal_argument_exception", "reason" : "No feature for name [health]" },
    "status" : 400 }
 
-[root@Va1 ~]# curl   192.168.0.11:9200/_cluser/health?pretty
+[root@Va1 ~]# curl   192.168.0.11:9200/_cluser/health?pretty  # 注意写错单词了cluster
 {
   "error" : {
     "root_cause" : [ {
@@ -893,7 +893,7 @@ Va3 | SUCCESS => {
 [root@Va1 ~]# 
 /*************
 [root@Va1 ~]# vim  test.yml
-[root@Va1 ~]# cat  test.yml   #ansible可以传递变量
+[root@Va1 ~]# cat  test.yml   #ansible的template模块可以传递 模块setup中的 变量
 node.name: {{ansible_hostname}}
 
 [root@Va1 ~]# vim  template.yml
@@ -926,7 +926,7 @@ Va5                        : ok=2    changed=1    unreachable=0    failed=0
 node.name: Va2
 [root@Va3 ~]# cat  test.yml 
 node.name: Va3
-[root@Va1 ~]# cat  /root/test.yml 
+[root@Va1 ~]# cat  /root/test.yml   #ansible的template模块可以传递 模块setup中的 变量
 node.name: {{ansible_hostname}}
 
 ************************************************/
@@ -990,7 +990,7 @@ red
 
 3、PUT  向服务器发送数据,指定了数据资源的在服务器中存放的位置
 
-4、Delete 删除服务器中的某一个资源
+4、DELETE 删除服务器中的某一个资源
 
 5、HEAD  发送一个请求,不含有呈现数据，仅含有HTTP头信息
 
@@ -1067,7 +1067,12 @@ GET --查
 curl 常用参数介绍：
 -A 修改请求 agent
 -X 设置请求方法
--i 显示返回头信息 (响应头支持网页跳转)
+-I 显示返回头信息 (响应头支持网页跳转)
+显示头信息
+-i 参数可以显示http response的头信息，连同网页代码一起
+-I 参数则是只显示http response的头信息
+ -v 参数可以显示一次http通信的整个过程，包括端口连接和http request头信息
+
 
 [root@Va1 ~]# curl  -i  http://www.baidu.com  |grep -A12 "HTTP/1.1 " # 显示返回头信息
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
@@ -1174,7 +1179,7 @@ curl -X POST -d "data=123&key=456" http://localhost:8080/search -v
 
 如果想使用JSON形式post数据，可以使用-H指定头部类型
 curl -H "Content-Type:application/json" -d '{"data":"123","key":"456"}' http://localhost:8080/search -v
-1
+
 如果想在请求的时候带上Cookie，可以这样
 curl -H "Cookie:username=XXX" {URL}
 
@@ -1505,6 +1510,111 @@ Installed plugins in /usr/share/elasticsearch/plugins:
     - bigdesk
 [root@Va5 bin]# 
 
+represent
+英 [ˌreprɪˈzent]   美 [ˌrɛprɪˈzɛnt]  
+vt. 表现，象征;代表，代理;扮演;作为示范
+vi. 代表;提出异议
+
+一、什么是Rest?
+REST不是"rest"这个单词，而是几个单词缩写 
+-- REpresentational State Transfer 
+
+representational
+英 [ˌreprɪzenˈteɪʃnl]  美 [ˌrɛprɪzɛnˈteʃənəl, -zən-]  
+adj. 代表性的，具象派的
+
+REpresentational State Transfer
+表现层 状态 迁移
+
+直接翻译：表现层状态转移，
+
+但这个翻译正常人根本看不懂，
+一种最好理解的说法是，
+URL定位资源，用HTTP动词（GET,POST,DELETE,DETC）描述操作。
+
+REST成熟度的四个层次
+  第一个层次（Level0）的Web 服务只是使用 HTTP 作为传输方式，
+实际上只是远程方法调用（RPC）的一种具体形  式。
+SOAP和 XML-RPC都属于此类。
+
+  第二个层次（Level1）的Web 服务引入了资源的概念。
+ 每个资源有对应的标识符和表达。
+
+  第三个层次（Level2）的Web 服务使用不同的 HTTP 方法来进行不同的操作，
+并且使用HTTP 状态码来表示不同的结果。
+如 HTTP GET 方法来获取资源，HTTP DELETE 方法来删除资源。
+
+  第四个层次（Level3）的Web 服务使用 HATEOAS。
+在资源的表达中包含了链接信息。
+客户端可以根据链接来发现可以执行的动作。
+
+HATEOAS（超媒体即应用状态引擎）
+Hypermedia as Application State Engine
+
+二、Restful api接口有什么特征？
+REST描述的是在网络中client和server的一种交互形式；
+REST本身不实用，
+实用的是如何设计 RESTful API（REST风格的网络接口）。
+
+1.URL的根路径
+
+http://api.chesxs.com/v1
+2.需要有api版本信息
+
+http://api.chesxs.com/v1
+3.URL中只使用名词指定资源，不用动词，且推荐使用复数
+
+服务（Server）提供的RESTful API中，URL中只使用名词来指定资源，原则上不使用动词。
+“资源”是REST架构或者说整个网络处理的核心。比如：
+
+http://api.chesxs.com/v1/cars // 获取某个账户下的车辆列表
+http://api.chesxs.com/v1/fences // 获取某个账户下的围栏列表
+
+4. 用HTTP协议里的动词来实现资源的添加，修改，删除等操作。
+即通过HTTP动词来实现资源的状态扭转
+
+
+GET 用来获取资源，
+POST 用来新建资源（也可以用于更新资源）。比如：POST http://api.chesxs.com/v1/car: 添加车辆
+PUT 用来更新资源，
+DELETE 用来删除资源。比如：DELETE http://api.chesxs.com/v1/cars 删除某辆车 （在http parameter指定好友id） 
+UPDATE http://api.chesxs.com/v1/fence 更新围栏信息 
+
+错误使用： GET http://api.chesxs.com/v1/deleteCar 删除车辆
+
+5.GET应该是安全的，不会改变资源状态
+
+ 这个应该很好理解，get的时候就只是获取资源，而不涉及添加、更新、删除资源。
+
+6.使用正确的HTTP Status Code返回状态码
+
+常用的有404，200，500，400等等。
+
+7.过滤信息
+
+如果记录数量很多，服务器不可能都将它们返回给用户。API应该提供参数，过滤返回结果。
+
+下面是一些常见的参数。
+
+?limit=10：指定返回记录的数量
+?offset=10：指定返回记录的开始位置。
+?page=2&per_page=100：指定第几页，以及每页的记录数。
+?sortby=name&order=asc：指定返回结果按照哪个属性排序，以及排序顺序。
+?producy_type=1：指定筛选条件
+
+8.规范返回的数据
+
+为了保障前后端的数据交互的顺畅，建议规范数据的返回，并采用固定的数据格式封装。
+
+接口返回模板：
+
+{
+    status:0,
+
+    data:{}||[],
+
+    msg:’’
+}
 
 
 
