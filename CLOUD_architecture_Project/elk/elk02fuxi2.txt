@@ -1,0 +1,832 @@
+
+------------------------------------------------------------------------------
+集群状态 索引属性查询
+http://192.168.0.15:9200/_cat
+=^.^=
+/_cat/allocation
+/_cat/shards
+/_cat/shards/{index}
+/_cat/master
+/_cat/nodes
+/_cat/indices
+/_cat/indices/{index}
+.............
+/_cat/health
+..............
+/_cat/snapshots/{repository}
+
+ES服务器监控工具——bigdesk
+http://127.0.0.1:9200/_plugin/bigdesk
+
+ES内容管理工具——head
+http://127.0.0.1:9200/_plugin/head/
+
+ES集群操作的API工具——Kopf
+http://127.0.0.1:9200/_plugin/kopf/
+
+http://192.168.0.11:9200/_cluster/health?pretty  ##检查集群状态
+
+http://192.168.0.15:9200/_plugin/bigdesk/#nodes
+
+http://192.168.0.15:9200/_plugin/kopf/#!/cluster
+
+ES内容管理工具——head
+http://192.168.0.15:9200/_plugin/head/
+
+=============================
+  关系型    --------  非关系型
+MySQL    ?--?  NoSQL
+Database ---->   Index
+Table    ---->   Type
+Row      ---->   Document
+Column   ---->   Filed
+
+
+POST请求
+curl -X POST -d  file.txt   http://localhost:8080/search -v
+curl -X POST -d "data=123&key=456" http://localhost:8080/search -v 
+
+使用 -A 自定义 User-Agent
+我们可以使用 -A 来自定义用户代理，例如下面的命令将伪装成安卓火狐浏览器对网页进行请求： 
+curl -A “Mozilla/5.0 (Android; Mobile; rv:35.0) Gecko/35.0 Firefox/35.0” http://www.baidu.com 
+
+Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0
+
+用户代理	Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36
+
+User-Agent: "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+
+[root@Va1 ~]# curl  http://192.168.0.15:9200/_cat
+=^.^=
+/_cat/allocation
+/_cat/shards
+/_cat/shards/{index}
+/_cat/master
+/_cat/nodes
+/_cat/indices
+/_cat/indices/{index}
+/_cat/segments
+/_cat/segments/{index}
+/_cat/count
+/_cat/count/{index}
+/_cat/recovery
+/_cat/recovery/{index}
+/_cat/health
+/_cat/pending_tasks
+/_cat/aliases
+/_cat/aliases/{alias}
+/_cat/thread_pool
+/_cat/plugins
+/_cat/fielddata
+/_cat/fielddata/{fields}
+/_cat/nodeattrs
+/_cat/repositories
+/_cat/snapshots/{repository}
+                                    ##检查集群状态
+[root@Va1 ~]# curl  http://192.168.0.15:9200/_cluster/health?pretty
+{
+  "cluster_name" : "elk-cluster",
+  "status" : "green",
+  "timed_out" : false,
+  "number_of_nodes" : 5,
+  "number_of_data_nodes" : 5,
+....................
+  "active_shards_percent_as_number" : 100.0
+}
+[root@Va1 ~]# 
+由于-d选项为使用POST方式向server发送数据，
+因此在使用-d的时候，可以省略-X POST。
+使用-d时，将使用Content-type:application/x-www-form-urlencoded方式发送数据。
+如果想使用JSON形式post数据，可以使用 -H 指定头部类型
+
+curl -H "Content-Type: application/json" -X POST http://192.168.0.11:9200/sjku  -d '         
+{"settings":{
+ "index":{                                      
+  "number_of_shards":5,"number_of_replicas":1  
+  } 
+ }                                             
+}'       # 注意 单引号 '{}' 成对
+                               创建索引{相当于mysql的数据库}   
+[root@Va1 ~]# curl -H "Content-Type: application/json" -X POST http://192.168.0.11:9200/sjku  -d '         
+> {"settings":{
+>  "index":{                                      
+>   "number_of_shards":5,"number_of_replicas":1  
+>   } 
+>  }                                             
+> }'
+{"acknowledged":true}[root@Va1 ~]# 
+
+[root@Va1 ~]# curl http://192.168.0.11:9200/_cat/indices?v  # 查看所有数据库
+health status index pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   sjku    5   1          0            0      1.5kb           795b 
+
+   #  PUT  向服务器发送数据,指定了数据资源的在服务器中存放的位置
+         # 使用 -H 自定义 header  -X 指定请求方式
+      注意空格 Content-Type: application/必须有一个空格,  es 使用 PUT --增加数据
+           注意这里的字段"key1":"shuxingzhi1" ,id 值对应 1 
+               
+[root@Va1 ~]# curl -H  "Content-Type: application/json" -XPUT  http://192.168.0.11:9200/sjku/btable/1  -d  '{"key1":"shuxingzhi1","name":"prettylily","sex":"girl","hobby":"playmusic","age":26}'
+
+{"_index":"sjku","_type":"btable","_id":"1","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"created":true}[root@Va1 ~]# 
+
+     # GET  发送一个请求来取得服务器上的某一资源 可以省略 -XGET   # es数据库查看特定id号的数据
+                                                                  # 注意"?pretty"的作用
+[root@Va1 ~]# curl  http://192.168.0.12:9200/sjku/btable/1?pretty  # 查询特定文档信息
+{
+  "_index" : "sjku",
+  "_type" : "btable",
+  "_id" : "1",
+  "_version" : 1,
+  "found" : true,
+  "_source" : {
+    "key1" : "shuxingzhi1",
+    "name" : "prettylily",
+    "sex" : "girl",
+    "hobby" : "playmusic",
+    "age" : 26
+  }
+}
+# 查询特定文档信息
+curl -XGET 'http://192.168.4.11:9200/school/students/1'
+curl -XGET 'http://192.168.4.11:9200/school/students/1?_source=name,age'
+  关系型    --------  非关系型
+MySQL    ?--?  NoSQL
+Database ---->   Index
+Table    ---->   Type
+Row      ---->   Document
+Column   ---->   Filed
+                                     # 查询特定文档信息 指定的字段 key1,name,sex,hobby,age
+[root@Va1 ~]# curl  http://192.168.0.12:9200/sjku/btable/1?_source=key1,name,sex,hobby,age
+
+{"_index":"sjku","_type":"btable","_id":"1","_version":1,"found":true,"_source":{"key1":"shuxingzhi1","sex":"girl","name":"prettylily","age":26,"hobby":"playmusic"}}
+
+                                               # 查询特定文档信息 指定的字段 name,age
+[root@Va1 ~]# curl  http://192.168.0.12:9200/sjku/btable/1?_source=name,age
+
+{"_index":"sjku","_type":"btable","_id":"1","_version":1,"found":true,"_source":{"name":"prettylily","age":26}}[root@Va1 ~]# 
+
+
+[root@Va1 ~]# curl http://192.168.0.11:9200/_cat/indices?v # 查看所有数据库(注意数据添加了一条docs.count=1)
+health status index pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   sjku    5   1          1            0      9.1kb          4.5kb 
+
+[root@Va1 ~]# curl -H  "Content-Type: application/json" -XPUT  http://192.168.0.11:9200/sjku/btable/1  -d  '{"key1":"shuxingzhi1","name":"prettylily","sex":"girl","hobby":"playmusic","age":26}'
+
+                                  # 使用 PUT --增加数据
+
+[root@Va1 ~]# curl -XPUT  http://192.168.0.12:9200/sjku/btable/2  -d  '{
+"key1":"shuxingzhi2","name":"pretty","sex":"girl","hobby":"music","age":36}'
+
+批量查询数据
+ curl -XGET  http://192.168.0.12:9200/_mget?pretty  -d '{
+"docs":[
+ {"_index" : "sjku", "_type" : "btable", "_id" : "1"},
+ {"_index" : "sjku", "_type" : "btable", "_id" : "2"}
+]}'
+
+[root@Va1 ~]# curl -XGET  http://192.168.0.12:9200/_mget?pretty  -d '{
+> "docs":[
+> {"_index" : "sjku", "_type" : "btable", "_id" : "1"},
+> {"_index" : "sjku", "_type" : "btable", "_id" : "2"}
+> ]}'
+{
+  "docs" : [ {
+    "_index" : "sjku",
+    "_type" : "btable",
+    "_id" : "1",
+    "_version" : 1,
+    "found" : true,
+    "_source" : {
+      "key1" : "shuxingzhi1",
+      "name" : "prettylily",
+      "sex" : "girl",
+      "hobby" : "playmusic",
+      "age" : 26
+    }
+  }, {
+    "_index" : "sjku",
+    "_type" : "btable",
+    "_id" : "2",
+    "_version" : 1,
+    "found" : true,
+    "_source" : {
+      "key1" : "shuxingzhi2",
+      "name" : "pretty",
+      "sex" : "girl",
+      "hobby" : "music",
+      "age" : 36
+    }
+  } ]
+}
+[root@Va1 ~]# 
+
+批量导入数据
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @shakespeare.json
+curl -XPOST 'http://192.168.4.14:9200/_bulk' --data-binary @logs.jsonl
+curl -XPOST 'http://192.168.4.14:9200/accounts/act/_bulk?pretty' --data-binary @accounts.json
+
+[root@Va1 ~]# vim  /root/databulk.json
+数据内容格式
+action_and_meta_data\n
+optional_source\n
+....
+action_and_meta_data\n
+optional_source\n
+Note: 最后的一行也必须以 \n 结尾
+
+[root@Va1 ~]# cat  /root/databulk.json     # 注意json格式和数据内容格式一定要正确
+
+{"index":{"_index":"sjku", "_type":"btable", "_id" : "3"}}
+{ "key1" : "shuxingzhi3", "name" : "lily", "sex" : "boy",  "hobby" : "play",  "age" : 17 } 
+
+{"index":{"_index":"sjku", "_type":"btable", "_id" : "4"}}
+{ "key1" : "shuxingzhi4", "name" : "jone", "sex" : "boy", "hobby" : "music", "age" : 16 }
+
+                       # 批量导入数据
+[root@Va1 ~]# curl  -XPOST  http://192.168.0.11:9200/_bulk  --data-binary @/root/databulk.json
+
+{"took":144,"errors":false,"items":[{"index":{"_index":"sjku","_type":"btable","_id":"3","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}},{"index":{"_index":"sjku","_type":"btable","_id":"4","_version":1,"_shards":{"total":2,"successful":2,"failed":0},"status":201}}]}
+
+ES和lucene是使用的JAVA，JAVA的内存分配大小决定了它们的发挥空间，这里的初始内存为 256M ，
+这也是大多数情况下的默认配置，
+但是应对当前的实际数据大小 265M 时就不够了，
+虽然官方说会尽量减小使用buffer，但实测下来，系统应该会是首先尽量使用内存，
+通过导入内存的方式来起到显著加速的效果，但是内存不够时，就直接报错退出了
+free -m
+ps faux | grep elas
+解决内存不足有两种思路：
+1.调整 Xms 和 Xmx 参数，使其适应业务需求，然后重启服务使之生效
+2.将原来的数据切小，分批导入
+sed  -rn '1,250000p' es_data.json  > es_data1.json
+]# sed  -n '250001,500000p' es_data.json  > es_data2.json
+]# sed  -n '500001,750000p' es_data.json  > es_data3.json
+
+
+[root@Va1 ~]# 
+bulk API
+ES提供了一个叫 bulk 的 API 来进行批量操作
+它用来在一个API调用中进行大量的索引更新或删除操作，这极大的提升了操作效率
+
+API 可以是 /_bulk, /{index}/_bulk, 或 {index}/{type}/_bulk 这三种形式，
+当索引或类型已经指定后，
+数据文件中如不明确指定或申明的内容，就会默认使用API中的值
+
+API 以是 /_bulk 结尾的，并且跟上如下形式的 JSON 数据
+
+数据内容格式
+action_and_meta_data\n
+optional_source\n
+action_and_meta_data\n
+optional_source\n
+....
+action_and_meta_data\n
+optional_source\n
+Note: 最后的一行也必须以 \n 结尾
+
+可用的操作有 index, create, delete 和 update ：
+index 和 create 得在操作与元数据(action_and_meta_data)之后
+另起一行然后接上内容(必须遵循这样的格式 ，不这么做导致操作失败)
+delete 只用接上元数据就可以了，不必接上内容(原因自不用说，定位到文档就OK了)
+update 得接上要变更的局部数据，也得另起一行
+
+[root@Va1 ~]# vim   sjku.json   # 注意json格式和数据内容格式一定要正确
+[root@Va1 ~]# cat   sjku.json
+{"index":{"_index":"sjku", "_type":"btable", "_id" : "5"}}
+{ "key1" : "shuxingzhi3", "name" : "lily2", "sex" : "girl",  "hobby" : "play",  "age" : 17 } 
+{"index":{"_index":"sjku", "_type":"btable", "_id" : "6"}}
+{ "key1" : "shuxingzhi4", "name" : "jone2", "sex" : "girl", "hobby" : "music", "age" : 16 }
+
+          # 批量导入数据,--data-binary 注意这里指定了库名/表名/_bulk
+[root@Va1 ~]# curl   -XPOST http://192.168.0.11:9200/sjku/btable/_bulk?pretty  --data-binary  @/root/sjku.json
+{
+  "took" : 154,
+  "errors" : false,
+  "items" : [ {
+    "index" : {
+      "_index" : "sjku",
+      "_type" : "btable",
+      "_id" : "5",
+      "_version" : 1,
+      "_shards" : {
+        "total" : 2,
+        "successful" : 2,
+        "failed" : 0
+      },
+      "status" : 201
+    }
+  }, {
+    "index" : {
+      "_index" : "sjku",
+      "_type" : "btable",
+      "_id" : "6",
+      "_version" : 1,
+      "_shards" : {
+        "total" : 2,
+        "successful" : 2,
+        "failed" : 0
+      },
+      "status" : 201
+    }
+  } ]
+}                                           #   批量查询数据
+[root@Va1 ~]# curl http://192.168.0.11:9200/_mget?pretty? -d '{"docs":[ {"_index" : "sjku", "_type" : "btable", "_id" : "1"},
+{"_index" : "sjku", "_type" : "btable", "_id" : "2"},
+{"_index" : "sjku", "_type" : "btable", "_id" : "3"},
+{"_index" : "sjku", "_type" : "btable", "_id" : "4"}
+] }'
+
+{"docs":[
+  {"_index":"sjku","_type":"btable","_id":"1","_version":1,"found":true,
+    "_source":    
+         {"key1":"shuxingzhi1","name":"prettylily","sex":"girl","hobby":"playmusic","age":26}},
+  {"_index":"sjku","_type":"btable","_id":"2","_version":1,"found":true,
+    "_source":
+         {"key1":"shuxingzhi2","name":"pretty","sex":"girl","hobby":"music","age":36}},
+  {"_index":"sjku","_type":"btable","_id":"3","_version":1,"found":true,
+    "_source":
+     { "key1" : "shuxingzhi3", "name" : "lily", "sex" : "boy",  "hobby" : "play",  "age" : 17 } },
+  {"_index":"sjku","_type":"btable","_id":"4","_version":1,"found":true,
+    "_source":
+     { "key1" : "shuxingzhi4", "name" : "jone", "sex" : "boy", "hobby" : "music", "age" : 16 }}]}
+
+[root@Va1 ~]# 
+使用 -A 自定义 User-Agent
+我们可以使用 -A 来自定义用户代理，例如下面的命令将伪装成安卓火狐浏览器对网页进行请求： 
+[root@Va2 ~]# curl  -IA  "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"  http://www.baidu.com
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: private, no-cache, no-store, proxy-revalidate, no-transform
+Connection: Keep-Alive
+Content-Length: 277
+Content-Type: text/html
+Date: Fri, 18 Jan 2019 08:59:15 GMT
+Etag: "575e1f65-115"
+Last-Modified: Mon, 13 Jun 2016 02:50:13 GMT
+Pragma: no-cache
+Server: bfe/1.0.8.18
+
+[root@Va2 ~]# 
+
+curl  -IA  "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"  http://www.baidu.com
+
+                                                    #   批量查询数据
+
+[root@Va2 ~]# curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"   http://192.168.0.11:9200/_mget?pretty? -d  '{
+> "docs":[ {"_index" : "sjku", "_type" : "btable", "_id" : "1"},
+>          {"_index" : "sjku", "_type" : "btable", "_id" : "4"}
+> ] }'
+
+{"docs":[{"_index":"sjku","_type":"btable","_id":"1","_version":1,"found":true,"_source":{"key1":"shuxingzhi1","name":"prettylily","sex":"girl","hobby":"playmusic","age":26}},{"_index":"sjku","_type":"btable","_id":"4","_version":1,"found":true,"_source":{ "key1" : "shuxingzhi4", "name" : "jone", "sex" : "boy", "hobby" : "music", "age" : 16 }}]}
+
+                使用 -A 自定义 User-Agent用户代理 # 查询特定文档信息 指定的字段 name,age
+
+[root@Va2 ~]# curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"   http://192.168.0.11:9200/sjku/btable/1?_source=name,age
+
+{"_index":"sjku","_type":"btable","_id":"1","_version":1,"found":true,"_source":{"name":"prettylily","age":26}}
+
+[root@Va2 ~]# 
+
+
+
+[root@Va1 ~]# yum  -y  install  kibana
+已安装:
+  kibana.x86_64 0:4.5.2-1                                                              
+
+完毕！
+[root@Va1 ~]# rpm   -q  kibana
+kibana-4.5.2-1.x86_64
+
+[root@Va1 ~]# rpm  -ql  kibana  |head  -5
+/etc/default/kibana
+/etc/init.d/kibana
+/lib/systemd/system/kibana.service
+/opt/kibana/LICENSE.txt
+/opt/kibana/README.txt
+
+[root@Va1 ~]# rpm  -ql  kibana  |tail  -1
+/opt/kibana/webpackShims/ui-bootstrap.js
+
+[root@Va1 ~]# ls /opt/
+kibana  rh
+[root@Va1 ~]# ls  /opt/rh/
+[root@Va1 ~]# ls /opt/kibana/
+
+bin     installedPlugins  node          optimize      README.txt  webpackShims
+config  LICENSE.txt       node_modules  package.json  src
+
+[root@Va1 ~]# cd /opt/kibana/config/ ;ls
+kibana.yml
+
+dashboard
+英 [ˈdæʃbɔ:d]   美 [ˈdæʃbɔ:rd]  
+n. 仪表板;仪表盘;仪表的控制盘;挡泥板
+
+[root@Va1 config]# vim kibana.yml  #配置 kibana 
+
+  2 server.port: 5601  # 默认值 : 5601 Kibana 由后端服务器提供服务。此设置指定要使用的端口。
+  3 
+  4 # The host to bind the server to.
+  5 server.host: "0.0.0.0"   #默认值 : “localhost”此设置指定后端服务器的主机。
+
+ 15 elasticsearch.url: "http://Va1:9200"    #要用于所有查询的 Elasticsearch 实例的 URL。
+
+#  Kibana 使用 Elasticsearch 中的索引来存储保存的搜索，可视化和仪表板。
+             # 如果索引不存在，Kibana 将创建一个新索引。
+ 23 kibana.index: ".kibana"
+                                  #打开kibana页面时，默认打开的页面discover
+  # 实际上有 4 个首页主项 页面 
+    Discover  Visualize  Dashboard  Settings
+       发现          可视化        仪表板      设置
+ 26 kibana.defaultAppId: "discover"  # 要加载的默认应用程序是“discover”
+
+# elasticsearch.requestTimeout 设置以毫秒为单位的时间等待 Elasticsearch 对 PING 作出响应。
+ 53 elasticsearch.pingTimeout: 1500   # ping检测超时时间
+
+# 等待来自后端或 Elasticsearch 的响应的时间（以毫秒为单位）。此值必须为正整数。
+ 57 elasticsearch.requestTimeout: 30000  # 请求超时
+
+#重试前在 Kibana 启动时等待 Elasticsearch 的时间（以毫秒为单位）。
+ 64 elasticsearch.startupTimeout: 5000  #启动超时
+
+Kibana 配置文件 kibana.yaml 文件详解
+https://blog.csdn.net/heatdeath/article/details/79531297
+------------------------------------------------------------------------------------------
+
+[root@Va1 config]# egrep -vn '^(#|$)'  kibana.yml
+2:server.port: 5601
+5:server.host: "0.0.0.0"  //服务器监听地址 0.0.0.0可以代表本机或其他任意主机地址
+15:elasticsearch.url: "http://Va1:9200" # 声明地址，从哪里查，集群里面随便选一个
+23:kibana.index: ".kibana"
+26:kibana.defaultAppId: "discover"
+53:elasticsearch.pingTimeout: 1500
+57:elasticsearch.requestTimeout: 30000
+64:elasticsearch.startupTimeout: 5000
+
+[root@Va1 config]# systemctl  start  kibana  && systemctl  enable  kibana  # 开机自启动
+Created symlink from /etc/systemd/system/multi-user.target.wants/kibana.service to /usr/lib/systemd/system/kibana.service.
+
+[root@Va1 config]# netstat   -npult |grep 5601  # 查看 kibana 监听端口
+tcp        0      0 0.0.0.0:5601            0.0.0.0:*               LISTEN      4907/node           
+http://192.168.0.11:5601  在浏览器中打开 kibana 服务平台
+http://192.168.0.11:5601/app/kibana#/settings/indices/?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))
+
+http://192.168.0.11:5601/status  ## 检查运行状态(绿色正常)
+Status: Green 
+/************************
+unzip
+unzip -o  myfile.zip  -d  /home/sunny  
+把myfile.zip文件解压到 /home/sunny/文件夹
+-o:不提示的情况下覆盖文件；
+-d:-d /home/sunny 指明将文件解压缩到/home/sunny目录下；
+
+使用 zip 来压缩文件，在 shell 提示下键入下面的命令：
+zip -r  创建的压缩文件filename.zip  filesdir/被压缩的目录
+-r 选项指定你想递归地（recursively）包括所有包括在 filesdir 目录中的文件。
+
+若文件是以XXX.tar.gz结尾的，
+则用tar -xf  /wenjian.tar.gz  -C  /指定释放解压路径/目标文件夹  进行解压缩
+
+若文件是以XXX.gz结尾的，
+则使用gzip -d  /wenjian.gz   进行解压缩
+
+gzip 本身并没有解压到指定目录的参数。
+-c 将输出写到标准输出上，并保留原有文件。
+-d 将压缩文件解压
+如果是单文件压缩，可以用 -c 加 输出重定向 实现 指定 解压目录
+                                  # 重定向 实现 指定 解压目录
+[root@Va1 ~]# gzip  -cd  elk/accounts.json.gz  > elk/newaccounts
+
+[root@Va1 ~]# head  -2 elk/newaccounts
+{"index":{"_id":"1"}}
+{"account_number":1,"balance":39225,"firstname":"Amber","lastname":"Duke","age":32,"gender":"M","address":"880 Holmes Lane","employer":"Pyrami","email":"amberduke@pyrami.com","city":"Brogan","state":"IL"}
+
+[root@Va1 ~]# cd elk/
+[root@Va1 elk]# ls
+accounts.json     bigdesk-master.zip             logs.jsonl.gz
+accounts.json.gz  elasticsearch-head-master.zip  newaccounts
+alog.gz           elasticsearch-kopf-master.zip  shakespeare.json.gz
+
+[root@Va1 elk]# gzip  -d   accounts.json.gz 
+gzip: accounts.json already exists; do you wish to overwrite (y or n)? y
+
+[root@Va1 elk]# gzip   -d  logs.jsonl.gz 
+[root@Va1 elk]# gzip   -d   shakespeare.json.gz 
+
+[root@Va1 elk]# ls
+accounts.json       elasticsearch-head-master.zip  newaccounts
+alog.gz             elasticsearch-kopf-master.zip  shakespeare.json
+bigdesk-master.zip  logs.jsonl
+
+[root@Va1 elk]# 
+
+   bulk API
+ES提供了一个叫 bulk 的 API 来进行批量操作
+它用来在一个API调用中进行大量的索引更新或删除操作，这极大的提升了操作效率
+
+API 可以是 /_bulk, /{index}/_bulk, 或 {index}/{type}/_bulk 这三种形式，
+当索引或类型已经指定后，
+数据文件中如不明确指定或申明的内容，就会默认使用API中的值
+
+API 以是 /_bulk 结尾的，并且跟上如下形式的 JSON 数据
+
+数据内容格式
+action_and_meta_data\n
+optional_source\n
+....
+action_and_meta_data\n
+optional_source\n
+Note: 最后的一行也必须以 \n 结尾
+
+可用的操作有 index, create, delete 和 update ：
+index 和 create 得在操作与元数据(action_and_meta_data)之后
+另起一行然后接上内容(必须遵循这样的格式 ，不这么做导致操作失败)
+delete 只用接上元数据就可以了，不必接上内容(原因自不用说，定位到文档就OK了)
+update 得接上要变更的局部数据，也得另起一行
+
+[root@Va1 elk]# wc  -l  shakespeare.json
+222792 shakespeare.json
+
+          # 批量导入数据,--data-binary 注意这里指定了/库名/表名/_bulk
+[root@Va1 ~]# curl   -XPOST http://192.168.0.11:9200/sjku/btable/_bulk?pretty  --data-binary  @/root/sjku.json
+.......................
+
+[root@Va1 elk]# tail   -2   shakespeare.json
+                # 注意这里指定了索引(数据库名称)
+{"index":{"_index":"shakespeare","_type":"line","_id":111395}}
+{"line_id":111396,"play_name":"A Winters Tale","speech_number":38,"line_number":"","speaker":"LEONTES","text_entry":"Exeunt"}
+
+API 可以是 /_bulk, /{index}/_bulk, 或 {index}/{type}/_bulk 这三种形式，
+当索引或类型已经指定后，
+数据文件中如不明确指定或申明的内容，就会默认使用API中的值
+                # 批量导入数据,--data-binary 注意这里指定了/库名/_bulk
+
+[root@Va1 elk]# curl  -XPOST  http://192.168.0.12:9200/.kibana/_bulk  --data-binary  @/root/elk/shakespeare.json
+
+............
+
+[root@Va1 elk]# head  -2   accounts.json 
+                        # 注意这里 没有 索引(数据库名称) 类型type(表)
+{"index":{"_id":"1"}}
+{"account_number":1,"balance":39225,"firstname":"Amber","lastname":"Duke","age":32,"gender":"M","address":"880 Holmes Lane","employer":"Pyrami","email":"amberduke@pyrami.com","city":"Brogan","state":"IL"}
+[root@Va1 elk]# cat   accounts.json  |wc  -l
+2000
+
+      # 批量导入数据,--data-binary 注意这里指定了/库名/表名/_bulk
+ # 注意/kuindex/typetable/这里指定的/库名/表名/都是  临时 新 定义 的,
+      采用elasticsearch 默认的5个分片1个副本的方式新建的 /库名/表名/
+
+[root@Va1 elk]# curl  -XPOST  http://192.168.0.12:9200/kuindex/typetable/_bulk  --data-binary  @accounts.json
+................
+
+=============================
+  关系型    --------  非关系型
+MySQL    ?--?  NoSQL
+Database ---->   Index
+Table    ---->   Type
+Row      ---->   Document
+Column   ---->   Filed
+
+                 # 查看所有数据库
+[root@Va1 elk]# curl  http://192.168.0.15:9200/_cat/indices?v
+health status index       pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   shakespeare   5   1     111394            0     37.4mb         18.9mb 
+green  open   kuindex       5   1       1000            0    890.6kb        448.2kb 
+green  open   .kibana       1   1          1            0      6.3kb          3.1kb 
+green  open   sjku          5   1          6            0     46.9kb         23.4kb 
+
+[root@Va1 ~]# curl  -X DELETE  http://192.168.0.12:9200/shakespeare  ## 删除数据库
+[root@Va1 elk]# curl  -X DELETE  http://192.168.0.12:9200/shakespeare 
+{"acknowledged":true}[root@Va1 elk]# 
+
+[root@Va1 elk]# curl  http://192.168.0.15:9200/_cat/indices?v   # 查看所有数据库
+health status index   pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   kuindex   5   1       1000            0    891.6kb        448.7kb 
+green  open   .kibana   1   1          1            0      6.3kb          3.1kb 
+green  open   sjku      5   1          6            0     46.9kb         23.4kb 
+[root@Va1 elk]# 
+
+[root@Va1 elk]# head  -2  shakespeare.json
+
+{"index":{"_index":"shakespeare","_type":"act","_id":0}}
+{"line_id":1,"play_name":"Henry IV","speech_number":"","line_number":"","speaker":"","text_entry":"ACT I"}
+
+[root@Va1 elk]# 
+[root@Va1 elk]# curl  -XPOST  http://192.168.0.12:9200/_bulk  --data-binary  @/root/elk/shakespeare.json
+
+                # 批量导入数据,--data-binary 注意这里没有指定索引(库) /_bulk
+
+
+[root@Va1 elk]# head  -1  logs.jsonl  ## 注意这里没有id,直接默认导入
+
+{"index":{"_index":"logstash-2015.05.18","_type":"log"}}
+
+                    # 批量导入数据,--data-binary 注意这里没有指定索引(库) /_bulk
+
+[root@Va1 elk]# curl  -XPOST http://192.168.0.11:9200/_bulk  --data-binary  @logs.jsonl
+..........................
+
+                              # 查看指定的数据库中指定的type表中的所有数据 
+
+[root@Va1 elk]# curl  -XGET  http://192.168.0.11:9200/sjku/btable/_search?pretty |grep "_id"
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  1738  100  1738    0     0   103k      0 --:--:-- --:--:-- --:--:--  113k
+      "_id" : "5",
+      "_id" : "2",
+      "_id" : "4",
+      "_id" : "6",
+      "_id" : "1",
+      "_id" : "3",
+                                         # 查询指定索引库sjku 所有数据
+[root@Va1 elk]# curl  -XGET  http://192.168.0.11:9200/sjku/_search?pretty 
+{
+  "took" : 2,         # took 代表消耗的时间，是2 毫秒
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,  # 总共 5 个分片
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 6,
+    "max_score" : 1.0,
+    "hits" : [ {
+      "_index" : "sjku",
+      "_type" : "btable",
+      "_id" : "5",
+      "_score" : 1.0,
+      "_source" : {
+        "key1" : "shuxingzhi3",
+        "name" : "lily2",
+        "sex" : "girl",
+        "hobby" : "play",
+        "age" : 17
+      }
+    }, {
+      "_index" : "sjku",
+.................
+        "age" : 26
+      }
+    }, {
+      "_index" : "sjku",
+      "_type" : "btable",
+      "_id" : "3",
+...................
+        "age" : 17
+      }
+    } ]
+  }
+}
+                                                    #   批量查询数据
+
+[root@Va1 ~]# curl -A "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"   http://192.168.0.11:9200/_mget?pretty? -d  '{
+> "docs":[ {"_index" : "sjku", "_type" : "btable", "_id" : "1"},
+>          {"_index" : "sjku", "_type" : "btable", "_id" : "4"}
+> ] }'
+ 
+===================== kibana =========================
+
+http://192.168.0.11:5601/app/kibana#/settings/indices/?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))
+ 注意是 在菜单 Settings 下 的页面中的菜单 Indices 下的页面 中设置 时间戳 @timestame
+[复选框 勾 ] Index contains time-based events
+[复选框   ]  Use event times to create index names [DEPRECATED]
+          Index name or pattern
+
+  Patterns allow you to define dynamic index names using * as a wildcard. Example: logstash-*
+  [ logstash-*  ]
+
+ Time-field name     refresh fields 
+ [ 在这个下拉菜单框中选择  时间戳 @timestamp  表示横坐标方向的值 ]
+点击 [ Create ]
+
+接下来 kibana有了索引库
+     Index Patterns 
+      * logstash-*
+
+[root@Va1 ~]# egrep  -vn  "^(#|$)"  /opt/kibana/config/kibana.yml
+2:server.port: 5601
+5:server.host: "0.0.0.0"
+15:elasticsearch.url: "http://Va1:9200"
+23:kibana.index: ".kibana"
+26:kibana.defaultAppId: "discover"
+53:elasticsearch.pingTimeout: 1500
+57:elasticsearch.requestTimeout: 30000
+64:elasticsearch.startupTimeout: 5000
+
+absolute
+英 [ˈæbsəlu:t]   美 [ˈæbsəˌlut]  
+adj. 绝对的，完全的;不受任何限制[约束]的;无条件的;有无上权力或权威的
+n. 绝对;绝对事物
+
+http://192.168.0.11:5601/app/kibana#/discover?_g=(refreshInterval............
+  注意是 在菜单 Discover 下 的页面中的右上角 [时钟Last 15 minutes]中设置 
+     Today
+........
+    Yesterday
+..............
+    Last 5 years 
+-----------------------------------
+也可以 选择 点击  absolute 弹开 年月日历表
+选择起始到终止时间范围
+
+
+
+
+
+
+
+
+
+[root@Va2 ~]# systemctl  is-active  httpd
+active
+[root@Va2 ~]# netstat  -npult  |grep  httpd
+tcp6       0      0 :::80                   :::*                    LISTEN      1095/httpd          
+[root@Va2 ~]# egrep  -n "^(Server|Listen|DocumentRoot)"  /etc/httpd/conf/httpd.conf 
+31:ServerRoot "/etc/httpd"
+42:Listen  80
+86:ServerAdmin root@localhost
+95:ServerName  127.0.0.1
+119:DocumentRoot "/var/www/html"
+
+[root@Va2 ~]# which  apachectl 
+/usr/sbin/apachectl
+[root@Va2 ~]# apachectl  -t
+Syntax OK
+[root@Va2 ~]# vim  /var/www/html/index.html
+[root@Va2 ~]# cat  /var/www/html/index.html
+<html>
+ <head></head>
+ <body>
+  <p style="color:#00ff00"><font size="9"> Va2 Va2 apache </font>
+  </p>
+  <h1> Va2  test</h1>
+  </body>
+</html>
+[root@Va2 ~]# elinks   -dump   192.168.0.12
+   Va2 Va2 apache
+
+                                    Va2 test
+[root@Va2 ~]# ls  /var/log/httpd/
+access_log  access_log-20190113  error_log  error_log-20190113
+[root@Va2 ~]# tail  -1  /var/log/httpd/access_log
+192.168.0.254 - - [18/Jan/2019:19:16:39 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+UTC=Universal Time Coordinated 通用协调时间
+GMT=Greenwich Mean Time 格林尼治平均时 UTC=GMT
+PST=Pacific Standard Time 太平洋标准时间，UTC-0800
+EST=Eastern Standard Time 东部标准时间，UTC-0500
+EDT=Eastern Daylight Time 东部夏令时(或）东部日光时间，UTC-0400
+UTC ＋ 时区差（东正西负） ＝ 本地时间
+ 
+北京时间=UTC+0800
+加州（太平洋）时间=UTC-0800
+
+ip地址 - -  time时间戳  "请求方法
+1 第一项信息192.168.0.254 是远程主机的clientIP地址  表明访问网站的客户ip是谁
+
+2 日志记录中的第二项是空白，用一个“-”占位符替代
+这个位置用于记录浏览者的标识，这不只是浏览者的登录名字，
+也是浏览者的email地址或者其他唯一标识符
+
+3 日志记录的第三项也是空白,用一个“-”占位符替代。
+这个位置用于记录浏览者进行身份验证时提供的名字。
+当然，如果网站的某些内容要求用户进行身份验证，那么这项信息 不是 空白的
+
+4 [18/Jan/2019:19:16:39 +0800] 第四项是utc_time 请求的timestamp时间戳 表示请求的时间是2019年1月18日19:16:39
+时间信息最后的“+800”表示服务器所处时区位于东八区。
+ 
+ 5  "GET /favicon.ico HTTP/1.1" 日志记录的第五项信息 表示 服务器收到的是一个什么样的请求。
+该项信息的典型格式是“METHOD RESOURCE PROTOCOL”，即“方法 资源 协议”
+ 在上例中，METHOD是GET，其他经常可能出现的METHOD还有POST和HEAD。
+ 此外还有不少可能出现的合法METHOD，但主要就是这三种
+ RESOURCE是指浏览者向服务器请求的文档，或URL。
+在这个例子中，浏览者请求的是“/favicon.ico”，即网站一个图片,图标
+PROTOCOL通常是HTTP，后面再加上版本号1.1
+
+6 第六项信息是状态代码 404 。它告诉我们请求是否成功，或者遇到了什么样的错误。
+大多数时候，这项值是200，它表示服务器已经成功地响应浏览器的请求，一切正常
+ 这里 404 表示 请求错误 Not Found 没有找到资源数据
+
+404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+7 第七项 209 表示发送给客户端的bytes 总字节数length。
+它告诉我们传输是否被打断（即，该数值是否和文件的大小相同）。
+把日志记录中的这些值加起来就可以得知服务器在一天、一周或者一月内发送了多少数据。
+
+8 第8项是空白,用一个“-”占位符替代 ,referer 记录访客来源,了解访客是从哪个网站过来的。%{Referer}i
+
+9 第9 项  "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+ 记录访客使用的浏览器 %{User-Agent}i 浏览器User-Agent用户代理 
+
+
+
+
+
+
+
+
+
+
+
+
