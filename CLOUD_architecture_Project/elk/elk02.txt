@@ -36,6 +36,26 @@ elasticsearch.startupTimeout: 5000
 通过图形页面展示，注意时间是 2015 年，需要调整时间才能正常显示
 
 logstash部分
+Logstash 是 Elastic Stack 的中央数据流引擎，
+用于收集、丰富和统一所有数据，而不管格式或模式。
+当与Elasticsearch，Kibana，及 Beats 共同使用
+的时候便会拥有特别强大的实时处理能力
+
+ logstash是一个数据分析软件，主要目的是分析log日志。
+整一套软件可以当作一个MVC模型，
+logstash是controller层，
+Elasticsearch是一个model层，
+kibana是view层。
+  首先将数据传给logstash，
+它将数据进行过滤和格式化（转成JSON格式），
+然后传给Elasticsearch进行存储、建搜索的索引，
+kibana提供前端的页面再进行搜索和图表可视化，
+它是调用Elasticsearch的接口返回的数据进行可视化。
+logstash和Elasticsearch是用Java写的，
+kibana使用node.js框架。
+
+这个软件官网有很详细的使用说明，https://www.elastic.co/，除了docs之外，
+还有视频教程
 
 3.logstash的概念及特点。
 概念：logstash是一个数据采集、加工处理以及传输(输出)的工具。
@@ -44,6 +64,12 @@ logstash部分
     - 不同模式和格式数据的正常化
     - 自定义日志格式的迅速扩展
     - 为自定义数据源轻松添加插件
+
+https://www.elastic.co/cn/videos
+
+Beats 是一系列轻量级的数据收集器，
+直接运行在终端设备并向 Elasticsearch 发送数据信息。
+Packetbeat 用来收集网络数据。
 
 安装Logstash
 rpm -ivh logstash-2.3.4-1.noarch.rpm

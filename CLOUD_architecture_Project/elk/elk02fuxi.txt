@@ -2141,16 +2141,229 @@ ElasticSearch View Plugin
 
 
 
-
-
-
-
-
-
 [root@Va6 ~]# free  -m
               total        used        free      shared  buff/cache   available
 Mem:           1476         109        1227           8         140        1211
 Swap:          2047           0        2047
+
+
+[root@room9pc01 ~]# ps  faux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         2  0.0  0.0      0     0 ?        S    09:44   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S    09:44   0:00  \_ [ksoftirqd/
+root         5  0.0  0.0      0     0 ?        S<   09:44   0:00  \_ [kworker/0:
+
+[root@Va5 ~]# ps  -l
+F  S  UID  PID   PPID  C  PRI  NI  ADDR  SZ     WCHAN   TTY    TIME      CMD
+4  S  0    1428  1418  0  80   0   -     29077  do_wai  pts/0  00:00:00  bash
+0  R  0    1806  1428  0  80   0   -     37235  -       pts/0  00:00:00  ps
+1  D  0    1807  1428  0  80   0   -     29077  lock_p  pts/0  00:00:00  bash
+
+ps  -l 长格式（有F,wchan,C 等字段）
+
+F 代表这个程序的旗标 (flag)， 4 代表使用者为 super user
+S 代表这个程序的状态 (STAT)，关于各 STAT 的意义将在内文介绍
+UID 程序被该 UID 所拥有
+PID 就是这个程序的 ID ！
+PPID 则是其上级父程序的ID
+C CPU 使用的资源百分比
+PRI 这个是 Priority (优先执行序) 的缩写
+NI 这个是 Nice 值
+ADDR 这个是 kernel function，指出该程序在内存的那个部分。如果是个 running的程序，一般就是 "-"
+SZ 使用掉的内存大小
+WCHAN 目前这个程序是否正在运作当中，若为 - 表示正在运作
+TTY 登入者的终端机位置
+TIME 使用掉的 CPU 时间。
+CMD 所下达的指令为何
+
+[root@Va5 ~]# ps  a
+  PID TTY      STAT   TIME COMMAND
+ 1143 tty1     Ss+    0:00 /sbin/agetty --noclear tty1 linux
+ 1144 ttyS0    Ss+    0:00 /sbin/agetty --keep-baud 115200 38400 9600 ttyS0 vt220
+ 1428 pts/0    Ss     0:00 -bash
+ 1842 pts/0    R+     0:00 ps a
+
+[root@Va5 ~]# ps  -a
+  PID TTY          TIME CMD
+ 1843 pts/0    00:00:00 ps
+
+[root@Va5 ~]# ps  -f
+UID        PID  PPID  C STIME TTY          TIME CMD
+root      1428  1418  0 09:57 pts/0    00:00:00 -bash
+root      1882  1428  0 10:39 pts/0    00:00:00 ps -f
+
+[root@Va5 ~]# ps  f
+  PID TTY      STAT   TIME COMMAND
+ 1428 pts/0    Ss     0:00 -bash
+ 1888 pts/0    R+     0:00  \_ ps f
+ 1144 ttyS0    Ss+    0:00 /sbin/agetty --keep-baud 115200 38400 9600 ttyS0 vt220
+ 1143 tty1     Ss+    0:00 /sbin/agetty --noclear tty1 linux
+
+[root@Va5 ~]# ps  -faux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         2  0.0  0.0      0     0 ?        S    09:50   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S    09:50   0:00  \_ [ksoftirqd/0]
+root         5  0.0  0.0      0     0 ?        S<   09:50   0:00  \_ [kworker/0:0H]
+
+常用命令参数
+f  显示程序间的关系(树形结构  pstree命令也是显示树形结构)
+f  用ASCII字符显示树状结构，表示程序间的相互关系
+-a 显示同一终端下的所有程序
+a  显示现行终端机下的所有程序，包括其他用户的程序
+u 　以用户为主的格式来显示程序状况。 
+u  指定用户的所有进程
+x 显示所有程序，不以终端机来区分。
+-au 显示较详细的资讯
+-aux 显示所有包含其他使用者的进程
+
+-p pid 父进程id
+-u uid or username 选择有效的用户id或者是用户名
+[root@Va5 ~]# ps  -u  0  |head -3
+  PID TTY          TIME CMD
+    1 ?        00:00:00 systemd
+    2 ?        00:00:00 kthreadd
+[root@Va2 ~]# id apache
+uid=48(apache) gid=48(apache) 组=48(apache)
+[root@Va2 ~]# ps  -u  apache
+  PID TTY          TIME CMD
+ 1320 ?        00:00:00 httpd
+ 1322 ?        00:00:00 httpd
+.......................
+-g gid or groupname 显示组的所有进程。
+-L 参数，后面加上特定的PID 显示特定进程的线程
+
+-A 显示所有进程 （等价于-e）
+-e 等于“-A” 
+e 显示环境变量
+-w 显示加宽可以显示较多的资讯
+
+Linux中的ps (Process Status)命令用来列出系统中当前运行的那些进程。
+ps命令列出的是当前那些进程的快照，就是执行ps命令的那个时刻的那些进程，
+动态显示进程信息，使用top命令
+linux上进程有5种状态: 
+  1. 运行(正在运行或在运行队列中等待) [  R 运行 ]
+  2. 中断(休眠中, 受阻, 在等待某个条件的形成或接受到信号)  [ S 中断 ]
+  3. 不可中断(收到信号不唤醒和不可运行, 进程必须等待直到有中断发生)  [ D 不可中断 ]
+  4. 僵死(进程已终止, 但进程描述符存在, 直到父进程调用wait4()系统调用后释放)  [ Z 僵死 ]
+  5. 停止(进程收到SIGSTOP, SIGSTP, SIGTIN, SIGTOU信号后停止运行运行) [ T 停止   ]
+
+ps工具标识进程的5种状态码: 
+    D 不可中断 uninterruptible sleep (usually IO) 
+    R 运行 runnable (on run queue) 
+    S 中断 sleeping 
+    T 停止 traced or stopped 
+    Z 僵死 a defunct (”zombie”) process
+
+ps aux输出格式：
+USER PID %CPU  %MEM   VSZ  RSS  TTY  STAT  START  TIME  COMMAND
+
+[root@Va5 ~]# ps   faux  |head  -4
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         2  0.0  0.0      0     0 ?        S    09:50   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S    09:50   0:00  \_ [ksoftirqd/0]
+root         5  0.0  0.0      0     0 ?        S<   09:50   0:00  \_ [kworker/0:0H]
+格式说明：
+USER: 行程拥有者
+PID: pid
+%CPU: 占用的 CPU 使用率
+%MEM: 占用的记忆体使用率
+
+VSZ: 占用的虚拟记忆体大小
+RSS: 占用的记忆体大小
+TTY: 终端的次要装置号码 (minor device number of tty)
+
+STAT: 该行程的状态，linux的进程有5种状态：
+D 不可中断 uninterruptible sleep (usually IO)
+R 运行 runnable (on run queue)
+S 中断 sleeping
+T 停止 traced or stopped
+Z 僵死 a defunct (”zombie”) process
+注: 其它状态还包括W(无驻留页), <(高优先级进程), N(低优先级进程), L(内存锁页).
+
+START: 行程开始时间
+TIME: 执行的时间
+COMMAND:所执行的指令
+
+1) ps a 显示现行终端机下的所有程序，包括其他用户的程序。
+2）ps -A 显示所有程序。 
+3）ps c 列出程序时，显示每个程序真正的指令名称，而不包含路径，参数或常驻服务的标示。 
+4）ps -e 此参数的效果和指定"A"参数相同。 
+5）ps e 列出程序时，显示每个程序所使用的环境变量。 
+6）ps f 用ASCII字符显示树状结构，表达程序间的相互关系。 
+7）ps -H 显示树状结构，表示程序间的相互关系。 
+8）ps -N 显示所有的程序，除了执行ps指令终端机下的程序之外。 
+9）ps s 采用程序信号的格式显示程序状况。 
+10）ps S 列出程序时，包括已中断的子程序资料。 
+11）ps -t 　指定终端机编号，并列出属于该终端机的程序的状况。 
+12）ps u 　以用户为主的格式来显示程序状况。 
+13）ps x 　显示所有程序，不以终端机来区分。
+ps是显示当前状态处于running的进程，grep表示在这些里搜索，而ps aux是显示所有进程和其状态。
+
+$ ps aux | grep amoeba 查看 amoeba的进程
+
+$ kill -s 9 pid 杀死进程
+
+[root@room9pc01 ~]# cat   /etc/crontab
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+
+# For details see man 4 crontabs
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name  command to be executed
+
+[root@room9pc01 ~]# which  crontab 
+/usr/bin/crontab
+[root@room9pc01 ~]# ll /usr/bin/crontab 
+-rwsr-xr-x. 1 root root 57576 8月   3 2017 /usr/bin/crontab
+[root@room9pc01 ~]# crontab   -l
+no crontab for root
+[root@room9pc01 ~]# 
+
+
+登入系统读取步骤：
+当登入系统时候获得一个shell进程时，其读取环境设定档有三步 :
+1.首先读入的是全局环境变量设定档/etc/profile，然后根据其内容读取额外的设定的文档，如 /etc/profile.d和/etc/inputrc
+2.然后根据不同使用者帐号，去其家目录读取~/.bash_profile，如果这读取不了就读取~/.bash_login，这个也读取不了才会读取~/.profile，这三个文档设定基本上是一样的，读取有优先关系
+3.然后在根据用户帐号读取~/.bashrc
+/etc/profile， /etc/bashrc 是系统全局环境变量设定
+~/.profile，  ~/.bashrc是用户家目录下的私有环境变量设定
+
+ profile 是某个用户唯一的用来设置环境变量的地方,
+ 因为用户可以有多个 shell 比如 bash, sh, zsh 之类的, 
+但像环境变量这种其实只需要在统一的一个地方初始化就可以了, 而这就是 profile
+
+bashrc 是专门用来给 bash 做初始化的
+比如用来初始化 bash 的设置, bash 的代码补全, bash 的别名, bash 的颜色. 
+
+~/.bashrc与/etc/bashrc、~/.bash_profile与/etc/profile的关系一样，
+都是一个针对某个用户，一个针对全局设置。读取的时候也是全局优先。
+
+交互式shell登录时读取profile，初始化时读取bashrc。
+非交互式只会读取bashrc。
+一般把alias和function一类的放到bashrc或~/.bashrc中。
+
+而把export更多的放在profile文件中。
+
+uftpd 是个精简的 FTP 服务器，不需要烦恼配置文件和安全特性。
+无配置文件，直接默认在  /srv/ftp 目录，端口 21 下。
+（注意：不建议在网络上使用，没有什么安全措施）
+此软件是基于 FTPServer 开发的
+[root@room9pc01 ~]# tail  -1  /etc/profile
+/bin/uftpd -D /public
+[root@room9pc01 ~]# ll  /public/
+总用量 0
+[root@room9pc01 ~]# which  uftpd
+/usr/bin/uftpd
+
+
 
 
 
