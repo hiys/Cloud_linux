@@ -1085,10 +1085,16 @@ id: lily3: no such user
 exec 4<&1          # 备份当前stdout
 exec 1>1.txt
  
+n<&-
+关闭输入文件描述符 n.
+
 while read line;do echo $line; done < 1
  
 exec 1<&4          # 恢复stdout
 exec 4>&-
+
+n>&-
+关闭输出文件描述符 n.
 
 重定向stdin 0  stdout 1 stderr 2
 内核启动的时候默认打开这三个I/O设备文件：
@@ -2118,5 +2124,6 @@ set ftp:charset utf8
 set file:charset utf8
 
 另外一个用的很多的图形界面的ftp客户端是gftp，在选项中可以选择编码，用惯了win下客户端的人应该能够很快的早到编码选择的地方，选择服务器端的编码为gbk就可以了。
+
 
 
