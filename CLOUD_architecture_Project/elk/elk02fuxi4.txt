@@ -1,0 +1,1602 @@
+
+
+[root@Va1 ~]# vim  baidu.sh
+
+[root@Va1 ~]# cat  baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/www.baidu.com/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: www.baidu.com\r\n"  >&9
+echo  -ne  "User-Agent: curl" >&9
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+
+[root@Va1 ~]# .  baidu.sh  
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Cache-Control: private, no-cache, no-store, proxy-revalidate, no-transform
+Connection: Keep-Alive
+Content-Length: 2381
+Content-Type: text/html
+Date: Mon, 14 Jan 2019 13:16:51 GMT
+Etag: "588604dd-94d"
+Last-Modified: Mon, 23 Jan 2017 13:27:57 GMT
+Pragma: no-cache
+Server: bfe/1.0.8.18
+Set-Cookie: BDORZ=27315; max-age=86400; domain=.baidu.com; path=/
+
+<!DOCTYPE html>
+<!--STATUS OK--><html> <head><meta http-equiv=content-type content=text/................_...............u.com/duty/>使用百度前必读</a>&nbsp; <a href=http://jianyi.baidu.com/ class=cp-feedback>意见反馈</a>&nbsp;京ICP证030173号&nbsp; <img src=//www.baidu.com/img/gs.gif> </p> </div> </div> </div> </body> </html>
+^C
+[root@Va1 ~]# vim  baidu.sh
+
+[root@Va1 ~]# cat  baidu.sh  # 注意位置变量$1
+#!/bin/bash
+exec   9<> /dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: $1\r\n"  >&9
+echo  -ne  "User-Agent: curl" >&9   ##注意空格 curl
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+[root@Va1 ~]# . baidu.sh  www.sohu.com
+
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 211469
+Connection: keep-alive
+Server: nginx
+Date: Mon, 14 Jan 2019 13:20:34 GMT
+Cache-Control: max-age=60
+X-From-Sohu: X-SRC-Cached
+FSS-Cache: HIT from 3963534.5929624.5300396
+Accept-Ranges: bytes
+FSS-Proxy: Powered by 4356756.6716062.5693624
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>搜狐</title>
+<meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
+<meta name="Description" content="搜狐网为用户提供24小时不间断的最新资讯，及搜索、邮件等网络服务。内容包括全球热点事件、突发新闻、时事评论、热播影视剧、体育赛事、行业动态、生活服务信息，以及论坛、博客、微博、我的搜狐等互动空间。" />
+...................
+
+
+[root@Va1 ~]# vim  baidu.sh 
+[root@Va1 ~]# cat   baidu.sh
+#!/bin/bash
+exec   9<> /dev/tcp/$1/80
+echo  -ne  "GET / HTTP/1.1\r\n" >&9
+echo  -ne  "Host: $1\r\n"  >&9
+echo  -ne  "User-Agent: elinks" >&9  ##注意空格 elinks
+echo  -e  "\r\n"  >&9
+cat   <&9
+
+[root@Va1 ~]# . baidu.sh  www.sohu.com 
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 211854
+Connection: keep-alive
+Server: nginx
+Date: Mon, 14 Jan 2019 13:29:12 GMT
+Cache-Control: max-age=60
+X-From-Sohu: X-SRC-Cached
+FSS-Cache: HIT from 4160145.6322843.5497010
+Accept-Ranges: bytes
+FSS-Proxy: Powered by 4356756.6716062.5693624
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>搜狐</title>
+<meta name="Keywords" content="搜狐,门户网站,新媒体,网络媒体,新闻,财经,体育,娱乐,时尚,汽车,房产,科技,图片,论坛,微博,博客,视频,电影,电视剧"/>
+..................
+
+
+[root@Va6 ~]# >  /var/lib/logstash/since.db
+[root@Va6 ~]# cat  /var/lib/logstash/since.db
+
+[root@Va6 ~]# echo  apache_${RANDOM} >> /tmp/apache.log 
+[root@Va6 ~]# cat  /tmp/apache.log
+apache_22927
+[root@Va6 ~]# echo  nginx_${RANDOM} >>  /var/tmp/nginx.log 
+[root@Va6 ~]# cat   /var/tmp/nginx.log
+nginx_15208
+[root@Va6 ~]# logstash
+logstash         logstash.lib.sh  logstash-plugin  
+[root@Va6 ~]# logstash  -f  /etc/logstash/logstash.conf #开始运行logstash服务
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "apache_22927",
+      "@version" => "1",
+    "@timestamp" => "2019-01-20T08:26:10.606Z",
+          "path" => "/tmp/apache.log",
+          "host" => "Va6",
+          "type" => "http_log"
+}
+{
+       "message" => "nginx_15208",
+      "@version" => "1",
+    "@timestamp" => "2019-01-20T08:26:10.587Z",
+          "path" => "/var/tmp/nginx.log",
+          "host" => "Va6",
+          "type" => "nginx_log"
+}
+
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+Pipeline main has been shutdown
+
+[root@Va6 ~]# ll   /var/lib/logstash/since.db 
+-rw-r--r-- 1 root root 20 1月  20 16:26 /var/lib/logstash/since.db
+[root@Va6 ~]# cat  /var/lib/logstash/since.db
+16777288 0 64768 13
+/****************
+        path => [‘pathA’，‘pathB’]
+
+        #表示多久去path路径下查看是够有新的文件产生。默认是15秒检查一次。
+        discover_interval => 15
+
+        #排除那些文件，也就是不去读取那些文件
+        exclude => [‘fileName1’,‘fileNmae2’]
+
+        #被监听的文件多久没更新后断开连接不在监听，默认是一个小时。
+        close_older => 3600
+
+        #在每次检查文件列 表的时候， 如果一个文件的最后 修改时间 超过这个值， 就忽略这个文件。 默认一天。
+        ignore_older => 86400
+
+        #logstash 每隔多 久检查一次被监听文件状态（ 是否有更新） ， 默认是 1 秒。
+        stat_interval => 1
+****************************/
+     
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-tcp.html
+
+Tcp Input Configuration Options
+This plugin supports the following configuration options plus the Common Options described later.
+
+Setting   Input type                        Required
+host       string                               No
+mode       string, one of ["server", "client"]  No
+port       number                               Yes
+....................
+
+Details
+.............
+id
+................
+input {
+  tcp {  # tcp协议 mode插件 支持服务端和客户端角色
+    id => "my_plugin_id"
+  }
+}
+tags
+..........................
+Common Optionsedit
+The following configuration options are supported by all input plugins:
+
+Setting               Input type               Required
+add_field              hash                     No
+codec                  codec                    No
+enable_metric          boolean                  No
+id                     string                   No
+tags                   array                    No
+type                   string                   No
+-----------------------------
++[Working with plugins]
+-[Input plugins]
+
+azure_event_hubs
+beats
+cloudwatch
+...........
+elasticsearch
+exec
+file
+.....
+tcp
+twitter
+[udp]点击链接
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-udp.html
+
+Udp Input Configuration Optionsedit
+This plugin supports the following configuration options plus the Common Options described later.
+
+Setting      Input type    Required
+buffer_size   number       No
+host          string       No
+port          number       Yes
+..............
+input {
+  udp {   ## udp mode插件 只能作为服务器
+    id => "my_plugin_id"
+  }
+}
+..............
+hostedit
+Value type is string
+Default value is "0.0.0.0"
+................
+
+ UDP是无连接通信协议，
+即在数据传输时，数据的发送端和接收端不建立逻辑连接。
+简单来说，当一台计算机向另外一台计算机发送数据时，
+发送端不会确认接收端是否存在，就会发出数据，
+同样接收端在收到数据时，也不会向发送端反馈是否收到数据。
+
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"  # 默认操作模式, server:监听客户端连接(client:连接到服务器)
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+}
+
+filter{}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# ss  -npult  |grep  8888
+[root@Va6 ~]# logstash   -f  /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+
+
+-------------------------------- 在 另一个 终端 进入Va6  测试 -------------
+
+[root@Va6 ~]#  ss  -npult  |grep  8888
+udp    UNCONN     0      0    :::8888  :::*     users:(("java",pid=7145,fd=37))
+tcp    LISTEN     0      50   :::8888  :::*     users:(("java",pid=7145,fd=16))
+
+--------------------------------------
+[root@Va2 ~]# which  function 
+/usr/bin/which: no function in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+[root@Va2 ~]# type  function
+function 是 shell 关键字
+                             #临时 函数{自定义的}
+[root@Va2 ~]# function  sendtcp(){
+> exec  7<>/dev/tcp/192.168.0.16/8888
+> echo  "$@" >&7
+> exec  7<&-
+> }
+[root@Va2 ~]# sendtcp   xixihahaVa2-->>Va6
+[root@Va2 ~]# which sendtcp
+/usr/bin/which: no sendtcp in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+[root@Va2 ~]# type   sendtcp
+sendtcp 是函数
+sendtcp () 
+{ 
+    exec 7<> /dev/tcp/192.168.0.16/8888;
+    echo "$@" 1>&7;  # 这里的$@表示所有输入的位置变量参数(即所有输入的位置变量参数作为一个数组列表对象)
+    exec 7>&-
+}
+
+/*******************
+$@与$*的区别：
+　　$@与$*都可以使用一个变量来来表示所有的参数内容，但这两个变量之间有一些不同之处。
+#@ 用[ ]括起来,以"dollar1" "dollar2" …  ""的形式输出所有参数,可以当作数组用,区分各个参数
+
+********/
+
+[root@Va6 ~]# logstash   -f  /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "xixihahaVa2--",
+      "@version" => "1",
+    "@timestamp" => "2019-01-20T10:13:17.722Z",
+          "host" => "192.168.0.12",
+          "port" => 40502,
+          "type" => "tcp_type"
+}
+
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {:exception=>#<IOError: closed stream>, :backtrace=>["org/jruby/RubyIO.java:3682:in `select'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:77:in `udp_listener'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:50:in `run'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:342:in `inputworker'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:336:in `start_input'"], :level=>:warn}
+Pipeline main has been shutdown
+
+[root@Va6 ~]# 
+
+
+函数是存在内存里的一组代码命名的元素。
+函数创建于脚本运行环境之中，并且可以执行
+[root@Va6 ~]# function  test() {
+> echo  -e "the date is\n$(date)"
+> }
+[root@Va6 ~]# type  test  #使用type命令查看函数的定义
+test 是函数
+test () 
+{ 
+    echo -e "the date is\n$(date)"
+}
+
+[root@Va6 ~]# which  test
+/usr/bin/test
+[root@Va6 ~]# test
+the date is
+2019年 01月 21日 星期一 14:08:24 CST
+
+sed基础参数：
+-n 取消默认输出
+-r 支持正则表达式
+-p 打印
+-e 多项编辑
+-i.bak  修改后备份 
+s 搜索一次
+sg 搜索全局
+
+------------ 用来移除文件中的注释行和空白行。
+
+sed -i.bak '/^\s*#/d;/^$/d' <filename>
+
+详细介绍一下上面的脚本：
+sed -i.bak：sed 命令会创建一个以.bak结尾的备份文件，用来备份原始的文件。
+/^：表示行首。
+\s*：匹配任何不可见字符，包括空格、制表符、换页符等。
+#/：shell 脚本中的注释标记。/^\s*#/一起使用用来查找注释行和带有不可见字符的注释行。
+d：用来删除匹配的行。
+;/^$/d：;是表达式的分隔符，后面的表达式跟前面的表达式意思很像，用来删除空白行, "$"匹配输入字符串的结束位置。
+
+[root@Va6 ~]# vim   old.txt
+[root@Va6 ~]# cat   old.txt
+# haha
+ # xixi
+abc  123
+          
+5555
+
+7777abcd efg
+
+[root@Va6 ~]# sed  -i.bak   '/^\s*#/d'  old.txt
+[root@Va6 ~]# cat  old.txt 
+abc  123
+          
+5555
+
+7777abcd efg
+[root@Va6 ~]# ll   old.txt.bak 
+-rw-r--r-- 1 root root 54 1月  21 14:23 old.txt.bak
+[root@Va6 ~]# cat   old.txt.bak
+# haha
+ # xixi
+abc  123
+          
+5555
+
+7777abcd efg
+[root@Va6 ~]# \cp  old.txt.bak  old.txt
+[root@Va6 ~]# cat   old.txt
+# haha
+ # xixi
+abc  123
+          
+5555
+
+7777abcd efg
+[root@Va6 ~]# sed  -i  "/\(^$\|^\s*#\)/d"  old.txt
+[root@Va6 ~]# cat   old.txt
+abc  123
+       #注意 "都是" 空格的 行不能匹配 ^\s*# [\s*：匹配任何不可见字符，包括空格、制表符、换页符等]
+5555
+7777abcd efg
+[root@Va6 ~]# 
+[root@Va6 ~]# vim  old.txt
+[root@Va6 ~]# cat  old.txt
+aaa
+# haha
+  # xixi
+abc  123
+
+666abcd efg
+[root@Va6 ~]# function  cleanxold() {
+> sed  -i  "/\(^$\|^\s*#\)/d"  old.txt
+> }
+[root@Va6 ~]# type  cleanxold
+cleanxold 是函数
+cleanxold () 
+{ 
+    sed -i "/\(^$\|^\s*#\)/d" old.txt
+}
+[root@Va6 ~]# cleanxold 
+[root@Va6 ~]# cat  old.txt
+aaa
+abc  123
+666abcd efg
+[root@Va6 ~]# function  cleanxold() { echo  hello }  # 注意函数体内的命令行内一定要有结束分号";"
+> ^C
+[root@Va6 ~]# function  cleanxold() { echo  hello; } # 注意函数体内的命令行内一定要有结束分号";"
+[root@Va6 ~]# function  cleanxold() { sed  -i.bak  "/\(^$\|^\s*#\)/d"  "$1"; } 
+
+[root@Va6 ~]# vim   old.txt
+[root@Va6 ~]# cat   old.txt
+#   a
+aaa
+  # ccc
+abc  1234
+[root@Va6 ~]# type  cleanxold 
+cleanxold 是函数
+cleanxold () 
+{ 
+    sed -i.bak "/\(^$\|^\s*#\)/d" "$1"
+}
+[root@Va6 ~]# cleanxold  old.txt
+[root@Va6 ~]# cat   old.txt
+aaa
+abc  1234
+[root@Va6 ~]# vim  old.txt
+[root@Va6 ~]# cat   old.txt
+#   a
+abbb
+  # ccc
+
+abcde  12345
+[root@Va6 ~]# cleanxold   old.txt
+[root@Va6 ~]# cat   old.txt
+abbb
+abcde  12345
+[root@Va6 ~]# 
+
+环境变量PS1表示Shell环境的一级提示符，即命令行提示符（\u 用户名、\h 主机名、\W 工作目录、\$ 权限标识）：
+[root@svr5 src]# echo $PS1                  //查看默认的一级提示
+[\u@\h \W]\$
+[root@svr5 src]#PS1='hehe#'                  //修改一级提示
+hehe#                                      //更改结果
+hehe# PS1='[\u@\h \W]\$ '                  //恢复原有设置
+[root@svr5 src]# 
+环境变量PS2表示二级提示符，出现在强制换行、at任务编辑等场合：
+[root@svr5 ~]# echo $PS2                      //查看默认的二级提示
+>
+[root@svr5 src]# cd \                     //强制换行，观察提示符效果
+> /root/
+[root@svr5 ~]# PS2='=> '                      //手动修改二级提示
+[root@svr5 ~]# cd \                          //再次验证提示符效果
+=> ~
+[root@svr5 ~]# PS2='> '                     //恢复原有设置
+3）查看系统变量
+使用env可查看所有环境变量：
+[root@svr5 src]# env
+HOSTNAME=svr5.tarena.com
+SHELL=/bin/bash
+HISTSIZE=1000
+SSH_CLIENT=192.168.4.110 59026 22
+OLDPWD=/root
+SSH_TTY=/dev/pts/0
+USER=root
+.. ..
+使用set可查看所有变量（包括env能看到的环境变量）：
+[root@svr5 src]# set
+BASH=/bin/bash
+BASH_ARGC=()
+BASH_ARGV=()
+BASH_LINENO=()
+.. ..
+
+[root@Va6 ~]# function  locationx(){
+> echo  -e  "表示执行的脚本名称 \$0=        $0
+> 第一个位置变量参数是 \$1=               $1
+> 第2个位置变量参数是  \$2=               $2
+> 传递给脚本或函数的参数个数  \$#=        $#
+> 传递给脚本或函数的所有位置变量参数 作为一个列表单一整体 \$*=    $*
+> 用[]括起来,以\"$1\" \"$2\" …  \"$n\"的形式输出所有参数,可以当作数组用,区分各个参数\$@=   $@
+> Shell最后运行的后台Process的PID(后台运行的最后一个进程的进程ID号)\$!=      $!  endpid
+> 当前进程的进程号  \$\$=            $$"
+> for  i  in  "$@";  do echo  "数组元素 $i";
+> done
+> for  j  in  "$*";
+> do   echo  "一个列表单一整体  $j"; done;
+> }
+[root@Va6 ~]# type  locationx 
+locationx 是函数
+locationx () 
+{ 
+    echo -e "表示执行的脚本名称 \$0=        $0
+第一个位置变量参数是 \$1=               $1
+第2个位置变量参数是  \$2=               $2
+传递给脚本或函数的参数个数  \$#=        $#
+传递给脚本或函数的所有位置变量参数 作为一个列表单一整体 \$*=    $*
+用[]括起来,以\"$1\" \"$2\" …  \"$n\"的形式输出所有参数,可以当作数组用,区分各个参数\$@=   $@
+Shell最后运行的后台Process的PID(后台运行的最后一个进程的进程ID号)\$!=      $!  endpid
+当前进程的进程号  \$\$=            $$";
+    for i in "$@";
+    do
+        echo "数组元素 $i";
+    done;
+    for j in "$*";
+    do
+        echo "一个列表单一整体  $j";
+    done
+}
+[root@Va6 ~]# locationx  dollar1  dollar2  dol3  444  5#5  6\$6
+表示执行的脚本名称 $0=        -bash
+第一个位置变量参数是 $1=               dollar1
+第2个位置变量参数是  $2=               dollar2
+传递给脚本或函数的参数个数  $#=        6
+传递给脚本或函数的所有位置变量参数 作为一个列表单一整体 $*=    dollar1 dollar2 dol3 444 5#5 6$6
+用[]括起来,以"dollar1" "dollar2" …  ""的形式输出所有参数,可以当作数组用,区分各个参数$@=   dollar1 dollar2 dol3 444 5#5 6$6
+Shell最后运行的后台Process的PID(后台运行的最后一个进程的进程ID号)$!=        endpid
+当前进程的进程号  $$=            1364
+数组元素 dollar1
+数组元素 dollar2
+数组元素 dol3
+数组元素 444
+数组元素 5#5
+数组元素 6$6
+一个列表单一整体  dollar1 dollar2 dol3 444 5#5 6$6
+[root@Va6 ~]# echo  $$
+1364
+/************************
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  file {      #path属性接受的参数是一个数组，其含义是标明需要读取的文件路径,
+    path        => ["/tmp/apache.log"]  #监听文件路径
+
+       # 如果需要每次都从开始读取文件的话，设置start_position => beginning是没有用的，
+                     # 可以选择  sincedb_path   定义为   /dev/null
+    sincedb_path   => "/var/lib/logstash/since.db"
+
+      #logstash 从什么 位置开始读取文件数据， 默认是结束位置 
+    start_position => "beginning"   # 设置 监听文件 从 起始位置 开始读取数据
+
+    type        => "http_log"   # 给日志设置标签,定义类型,
+                     可以在logstash -f /etc/logstash/logstash.conf输出结果中区分文件来源
+  }
+  file {
+    path        => ["/var/tmp/nginx.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "nginx_log"
+  }
+}
+
+filter{}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+*******************/
+[root@Va6 ~]# cat  /etc/logstash/logstash.conf 
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+}
+
+filter{}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# logstash   -f  /etc/logstash/logstash.conf
+^C
+
+[root@Va6 ~]# cat  test.txt
+[root@Va6 ~]# logstash   -f  /etc/logstash/logstash.conf  >> test.txt   &
+[1] 3637
+[root@Va6 ~]# cat  test.txt 
+{:timestamp=>"2019-01-21T17:24:06.405000+0800", :message=>"Pipeline main started"}
+[root@Va6 ~]# 
+
+---------------------------- 在 另一个 终端 远程 tcp   Va6  测试 -------------
+[root@Va1 ~]# type  function 
+function 是 shell 关键字
+[root@Va1 ~]# function  sendtcp() {
+> exec  6<>/dev/tcp/192.168.0.16/8888
+> echo  "$@" >&6     #注意$@ 会包含所有输入的位置变量参数,$1 只包含位置变量参数1
+> exec   6<&- ;}
+[root@Va1 ~]# sendtcp xixi   haha2
+[root@Va1 ~]# type  sendtcp 
+sendtcp 是函数
+sendtcp () 
+{ 
+    exec 6<> /dev/tcp/192.168.0.16/8888;
+    echo "$@" 1>&6;
+    exec 6>&-
+}
+[root@Va1 ~]# 
+
+[root@Va6 ~]# netstat   -nplut  |grep  java
+tcp6       0      0 :::8888                 :::*                    LISTEN      3637/java           
+udp6       0      0 :::8888                 :::*                                3637/java           
+[root@Va6 ~]# netstat   -nplut  |grep  8888
+tcp6       0      0 :::8888                 :::*                    LISTEN      3637/java           
+udp6       0      0 :::8888                 :::*                                3637/java           
+[root@Va6 ~]# cat  test.txt 
+{:timestamp=>"2019-01-21T17:24:06.405000+0800", :message=>"Pipeline main started"}
+{
+       "message" => "xixi haha2",
+      "@version" => "1",
+    "@timestamp" => "2019-01-21T09:28:35.890Z",
+          "host" => "192.168.0.11",
+          "port" => 46486,
+          "type" => "tcp_type"
+}
+[root@Va6 ~]# cat  /var/lib/logstash/since.db  #指针文件
+16777288 0 64768 13
+
+[root@Va6 ~]# jobs
+[1]+  运行中               logstash -f /etc/logstash/logstash.conf >> test.txt &
+[root@Va6 ~]# fg  1
+logstash -f /etc/logstash/logstash.conf >> test.txt
+^C
+[root@Va6 ~]# netstat   -nplut  |grep  8888
+
+
+[root@Va6 ~]# logstash   -f  /etc/logstash/logstash.conf  >> test.txt   &
+[1] 3810
+---------------------------- 在 另一个 终端 远程 udp   Va6  测试 -------------
+
+[root@Va1 ~]# function  send_udp  {
+> exec   6<>/dev/udp/192.168.0.16/8888
+> echo   "$1"  >&6   #注意$@ 会包含所有输入的位置变量参数,$1 只包含位置变量参数1
+> exec   6>&-
+> }
+[root@Va1 ~]# type   send_udp 
+send_udp 是函数
+send_udp () 
+{ 
+    exec 6<> /dev/udp/192.168.0.16/8888;
+    echo "$1" 1>&6;   #
+    exec 6>&-
+}
+[root@Va1 ~]# send_udp  xixi   haha2
+
+[root@Va6 ~]# ps  aux  |grep  3810
+root      3810  4.2 10.2 3631612 199804 pts/0  Sl   17:35   0:13 /usr/bin/java -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -Djava.awt.headless=true ............=/bin/sh org.jruby.Main --1.9 /opt/logstash/lib/bootstrap/environment.rb logstash/runner.rb agent -f /etc/logstash/logstash.conf
+root      3903  0.0  0.0 112676   980 pts/0    R+   17:40   0:00 grep --color=auto 3810
+[root@Va6 ~]# ps  -ef  |grep  3810
+...................
+[root@Va6 ~]# netstat   -nplut  |grep  8888
+tcp6       0      0 :::8888                 :::*        LISTEN      3810/java
+udp6       0      0 :::8888                 :::*        3810/java 
+
+[root@Va6 ~]# jobs
+[1]+  运行中               logstash -f /etc/logstash/logstash.conf >> test.txt &
+
+[root@Va6 ~]# cat  test.txt 
+{:timestamp=>"2019-01-21T17:24:06.405000+0800", :message=>"Pipeline main started"}
+{
+       "message" => "xixi haha2",  #注意$@ 会包含所有输入的位置变量参数,$1 只包含位置变量参数1
+      "@version" => "1",
+    "@timestamp" => "2019-01-21T09:28:35.890Z",
+          "host" => "192.168.0.11",
+          "port" => 46486,
+          "type" => "tcp_type"
+}
+{:timestamp=>"2019-01-21T17:33:06.062000+0800", :message=>"SIGINT received. Shutting down the agent.", :level=>:warn}
+{:timestamp=>"2019-01-21T17:33:06.065000+0800", :message=>"stopping pipeline", :id=>"main"}
+{:timestamp=>"2019-01-21T17:33:06.395000+0800", :message=>"UDP listener died", :exception=>#<IOError: closed stream>, :backtrace=>["org/jruby/RubyIO.java:3682:in `select'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:77:in `udp_listener'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:50:in `run'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:342:in `inputworker'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:336:in `start_input'"], :level=>:warn}
+{:timestamp=>"2019-01-21T17:33:07.424000+0800", :message=>"Pipeline main has been shutdown"}
+{:timestamp=>"2019-01-21T17:35:15.600000+0800", :message=>"Pipeline main started"}
+{
+       "message" => "xixi\n",  #注意$@ 会包含所有输入的位置变量参数,$1 只包含位置变量参数1
+      "@version" => "1",
+    "@timestamp" => "2019-01-21T09:37:45.459Z",
+          "type" => "udp_type",
+          "host" => "192.168.0.11"
+}
+[root@Va6 ~]# cat  /var/lib/logstash/since.db 
+16777288 0 64768 13
+[root@Va6 ~]# fg  1
+logstash -f /etc/logstash/logstash.conf >> test.txt
+^C
+
+[root@Va6 ~]# ls  /etc/logstash/
+conf.d  logstash.conf
+
+[root@Va6 ~]# which  logstash
+/opt/logstash/bin/logstash
+
+[root@Va6 ~]# ls  /opt/logstash/bin/
+logstash      logstash.lib.sh  logstash-plugin.bat  plugin.bat  rspec.bat
+logstash.bat  logstash-plugin  plugin               rspec       setup.bat
+
+[root@Va6 ~]# tail  -2   /etc/bashrc 
+# vim:ts=4:sw=4
+PATH=${PATH}:/opt/logstash/bin/
+[root@Va6 ~]# tail  -2   /etc/profile
+unset -f pathmunge
+PATH=/opt/logstash/bin/:$PATH
+
+https://www.elastic.co/guide/en/logstash/current/index.html
+
+-Input plugins
+  azure_event_hubs
+  beats
+  cloudwatch
+  couchdb_changes
+  dead_letter_queue
+  elasticsearch
+  exec
+  file
+  ganglia
+  gelf
+  generator
+  github
+  google_pubsub
+  graphite
+  heartbeat
+  http
+  http_poller
+  imap
+  irc
+  jdbc
+  jms
+  jmx
+  kafka
+  kinesis
+  log4j
+  lumberjack
+  meetup
+  pipe
+  puppet_facter
+  rabbitmq
+  redis
+  relp
+  rss
+  s3
+  salesforce
+  snmp
+  snmptrap
+  sqlite
+  sqs
+  stdin
+  stomp
+ syslog  #点击链接
+  tcp
+  twitter
+  udp
+  unix
+  varnishlog
+  websocket
+  wmi
+  xmpp
++Output plugins
++Filter plugins
+
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html
+
+syslog_field
+Value type is string
+Default value is "message"
+编解码器在分析其余数据之前处理数据。
+一些编解码器，如CEF，在预处理数据后将系统日志数据放入另一个字段。
+在这种情况下，将此选项与grok_模式配置结合使用，以允许Syslog输入插件完全解析Syslog数据。
+
+input {
+  syslog {
+    port => 12345
+    codec => cef
+    syslog_field => "syslog"
+    grok_pattern => "<%{POSINT:priority}>%{SYSLOGTIMESTAMP:timestamp} CUSTOM GROK HERE"
+  }
+}
+
+input {
+  syslog {
+    id => "my_plugin_id"
+  }
+}
+
+[root@Va6 ~]# vim   /etc/logstash/logstash.conf
+[root@Va6 ~]# cat  /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# 
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf  # 开启服务
+Settings: Default pipeline workers: 2
+Pipeline main started
+
+
+
+
+[root@Va2 ~]# man  logger  |grep  local0.notice
+.........
+       logger -p local0.notice -t HOSTIDM -f /dev/idmc
+
+/****************
+syslog是Linux系统默认的日志守护进程，
+默认的syslog配置文件是/etc/syslog.conf文件
+
+Linux 内核由很多子系统组成,
+包括网络,文件访问,内存管理等.
+子系 统 需要给用户传送一些消息, 
+这些消息内容 包括消息的来源及其重要性等 .
+
+所有的子系统都要把消息送到一个可以维护的公用消息区,
+于是,就有了syslog. 
+
+syslog是一个综合的日志记录系统.它的主要功能是:
+方便日志管理和分类存放日志. 
+syslog使程序设计者从繁重的,机械的编写日志文件代码 的工作中解脱出来,
+使管理员更好地控制日志的记录过程.
+在syslog出现之前,每个程序都使用自己的日志记录策略.
+管理员对保存什么信息或是信息存放在 哪里没有控制权.
+
+任何希望生成日志信息的程序都可以向 syslog 接口呼叫生成该信息。
+
+几乎所有的网络设备都可以通过syslog协议，
+将日志信息以用户数据报协议(UDP)方式传送到远端服务器，
+远端接收日志服务器
+必须通过 syslogd 监听 UDP 端口514，
+并根据 syslog.conf配置文件中的配置处理本机，
+接收访问系统的日志信息，
+把指定的事件写入特定文件中，
+供后台数据库管理和响应之用。
+
+意味着可以让任何事件都登录到一台或多台服务器上，
+以备后台数据库用off-line(离线) 方法分析远端设备的事件。
+
+通常，syslog 接受来自系统的各种功能的信息，每个信息都包括重要级
+
+使用方法
+在/var/log中创建并写入日志信息是由syslog协议处理的，
+是由守护进程sylogd负责执行。
+
+每个标准的进程都可以用syslog记录日志。
+可以使用logger命令通过syslogd记录日志
+
+[root@Va2 ~]# man  logger  |grep  local0.notice
+.........
+       logger -p local0.notice -t HOSTIDM -f /dev/idmc
+
+通过logger命令记录日志
+
+ 
+
+logger是一个shell命令接口，可以通过该接口使用Syslog的系统日志模块，还可以从命令行直接向系统日志文件写入一行信息。
+
+----------------------------------------------------------
+
+logger 语法
+logger [options] [messages]
+  **options (选项)：**
+    -d, --udp  
+        使用数据报(UDP)而不是使用默认的流连接(TCP)
+    -i, --id   
+        逐行记录每一次logger的进程ID
+    -f, --file file_name
+        记录特定的文件
+    -h, --help 
+        显示帮助文本并退出
+    -n， --server 
+        写入指定的远程syslog服务器，使用UDP代替内装式syslog的例程
+    -P， --port port_num
+        使用指定的UDP端口。默认的端口号是514
+    -p， --priority priority_level
+        指定输入消息的优先级，优先级可以是数字或者指定为 "facility.level" 的格式。比如："-p local3.info " local3 这个设备的消息级别为info。默认级别是 "user.notice"
+    -s， --stderr
+        输出标准错误到系统日志。
+    -t， --tag tag
+        指定标记记录
+    -u， --socket socket
+        写入指定的socket，而不是到内置系统日志例程。
+    -V, --version
+        现实版本信息并退出
+
+**messages：**写入log文件的内容消息，可以与-f配合使用。
+logger 以0退出表示成功，大于0表示失败。
+
+
+日志级别
+facility：------------- 种类 ----------------------
+    auth：             用户授权
+    authpriv：         授权和安全
+    cron：             计划任务
+    daemon：           系统守护进程
+    kern：             与内核有关的信息
+    lpr                与打印服务有关的信息
+    mail               与电子邮件有关的信息
+    news               来自新闻服务器的信息
+    syslog             由syslog生成的信息
+    user               用户的程序生成的信息，默认
+    uucp               由uucp生成的信息
+    local0~7           用来定义本地策略
+
+level：---------- 共 8 个等级  ---------------
+    alert          需要立即采取动作
+    crit           临界状态
+    debug          调试
+    emerg          系统不可用
+    err            错误状态
+    error          错误状态
+    info           正常消息
+    notice         正常但是要注意
+
+
+
+[root@Va2 ~]# vim   /etc/rsyslog.conf 
+    种类.等级            .none表示拒绝发送(不包含)       .*表示包含所有等级(共8个等级)
+ 54 *.info;mail.none;authpriv.none;cron.none                /var/log/messages
+ 55 
+ 60 mail.*  -/var/log/maillog 表示mail邮件日志种类下的 所有等级 都发送到 /var/log/maillog文件中
+ 61 
+     将引导消息也保存到boot.log
+ 72 # Save boot messages also to boot.log
+ 73 local7.*                                                /var/log/boot.log
+ 74 local0.=notice            /var/log/test.log
+
+90 #*.* @@remote-host:514  #   把任何日志写到远程主机端口514
+
+[root@Va2 ~]# sed  -n  74p   /etc/rsyslog.conf 
+local0.=notice            /var/log/test.log
+
+[root@Va2 ~]# systemctl   restart   rsyslog.service 
+[root@Va2 ~]# cd  /var/log/
+[root@Va2 log]# ls  test.log
+ls: 无法访问test.log: 没有那个文件或目录
+
+[root@Va2 log]# man  logger  |grep  -A3  EXAMPLES
+.............
+EXAMPLES
+       logger System rebooted
+                       种类.等级
+       logger -p local0.notice -t HOSTIDM -f /dev/idmc
+       logger -n loghost.example.com System rebooted
+
+integrated document management 集成文档管理
+integrated data model 集成数据模型;
+
+[root@Va2 log]# logger   -p  local0.notice  -t  zidingyi  "hello"
+[root@Va2 log]# cat   /var/log/test.log 
+Jan 21 18:48:33 Va2 zidingyi: hello
+
+[root@Va2 log]# logger   -p  local0.notice  -t  zdyibiaoti  "hello boy"
+[root@Va2 log]# cat   /var/log/test.log 
+Jan 21 18:48:33 Va2 zidingyi: hello
+Jan 21 18:49:57 Va2 zdyibiaoti: hello boy
+---------------------------------------------------
+ 73 local7.*                                                /var/log/boot.log
+ 74 local0.=notice             @192.168.0.16:514  # 注意一个@是udp协议
+     把任何日志写到远程主机端口514
+ #*.* @@remote-host:514  # 注意一个@是udp协议, 两个@@使用tcp协议
+
+[root@Va2 log]# vim   /etc/rsyslog.conf 
+[root@Va2 log]# sed  -n  74p   /etc/rsyslog.conf
+local0.=notice            @192.168.0.16:514  # 注意一个@是udp协议, 两个@@使用tcp协议
+
+[root@Va2 log]# systemctl   restart   rsyslog.service 
+
+[root@Va2 ~]# netstat  -npult |grep rsyslog
+udp        0      0 0.0.0.0:50607           0.0.0.0:*      4651/rsyslogd
+
+[root@Va2 log]# logger   -p  local0.notice  -t  zdyibiaoti  "hello boy girl"
+
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+           "message" => "hello boy girl", #Va2主机发送的信息
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T10:58:39.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 133,
+         "timestamp" => "Jan 21 18:58:39",
+         "logsource" => "Va2",
+           "program" => "zdyibiaoti",
+          "severity" => 5,
+          "facility" => 16,
+    "facility_label" => "local0",  # 种类
+    "severity_label" => "Notice"   # 等级
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {.......... :level=>:warn}
+Pipeline main has been shutdown
+
+[root@Va6 ~]# 
+----------------------------
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+
+[root@Va2 log]# vim   /etc/rsyslog.conf 
+[root@Va2 log]# sed  -n  74p   /etc/rsyslog.conf 
+local0.=notice            @@192.168.0.16:514  # 注意一个@是udp协议, 两个@@使用tcp协议
+[root@Va2 log]# systemctl   restart   rsyslog.service 
+[root@Va2 log]# logger   -p  local0.notice  -t  BiaoTi  "hello girl2"
+[root@Va2 log]# 
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+           "message" => "hello girl2\n",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:05:57.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 133,
+         "timestamp" => "Jan 21 19:05:57",
+         "logsource" => "Va2",
+           "program" => "BiaoTi",
+          "severity" => 5,
+          "facility" => 16,
+    "facility_label" => "local0",
+    "severity_label" => "Notice"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+.....................
+--------------------------------------------------------------
+      authpriv文件的访问受到限制(安全相关的日志 )
+ 56 # The authpriv file has restricted access.
+ 57 authpriv.*                                              /var/log/secure
+[root@Va2 log]# vim   /etc/rsyslog.conf 
+[root@Va2 log]# sed  -n  '74,75p'   /etc/rsyslog.conf
+authpriv.*                 @192.168.0.16:514   #会记录是否登陆成功的日志
+local0.=notice            @@192.168.0.16:514
+[root@Va2 log]# systemctl   restart   rsyslog.service 
+
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+root@192.168.0.12's password: 第一次输入密码错误
+Permission denied, please try again.
+root@192.168.0.12's password:  第二次输入密码正确
+Last failed login: Mon Jan 21 19:17:48 CST 2019 from 192.168.0.254 on ssh:notty
+There was 1 failed login attempt since the last successful login.
+Last login: Mon Jan 21 13:42:48 2019 from 192.168.0.254
+[root@Va2 ~]# 
+[root@Va2 ~]# netstat  -npult |grep rsyslog
+udp        0      0 0.0.0.0:50607           0.0.0.0:*      4651/rsyslogd
+
+
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+           "message" => "pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.0.254  user=root",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:17:46.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 85,
+         "timestamp" => "Jan 21 19:17:46",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 5,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Notice"
+}
+{
+           "message" => "pam_succeed_if(sshd:auth): requirement \"uid >= 1000\" not met by user \"root\"",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:17:46.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:17:46",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+{                            # 检测到登陆输入密码失败的信息
+           "message" => "Failed password for root from 192.168.0.254 port 58320 ssh2",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:17:48.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:17:48",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+{                              # 检测到登陆输入密码正确成功的信息
+           "message" => "Accepted password for root from 192.168.0.254 port 58320 ssh2",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:18:18.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:18:18",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+{                              # 检测到登陆输入密码正确成功的信息
+           "message" => "pam_unix(sshd:session): session opened for user root by (uid=0)",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:18:18.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:18:18",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+
+[root@Va2 ~]# exit
+登出
+Connection to 192.168.0.12 closed.
+
+{                                # Va6 检测到退出登陆的信息
+           "message" => "Received disconnect from 192.168.0.254 port 58320:11: disconnected by user",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:26:52.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:26:52",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+{                                     # Va6 检测到退出登陆的信息
+           "message" => "Disconnected from 192.168.0.254 port 58320",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:26:52.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:26:52",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+{                              # Va6 检测到退出登陆的信息
+           "message" => "pam_unix(sshd:session): session closed for user root",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:26:52.000Z",
+              "type" => "sys_log",
+              "host" => "192.168.0.12",
+          "priority" => 86,
+         "timestamp" => "Jan 21 19:26:52",
+         "logsource" => "Va2",
+           "program" => "sshd",
+               "pid" => "4698",
+          "severity" => 6,
+          "facility" => 10,
+    "facility_label" => "security/authorization",
+    "severity_label" => "Informational"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+.................
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# 
+Grok 是 Logstash 最重要的插件之一。
+也是迄今为止 使 无结构的日志 结构化 
+和 可查询的最好方式。
+Grok在解析 syslog logs、apache and other webserver logs、mysql logs
+等任意格式的文件上表现完美
+
+使用grok前注意
+grok 模式是正则表达式，
+因此这个插件的性能 受到 正则表达式 引擎 严重影响。
+尽管知道 grok 模式与日志条目可以多快匹配非常重要，
+但是了解它在什么时候匹配失败也很重要。
+匹配成功和匹配失败的性能可能会差异很大。 
+
+syntax    n. 语法;句法;句法规则[分析];语构
+semantic  英 [sɪˈmæntɪk]   美 [sɪˈmæntɪk]  
+adj. <语>语义的，语义学的
+
+grok模式的语法如下：
+
+%{SYNTAX:SEMANTIC}
+1
+SYNTAX：代表匹配值的类型,例如3.44可以用NUMBER类型所匹配,127.0.0.1可以使用IP类型匹配。 
+SEMANTIC：代表存储该值的一个变量名称,例如 3.44 可能是一个事件的持续时间,127.0.0.1可能是请求的client地址。所以这两个值可以用 %{NUMBER:duration} %{IP:client} 来匹配。
+
+你也可以选择将数据类型转换添加到Grok模式。
+默认情况下，所有语义都保存为字符串。
+如果您希望转换语义的数据类型，例如将字符串更改为整数，则将其后缀为目标数据类型。
+
+例如%{NUMBER:num:int}将num语义从一个字符串转换为一个整数。
+目前唯一支持的转换是int和float。
+
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html#plugins-inputs-syslog-syslog_field
+
++Filter plugins  点击链接
+- Filter plugins 
+  grok 点击链接
+https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html
+
+
+
+input {
+  file {
+    path => "/var/log/http.log"
+  }
+}
+filter {
+  grok {
+    match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+  }
+}
+
+Grok Filter Configuration Options
+This plugin supports the following configuration options plus the Common Options described later.
+
+Setting           Input type    Required
+break_on_match    boolean       No
+.............
+break_on_matchedit
+Value type is boolean
+Default value is true
+
+            这是匹配apache 日志的正则表达式样
+match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+
+
+                   # Va6 检测到退出登陆的信息
+           "message" => "pam_unix(sshd:session): session closed for user root",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:26:52.000Z",
+
+
+[root@Va2 ~]# tail  -1  /var/log/httpd/access_log
+192.168.0.254 - - [18/Jan/2019:19:16:39 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+UTC=Universal Time Coordinated 通用协调时间
+GMT=Greenwich Mean Time 格林尼治平均时 UTC=GMT
+PST=Pacific Standard Time 太平洋标准时间，UTC-0800
+EST=Eastern Standard Time 东部标准时间，UTC-0500
+EDT=Eastern Daylight Time 东部夏令时(或）东部日光时间，UTC-0400
+UTC ＋ 时区差（东正西负） ＝ 本地时间
+ 
+北京时间=UTC+0800
+加州（太平洋）时间=UTC-0800
+
+ip地址 - -  time时间戳  "请求方法
+1 第一项信息192.168.0.254 是远程主机的clientIP地址  表明访问网站的客户ip是谁
+
+2 日志记录中的第二项是空白，用一个“-”占位符替代
+这个位置用于记录浏览者的标识，这不只是浏览者的登录名字，
+也是浏览者的email地址或者其他唯一标识符
+
+3 日志记录的第三项也是空白,用一个“-”占位符替代。
+这个位置用于记录浏览者进行身份验证时提供的名字。
+当然，如果网站的某些内容要求用户进行身份验证，那么这项信息 不是 空白的
+
+4 [18/Jan/2019:19:16:39 +0800] 第四项是utc_time 请求的timestamp时间戳 表示请求的时间是2019年1月18日19:16:39
+时间信息最后的“+800”表示服务器所处时区位于东八区。
+ 
+ 5  "GET /favicon.ico HTTP/1.1" 日志记录的第五项信息 表示 服务器收到的是一个什么样的请求。
+该项信息的典型格式是“METHOD RESOURCE PROTOCOL”，即“方法 资源 协议”
+ 在上例中，METHOD是GET，其他经常可能出现的METHOD还有POST和HEAD。
+ 此外还有不少可能出现的合法METHOD，但主要就是这三种
+ RESOURCE是指浏览者向服务器请求的文档，或URL。
+在这个例子中，浏览者请求的是“/favicon.ico”，即网站一个图片,图标
+PROTOCOL通常是HTTP，后面再加上版本号1.1
+
+6 第六项信息是状态代码 404 。它告诉我们请求是否成功，或者遇到了什么样的错误。
+大多数时候，这项值是200，它表示服务器已经成功地响应浏览器的请求，一切正常
+ 这里 404 表示 请求错误 Not Found 没有找到资源数据
+
+404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+7 第七项 209 表示发送给客户端的bytes 总字节数length。
+它告诉我们传输是否被打断（即，该数值是否和文件的大小相同）。
+把日志记录中的这些值加起来就可以得知服务器在一天、一周或者一月内发送了多少数据。
+
+8 第8项是空白,用一个“-”占位符替代 ,referer 记录访客来源,了解访客是从哪个网站过来的。%{Referer}i
+
+9 第9 项  "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+ 记录访客使用的浏览器 %{User-Agent}i 浏览器User-Agent用户代理 
+
+/************
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  file {      #path属性接受的参数是一个数组，其含义是标明需要读取的文件路径,
+    path        => ["/tmp/apache.log"]  #监听文件路径
+
+       # 如果需要每次都从开始读取文件的话，设置start_position => beginning是没有用的，
+                     # 可以选择  sincedb_path   定义为   /dev/null
+    sincedb_path   => "/var/lib/logstash/since.db"
+
+      #logstash 从什么 位置开始读取文件数据， 默认是结束位置 
+    start_position => "beginning"   # 设置 监听文件 从 起始位置 开始读取数据
+
+    type        => "http_log"   # 给日志设置标签,定义类型,
+                     可以在logstash -f /etc/logstash/logstash.conf输出结果中区分文件来源
+  }
+
+************************/
+
+[root@Va6 ~]# vim   /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va2 ~]# systemctl is-active  httpd
+active
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+   Va2 Va2 apache
+
+                                    Va2 test
+[root@Va2 ~]# tail  -1  /var/log/httpd/access_log
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+rsync参数的具体解释
+ -e, --rsh=COMMAND 指定使用rsh、ssh方式进行数据同步
+ -c, --checksum 打开校验开关，强制对文件传输进行校验
+ -a, --archive 归档模式，表示以递归方式传输文件，并保持所有文件属性，等于-rlptgoD
+ -r, --recursive 对子目录以递归模式处理
+ -v, --verbose 详细模式输出
+ -z, --compress 对备份的文件在传输时进行压缩处理
+...........
+[root@Va6 ~]# rsync  -e "ssh -p22  -lroot"  -av  root@192.168.0.12:/var/log/httpd/access_log  /tmp/apache.log
+...................
+Are you sure you want to continue connecting (yes/no)? yes
+...............
+root@192.168.0.12's password: 
+.................
+[root@Va6 ~]# cat  /tmp/apache.log
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+[root@Va6 ~]# vim   /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    #sincedb_path   => "/var/lib/logstash/since.db"
+    sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] \"GET / HTTP/1.1\" 200 143 \"-\" \"ELinks/0.12pre6 (textmode; Linux; -)\"",
+      "@version" => "1",
+    "@timestamp" => "2019-01-21T13:03:20.155Z",
+          "path" => "/tmp/apache.log",
+          "host" => "Va6",
+          "type" => "http_log",
+          "tags" => [
+        [0] "_grokparsefailure"
+    ]
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {................:level=>:warn}
+Pipeline main has been shutdown
+[root@Va6 ~]# 
+
+[root@Va2 ~]# vim  /etc/httpd/conf/httpd.conf  # apache 配置文件
+
+196     LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" com    bined
+197     LogFormat "%h %l %u %t \"%r\" %>s %b" common
+
+金步国作品集
+http://www.jinbuguo.com/apache/menu22/logs.html
+客户日志
+CustomLog
+访问日志中会记录服务器所处理的所有请求，其文件名和位置取决于 [ 链接CustomLog] 指令，LogFormat指令可以简化日志的内容。这里阐述如何配置服务器的访问日志。
+http://www.jinbuguo.com/apache/menu22/mod/mod_log_config.html#customlog
+
+第二个参数指定了写入日志文件的内容。它既可以是由前面的LogFormat指令定义的nickname ，也可以是直接按 [ 日志格式 链接 ] 一节 所描述的规则定义的format字符串。
+http://www.jinbuguo.com/apache/menu22/mod/mod_log_config.html#formats
+
+
+定制日志文件格式
+
+LogFormat和CustomLog指令的格式化参数是一个字符串。这个字符串会在每次请求发生的时候，被记录到日志中去。它可以包含将被原样写入日志的文本字符串以及C风格的控制字符"\n"和"\t"以实现换行与制表。文本中的引号和反斜杠应通过"\"来转义。
+
+请求本身的情况将通过在格式字符串中放置各种"%"转义符的方法来记录，它们在写入日志文件时，根据下表的定义进行转换：
+
+格式字符串	描述
+%%	百分号(Apache2.0.44或更高的版本)
+%a	远端IP地址
+%A	本机IP地址
+%B	除HTTP头以外传送的字节数
+%b	以CLF格式显示的除HTTP头以外传送的字节数，也就是当没有字节传送时显示'-'而不是0。
+%{Foobar}C	在请求中传送给服务端的cookieFoobar的内容。
+%D	服务器处理本请求所用时间，以微为单位。
+%{FOOBAR}e	环境变量FOOBAR的值
+%f	文件名
+%h	远端主机
+%H	请求使用的协议
+%{Foobar}i	发送到服务器的请求头Foobar:的内容。
+%l	远端登录名(由identd而来，如果支持的话)，除非IdentityCheck设为"On"，否则将得到一个"-"。
+%m	请求的方法
+%{Foobar}n	来自另一个模块的注解Foobar的内容。
+%{Foobar}o	应答头Foobar:的内容。
+%p	服务器服务于该请求的标准端口。
+%P	为本请求提供服务的子进程的PID。
+%{format}P	服务于该请求的PID或TID(线程ID)，format的取值范围为：pid和tid(2.0.46及以后版本)以及hextid(需要APR1.2.0及以上版本)
+%q	查询字符串(若存在则由一个"?"引导，否则返回空串)
+%r	请求的第一行
+%s	状态。对于内部重定向的请求，这个状态指的是原始请求的状态，---%>s则指的是最后请求的状态。
+%t	时间，用普通日志时间格式(标准英语格式)
+%{format}t	时间，用strftime(3)指定的格式表示的时间。(默认情况下按本地化格式)
+%T	处理完请求所花时间，以秒为单位。
+%u	远程用户名(根据验证信息而来；如果返回status(%s)为401，可能是假的)
+%U	请求的URL路径，不包含查询字符串。
+%v	对该请求提供服务的标准ServerName。
+%V	根据UseCanonicalName指令设定的服务器名称。
+%X	请求完成时的连接状态：
+X=	连接在应答完成前中断。
++=	应答传送完后继续保持连接。
+-=	应答传送完后关闭连接。
+(在1.3以后的版本中，这个指令是%c，但这样就和过去的SSL语法：%{var}c冲突了)
+
+%I	接收的字节数，包括请求头的数据，并且不能为零。要使用这个指令你必须启用mod_logio模块。
+%O	发送的字节数，包括请求头的数据，并且不能为零。要使用这个指令你必须启用mod_logio模块。
+修饰符
+可以紧跟在"%"后面加上一个逗号分隔的状态码列表来限制记录的条目。例如，"%400,501{User-agent}i"只记录状态码400和501发生时的User-agent头内容；不满足条件时用"-"代替。状态码前还可以加上"!"前缀表示否定，"%!200,304,302{Referer}i"记录所有不同于200,304,302的状态码发生时的Referer头内容。
+
+"<"和">"修饰符可以用来指定对于已被内部重定向的请求是选择原始的请求还是选择最终的请求。默认情况下，%s, %U, %T, %D, %r 使用原始请求，而所有其他格式串则选择最终请求。例如，%>s 可以用于记录请求的最终状态，而 %<u 则记录一个已经被内部重定向到非认证资源的请求的原始认证用户。
+
+一些说明
+出于安全考虑，从2.0.46版本开始，%r, %i, %o 中的特殊字符，除了双引号(")和反斜线(\)分别用 \" 和 \\ 进行转义、空白字符用C风格(\n, \t 等)进行转义以外，非打印字符和其它特殊字符使用 \xhh 格式进行转义(hh是该字符的16进制编码)。在2.0.46以前的版本中，这些内容会被完整的按原样记录。这种做法将导致客户端可以在日志中插入控制字符，所以你在处理这些日志文件的时候要特别小心。
+
+在2.0版本中(不同于1.3)，%b 和 %B 格式字符串并不表示发送到客户端的字节数，而只是简单的表示HTTP应答字节数(在连接中断或使用SSL时与前者有所不同)。mod_logio提供的 %O 格式字符串将会记录发送的实际字节数。
+
+示例
+一些常见的格式串：
+
+通用日志格式(CLF)
+"%h %l %u %t \"%r\" %>s %b"
+带虚拟主机的通用日志格式
+"%v %h %l %u %t \"%r\" %>s %b"
+NCSA扩展/组合日志格式
+"%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+Referer日志格式
+"%{Referer}i -> %U"
+Agent(Browser)日志格式
+"%{User-agent}i"
+
+
+
+
+
+
+
+

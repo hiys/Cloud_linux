@@ -1653,11 +1653,12 @@ Pipeline main started
 
 ^CSIGINT received. Shutting down the agent. {:level=>:warn}
 stopping pipeline {:id=>"main"}
-UDP listener died {:exception=>#<IOError: closed stream>, :backtrace=>["org/jruby/RubyIO.java:3682:in `select'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:77:in `udp_listener'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:50:in `run'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:342:in `inputworker'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:336:in `start_input'"], :level=>:warn}
+UDP ..................... :level=>:warn}
 Pipeline main has been shutdown
 
 [root@Va6 ~]# 
 
+Grok 是 Logstash 最重要的插件之一。也是迄今为止使蹩脚的、无结构的日志结构化和可查询的最好方式。Grok在解析 syslog logs、apache and other webserver logs、mysql logs等任意格式的文件上表现完美
 
 
 
