@@ -1,0 +1,1360 @@
+
+
+Grok 是 Logstash 最重要的插件之一。
+也是迄今为止 使 无结构的日志 结构化 
+和 可查询的最好方式。
+Grok在解析 syslog logs、apache and other webserver logs、mysql logs
+等任意格式的文件上表现完美
+
+使用grok前注意
+grok 模式是正则表达式，
+因此这个插件的性能 受到 正则表达式 引擎 严重影响。
+尽管知道 grok 模式与日志条目可以多快匹配非常重要，
+但是了解它在什么时候匹配失败也很重要。
+匹配成功和匹配失败的性能可能会差异很大。 
+
+syntax    n. 语法;句法;句法规则[分析];语构
+semantic  英 [sɪˈmæntɪk]   美 [sɪˈmæntɪk]  
+adj. <语>语义的，语义学的
+
+grok模式的语法如下：
+
+%{SYNTAX:SEMANTIC}
+
+SYNTAX：代表匹配值的类型,例如3.44可以用NUMBER类型所匹配,127.0.0.1可以使用IP类型匹配。 
+SEMANTIC：代表存储该值的一个变量名称,例如 3.44 可能是一个事件的持续时间,127.0.0.1可能是请求的client地址。所以这两个值可以用 %{NUMBER:duration} %{IP:client} 来匹配。
+
+你也可以选择将数据类型转换添加到Grok模式。
+默认情况下，所有语义都保存为字符串。
+如果您希望转换语义的数据类型，例如将字符串更改为整数，则将其后缀为目标数据类型。
+
+例如%{NUMBER:num:int}将num语义从一个字符串转换为一个整数。
+目前唯一支持的转换是int和float。
+
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html#plugins-inputs-syslog-syslog_field
+
++Filter plugins  点击链接
+- Filter plugins 
+  grok 点击链接
+https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html
+
+
+
+input {
+  file {
+    path => "/var/log/http.log"
+  }
+}
+filter {
+  grok {
+    match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+  }
+}
+
+Grok Filter Configuration Options
+This plugin supports the following configuration options plus the Common Options described later.
+
+Setting           Input type    Required
+break_on_match    boolean       No
+.............
+break_on_matchedit
+Value type is boolean
+Default value is true
+
+            这是匹配apache 日志的正则表达式样
+match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+
+
+                   # Va6 检测到退出登陆的信息
+           "message" => "pam_unix(sshd:session): session closed for user root",
+          "@version" => "1",
+        "@timestamp" => "2019-01-21T11:26:52.000Z",
+
+
+[root@Va2 ~]# tail  -1  /var/log/httpd/access_log
+192.168.0.254 - - [18/Jan/2019:19:16:39 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+UTC=Universal Time Coordinated 通用协调时间
+GMT=Greenwich Mean Time 格林尼治平均时 UTC=GMT
+PST=Pacific Standard Time 太平洋标准时间，UTC-0800
+EST=Eastern Standard Time 东部标准时间，UTC-0500
+EDT=Eastern Daylight Time 东部夏令时(或）东部日光时间，UTC-0400
+UTC ＋ 时区差（东正西负） ＝ 本地时间
+ 
+北京时间=UTC+0800
+加州（太平洋）时间=UTC-0800
+
+ip地址 - -  time时间戳  "请求方法
+1 第一项信息192.168.0.254 是远程主机的clientIP地址  表明访问网站的客户ip是谁
+
+2 日志记录中的第二项是空白，用一个“-”占位符替代
+这个位置用于记录浏览者的标识，这不只是浏览者的登录名字，
+也是浏览者的email地址或者其他唯一标识符
+
+3 日志记录的第三项也是空白,用一个“-”占位符替代。
+这个位置用于记录浏览者进行身份验证时提供的名字。
+当然，如果网站的某些内容要求用户进行身份验证，那么这项信息 不是 空白的
+
+4 [18/Jan/2019:19:16:39 +0800] 第四项是utc_time 请求的timestamp时间戳 表示请求的时间是2019年1月18日19:16:39
+时间信息最后的“+800”表示服务器所处时区位于东八区。
+ 
+ 5  "GET /favicon.ico HTTP/1.1" 日志记录的第五项信息 表示 服务器收到的是一个什么样的请求。
+该项信息的典型格式是“METHOD RESOURCE PROTOCOL”，即“方法 资源 协议”
+ 在上例中，METHOD是GET，其他经常可能出现的METHOD还有POST和HEAD。
+ 此外还有不少可能出现的合法METHOD，但主要就是这三种
+ RESOURCE是指浏览者向服务器请求的文档，或URL。
+在这个例子中，浏览者请求的是“/favicon.ico”，即网站一个图片,图标
+PROTOCOL通常是HTTP，后面再加上版本号1.1
+
+6 第六项信息是状态代码 404 。它告诉我们请求是否成功，或者遇到了什么样的错误。
+大多数时候，这项值是200，它表示服务器已经成功地响应浏览器的请求，一切正常
+ 这里 404 表示 请求错误 Not Found 没有找到资源数据
+
+404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+7 第七项 209 表示发送给客户端的bytes 总字节数length。
+它告诉我们传输是否被打断（即，该数值是否和文件的大小相同）。
+把日志记录中的这些值加起来就可以得知服务器在一天、一周或者一月内发送了多少数据。
+
+8 第8项是空白,用一个“-”占位符替代 ,referer 记录访客来源,了解访客是从哪个网站过来的。%{Referer}i
+
+9 第9 项  "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+ 记录访客使用的浏览器 %{User-Agent}i 浏览器User-Agent用户代理 
+
+/************
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  file {      #path属性接受的参数是一个数组，其含义是标明需要读取的文件路径,
+    path        => ["/tmp/apache.log"]  #监听文件路径
+
+       # 如果需要每次都从开始读取文件的话，设置start_position => beginning是没有用的，
+                     # 可以选择  sincedb_path   定义为   /dev/null
+    sincedb_path   => "/var/lib/logstash/since.db"
+
+      #logstash 从什么 位置开始读取文件数据， 默认是结束位置 
+    start_position => "beginning"   # 设置 监听文件 从 起始位置 开始读取数据
+
+    type        => "http_log"   # 给日志设置标签,定义类型,
+                     可以在logstash -f /etc/logstash/logstash.conf输出结果中区分文件来源
+  }
+
+************************/
+
+[root@Va6 ~]# vim   /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va2 ~]# systemctl is-active  httpd
+active
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+   Va2 Va2 apache
+
+                                    Va2 test
+[root@Va2 ~]# tail  -1  /var/log/httpd/access_log
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+rsync参数的具体解释
+ -e, --rsh=COMMAND 指定使用rsh、ssh方式进行数据同步
+ -c, --checksum 打开校验开关，强制对文件传输进行校验
+ -a, --archive 归档模式，表示以递归方式传输文件，并保持所有文件属性，等于-rlptgoD
+ -r, --recursive 对子目录以递归模式处理
+ -v, --verbose 详细模式输出
+ -z, --compress 对备份的文件在传输时进行压缩处理
+...........
+[root@Va6 ~]# rsync  -e "ssh -p22  -lroot"  -av  root@192.168.0.12:/var/log/httpd/access_log  /tmp/apache.log
+...................
+Are you sure you want to continue connecting (yes/no)? yes
+...............
+root@192.168.0.12's password: 
+.................
+[root@Va6 ~]# cat  /tmp/apache.log
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+[root@Va6 ~]# vim   /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    #sincedb_path   => "/var/lib/logstash/since.db"
+
+ # 如果需要每次都从开始读取文件的话，设置start_position => beginning是没有用的，
+                     # 可以选择  sincedb_path   定义为   /dev/null
+
+    sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+       "message" => "192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] \"GET / HTTP/1.1\" 200 143 \"-\" \"ELinks/0.12pre6 (textmode; Linux; -)\"",
+      "@version" => "1",
+    "@timestamp" => "2019-01-21T13:03:20.155Z",
+          "path" => "/tmp/apache.log",
+          "host" => "Va6",
+          "type" => "http_log",
+          "tags" => [
+        [0] "_grokparsefailure"
+    ]
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {................:level=>:warn}
+Pipeline main has been shutdown
+[root@Va6 ~]# 
+
+[root@Va2 ~]# vim  /etc/httpd/conf/httpd.conf  # apache 配置文件
+
+196     LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" com    bined
+197     LogFormat "%h %l %u %t \"%r\" %>s %b" common
+
+金步国作品集
+http://www.jinbuguo.com/apache/menu22/logs.html
+客户日志
+CustomLog
+访问日志中会记录服务器所处理的所有请求，其文件名和位置取决于 [ 链接CustomLog] 指令，LogFormat指令可以简化日志的内容。这里阐述如何配置服务器的访问日志。
+http://www.jinbuguo.com/apache/menu22/mod/mod_log_config.html#customlog
+
+第二个参数指定了写入日志文件的内容。它既可以是由前面的LogFormat指令定义的nickname ，也可以是直接按 [ 日志格式 链接 ] 一节 所描述的规则定义的format字符串。
+http://www.jinbuguo.com/apache/menu22/mod/mod_log_config.html#formats
+
+
+定制日志文件格式
+
+LogFormat和CustomLog指令的格式化参数是一个字符串。这个字符串会在每次请求发生的时候，被记录到日志中去。它可以包含将被原样写入日志的文本字符串以及C风格的控制字符"\n"和"\t"以实现换行与制表。文本中的引号和反斜杠应通过"\"来转义。
+
+请求本身的情况将通过在格式字符串中放置各种"%"转义符的方法来记录，它们在写入日志文件时，根据下表的定义进行转换：
+
+格式字符串	描述
+%%	百分号(Apache2.0.44或更高的版本)
+%a	远端IP地址
+%A	本机IP地址
+%B	除HTTP头以外传送的字节数
+%b	以CLF格式显示的除HTTP头以外传送的字节数，也就是当没有字节传送时显示'-'而不是0。
+%{Foobar}C	在请求中传送给服务端的cookieFoobar的内容。
+%D	服务器处理本请求所用时间，以微为单位。
+%{FOOBAR}e	环境变量FOOBAR的值
+%f	文件名
+%h	远端主机
+%H	请求使用的协议
+%{Foobar}i	发送到服务器的请求头Foobar:的内容。
+%l	远端登录名(由identd而来，如果支持的话)，除非IdentityCheck设为"On"，否则将得到一个"-"。
+%m	请求的方法
+%{Foobar}n	来自另一个模块的注解Foobar的内容。
+%{Foobar}o	应答头Foobar:的内容。
+%p	服务器服务于该请求的标准端口。
+%P	为本请求提供服务的子进程的PID。
+%{format}P	服务于该请求的PID或TID(线程ID)，format的取值范围为：pid和tid(2.0.46及以后版本)以及hextid(需要APR1.2.0及以上版本)
+%q	查询字符串(若存在则由一个"?"引导，否则返回空串)
+%r	请求的第一行
+%s	状态。对于内部重定向的请求，这个状态指的是原始请求的状态，---%>s则指的是最后请求的状态。
+%t	时间，用普通日志时间格式(标准英语格式)
+%{format}t	时间，用strftime(3)指定的格式表示的时间。(默认情况下按本地化格式)
+%T	处理完请求所花时间，以秒为单位。
+%u	远程用户名(根据验证信息而来；如果返回status(%s)为401，可能是假的)
+%U	请求的URL路径，不包含查询字符串。
+%v	对该请求提供服务的标准ServerName。
+%V	根据UseCanonicalName指令设定的服务器名称。
+%X	请求完成时的连接状态：
+X=	连接在应答完成前中断。
++=	应答传送完后继续保持连接。
+-=	应答传送完后关闭连接。
+(在1.3以后的版本中，这个指令是%c，但这样就和过去的SSL语法：%{var}c冲突了)
+
+%I	接收的字节数，包括请求头的数据，并且不能为零。要使用这个指令你必须启用mod_logio模块。
+%O	发送的字节数，包括请求头的数据，并且不能为零。要使用这个指令你必须启用mod_logio模块。
+修饰符
+可以紧跟在"%"后面加上一个逗号分隔的状态码列表来限制记录的条目。例如，"%400,501{User-agent}i"只记录状态码400和501发生时的User-agent头内容；不满足条件时用"-"代替。状态码前还可以加上"!"前缀表示否定，"%!200,304,302{Referer}i"记录所有不同于200,304,302的状态码发生时的Referer头内容。
+
+"<"和">"修饰符可以用来指定对于已被内部重定向的请求是选择原始的请求还是选择最终的请求。默认情况下，%s, %U, %T, %D, %r 使用原始请求，而所有其他格式串则选择最终请求。例如，%>s 可以用于记录请求的最终状态，而 %<u 则记录一个已经被内部重定向到非认证资源的请求的原始认证用户。
+
+一些说明
+出于安全考虑，从2.0.46版本开始，%r, %i, %o 中的特殊字符，除了双引号(")和反斜线(\)分别用 \" 和 \\ 进行转义、空白字符用C风格(\n, \t 等)进行转义以外，非打印字符和其它特殊字符使用 \xhh 格式进行转义(hh是该字符的16进制编码)。在2.0.46以前的版本中，这些内容会被完整的按原样记录。这种做法将导致客户端可以在日志中插入控制字符，所以你在处理这些日志文件的时候要特别小心。
+
+在2.0版本中(不同于1.3)，%b 和 %B 格式字符串并不表示发送到客户端的字节数，而只是简单的表示HTTP应答字节数(在连接中断或使用SSL时与前者有所不同)。mod_logio提供的 %O 格式字符串将会记录发送的实际字节数。
+
+示例
+一些常见的格式串：
+
+通用日志格式(CLF)
+"%h %l %u %t \"%r\" %>s %b"
+带虚拟主机的通用日志格式
+"%v %h %l %u %t \"%r\" %>s %b"
+NCSA扩展/组合日志格式
+"%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+Referer日志格式
+"%{Referer}i -> %U"
+Agent(Browser)日志格式
+"%{User-agent}i"
+
+
+1     2     3
+12   0-9   0-9
+
+1   \d   \d
+2    0-5
+      5    0-5
+    0-4  \d
+
+25[0-5]|2[0-4]\d|1?\d?\d
+
+?\d
+?\d  匹配零个或一个 十进制数字字符  ## 注意 . 点和 ? 问号的区别
+.\d  匹配 一个  十进制数字字符
+
+精确匹配ip地址
+((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)
+
+模糊匹配ip地址
+([12]?\d?\d\.){3}[12]?\d?\d
+模糊匹配ip地址
+([12](?\d){2}\.){3}[12](?\d){2}
+模糊匹配ip地址
+[0-9.]+
+
+(?<ip>[0-9]+).*[(?<time>.+)\]  [A-Z]+
+
+"%"转义符
+
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    #sincedb_path   => "/var/lib/logstash/since.db"
+    sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "%{IP:client} %{WORD:method} %{URIPATHPARAM:request} %{NUMBER:bytes} %{NUMBER:duration}" }
+/*********  "%"转义符 *******************
+
+192.168.0.254 - - [18/Jan/2019:19:16:39 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+
+192.168.0.254 - - [18/Jan/2019:19:16:39 +0800] "GET /favicon.ico HTTP/1.1" 404 209
+(?<client_ip>((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)).*\[(?<time>.*)\] \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\" (?<rc>\d+) (?<size-length>\d+)
+
+
+%{IP:client}
+192.168.0.254
+(?<client_ip>((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d))
+1 第一项信息192.168.0.254 是远程主机的clientIP地址  表明访问网站的客户ip是谁
+
+.*
+2 日志记录中的第二项是空白，用一个“-”占位符替代
+这个位置用于记录浏览者的标识，这不只是浏览者的登录用户名字，
+也是浏览者的email地址或者其他唯一标识符
+.*
+3 日志记录的第三项也是空白,用一个“-”占位符替代。
+这个位置用于记录浏览者进行身份验证时提供的密码。
+当然，如果网站的某些内容要求用户进行身份验证，那么这项信息 不是 空白的
+
+
+[18/Jan/2019:19:16:39 +0800]
+\[(?<time>.*)\]
+4 [18/Jan/2019:19:16:39 +0800] 第四项是utc_time 请求的timestamp时间戳 表示请求的时间是2019年1月18日19:16:39
+时间信息最后的“+800”表示服务器所处时区位于东八区。
+
+ "GET /favicon.ico HTTP/1.1" 404 209
+ \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\" (?<rc>\d+) (?<size-length>\d+)
+
+
+  注意 空格  匹配
+"GET /favicon.ico HTTP/1.1"
+ \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\"
+
+ \"(?<method>[A-Z]+]) (?<url>\S+)
+ 5  "GET /favicon.ico HTTP/1.1" 日志记录的第五项信息 表示 服务器收到的是一个什么样的请求。
+该项信息的典型格式是“METHOD RESOURCE PROTOCOL”，即“方法 资源 协议”
+ 在上例中，METHOD是GET，其他经常可能出现的METHOD还有POST和HEAD。
+ \"(?<method>[A-Z]+])
+ 此外还有不少可能出现的合法METHOD，但主要就是这三种
+ RESOURCE是指浏览者向服务器请求的文档，或URL。
+ (?<url>\S+)
+在这个例子中，浏览者请求的是“/favicon.ico”，即网站一个图片,图标
+(?<proto>[A-Z]+)
+PROTOCOL通常是HTTP，后面再加上版本号1.1
+/1.1
+\/(?<ver_http>[0-9.]+)\"
+
+
+404
+(?<rc>\d+)
+6 第六项信息是状态代码 404 。它告诉我们请求是否成功，或者遇到了什么样的错误。
+大多数时候，这项值是200，它表示服务器已经成功地响应浏览器的请求，一切正常
+ 这里 404 表示 请求错误 Not Found 没有找到资源数据
+
+ "GET /favicon.ico HTTP/1.1" 404 209
+ \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\" (?<rc>\d+) (?<size-length>\d+)
+
+ 209 
+ (?<size-length>\d+)
+7 第七项 209 表示发送给客户端的bytes 总字节数length。
+它告诉我们传输是否被打断（即，该数值是否和文件的大小相同）。
+把日志记录中的这些值加起来就可以得知服务器在一天、一周或者一月内发送了多少数据。
+
+
+ 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+ \"(?<refer>-)\"
+8 第8项是空白,用一个“-”占位符替代 ,referer 记录访客来源,了解访客是从哪个网站过来的。%{Referer}i
+
+[root@Va6 ~]# cat   /tmp/apache.log 
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+(?<client_ip>((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)).*\[(?<time>.*)\] \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\" (?<rc>\d+) (?<size-length>\d+) \"(?<refer>-)\" \"(?<user-agent>.*)\"
+
+ \"(?<user-agent>.*)\"
+"ELinks/0.12pre6 (textmode; Linux; -)"
+9 第9 项  "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+ 记录访客使用的浏览器 %{User-Agent}i 浏览器User-Agent用户代理 
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+          
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    #sincedb_path   => "/var/lib/logstash/since.db"
+    sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "(?<client_ip>((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)).*\[(?<time>.*)\] \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\" (?<rc>\d+) (?<size-length>\d+) \"(?<refer>-)\" \"(?<user-agent>.*)\"" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# logstash  -f  /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+        "message" => "192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] \"GET / HTTP/1.1\" 200 143 \"-\" \"ELinks/0.12pre6 (textmode; Linux; -)\"",
+       "@version" => "1",
+     "@timestamp" => "2019-01-22T08:17:12.028Z",
+           "path" => "/tmp/apache.log",
+           "host" => "Va6",
+           "type" => "http_log",
+      "client_ip" => "192.168.0.12",
+           "time" => "21/Jan/2019:20:34:16 +0800",
+         "method" => "GET",
+            "url" => "/",
+          "proto" => "HTTP",
+       "ver_http" => "1.1",
+             "rc" => "200",
+    "size-length" => "143",
+          "refer" => "-",
+     "user-agent" => "ELinks/0.12pre6 (textmode; Linux; -)"
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {:exception=>#<IOError: closed stream>, :backtrace=>["org/jruby/RubyIO.java:3682:in `select'", "............, "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:336:in `start_input'"], :level=>:warn}
+Pipeline main has been shutdown
+
+[root@Va6 ~]# cat  /tmp/apache.log 
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+[root@Va6 ~]# ls  /opt/logstash/vendor/
+bundle  jruby
+[root@Va6 ~]# ls  /opt/logstash/vendor/bundle/jruby/1.9/gems/ |wc -l
+213
+
+[root@Va6 ~]# ls  /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns 
+
+/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+
+[root@Va6 ~]# ll  /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+-rw-r--r-- 1 logstash logstash 6008 7月   7 2016 /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+
+[root@Va2 ~]# ls  /etc/httpd/logs/
+access_log           access_log-20190121  error_log-20190113
+access_log-20190113  error_log            error_log-20190121
+
+[root@Va2 ~]# grep  -n  combined   <  /etc/httpd/conf/httpd.conf
+196:    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+201:      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+217:    CustomLog "logs/access_log" combined
+
+
+[root@Va2 ~]# grep  -n   "logs/access_log"   <  /etc/httpd/conf/httpd.conf
+211:    #CustomLog "logs/access_log" common
+217:    CustomLog "logs/access_log" combined
+
+模式        英文名           描述
+命令模式   command-mode  用于输入指令，如：保存、运行、切换标签、切割屏幕等
+插入模式   insert-mode   也即编辑模式，用于编辑文本
+可视模式	visual-mode	相当于高亮选取文本后的正常模式
+正常模式	normal-mode	用于查看文本，也可复制、粘贴、撤销、重做等
+
+[root@Va6 ~]# vim   /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns
+
+vim 忽略大小写查找
+
+COMBINEDAPACHELOG %{COMMONAPACHELOG} %{QS:referrer} %{QS:agent}
+ 94 COMBINEDAPACHELOG %{COMMONAPACHELOG} %{QS:referrer} %{QS:agent}
+
+:set ic  # 忽略大小写查找
+:set  nu
+/combined
+
+[root@Va6 ~]# grep  -ni  combined   /opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-2.0.5/patterns/grok-patterns 
+
+94:COMBINEDAPACHELOG %{COMMONAPACHELOG} %{QS:referrer} %{QS:agent}
+
+combined    adj. 结合的;<化>化合的;[数]组合的
+commonApachelog
+common  adj. 普通的;通俗的;[数学]公共的;共有的
+n. 普通;[法律]（对土地、水域的）共有权;公共用地;平民
+
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    #sincedb_path   => "/var/lib/logstash/since.db"
+    sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+#  grok { match => { "message" => "(?<client_ip>((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)).*\[(?<time>.*)\] \"(?<method>[A-Z]+) (?<url>\S+) (?<proto>[A-Z]+)\/(?<ver_http>[0-9.]+)\" (?<rc>\d+) (?<size-length>\d+) \"(?<refer>-)\" \"(?<user-agent>.*)\"" }
+  grok { match => { "message" => "%{COMBINEDAPACHELOG}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+}
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+        "message" => "192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] \"GET / HTTP/1.1\" 200 143 \"-\" \"ELinks/0.12pre6 (textmode; Linux; -)\"",
+       "@version" => "1",
+     "@timestamp" => "2019-01-22T09:23:31.136Z",
+           "path" => "/tmp/apache.log",
+           "host" => "Va6",
+           "type" => "http_log",
+       "clientip" => "192.168.0.12",
+          "ident" => "-",
+           "auth" => "-",
+      "timestamp" => "21/Jan/2019:20:34:16 +0800",
+           "verb" => "GET",
+        "request" => "/",
+    "httpversion" => "1.1",
+       "response" => "200",
+          "bytes" => "143",
+       "referrer" => "\"-\"",
+          "agent" => "\"ELinks/0.12pre6 (textmode; Linux; -)\""
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {:exception=>#<IOError: closed stream>, :backtrace=>["org/jruby/RubyIO.java:3682:in `select'", "/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-input-udp-2.0.5/lib/logstash/inputs/udp.rb:77:in `udp_listener'", ..............."/opt/logstash/vendor/bundle/jruby/1.9/gems/logstash-core-2.3.4-java/lib/logstash/pipeline.rb:336:in `start_input'"], :level=>:warn}
+Pipeline main has been shutdown
+
+[root@Va6 ~]# 
+=========================================================
+ES服务器监控工具——bigdesk
+http://127.0.0.1:9200/_plugin/bigdesk
+http://192.168.0.15:9200/_plugin/bigdesk/#nodes
+
+ES内容管理工具——head
+http://127.0.0.1:9200/_plugin/head/
+
+ES集群操作的API工具——Kopf
+http://127.0.0.1:9200/_plugin/kopf/
+
+http://192.168.0.11:9200/_cluster/health?pretty  ##检查集群状态
+
+http://192.168.0.15:9200/_plugin/bigdesk/#nodes  ES服务器监控工具
+
+http://192.168.0.15:9200/_plugin/kopf/#!/cluster
+
+ES内容管理工具——head
+http://192.168.0.15:9200/_plugin/head/   ES内容管理工具
+
+[root@Va1 ~]# curl http://192.168.0.11:9200/_cat/indices?v  # 查看所有数据库
+[root@Va6 ~]# curl  http://Va1:9200/_cat/indices?v
+health status index               pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   kuindex               5   1       1000            0    885.6kb        442.8kb 
+green  open   .kibana               1   1          5            1       67kb         33.5kb 
+green  open   sjku                  5   1          6            0     46.9kb         23.4kb 
+green  open   shakespeare           5   1     111393            0       37mb         18.5mb 
+green  open   logstash-2015.05.20   5   1       4750            0     36.7mb         18.3mb 
+green  open   logstash-2015.05.18   5   1       4631            0     34.8mb         17.4mb 
+green  open   logstash-2015.05.19   5   1       4624            0     35.6mb         17.8mb 
+
+[root@Va1 ~]# curl  -X DELETE  http://192.168.0.12:9200/shakespeare  ## 删除数据库
+
+[root@Va6 ~]# curl  -X DELETE  http://Va5:9200/shakespeare
+{"acknowledged":true}[root@Va6 ~]# 
+[root@Va6 ~]# curl  -X DELETE  http://Va5:9200/*  ## 删除所有的数据库(默认不包含.kibana)
+{"acknowledged
+[root@Va6 ~]# curl  http://Va1:9200/_cat/indices?v
+health status index   pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   .kibana   1   1          1            0      6.1kb            3kb 
+
+
+
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  file {
+    path        => ["/tmp/apache.log"]
+    #sincedb_path   => "/var/lib/logstash/since.db"
+    sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"  # type 相当于设置了一个数据库中的表名http_log
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  grok { match => { "message" => "%{COMBINEDAPACHELOG}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+  if [type] == "http_log" {
+
+# type 相当于设置了一个数据库中的表名http_log
+# logstash 最常用的两个输出插件：redis 与 es
+
+    elasticsearch {
+      hosts      => ["Va1:9200", "Va5:9200"] # 指定es 服务器 数组
+      index      => "weblog"  #设置 将要创建的 数据库名字
+      flush_size => 1200   #设置1200 (默认500，logstash攒够500条数据再一次性向es发送)
+      idle_flush_time => 5 #设置5秒 (默认1s，如果1s内没攒够500条还是会一次性将攒的数据发出去给es)
+    }
+  }
+}
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf  # 开启服务logstash
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+        "message" => "192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] \"GET / HTTP/1.1\" 200 143 \"-\" \"ELinks/0.12pre6 (textmode; Linux; -)\"",
+       "@version" => "1",
+     "@timestamp" => "2019-01-22T09:59:30.281Z",
+           "path" => "/tmp/apache.log",
+           "host" => "Va6",
+           "type" => "http_log",
+       "clientip" => "192.168.0.12",
+          "ident" => "-",
+           "auth" => "-",
+      "timestamp" => "21/Jan/2019:20:34:16 +0800",
+           "verb" => "GET",
+        "request" => "/",
+    "httpversion" => "1.1",
+       "response" => "200",
+          "bytes" => "143",
+       "referrer" => "\"-\"",
+          "agent" => "\"ELinks/0.12pre6 (textmode; Linux; -)\""
+}
+^CSIGINT received. Shutting down the agent. {:level=>:warn}
+stopping pipeline {:id=>"main"}
+UDP listener died {...............
+
+[root@Va6 ~]# curl  http://Va5:9200/_cat/indices?v  # 查看数据库新增加了weblog
+health status index   pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   .kibana   1   1          1            0      6.3kb          3.1kb 
+green  open   weblog    5   1          1            0     13.5kb          6.7kb 
+
+                                         # 查询指定索引库sjku 所有数据
+[root@Va1 elk]# curl  -XGET  http://192.168.0.11:9200/sjku/_search?pretty 
+.....................
+[root@Va6 ~]# curl  -XGET  http://Va5:9200/weblog/_search?pretty
+{
+  "took" : 11,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 1.0,
+    "hits" : [ {
+      "_index" : "weblog",
+      "_type" : "http_log",
+      "_id" : "AWh1AC0jnSNe0DE-awlH",
+      "_score" : 1.0,
+      "_source" : {
+        "message" : "192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] \"GET / HTTP/1.1\" 200 143 \"-\" \"ELinks/0.12pre6 (textmode; Linux; -)\"",
+        "@version" : "1",
+        "@timestamp" : "2019-01-22T09:59:30.281Z",
+        "path" : "/tmp/apache.log",
+        "host" : "Va6",
+        "type" : "http_log",
+        "clientip" : "192.168.0.12",
+        "ident" : "-",
+        "auth" : "-",
+        "timestamp" : "21/Jan/2019:20:34:16 +0800",
+        "verb" : "GET",
+        "request" : "/",
+        "httpversion" : "1.1",
+        "response" : "200",
+        "bytes" : "143",
+        "referrer" : "\"-\"",
+        "agent" : "\"ELinks/0.12pre6 (textmode; Linux; -)\""
+      }
+    } ]
+  }
+}
+
+[root@Va6 ~]# cat   /var/lib/logstash/since.db
+16777288 0 64768 13
+[root@Va6 ~]# >   /var/lib/logstash/since.db
+
+Beats 平台集合了多种单一用途 数据采集器。
+这些采集器安装后可用作轻量型代理，
+从成百上千或成千上万台机器向 Logstash 或 Elasticsearch 发送数据
+----------------- 配置Logstash接收来自Filebeat服务器Va2 采集的数据 ---------
+
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# cat    /etc/logstash/logstash.conf
+input {
+  beats{
+    port  => 5044       # 监听5044用于接收Filebeat服务器Va2 传来的数据
+  }
+
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db" # 设置指针文件存放路径
+   # sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{                              # 匹配HTTP的日志
+  grok { match => { "message" => "%{COMBINEDAPACHELOG}" }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+  if [type] == "http_log" {
+
+    elasticsearch {
+      hosts      => ["Va1:9200", "Va5:9200"] # 指定es 服务器集群IP [数组]
+      index      => "weblog"  #设置 将要创建的 数据库名字
+      flush_size => 1200   #设置1200 (默认500，logstash攒够500条数据再一次性向es发送)
+      idle_flush_time => 5 #设置每隔5秒写入数据库一次 (默认1s，如果1s内没攒够500条还是会一次性将攒的数据发出去给es)
+    }
+  }
+}
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf >> test2.txt  &   # 开启服务logstash
+[1] 5521
+[root@Va6 ~]# jobs
+[1]+  运行中               logstash -f /etc/logstash/logstash.conf >> test2.txt &
+[root@Va6 ~]# netstat   -npult |egrep  "java|5044"
+tcp6       0      0 :::5044                 :::*                    LISTEN      5521/java           
+tcp6       0      0 :::8888                 :::*                    LISTEN      5521/java           
+tcp6       0      0 :::514                  :::*                    LISTEN      5521/java           
+udp6       0      0 :::514                  :::*                                5521/java           
+udp6       0      0 :::8888                 :::*                                5521/java           
+[root@Va6 ~]# 
+
+[root@Va2 ~]# cat  /etc/yum.repos.d/local.repo 
+[CentOS7-1708]
+name=CentOS7-1708
+gpgcheck=0
+baseurl=ftp://192.168.0.254/CentOS7-1708/
+enabled=1
+
+[ansible]
+name=ansible
+baseurl=ftp://192.168.0.254/ansible
+gpgcheck=0
+enabled=1
+
+Beats 平台集合了多种单一用途 数据采集器。
+这些采集器安装后可用作轻量型代理，
+从成百上千或成千上万台机器向 Logstash 或 Elasticsearch 发送数据
+--------------------------------在 所有的 web 服务器上下载并安装Filebeat------------------
+
+wget  https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.0.1-x86_64.rpm
+yum install ./filebeat-6.0.1-x86_64.rpm
+
+[root@Va2 ~]# yum  list |grep filebeat
+filebeat.x86_64                          1.2.3-1                   ansible      
+[root@Va2 ~]# yum  -y  install  filebeat  |tail -2  # 安装Filebeat
+
+完毕！
+[root@Va2 ~]# rpm  -qa  |grep  filebeat
+filebeat-1.2.3-1.x86_64
+[root@Va2 ~]# ls  /etc/filebeat/
+filebeat.template.json  filebeat.yml
+
+            #  \s*：匹配任何不可见字符，包括空格、制表符、换页符等
+[root@Va2 ~]# grep  -Pvn  "^\s*(#|$)"  /etc/filebeat/filebeat.yml  # 主配置文件
+4:filebeat:
+6:  prospectors:
+8:    -
+14:      paths:
+15:        - /var/log/*.log      # 从哪里读入数据
+31:      input_type: log
+164:  registry_file: /var/lib/filebeat/registry
+180:output:
+183:  elasticsearch:
+188:    hosts: ["localhost:9200"]
+346:shipper:
+387:logging:
+398:  files:
+407:    rotateeverybytes: 10485760 # = 10MB
+
+[root@Va2 ~]# ls /var/log/httpd/
+access_log           access_log-20190121  error_log-20190113
+access_log-20190113  error_log            error_log-20190121
+
+[root@Va2 ~]# cat  /var/log/httpd/access_log      # 将要读入的数据来源的文件日志
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+..............
+
+Beats 平台集合了多种单一用途 数据采集器。
+这些采集器安装后可用作轻量型代理，
+从成百上千或成千上万台机器向 Logstash 或 Elasticsearch 发送数据
+
+[root@Va2 ~]# vim  /etc/filebeat/filebeat.yml
+
+ 14       paths:
+ 15         - /var/log/httpd/access_log  # 修改读取的日志路径
+
+ 72       document_type: http_log   # 设置 日志的类型(相当于数据库中的表)
+#效果等于在/etc/logstash/logstash.conf文件中的
+插件input {  file { type   => "http_log"}}中的作用
+
+180 output:
+181 
+182   ### Elasticsearch as output
+                 #  关闭 将日志直接输出到 elasticsearch服务器 的方式 
+183 #  elasticsearch:  # 手动注释{# 将会输出在elasticsearch与logstash, 二选一即可}
+188   #  hosts: ["localhost:9200"]  # 手动注释
+
+277   ### Logstash as output
+
+278   logstash:  # 打开注释 # 将数据传送到logstash服务器，注意要配置logstash使用beats接收
+                     # 注意端口要一致 5044
+/*********************
+----------------- 配置Logstash接收来自Filebeat服务器Va2 采集的数据 ---------
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+input {
+  beats{
+    port  => 5044       # 监听5044用于接收Filebeat服务器Va2 传来的数据
+  }
+*************/
+       #指定 接收 数据 的logstash服务器Va6的地址[ 注意端口要一致 5044 ]
+280     hosts: ["192.168.0.16:5044"] 
+
+
+[root@Va2 ~]# grep  -Evn  "^\s*(#|$)"  /etc/filebeat/filebeat.yml 
+4:filebeat:
+6:  prospectors:
+8:    -
+14:      paths:
+15:        - /var/log/httpd/access_log
+31:      input_type: log
+72:      document_type: http_log
+164:  registry_file: /var/lib/filebeat/registry
+180:output:
+278:  logstash:
+    #指定 接收数据并且 输出 显示数据 的logstash服务器Va6的地址[ 注意端口要一致 5044 ]
+280:    hosts: ["192.168.0.16:5044"]  #指定输出的logstash服务器ip地址:端口
+
+346:shipper:
+387:logging:
+398:  files:
+407:    rotateeverybytes: 10485760 # = 10MB
+
+[root@Va2 ~]# systemctl   start  filebeat    # 启动服务 [ Filebeat轻量级日志采集工具 ]
+[root@Va2 ~]# systemctl   enable  filebeat
+Created symlink from /etc/systemd/system/multi-user.target.wants/filebeat.service to /usr/lib/systemd/system/filebeat.service.
+[root@Va2 ~]# ps -C  filebeat
+  PID TTY          TIME CMD
+ 4985 ?        00:00:00 filebeat
+-----------------------------------------
+http://192.168.0.12/
+ Va2 Va2 apache
+Va2 test
+[root@Va2 ~]# cat  /var/log/httpd/access_log
+192.168.0.12 - - [21/Jan/2019:20:34:16 +0800] "GET / HTTP/1.1" 200 143 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+192.168.0.254 - - [22/Jan/2019:18:55:26 +0800] "GET / HTTP/1.1" 304 - "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+192.168.0.254 - - [22/Jan/2019:18:55:26 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+192.168.0.254 - - [22/Jan/2019:18:55:26 +0800] "GET /favicon.ico HTTP/1.1" 404 209 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+
+[root@Va2 ~]# 
+------------------       启动Filebeat 服务器Va2 之后,从运行中的 logstash 服务器Va6中看到
+   filebeat服务器Va2 采集/var/log/httpd/access_log 文件中的数据
+    经过Logtash 服务器Va6 过滤 再 输出送给 Elasticsearch 数据库集群 [ 数组 ] 的数据
+
+[root@Va6 ~]# cat    test2.txt  |tail  -32
+          "agent" => "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+}
+{
+        "message" => "192.168.0.254 - - [22/Jan/2019:18:55:26 +0800] \"GET /favicon.ico HTTP/1.1\" 404 209 \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"",
+       "@version" => "1",
+     "@timestamp" => "2019-01-22T10:55:30.251Z",
+          "count" => 1,
+         "offset" => 417,
+           "type" => "http_log",
+     "input_type" => "log",
+         "fields" => nil,
+           "beat" => {
+        "hostname" => "Va2",
+            "name" => "Va2"
+    },
+         "source" => "/var/log/httpd/access_log",
+           "host" => "Va2",
+           "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ],
+       "clientip" => "192.168.0.254",
+          "ident" => "-",
+           "auth" => "-",
+      "timestamp" => "22/Jan/2019:18:55:26 +0800",
+           "verb" => "GET",
+        "request" => "/favicon.ico",
+    "httpversion" => "1.1",
+       "response" => "404",
+          "bytes" => "209",
+       "referrer" => "\"-\"",
+          "agent" => "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+}
+[root@Va6 ~]# jobs
+[1]+  运行中               logstash -f /etc/logstash/logstash.conf >> test2.txt &
+[root@Va6 ~]# fg  1
+logstash -f /etc/logstash/logstash.conf >> test2.txt
+^C
+
+-------------- ----------------- 配置Logstash接收来自Filebeat服务器Va2 采集的数据 -----------
+
+[root@Va6 ~]# vim    /etc/logstash/logstash.conf
+[root@Va6 ~]# cat   /etc/logstash/logstash.conf
+input {
+  beats{
+    port  => 5044    # 监听5044用于接收Filebeat服务器Va2 传来的数据
+  }
+
+  file {
+    path        => ["/tmp/apache.log"]
+    sincedb_path   => "/var/lib/logstash/since.db"
+   # sincedb_path   => "/dev/null"
+    start_position => "beginning"
+    type        => "http_log"
+  }
+  tcp {
+    mode     => "server"
+    host     => "0.0.0.0"
+    port     =>  8888
+    type     => "tcp_type"
+  }
+  udp {
+    port     =>  8888
+    type     => "udp_type"
+  }
+  syslog {  type  =>  "sys_log"   }
+}
+
+filter{
+  if [type] == "http_log" {  ## 注意过滤条件满足type数据库表的类型
+    grok { match => { "message" => "%{COMBINEDAPACHELOG}" }
+    }
+  }
+}
+
+output{
+  stdout{ codec => "rubydebug" }
+  if [type] == "http_log" {
+    elasticsearch {
+      hosts      => ["Va1:9200", "Va5:9200"]
+      index      => "weblog"
+      flush_size => 1200
+      idle_flush_time => 5
+    }
+  }
+}
+[root@Va6 ~]# 
+
+~]# curl  http://Va5:9200/_cat/indices?v  # 查看数据库新增加了weblog
+.................
+                                         # 查询指定索引库sjku 所有数据
+ elk]# curl  -XGET  http://192.168.0.11:9200/sjku/_search?pretty 
+.....................
+~]# curl  -XGET  http://Va5:9200/weblog/_search?pretty
+
+ ~]# curl  -X DELETE  http://192.168.0.12:9200/shakespeare  ## 删除数据库
+
+ ~]# curl  -X DELETE  http://Va5:9200/shakespeare
+{"acknowledged":true}[root@Va6 ~]# 
+~]# curl  -X DELETE  http://Va5:9200/*  ## 删除所有的数据库(默认不包含.kibana)
+
+[root@Va6 ~]# curl  -X  DELETE  http://Va1:9200/*
+{"acknowledged":true}[root@Va6 ~]# 
+[root@Va6 ~]# curl  http://Va1:9200/_cat/indices?v
+health status index   pri rep docs.count docs.deleted store.size pri.store.size 
+green  open   .kibana   1   1          1            0      6.1kb            3kb 
+
+[root@Va6 ~]# 
+
+[root@Va1 config]# egrep -vn '^(#|$)'  kibana.yml
+2:server.port: 5601
+5:server.host: "0.0.0.0"  //服务器监听地址 0.0.0.0可以代表本机或其他任意主机地址
+15:elasticsearch.url: "http://Va1:9200" # 声明地址，从哪里查，集群里面随便选一个
+23:kibana.index: ".kibana"
+26:kibana.defaultAppId: "discover"
+53:elasticsearch.pingTimeout: 1500
+57:elasticsearch.requestTimeout: 30000
+64:elasticsearch.startupTimeout: 5000
+
+[root@Va1 ~]# systemctl  is-active  kibana.service 
+active
+[root@Va1 ~]# systemctl   restart  kibana.service
+[root@Va1 ~]# netstat   -npult |grep  5601
+tcp     0      0 0.0.0.0:5601     0.0.0.0:*        LISTEN      5141/node
+
+http://192.168.0.11:5601/
+http://192.168.0.11:5601/app/kibana#/settings/indices/?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))
+
+http://192.168.0.15:9200/_plugin/head/  # 查看数据库概览
+
+http://192.168.0.12/ # 刷新为web测试页面(多次刷新生成访问日志)
+
+
+
+
+
+
+
+
+[root@Va6 ~]# logstash  -f   /etc/logstash/logstash.conf 
+Settings: Default pipeline workers: 2
+Pipeline main started
+{
+        "message" => "192.168.0.254 - - [22/Jan/2019:19:26:28 +0800] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"",
+       "@version" => "1",
+     "@timestamp" => "2019-01-22T11:26:35.310Z",
+         "offset" => 575,
+           "type" => "http_log",
+     "input_type" => "log",
+           "beat" => {
+        "hostname" => "Va2",
+            "name" => "Va2"
+    },
+         "source" => "/var/log/httpd/access_log",
+          "count" => 1,
+         "fields" => nil,
+           "host" => "Va2",
+           "tags" => [
+        [0] "beats_input_codec_plain_applied"
+    ],
+       "clientip" => "192.168.0.254",
+          "ident" => "-",
+           "auth" => "-",
+      "timestamp" => "22/Jan/2019:19:26:28 +0800",
+           "verb" => "GET",
+        "request" => "/",
+    "httpversion" => "1.1",
+       "response" => "304",
+       "referrer" => "\"-\"",
+          "agent" => "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+}
+{
+        "message" => "192.168.0.254 - - [22/Jan/2019:19:26:28 +0800] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"",
+..................
+
+http://192.168.0.15:9200/_plugin/head/  
+
+------------------       启动Filebeat 服务器Va2 之后,从运行中的 logstash 服务器Va6中看到
+   filebeat服务器Va2 采集/var/log/httpd/access_log 文件中的数据
+    经过Logtash 服务器Va6 过滤 再 输出送给 Elasticsearch 数据库集群 [ 数组 ] 的数据
+
+
+~]# curl  http://Va5:9200/_cat/indices?v  # 查看数据库新增加了weblog
+.................
+                                         # 查询指定索引库sjku 所有数据
+ elk]# curl  -XGET  http://192.168.0.11:9200/sjku/_search?pretty 
+.....................
+~]# curl  -XGET  http://Va5:9200/weblog/_search?pretty
+
+              # GET  发送一个请求来取得服务器上的某一资源 可以省略 -XGET 
+
+[root@Va1 ~]# curl  -XGET  http://192.168.0.12:9200/sjku/btable/1  # es 数据库查看特定id号的数据
+................
+[root@Va6 ~]# curl  http://Va2:9200/weblog/_search?pretty  
+{
+  "took" : 15,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 19,
+    "max_score" : 1.0,
+    "hits" : [ {
+      "_index" : "weblog",
+      "_type" : "http_log",
+      "_id" : "AWh1UdkZvrceuvBsOeb9",
+      "_score" : 1.0,
+      "_source" : {
+        "message" : "192.168.0.254 - - [22/Jan/2019:19:26:29 +0800] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"",
+        "@version" : "1",
+        "@timestamp" : "2019-01-22T11:26:35.310Z",
+        "count" : 1,
+        "fields" : null,
+        "beat" : {
+          "hostname" : "Va2",
+          "name" : "Va2"
+        },
+        "source" : "/var/log/httpd/access_log",
+        "offset" : 865,
+        "type" : "http_log",
+        "input_type" : "log",
+        "host" : "Va2",
+        "tags" : [ "beats_input_codec_plain_applied" ],
+        "clientip" : "192.168.0.254",
+        "ident" : "-",
+        "auth" : "-",
+        "timestamp" : "22/Jan/2019:19:26:29 +0800",
+        "verb" : "GET",
+        "request" : "/",
+        "httpversion" : "1.1",
+        "response" : "304",
+        "referrer" : "\"-\"",
+        "agent" : "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+      }
+    }, {
+      "_index" : "weblog",
+      "_type" : "http_log",
+      "_id" : "AWh1UdkZvrceuvBsOecE",
+      "_score" : 1.0,
+      "_source" : {
+        "message" : "192.168.0.254 - - [22/Jan/2019:19:26:31 +0800] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"",
+        "@version" : "1",
+        "@timestamp" : "2019-01-22T11:26:35.310Z",
+        "source" : "/var/log/httpd/access_log",
+        "offset" : 1880,
+        "type" : "http_log",
+        "count" : 1,
+        "input_type" : "log",
+        "fields" : null,
+        "beat" : {
+          "hostname" : "Va2",
+          "name" : "Va2"
+        },
+        "host" : "Va2",
+        "tags" : [ "beats_input_codec_plain_applied" ],
+        "clientip" : "192.168.0.254",
+        "ident" : "-",
+        "auth" : "-",
+        "timestamp" : "22/Jan/2019:19:26:31 +0800",
+        "verb" : "GET",
+        "request" : "/",
+        "httpversion" : "1.1",
+        "response" : "304",
+        "referrer" : "\"-\"",
+        "agent" : "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+      }
+    }, .............
+"agent" : "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+      }
+    } ]
+  }
+}
+[root@Va6 ~]#  
+
+[root@Va6 ~]# curl  http://Va2:9200/weblog/http_log/AWh1UdkZvrceuvBsOeb9?pretty
+{
+  "_index" : "weblog",
+  "_type" : "http_log",
+  "_id" : "AWh1UdkZvrceuvBsOeb9",
+  "_version" : 1,
+  "found" : true,
+  "_source" : {
+    "message" : "192.168.0.254 - - [22/Jan/2019:19:26:29 +0800] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"",
+    "@version" : "1",
+    "@timestamp" : "2019-01-22T11:26:35.310Z",
+    "count" : 1,
+    "fields" : null,
+    "beat" : {
+      "hostname" : "Va2",
+      "name" : "Va2"
+    },
+    "source" : "/var/log/httpd/access_log",
+    "offset" : 865,
+    "type" : "http_log",
+    "input_type" : "log",
+    "host" : "Va2",
+    "tags" : [ "beats_input_codec_plain_applied" ],
+    "clientip" : "192.168.0.254",
+    "ident" : "-",
+    "auth" : "-",
+    "timestamp" : "22/Jan/2019:19:26:29 +0800",
+    "verb" : "GET",
+    "request" : "/",
+    "httpversion" : "1.1",
+    "response" : "304",
+    "referrer" : "\"-\"",
+    "agent" : "\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""
+  }
+}
+[root@Va6 ~]# curl  http://Va2:9200/weblog/http_log/AWh1UdkZvrceuvBsOeb9
+{"_index":"weblog","_type":"http_log","_id":"AWh1UdkZvrceuvBsOeb9","_version":1,"found":true,"_source":{"message":"192.168.0.254 - - [22/Jan/2019:19:26:29 +0800] \"GET / HTTP/1.1\" 304 - \"-\" \"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\"","@version":"1","@timestamp":"2019-01-22T11:26:35.310Z","count":1,"fields":null,"beat":{"hostname":"Va2","name":"Va2"},"source":"/var/log/httpd/access_log","offset":865,"type":"http_log","input_type":"log","host":"Va2","tags":["beats_input_codec_plain_applied"],"clientip":"192.168.0.254","ident":"-","auth":"-","timestamp":"22/Jan/2019:19:26:29 +0800","verb":"GET","request":"/","httpversion":"1.1","response":"304","referrer":"\"-\"","agent":"\"Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\""}}[root@Va6 ~]# 
+
+[root@Va1 config]# egrep -vn '^(#|$)'  kibana.yml
+2:server.port: 5601
+5:server.host: "0.0.0.0"  //服务器监听地址 0.0.0.0可以代表本机或其他任意主机地址
+15:elasticsearch.url: "http://Va1:9200" # 声明地址，从哪里查，集群里面随便选一个
+23:kibana.index: ".kibana"
+26:kibana.defaultAppId: "discover"
+53:elasticsearch.pingTimeout: 1500
+57:elasticsearch.requestTimeout: 30000
+64:elasticsearch.startupTimeout: 5000
+
+[root@Va1 ~]# systemctl  is-active  kibana.service 
+active
+
+[root@Va1 ~]# netstat   -npult |grep  5601
+tcp     0      0 0.0.0.0:5601     0.0.0.0:*        LISTEN      5141/node
+
+kibana是view层。
+  首先将数据传给logstash，
+它将数据进行过滤和格式化（转成JSON格式），
+然后传给Elasticsearch进行存储、建搜索的索引，
+kibana提供前端的页面再进行搜索和图表可视化，
+它是调用Elasticsearch的接口返回的数据进行可视化。
+logstash和Elasticsearch是用Java写的，
+kibana使用node.js框架。
+
+http://192.168.0.11:5601/    kibana 网站操作
+http://192.168.0.11:5601/app/kibana#/settings/indices/?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))
+
+http://192.168.0.15:9200/_plugin/head/  # 查看数据库概览
+
+
+
+
+
+
+
+

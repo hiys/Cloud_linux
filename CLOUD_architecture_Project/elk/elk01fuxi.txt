@@ -37,7 +37,6 @@ GET请求中，永远不会包含呈现数据。
        以上的六种方法，我们可以跟数据库的CRUD增删改查操作对应起来： CREATE ：PUT READ：GET UPDATE：POST DELETE：DELETE 这样一来就实现了HTTP和数据库操作（其实不光是数据库，任何数据如文件图表都是这样）的完美统一，这也是REST的精髓之一
 
 
-
  关系型   --------  非关系型
 MySQL    ?--?  NoSQL
 Database  ---->   Index

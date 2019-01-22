@@ -34,6 +34,11 @@ elasticsearch.requestTimeout: 30000
 elasticsearch.startupTimeout: 5000
 
 通过图形页面展示，注意时间是 2015 年，需要调整时间才能正常显示
+
+Beats 平台集合了多种单一用途 数据采集器。
+这些采集器安装后可用作轻量型代理，
+从成百上千或成千上万台机器向 Logstash 或 Elasticsearch 发送数据
+--------------------------------在 所有的 web 服务器上下载并安装Filebeat------------------
 filebeat-1.2.3-x86_64.rpm   
 
 logstash部分
