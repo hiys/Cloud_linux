@@ -1,0 +1,156 @@
+hadoop 完全分布式安装
+1、规划集群 namenode ,secnedorynamenode, datanode
+
+使用 4 台机器组件集群，其中 1台作为 master，其他3台做为 node 节点
+master 上的角色 namenode , secnedorynamenode
+node    上的角色 datanode
+
+master ip => 192.168.4.10
+node    ip => 192.168.4.{11,12,13}
+
+修改 /etc/hosts ，配置 ip 与名称的对应关系
+
+禁用防火墙，禁用 selinux
+
+在所有机器上 安装 java 运行环境 openjdk 和 jps 工具
+
+在机器上设置 ssh-key 信任登录，保证 master 能登录所有主机，包括自己
+
+在 master 上安装配置：
+1、把软件解压拷贝到 /usr/local/hadoop
+
+2、编辑配置文件
+
+hadoop-env.sh
+
+配置  JAVA_HOME , HADOOP_CONF_DIR
+
+xml 配置格式
+    <property>
+        <name>关键字</name>
+        <value>值</value>
+        <description>描述说明</description>
+    </property>
+
+core-site.xml
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>  
+        <value>hdfs://master:9000</value>  
+    </property>  
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+        <description>A base for other temporary directories.</description>
+    </property>
+</configuration>
+
+hdfs-site.xml
+<configuration>
+    <property>
+        <name>dfs.namenode.http-address</name>
+        <value>master:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.secondary.http-address</name>
+        <value>master:50090</value>
+    </property>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+    </property>
+</configuration>
+
+配置 slaves ，写入所有 datanode 节点
+node01
+node02
+node03
+
+同步所有文件到所有节点
+
+在所有节点上创建 hadoop.tmp.dir 指定的文件夹
+
+在 master 上执行格式化 namenode 的操作
+./bin/hdfs namenode -format
+
+启动集群  
+./sbin/start-dfs.sh
+
+验证集群：
+在 master 上 
+jps 能看见 namenode ,secondarynamenode
+netstat -ltunp 能看见  9000，50070，50090 端口被监听
+
+在 node 上
+jps 能看见 datanode
+netstat -ltunp 能看见 50075 被监听
+
+排错：
+所有的日志在本机的 logs 里面，查看对应的角色日志
+
+通过 web 访问 hdfs角色
+http://192.168.4.10:50070/
+http://192.168.4.10:50090/
+http://192.168.4.12:50075/
+
+hdfs 基本使用
+./bin/hadoop fs -ls /
+./bin/hadoop fs mkdir /input
+./bin/hadoop fs put *.txt /input
+
+配置 mapred-site.xml 
+<configuration>
+    <property>
+       <name>mapreduce.framework.name</name>
+       <value>yarn</value>
+    </property>
+</configuration>
+
+配置 yarn-site.xml
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+   <property>
+       <name>yarn.nodemanager.aux-services</name>
+       <value>mapreduce_shuffle</value>
+   </property>
+   <property>
+       <name>yarn.resourcemanager.hostname</name>
+       <value>master</value>
+   </property>
+</configuration>
+
+配置以后同步到所有机器
+启动服务
+./sbin/start-yarn.sh
+
+验证配置：
+在 master 上 jsp 能看见 resourecemanager，并且 netstat 可以看见  8088 端口打开
+可以访问 http://master:8088/
+在 node 上 jps 可以看见 nodemanager ，并且 netstat 可以看见  8042 端口打开
+可以访问 http://node01:8042/
+
+在集群上做数据分析
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep hdfs://192.168.4.10:9000/input hdfs://192.168.4.10:9000/output '(?<=h)dfs'
+
+查看分析结果
+./bin/hadoop fs -cat hdfs://192.168.4.10:9000/output/*
+
+hdfs 进阶应用 NFS 网关
+core-site.xml
+hadoop.proxyuser.nfsgw.groups
+hadoop.proxyuser.nfsgw.hosts
+* 表示全部允许
+
+hdfs-site.xml
+nfs.exports.allowed.hosts  (* rw)
+dfs.namenode.accesstime.precision (3600000)
+nfs.dump.dir (/tmp/.hdfs-nfs)
+nfs.rtmax (4194304)
+nfs.wtmax (1048576)
+nfs.port.monitoring.disabled (false)
+
+这里要注意 关闭系统的 portmap 和 nfs 服务添加用户
+重启 hdfs 集群服务  ./bin/hdfs dfsadmin -report
+启动 portmap  ./sbin/hadoop-daemon.sh --script ./bin/hdfs start portmap 
+服务启动 nfs3 服务 sudo -u 你core-site里面配置的用户 ./sbin/hadoop-daemon.sh --script ./bin/hdfs start nfs3

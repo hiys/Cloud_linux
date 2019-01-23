@@ -1,0 +1,1607 @@
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va1 ------------------------------------
+## ifconfig  eth1 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.0.14;ifconfig |awk '/inet /{print $2}';route  -n
+
+
+[root@Va1 ~]# ip  -o  address
+........................
+[root@Va1 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+..................
+[root@Va1 ~]# rpm  -q  tree
+tree-1.6.0-10.el7.x86_64
+
+[root@Va1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+
+[root@Va1 ~]# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+[root@Va1 ~]# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+
+[root@Va1 ~]# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+[root@Va1 ~]# route  add  default  gw  192.168.0.14   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@Va1 ~]# ip  route  show
+default via 192.168.0.14 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.11 
+
+[root@Va1 ~]# ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.11
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.0.14   ## ping 通成功
+
+...................................
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.1.14  ## ping 通成功
+
+..................................
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.2.14   ## ping 通成功
+
+.............................
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.1.15  ## ping 不通
+...................
+--- 192.168.1.15 ping statistics ---
+5 packets transmitted, 0 received, 100% packet loss, time 830ms
+
+[root@Va1 ~]# ping -c2 -i0.2  -w1  192.168.2.16  ## ping 不通
+.....................
+--- 192.168.2.16 ping statistics ---
+5 packets transmitted, 0 received, 100% packet loss, time 830ms
+
+[root@Va1 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+.....................
+
+[root@Va1 ~]# echo "<h1> Va1   192.168.0.11 </h1>" > /var/www/html/index.html
+
+[root@Va1 ~]# systemctl  start httpd && systemctl  enable  httpd
+..................
+[root@Va1 ~]# elinks  -dump  192.168.0.11
+                                Va1 192.168.0.11
+[root@Va1 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+ 
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va2 ------------------------------------
+
+[root@Va2 ~]# route -n
+..................
+
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.0.14   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@Va2 ~]# ifconfig   eth1  down ## 临时性关闭指定的网卡 eth1
+[root@Va2 ~]# ifconfig   eth2  down  ## 临时性关闭指定的网卡 eth2
+
+[root@Va2 ~]# route  del  default  gw  192.168.0.254
+[root@Va2 ~]# route  add  default  gw  192.168.0.14
+
+[root@Va2 ~]# ip  route  show
+default via 192.168.0.14 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.12 
+
+[root@Va2 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.12
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@Va2 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va2 ~]# echo "<h1> Va2   192.168.0.12 </h1>" > /var/www/html/index.html
+
+[root@Va2 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink ..................
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+                                Va2 192.168.0.12
+[root@Va2 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va3 ------------------------------------
+
+# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.0.14   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@Va3 ~]# ifconfig  eth1  down
+[root@Va3 ~]# ifconfig   eth2  down
+[root@Va3 ~]# route  del default  gw  192.168.0.254
+[root@Va3 ~]# route  add  default  gw  192.168.0.14
+[root@Va3 ~]# ip  route  show
+default via 192.168.0.14 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.13 
+
+[root@Va3 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.13
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@Va3 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+....................
+[root@Va3 ~]# echo "<h1> Va3   192.168.0.13 </h1>" > /var/www/html/index.html
+
+[root@Va3 ~]# systemctl  start httpd && systemctl  enable  httpd
+.....................
+[root@Va3 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+
+[root@Va3 ~]#  cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va4 ------------------------------------
+
+
+[root@Va4 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.0.14
+192.168.1.14
+192.168.2.14
+127.0.0.1
+192.168.122.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+............................
+
+[root@Va4 ~]# /usr/sbin/sysctl  -p
+
+[root@Va4 ~]# sysctl   -p
+
+[root@Va4 ~]# cat  /etc/sysctl.conf    ## 永久性 开启 IP 转发 配置文件
+........................
+
+[root@Va4 ~]# sysctl   -a  |grep  netfilter  |tail -3
+..................
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward   ## 临时性 开启 IP 转发
+1
+
+[root@Va4 ~]# vim   /etc/sysctl.conf     ## 永久性 开启 IP 转发 路由功能 
+
+[root@Va4 ~]# tail  -2  /etc/sysctl.conf
+
+# For more information, see sysctl.conf(5) and sysctl.d(5).
+net.ipv4.ip_forward=1
+
+[root@Va4 ~]# sysctl   -p  # 从指定的文件加载系统参数，如不指定即从/etc/sysctl.conf中加载
+
+net.ipv4.ip_forward = 1
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+[root@Va4 ~]# sysctl  -w  net.ipv4.ip_forward=0   ## 临时性 开启 IP 转发
+net.ipv4.ip_forward = 0
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+0
+[root@Va4 ~]# sysctl   -p  ## 重新加载 开启 IP 转发 路由功能  默认配置文件/etc/sysctl.conf
+net.ipv4.ip_forward = 1
+
+[root@Va4 ~]# cat  /proc/sys/net/ipv4/ip_forward
+1
+
+[root@Va4 ~]# yum clean  all > /dev/null &&  yum repolist |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va4 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+
+[root@Va4 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va4 ~]# echo "<h1> NAT-PAT-Va4  192.168.0.14 </h1>" > /var/www/html/index.html
+
+[root@Va4 ~]# systemctl  start httpd && systemctl  enable  httpd
+
+[root@Va4 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+
+[root@Va4 ~]# systemctl is-active  firewalld
+unknown
+[root@Va4 ~]# systemctl is-active  NetworkManager
+inactive
+
+[root@Va4 ~]# yum  -y install  iptables-services  ## 能够永久保存规则的包
+已安装:
+  iptables-services.x86_64 0:1.4.21-18.0.1.el7.centos                                
+
+完毕！
+
+[root@Va4 ~]# rpm  -qa |grep  iptables
+iptables-services-1.4.21-18.0.1.el7.centos.x86_64
+iptables-1.4.21-18.0.1.el7.centos.x86_64
+
+[root@Va4 ~]# lsmod |grep iptable
+iptable_raw            12678  0 
+iptable_mangle         12695  1 
+iptable_nat            12875  1 
+nf_nat_ipv4            14115  1 iptable_nat
+iptable_filter         12810  1 
+ip_tables              27115  4 iptable_filter,iptable_mangle,iptable_nat,iptable_raw
+
+
+[root@Va4 ~]# service  iptables   start  &&  chkconfig   iptables  on
+
+[root@Va4 ~]# service    iptables  status  |grep  -io  Active
+Redirecting to /bin/systemctl status iptables.service
+Active
+active
+
+
+[root@Va4 ~]# iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -F
+
+
+[root@Va4 ~]# iptables -t raw -L ;echo "------mangle-----------"; 
+iptables -t mangle -L; echo "-----------nat-------"; 
+ iptables -t  nat -L ;echo "-----------filter----------"; 
+ iptables -t filter -L
+
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination 
+        
+------mangle-----------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination 
+        
+-----------nat-------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination  
+       
+-----------filter----------
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+
+SNAT改写封包来源IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将直接跳往下一个规则（mangleostrouting）。
+例如：
+iptables -t nat -A POSTROUTING -p tcp -o eth0
+    -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
+
+ ----------  实现IP地址的伪装（SNAT源地址转换） --------------------
+
+[root@Va4 ~]# iptables -t nat  -A  POSTROUTING  \
+> -s  192.168.0.0/24  -p tcp  --dport  80   \
+> -j  SNAT  --to-source   192.168.1.14 
+
+-------------------------------  实现IP地址的伪装（SNAT源地址转换） POSTROUTING --------------------
+
+[root@Va4 ~]# iptables  -t  nat  -A  POSTROUTING  -s  192.168.0.0/24  -p  tcp  --dport  80 -j  SNAT  --to-source   192.168.1.14
+
+[root@Va4 ~]# iptables  -t   nat  -nL
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
+
+target     prot opt source               destination         
+SNAT       tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:80 to:192.168.1.14
+
+-----------------------------------------------------------
+--- ##ping 通的原因是 0.11 的地址伪装转成了1.14,所以通 1.15 同一网段
+
+[root@Va1 ~]# elinks -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+ --- 通过日志会发现，客户端0.11 是先伪装为了192.168.1.14 之后再访问的Va5主机 web服务器
+
+[root@Va5 ~]# tail  -1  /var/log/httpd/access_log 
+192.168.1.14 - - [20/Dec/2018:14:08:25 +0800] "GET / HTTP/1.1" 200 37 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+
+[root@Va1 ~]# elinks -dump  192.168.2.16
+^C
+------------------------------------同一网段 192.168.0.0/24 ------------------------------
+
+[root@Va1 ~]# elinks -dump  192.168.0.17   ## 没有伪装,同一网段
+                            NAT-PAT-Va7 192.168.0.17
+[root@Va7 ~]# tail  -1  /var/log/httpd/access_log 
+192.168.0.11 - - [20/Dec/2018:14:08:49 +0800] "GET / HTTP/1.1" 200 37 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+-------------------------------------------------------------------------
+
+--- ##ping 通的原因是 0.11 的地址伪装转成了1.14,所以通 1.18 同一网段
+
+[root@Va1 ~]# elinks -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va8 ~]# tail  -1  /var/log/httpd/access_log 
+192.168.1.14 - - [20/Dec/2018:14:09:05 +0800] "GET / HTTP/1.1" 200 37 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+------------------------------------------------------------------
+
+[root@Va1 ~]# elinks -dump  192.168.2.19
+^C
+[root@Va1 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.14    0.0.0.0         UG    0      0        0 eth0
+................
+
+[root@Va4 ~]# ip  route  show |grep default
+default via 192.168.0.254 dev eth0 
+
+[root@Va2 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va2 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+
+[root@Va3 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va3 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va3 ~]# elinks  -dump  192.168.2.19
+^C
+[root@Va3 ~]# elinks  -dump  192.168.0.17
+                            NAT-PAT-Va7 192.168.0.17
+
+---------------------- SNAT  外网 ip 地址 固定 是 缺陷 ----------------------
+
+----------------------- MASQUERADE  灵活伪装 --------------------
+
+masquerade 
+n.	伪装; 化装舞会; 掩饰;
+vi.	伪装; 假扮; 乔装; 冒充;
+
+MASQUERADE 【masquerade 】改写封包来源 IP 为防火墙 NIC IP，
+可以指定 port 对应的范围，进行完此处理动作后，
+直接跳往下一个规则（mangleostrouting）。
+
+这个功能与 SNAT 略有不同，
+当进行 IP 伪装时，不需指定要伪装成哪个 IP，
+IP 会从网卡直接读，
+当使用拨接连线时，
+IP 通常是由 ISP 公司的 DHCP 服务器指派的，
+这个时候 MASQUERADE 特别有用。
+
+[root@Va4 ~]# iptables   -t  nat  -R   POSTROUTING  1 \
+> -s  192.168.0.0/24  -p  tcp  --dport  80 \
+> -j   MASQUERADE
+[root@Va4 ~]# iptables   -t  nat  -nL   POSTROUTING  --line-numbers
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:80
+
+----------- 根据 网关 Va4 上 的外网地址eth1,eth2 的改变  灵活伪装---------------
+
+[root@Va1 ~]# elinks -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va1 ~]# elinks -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va8 ~]# tail  -1  /var/log/httpd/access_log 
+192.168.1.14 - - [20/Dec/2018:14:36:11 +0800] "GET / HTTP/1.1" 200 37 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+[root@Va1 ~]# elinks -dump  192.168.0.17
+                            NAT-PAT-Va7 192.168.0.17
+
+[root@Va1 ~]# elinks -dump  192.168.2.16
+                            NAT-PAT-Va6 192.168.2.16
+[root@Va6 ~]# tail  -1  /var/log/httpd/access_log 
+192.168.2.14 - - [20/Dec/2018:14:36:23 +0800] "GET / HTTP/1.1" 200 37 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+[root@Va1 ~]# elinks -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va5 ~]# tail  -1  /var/log/httpd/access_log 
+192.168.1.14 - - [20/Dec/2018:14:36:31 +0800] "GET / HTTP/1.1" 200 37 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+
+
+DNAT改写封包目的地IP 为某特定 IP 或 IP 范围，
+可以指定 port 对应的范围，进行完此处理动作后，
+将会直接跳往下一个规则（filter:input 或 filter:forward）。
+例如：
+iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 --dport 80 
+        -j DNAT --to-destination 192.168.1.1-192.168.1.10:80-100
+
+# iptables -t nat -A POSTROUTING -p tcp  -o  eth0
+  -j SNAT --to-source 194.236.50.155-194.236.50.160:1024-32000
+
+~]# iptables  -t  nat  -A PREROUTING -p tcp  -d 192.168.1.0/24  \
+>  --dport  80 -j  DNAT  \
+>  --to-destination  192.168.0.11-192.168.0.13:9091-9093
+
+--------------------DNAT改写封包目的地IP -------------------
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING  -p  tcp  \
+> -d  192.168.1.14  --dport  80  -j  DNAT  \
+> --to-destination   192.168.0.11:80
+
+[root@Va4 ~]# iptables  -t  nat  -R  PREROUTING  2 -p  tcp \
+> -d  192.168.1.14  --dport  82  -j  DNAT  \ 
+>   --to-destination   192.168.0.12:80
+
+
+[root@Va4 ~]# iptables  -t  nat  -R  PREROUTING  3 -p  tcp \
+> -d  192.168.1.14  --dport  83  -j  DNAT  --to-destination   192.168.0.13:80
+
+[root@Va4 ~]# iptables   -t  nat  -nL    --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source       destination         
+1    DNAT       tcp  --  0.0.0.0/0    192.168.1.14   tcp dpt:80 to:192.168.0.11:80
+2    DNAT       tcp  --  0.0.0.0/0    192.168.1.14   tcp dpt:82 to:192.168.0.12:80
+3    DNAT       tcp  --  0.0.0.0/0    192.168.1.14   tcp dpt:83 to:192.168.0.13:80
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target[处理机制] prot[放行哪种协议] opt[额外的选项，--表示没有] source[源地址] destination[目标地址]
+
+num  target     prot opt source               destination         
+1    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:80
+
+[root@Va4 ~]# 
+
+[root@Va1 ~]# elinks -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+
+[root@Va2 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+
+[root@Va5 ~]# elinks -dump  192.168.1.14
+                                Va1 192.168.0.11
+[root@Va5 ~]# elinks -dump  192.168.1.14:82
+                                Va2 192.168.0.12
+[root@Va5 ~]# elinks -dump  192.168.1.14:83
+                                Va3 192.168.0.13
+
+[root@Va3 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+
+[root@Va3 ~]# elinks  -dump  192.168.2.16
+                            NAT-PAT-Va6 192.168.2.16
+[root@Va3 ~]# elinks  -dump  192.168.0.17
+                            NAT-PAT-Va7 192.168.0.17
+[root@Va3 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va3 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va3 ~]# elinks  -dump  192.168.2.14
+                            NAT-PAT-Va4 192.168.0.14
+
+
+[root@Va8 ~]# elinks   -dump  192.168.1.14
+                                Va1 192.168.0.11
+[root@Va8 ~]# elinks   -dump  192.168.1.14:82
+                                Va2 192.168.0.12
+[root@Va8 ~]# elinks   -dump  192.168.1.14:83
+                                Va3 192.168.0.13
+
+
+[root@Va9 ~]# elinks   -dump  192.168.2.14
+                            NAT-PAT-Va4 192.168.0.14
+[root@Va9 ~]# elinks   -dump  192.168.2.14:82   ##失败原因 没有开通2.0的DNAT 网段
+ELinks: 拒绝连接
+
+[root@Va4 ~]# iptables  -t  nat  -F  PREROUTING
+
+[root@Va4 ~]# iptables   -t  nat  -nL    --line-numbers
+
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:80
+
+------------------DNAT改写封包目的地IP -------------------
+-------- 注意DNAT 可以 -d ip1,ip2,ip3 用逗号分隔多个不连续的ip地址
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING   -p  tcp \
+> -d  192.168.1.14,192.168.2.14    --dport  80      \
+> -j  DNAT  --to-destination   192.168.0.11:80
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING   -p  tcp \
+> -d  192.168.1.14,192.168.2.14    --dport  8091    \
+> -j  DNAT  --to-destination   192.168.0.12:80
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING   -p  tcp \ 
+> -d  192.168.1.14,192.168.2.14    --dport  8093    \
+> -j  DNAT  --to-destination   192.168.0.13:80
+
+[root@Va4 ~]# iptables   -t  nat  -nL    --line-numbers
+Chain PREROUTING (policy ACCEPT) 路由前规则链
+num  target     prot opt source               destination         
+1    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11:80
+2    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:80 to:192.168.0.11:80
+3    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:8091 to:192.168.0.12:80
+4    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:8091 to:192.168.0.12:80
+5    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:8093 to:192.168.0.13:80
+6    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:8093 to:192.168.0.13:80
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT) 路由后规则链
+num  target     prot opt source               destination         
+1    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0    tcp dpt:80
+
+
+[root@Va9 ~]# elinks   -dump  192.168.2.14
+                                Va1 192.168.0.11
+
+[root@Va9 ~]# elinks   -dump  192.168.2.14:8091
+                                Va2 192.168.0.12
+
+[root@Va9 ~]# elinks   -dump  192.168.2.14:8093
+                                Va3 192.168.0.13
+
+[root@Va8 ~]# elinks   -dump  192.168.1.14
+                                Va1 192.168.0.11
+[root@Va8 ~]# elinks   -dump  192.168.1.14:8091
+                                Va2 192.168.0.12
+[root@Va8 ~]# elinks   -dump  192.168.1.14:8093
+                                Va3 192.168.0.13
+
+[root@Va7 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+[root@Va7 ~]# elinks  -dump  192.168.0.14:8091  ##失败原因 没有开通0.0的DNAT 网段
+ELinks: 拒绝连接
+
+[root@Va2 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va2 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va2 ~]# elinks  -dump  192.168.2.16                            NAT-PAT-Va6 192.168.2.16
+[root@Va2 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+
+# iptables     [-t 表名]  
+  命令选项(-A 追加规则[链名]、 -D 删除规则[链名]、 -R 修改规则[链名]、 -I 插入规则[链名]、 -L 查看规则[链名] 等)  
+ 参数(-p 协议、-s 源地址、-d 目的地址、--sport 源端口、--dport 目的端口、-i 进入网卡、-o 出去网卡 等)  
+ 动作-j ( ACCEPT 接受包、DROP 丢弃包、REJECT 丢弃包并通知对方、REDIRECT 端口重定向包 ，
+          RETURN 返回主链继续匹配, MASQUERADE 地址伪装, MARK 打标签,
+        LOG将封包相关讯息记录在 /var/log/messages中，SNAT改写封包来源IP，DNAT改写封包目的地IP  等)
+
+
+REDIRECT 【redirect】将封包重新导向到另一个端口（PNAT），
+进行完此处理动作后，将会继续比对其它规则。
+这个功能可以用来实作通透式proxy 或用来保护 web 服务器。
+例如：
+iptables  -t  nat  -A  PREROUTING -p tcp --dport 80 -j  REDIRECT --to-ports 8080
+
+ ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  --dport 80 -j  REDIRECT --help |wc  -l
+87
+ ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  --dport  80 -j  REDIRECT  --help  |tail  -18
+
+REDIRECT target options:
+ --to-ports <port>[-<port>]
+				Port (range) to map to.
+ [--random]
+
+tcp match options:
+[!] --tcp-flags mask comp	match when TCP flags & mask == comp
+				(Flags: SYN ACK FIN RST URG PSH ALL NONE)
+[!] --syn			match when only SYN flag set
+				(equivalent to --tcp-flags SYN,RST,ACK,FIN SYN)
+[!] --source-port port[:port]
+ --sport ...
+				match source port(s)
+[!] --destination-port port[:port]
+ --dport ...
+				match destination port(s)
+
+[root@localhost ~]# iptables -A PREROUTING -t nat -d 192.168.10.11 -p tcp --dport 80 -j REDIRECT --to-ports 8080
+#把来自80的访问映射到8080
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING   -p  tcp  -d  192.168.0.13  --dport  8093  -j  REDIRECT  --to-ports  80
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING   -p  tcp  -d  192.168.0.12  --dport  8092  -j  REDIRECT  --to-ports  80
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING   -p  tcp  -d  192.168.0.11  --dport  8091  -j  REDIRECT  --to-ports  80
+
+[root@Va4 ~]# iptables   -t  nat  -nL    --line-numbers
+
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11:80
+2    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:80 to:192.168.0.11:80
+3    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:8091 to:192.168.0.12:80
+4    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:8091 to:192.168.0.12:80
+5    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:8093 to:192.168.0.13:80
+6    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:8093 to:192.168.0.13:80
+7    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.13         tcp dpt:8093 redir ports 80
+8    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.12         tcp dpt:8092 redir ports 80
+9    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.11         tcp dpt:8091 redir ports 80
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:80
+
+[root@Va4 ~]# 
+
+[root@Va4 ~]# elinks -dump  192.168.0.11
+                                Va1 192.168.0.11
+
+---- ## 失败原因 需要在web 服务器上部署转发配置服务 ----
+
+[root@Va4 ~]# elinks -dump  192.168.0.11:8091 
+ELinks: 拒绝连接
+[root@Va4 ~]# elinks -dump  192.168.0.13
+                                Va3 192.168.0.13
+[root@Va4 ~]# elinks -dump  192.168.0.13:8093
+ELinks: 拒绝连接
+-----------------------------------------------------------------------------
+---------------------------------
+-----------------  MASQUERADE 【masquerade 】改写封包来源  ---------------------------
+
+[root@Va4 ~]# iptables  -t  nat  -A  POSTROUTING  -s 192.168.0.0/24  -p  tcp  --dport  22  -j  MASQUERADE
+
+[root@Va1 ~]# ssh   192.168.1.15
+....................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: ...............
+root@192.168.1.15's password: 1
+Last login: Thu Dec 20 08:58:37 2018 from 192.168.1.254
+[root@Va5 ~]# exit
+登出
+Connection to 192.168.1.15 closed.
+[root@Va1 ~]# ssh   192.168.2.16
+...............
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: .................
+root@192.168.2.16's password: 1
+Last login: Thu Dec 20 08:58:43 2018 from 192.168.2.254
+[root@Va6 ~]# exit
+登出
+Connection to 192.168.2.16 closed.
+
+[root@Va1 ~]# ssh -o StrictHostKeyChecking=no  192.168.2.19
+Warning: Permanently added '192.168.2.19' (ECDSA) to the list of known hosts.
+root@192.168.2.19's password: 1
+Last login: Thu Dec 20 13:05:03 2018 from 192.168.2.254
+
+[root@Va9 ~]# ls
+anaconda-ks.cfg       ip.sh  模板  图片  下载  桌面
+initial-setup-ks.cfg  公共   视频  文档  音乐
+[root@Va9 ~]# pwd
+/root
+[root@Va9 ~]# echo $USER
+root
+[root@Va9 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va9 ~]# exit
+登出
+Connection to 192.168.2.19 closed.
+[root@Va1 ~]# 
+
+[root@Va2 ~]# ssh  -o StrictHostKeyChecking=no  192.168.1.18
+Warning: Permanently added '192.168.1.18' (ECDSA) to the list of known hosts.
+root@192.168.1.18's password: 
+Last login: Thu Dec 20 13:05:15 2018 from 192.168.1.254
+[root@Va8 ~]# hostname
+Va8
+[root@Va8 ~]# elinks -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va8 ~]# elinks -dump  192.168.2.19
+ELinks: 拒绝连接
+[root@Va8 ~]# elinks -dump  192.168.0.12
+ELinks: 拒绝连接
+[root@Va8 ~]# elinks -dump  192.168.1.14:8091
+                                Va2 192.168.0.12
+[root@Va8 ~]# elinks -dump  192.168.1.14:8093
+                                Va3 192.168.0.13
+[root@Va8 ~]# elinks -dump  192.168.1.14
+                                Va1 192.168.0.11
+[root@Va8 ~]# exit
+登出
+Connection to 192.168.1.18 closed.
+[root@Va2 ~]# 
+
+------------------DNAT改写封包目的地IP -------------------
+-------- 注意DNAT 可以 -d ip1,ip2,ip3 用逗号分隔多个不连续的ip地址
+------------------ DNAT改写封包目的地IP -------------------
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  \
+> -d  192.168.1.14,192.168.2.14  --dport  22  \
+> -j  DNAT  --to-destination  192.168.0.11:22 
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  -d  192.168.1.14,192.168.2.14  --dport  9022  -j  DNAT  --to-destination  192.168.0.12:22 
+
+[root@Va4 ~]# iptables  -t  nat  -A  PREROUTING  -p tcp  -d  192.168.1.14,192.168.2.14  --dport  9023  -j  DNAT  --to-destination  192.168.0.13:22 
+
+[root@Va4 ~]# iptables  -t  nat  -L
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:http to:192.168.0.11:80
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:http to:192.168.0.11:80
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:jamlink to:192.168.0.12:80
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:jamlink to:192.168.0.12:80
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:8093 to:192.168.0.13:80
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:8093 to:192.168.0.13:80
+REDIRECT   tcp  --  anywhere             192.168.0.13         tcp dpt:8093 redir ports 80
+REDIRECT   tcp  --  anywhere             192.168.0.12         tcp dpt:8092 redir ports 80
+REDIRECT   tcp  --  anywhere             192.168.0.11         tcp dpt:jamlink redir ports 80
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:ssh to:192.168.0.11:22
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:ssh to:192.168.0.11:22
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:paragent to:192.168.0.12:22
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:paragent to:192.168.0.12:22
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:swa-1 to:192.168.0.13:22
+DNAT       tcp  --  anywhere             Va4                  tcp dpt:swa-1 to:192.168.0.13:22
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  tcp  --  192.168.0.0/24       anywhere             tcp dpt:http
+MASQUERADE  tcp  --  192.168.0.0/24       anywhere             tcp dpt:ssh
+
+[root@Va4 ~]# iptables  -t  nat  -nL  --line-numbers
+Chain PREROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:80 to:192.168.0.11:80
+2    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:80 to:192.168.0.11:80
+3    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:8091 to:192.168.0.12:80
+4    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:8091 to:192.168.0.12:80
+5    DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:8093 to:192.168.0.13:80
+6    DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:8093 to:192.168.0.13:80
+7    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.13         tcp dpt:8093 redir ports 80
+8    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.12         tcp dpt:8092 redir ports 80
+9    REDIRECT   tcp  --  0.0.0.0/0            192.168.0.11         tcp dpt:8091 redir ports 80
+10   DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:22 to:192.168.0.11:22
+11   DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:22 to:192.168.0.11:22
+12   DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:9022 to:192.168.0.12:22
+13   DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:9022 to:192.168.0.12:22
+14   DNAT       tcp  --  0.0.0.0/0            192.168.1.14         tcp dpt:9023 to:192.168.0.13:22
+15   DNAT       tcp  --  0.0.0.0/0            192.168.2.14         tcp dpt:9023 to:192.168.0.13:22
+
+Chain INPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+num  target     prot opt source               destination         
+1    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:80
+2    MASQUERADE  tcp  --  192.168.0.0/24       0.0.0.0/0            tcp dpt:22
+[root@Va4 ~]# 
+ 
+[root@Va5 ~]# ssh   192.168.1.14
+root@192.168.1.14's password: 
+Last login: Thu Dec 20 08:57:58 2018 from 192.168.0.254
+[root@Va1 ~]# hostname
+Va1
+[root@Va1 ~]# elinks  -dump   192.168.0.11
+                                Va1 192.168.0.11
+[root@Va1 ~]# elinks  -dump   192.168.0.13
+                                Va3 192.168.0.13
+[root@Va1 ~]# elinks  -dump   192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+[root@Va1 ~]# elinks  -dump   192.168.2.16
+                            NAT-PAT-Va6 192.168.2.16
+
+[root@Va1 ~]# elinks  -dump   192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va1 ~]# elinks  -dump   192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va1 ~]# elinks  -dump   192.168.0.12
+                                Va2 192.168.0.12
+[root@Va1 ~]# exit
+登出
+Connection to 192.168.1.14 closed.
+[root@Va5 ~]# 
+
+
+
+[root@Va6 ~]# ssh   192.168.2.14
+......................
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.2.14' (ECDSA) to the list of known hosts.
+root@192.168.2.14's password: 
+Last login: Thu Dec 20 19:02:45 2018 from 192.168.1.15
+[root@Va1 ~]# hostname
+Va1
+[root@Va1 ~]# exit
+登出
+Connection to 192.168.2.14 closed.
+
+[root@Va6 ~]# ssh  -o  StrictHostKeyChecking=no  -p9022   192.168.2.14
+root@192.168.2.14's password: 1
+Last login: Thu Dec 20 08:58:10 2018 from 192.168.0.254
+[root@Va2 ~]# hostname
+Va2
+[root@Va2 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+[root@Va2 ~]# elinks  -dump  192.168.0.12
+                                Va2 192.168.0.12
+[root@Va2 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va2 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va2 ~]# exit
+登出
+Connection to 192.168.2.14 closed.
+[root@Va6 ~]# 
+
+
+[root@Va9 ~]#  ssh  -o  StrictHostKeyChecking=no  -p 9023   192.168.2.14
+Warning: Permanently added '[192.168.2.14]:9023' (ECDSA) to the list of known hosts.
+root@192.168.2.14's password: 
+Last login: Thu Dec 20 08:58:19 2018 from 192.168.0.254
+[root@Va3 ~]# hostname
+Va3
+[root@Va3 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+[root@Va3 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+[root@Va3 ~]# elinks  -dump  192.168.0.17
+                            NAT-PAT-Va7 192.168.0.17
+[root@Va3 ~]# elinks  -dump  192.168.0.13
+                                Va3 192.168.0.13
+[root@Va3 ~]# elinks  -dump  192.168.0.14
+                            NAT-PAT-Va4 192.168.0.14
+[root@Va3 ~]# tail  -1  /etc/httpd/logs/access_log 
+192.168.0.13 - - [20/Dec/2018:19:16:57 +0800] "GET / HTTP/1.1" 200 30 "-" "ELinks/0.12pre6 (textmode; Linux; -)"
+[root@Va3 ~]# exit
+登出
+Connection to 192.168.2.14 closed.
+[root@Va9 ~]# hostname
+Va9
+[root@Va9 ~]# 
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+------------------------- Va5 -----------------------------
+ifconfig  eth0 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.1.254;ifconfig |awk '/inet /{print $2}';route  -n
+
+# ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
+# ifconfig  eth2  down  ## 临时性关闭指定的网卡 eth2
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.1.254   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@hiys ~]# ssh  -X  192.168.1.15
+Warning: Permanently added '192.168.1.15' (ECDSA) to the list of known hosts.
+root@192.168.1.15's password: 1
+.......................
+[root@Va5 ~]# ifconfig  |awk '/inet /{print  $2}'
+192.168.0.15
+192.168.1.15
+192.168.2.15
+127.0.0.1
+[root@Va5 ~]# ip  route  show
+default via 192.168.0.254 dev eth0 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.15 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.15 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.15 
+
+[root@Va5 ~]# ifconfig  eth0  down
+[root@Va5 ~]# ifconfig  eth2  down
+[root@Va5 ~]# route  del  default  gw   192.168.0.254
+SIOCDELRT: 没有那个进程
+[root@Va5 ~]# echo  $?
+7
+[root@Va5 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+
+[root@Va5 ~]# route  add   default  gw   192.168.1.254
+
+[root@Va5 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.1.15
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+
+[root@Va5 ~]# ip  route  show
+
+default via 192.168.1.254 dev eth1 
+
+169.254.0.0/16 dev eth1 scope link metric 1003 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.15 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@Va5 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va5 ~]# cat  /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.1.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va5 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+
+[root@Va5 ~]# yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
+[root@Va5 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va5 ~]# echo "<h1> NAT-PAT-Va5  192.168.1.15 </h1>" > /var/www/html/index.html
+
+[root@Va5 ~]# systemctl  start httpd && systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va5 ~]# elinks  -dump  192.168.1.15
+                            NAT-PAT-Va5 192.168.1.15
+
+[root@Va5 ~]# yum  -y  install   iptables-services |tail  -3
+  iptables-services.x86_64 0:1.4.21-18.el7                                      
+
+完毕！
+[root@Va5 ~]# rpm  -qa |grep  iptables
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+
+[root@Va5 ~]# service  iptables  start  && chkconfig   iptables  on
+
+
+[root@Va5 ~]# service    iptables  status  |grep  -io  Active
+Redirecting to /bin/systemctl status iptables.service
+Active
+active
+[root@Va5 ~]# iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -F
+
+[root@Va5 ~]# iptables -t raw -L ;echo "------mangle-----------"; 
+iptables -t mangle -L; echo "-----------nat-------";  
+iptables -t  nat -L ;echo "-----------filter----------"; 
+ iptables -t filter -L
+
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+------mangle-----------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+-----------nat-------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+-----------filter----------
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+       
+[root@Va5 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va1  ----|
+         |-----Va4  ----- Va5
+Va2  ----|      
+                     
+Va2  ----|
+         |-----Va4  ----- Va6
+Va3  ----|
+
+-------------------------------------------- Va6 ------------------------------------
+#ifconfig  eth0 down;ifconfig eth1 down;route  del default gw 192.168.0.254;route add default gw  192.168.2.254;ifconfig |awk '/inet /{print $2}';route  -n
+
+# ifconfig  eth0  down  ## 临时性关闭指定的网卡 eth0
+# ifconfig  eth1  down  ## 临时性关闭指定的网卡 eth1
+# route  del  default  gw  192.168.0.254  ## 临时性先删除旧的网关
+# route  add  default  gw  192.168.2.254   ## 临时性添加新网关{添加多个网关也是此命令}
+
+[root@hiys ~]# ssh  -X  192.168.2.16
+Warning:..............
+root@192.168.2.16's password: 1
+......................
+[root@Va6 ~]# ifconfig  |awk '/inet /{print  $2}'
+192.168.0.16
+192.168.1.16
+192.168.2.16
+127.0.0.1
+[root@Va6 ~]# ifconfig  eth0   down
+[root@Va6 ~]# ifconfig   eth1   down
+
+[root@Va6 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@Va6 ~]# ip  route  show
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.16 
+
+[root@Va6 ~]# route  add  default  gw   192.168.2.254
+
+[root@Va6 ~]# ip  route  show
+default via 192.168.2.254 dev eth2 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.16 
+
+[root@Va6 ~]#  ifconfig |awk '/inet /{print $2}';route  -n
+192.168.2.16
+127.0.0.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.254   0.0.0.0         UG    0      0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+
+[root@Va6 ~]# vim  /etc/yum.repos.d/local.repo 
+[root@Va6 ~]# cat   /etc/yum.repos.d/local.repo
+
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.2.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va6 ~]# ls   /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va6 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+
+[root@Va6 ~]# yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  httpd-tools.x86_64 0:2.4.6-67.el7.centos     mailcap.noarch 0:2.1.41-2.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.centos.x86_64
+
+[root@Va6 ~]# echo "<h1> NAT-PAT-Va6  192.168.2.16 </h1>" > /var/www/html/index.html
+
+[root@Va6 ~]# systemctl start  httpd  &&  systemctl  enable  httpd
+Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[root@Va6 ~]# elinks  -dump  192.168.2.16
+                            NAT-PAT-Va6 192.168.2.16
+
+[root@Va6 ~]# yum  -y  install   iptables-services |tail  -3
+  iptables-services.x86_64 0:1.4.21-18.el7                                      
+
+完毕！
+[root@Va6 ~]# rpm  -qa  |grep iptables
+iptables-1.4.21-18.el7.x86_64
+iptables-services-1.4.21-18.el7.x86_64
+
+[root@Va6 ~]# service  iptables  start  && chkconfig   iptables  on
+
+Redirecting to /bin/systemctl start iptables.service
+注意：正在将请求转发到“systemctl enable iptables.service”。
+Created symlink from /etc/systemd/system/basic.target.wants/iptables.service to /usr/lib/systemd/system/iptables.service.
+
+[root@Va6 ~]# systemctl is-active  firewalld
+unknown
+
+[root@Va6 ~]# service    iptables  status  |grep  -io  Active
+Redirecting to /bin/systemctl status iptables.service
+Active
+active
+
+[root@Va6 ~]# iptables -t raw -F ; iptables -t mangle -F; iptables -t  nat -F ; iptables -t filter -F
+
+[root@Va6 ~]# iptables -t raw -L ;echo "------mangle-----------"; 
+iptables -t mangle -L; echo "-----------nat-------"; 
+ iptables -t  nat -L ;echo "-----------filter----------"; 
+ iptables -t filter -L
+
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination  
+       
+------mangle-----------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination
+         
+-----------nat-------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination  
+       
+-----------filter----------
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination 
+        
+[root@Va6 ~]# 
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+ 
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.0.17
+.............
+[root@Va7 ~]# ifconfig  eth1 down;ifconfig eth2 down;ifconfig |awk '/inet /{print $2}';route  -n192.168.0.17
+127.0.0.1
+192.168.122.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.254   0.0.0.0         UG    0      0        0 eth0
+169.254.0.0     0.0.0.0         255.255.0.0     U     1002   0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@Va7 ~]# ls  /etc/yum.repos.d/
+local.repo  redhat.repo
+[root@Va7 ~]# cat  /etc/yum.repos.d/local.repo 
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@Va7 ~]#  yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+  mailcap.noarch 0:2.1.41-2.el7         nss_compat_ossl.x86_64 0:0.9.6-8.el7    
+
+完毕！
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+[root@Va7 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+[root@Va7 ~]# echo "<h1> NAT-PAT-Va7  192.168.0.17 </h1>" > /var/www/html/index.html
+[root@Va7 ~]# systemctl  start httpd && systemctl  enable  httpd
+
+[root@Va7 ~]# elinks  -dump  192.168.0.17
+                            NAT-PAT-Va7 192.168.0.17
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.1.18
+.....................
+[root@Va8 ~]# ifconfig  eth0 down;ifconfig eth2 down;route  del default gw 192.168.0.254;route add default gw  192.168.1.254;ifconfig |awk '/inet /{print $2}';route  -n
+SIOCDELRT: 没有那个进程
+192.168.1.18
+127.0.0.1
+192.168.122.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.1.254   0.0.0.0         UG    0      0        0 eth1
+169.254.0.0     0.0.0.0         255.255.0.0     U     1003   0        0 eth1
+192.168.1.0     0.0.0.0         255.255.255.0   U     0      0        0 eth1
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@Va8 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va8 ~]#  yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+.........................
+[root@Va8 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va8 ~]#  yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+软件包 elinks-0.12-0.36.pre6.el7.x86_64 已安装并且是最新版本
+软件包 httpd-2.4.6-67.el7.x86_64 已安装并且是最新版本
+无须任何处理
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va8 ~]# echo "<h1> NAT-PAT-Va8  192.168.1.18 </h1>" > /var/www/html/index.html
+[root@Va8 ~]# systemctl  start httpd && systemctl  enable  httpd
+
+[root@Va8 ~]# elinks  -dump  192.168.1.18
+                            NAT-PAT-Va8 192.168.1.18
+
+
+
+
+
+
+
+
+
+
+Va1  192.168.0.11 --- 内网   --- 网关 Va4 192.168.0.14
+Va2  192.168.0.12 --- 内网   --- 网关 Va4 192.168.0.14
+Va3  192.168.0.13 --- 内网   --- 网关 Va4 192.168.0.14
+
+Va4  192.168.0.14 --- 内网    --- 网关 192.168.0.254
+Va4  192.168.1.14 --- 外网 1
+Va4  192.168.2.14 --- 外网 2
+
+Va5  192.168.1.15 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va6  192.168.2.16 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+Va7  192.168.0.17 --- 外网 0   --- 网关 192.168.0.254  HTTP 服务 80 端口
+Va8  192.168.1.18 --- 外网 1   --- 网关 192.168.1.254  HTTP 服务 80 端口
+Va9  192.168.2.19 --- 外网 2   --- 网关 192.168.2.254  HTTP 服务 80 端口
+
+[root@room9pc01 ~]# ssh -o StrictHostKeyChecking=no  -X  192.168.2.19
+...............
+[root@Va9 ~]# ifconfig  eth0 down;ifconfig eth1 down;route  del default gw 192.168.0.254;route add default gw  192.168.2.254;ifconfig |awk '/inet /{print $2}';route  -n
+SIOCDELRT: 没有那个进程
+192.168.2.19
+127.0.0.1
+192.168.122.1
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.2.254   0.0.0.0         UG    0      0        0 eth2
+169.254.0.0     0.0.0.0         255.255.0.0     U     1004   0        0 eth2
+192.168.2.0     0.0.0.0         255.255.255.0   U     0      0        0 eth2
+192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+
+[root@Va9 ~]#  yum  clean  all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7                    rhel-server-7.4-x86_64-dvd.iso                    4,986
+repolist: 4,986
+[root@Va9 ~]#  yum  -y install  elinks  httpd |tail -3;rpm  -q  elinks  httpd
+软件包 elinks-0.12-0.36.pre6.el7.x86_64 已安装并且是最新版本
+软件包 httpd-2.4.6-67.el7.x86_64 已安装并且是最新版本
+无须任何处理
+elinks-0.12-0.36.pre6.el7.x86_64
+httpd-2.4.6-67.el7.x86_64
+
+[root@Va9 ~]# echo "<h1> NAT-PAT-Va9  192.168.2.19 </h1>" > /var/www/html/index.html
+[root@Va9 ~]# systemctl  start httpd && systemctl  enable  httpd
+
+[root@Va9 ~]# elinks  -dump  192.168.2.19
+                            NAT-PAT-Va9 192.168.2.19
+ 
+
+
+
+
+

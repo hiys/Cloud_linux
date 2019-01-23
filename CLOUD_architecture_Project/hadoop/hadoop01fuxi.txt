@@ -1,0 +1,673 @@
+hadoop 安装 （单机模式）
+
+禁用 selinux 和 iptables
+禁用 selinux 和 iptables
+禁用 selinux 和 iptables
+配置 /etc/hosts 保证所有主机域名能够相互解析
+配置 /etc/hosts 保证所有主机域名能够相互解析
+配置 /etc/hosts 保证所有主机域名能够相互解析
+
+1、安装 java 
+yum install java-1.8.0-openjdk -y
+
+验证：
+java -version
+
+2、安装 jps
+yum install java-1.8.0-openjdk-devel -y
+
+验证：
+jps
+
+3、安装 hadoop 
+tar zxf hadoop-2.7.3.tar.gz
+mv hadoop-2.7.3 /usr/local/hadoop
+
+修改配置文件的运行环境：
+/usr/local/hadoop/etc/hadoop/hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+验证：
+cd /usr/local/hadoop
+./bin/hadoop version
+
+统计分析热词
+创建数据源
+mkdir input
+在这个文件夹里面放入需要统计分析的数据
+cp *.txt input/
+
+统计分析1  单词出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+统计分析2  某一个关键词出现的频率，例如 dfs 这个词前面字母是 h 的出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep input output1 '(?<=h)dfs'
+
+排错 1
+提示  JAVA_HOME is not set and could not be found
+表示  JAVA_HOME 没有设置
+解决方法：
+设置 hadoop-env.sh 里面的 JAVA_HOME 或在运行脚本前面加入前置变量设置
+JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre" ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+排错 2
+提示 java.net.UnknownHostException: host: host: unknown error
+	at java.net.InetAddress.getLocalHost(InetAddress.java:1505)
+表示主机名没有 IP 解析
+解决方法：
+在 /etc/hosts 里面增加 主机名 IP 对应关系
+
+排错 3
+提示：17/07/24 23:10:46 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory file:/usr/local/hadoop/output already exists
+表示输出的文件目录已经存在
+解决方法：
+删除已经存在的目录或更改结果保存位置
+
+伪分布式配置：
+
+xml 配置格式
+<property>
+        <name>关键字</name>
+        <value>变量值</value>
+        <description> 描述 </description>
+</property>
+
+配置文件路径 /usr/local/hadoop/etc/hadoop/
+1 配置 hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+查找 JAVA_HOME
+readlink -f $(which java)
+
+2 配置 core-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-common/core-default.xml
+
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>file:///</value>
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+    </property>
+</configuration>
+
+3 配置 hdfs-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+        <description> 文件复制份数 </description>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address</name>
+        <value>192.168.4.10:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.secondary.http-address</name>
+        <value>192.168.4.10:50090</value>
+    </property>
+</configuration>
+
+常用配置选项
+dfs.namenode.name.dir
+dfs.datanode.data.dir
+dfs.namenode.http-address
+dfs.namenode.secondary.http-address
+dfs.webhdfs.enabled
+dfs.permissions.enabled
+
+4 配置 mapred-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-mapreduce-client/hadoop-mapreduce-client-core/mapred-default.xml
+
+<configuration>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>mapreduce.jobtracker.http.address</name>
+        <value>master:50030</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>master:10020</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>master:19888</value>
+    </property>
+</configuration>
+
+常用配置选项
+mapreduce.framework.name
+mapreduce.jobtracker.http.address
+mapreduce.jobhistory.address
+mapreduce.jobhistory.webapp.address
+
+5 配置 yarn-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-yarn/hadoop-yarn-common/yarn-default.xml
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>myhadoop</value>
+    </property>
+
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>master</value>
+    </property>
+</configuration>
+
+
+常用配置选项
+yarn.nodemanager.aux-services
+yarn.nodemanager.aux-services.mapreduce.shuffle.class
+yarn.resourcemanager.hostname
+
+GFS是一个可扩展的分布式文件系统,
+用于大型的,分布式的,对大量数据进行访问
+的应用
+GFS可以运行在廉价的普通硬件上,提供容错功能
+
+Map/Reduce
+Mapreduce是一种编程模型，是一种编程方法，抽象理论。
+Map和Reduce其实是两种操作
+Mapreduce是针对分布式并行计算的一套编程模型,
+由 Map 和Reduce 组成,
+Map是映射,
+把指令分发到多个worker上,
+Reduce 是规约,
+把worker计算出的结果合并
+
+BigTable存储结构化数据,是一个数据库
+BigTable建立在GFS,Scheduler,Lock Service 和MapReduce之上
+每个Table都是一个多维的稀疏图
+
+
+
+Hadoop就是一个实现了Google云计算系统的开源系统，
+包括并行计算模型Map/Reduce，
+分布式文件系统HDFS，
+以及分布式数据库Hbase，
+同时Hadoop的相关项目也很丰富，
+包括ZooKeeper，Pig，Chukwa，Hive，Hbase，Mahout，flume等.
+
+
+Google三驾马车——GFS、MapReduce、Bigtable
+
+1.用户程序调用的MapReduce库首先将输入文件分成M个数据片度，每个数据片段的大小一般从 16MB到64MB(可以通过可选的参数来控制每个数据片段的大小)。然后master在机群中创建大量的用户程序副本（It then starts up many copies of the program on a cluster of machines，即，把map/reduce函数给不同的机器执行）。
+2.这些程序副本中的有一个特殊的程序–master。副本中其它的程序都是worker程序，由master分配任务。有M个Map任务和R个Reduce任务将被分配，master将一个Map任务或Reduce任务分配给一个空闲的worker。
+3.被分配了map任务的worker程序读取相关的输入数据片段，从输入的数据片段中解析出key/value pair，然
+..........
+7.当所有的Map和Reduce任务都完成之后，master唤醒用户程序。在这个时候，在用户程序里的对MapReduce调用才返回。
+ 
+在成功完成任务之后，MapReduce的输出存放在R个输出文件中（对应每个Reduce任务产生一个输出文件，文件名由用户指定）。一般情况下，用户不需要将这R个输出文件合并成一个文件–他们经常把这些文件作为另外一个MapReduce的输入，或者在另外一个可以处理多个分割文件的分布式应用中使用。
+https://blog.csdn.net/mmc2015/article/details/39803691
+
+-------------------------------------------------------------------------------------------
+GFS.BigTable.MapReduce谷歌论文
+
+1、GFS分布式文件系统（GFS）
+GFS的一些假设：
+系统由许多廉价的普通组件组成，组件失效是一种常态。
+统的工作负载主要由两种读操作组成：大规模的流式读取和小规模的随机读取。
+系统的工作负载还包括许多大规模的、顺序的、数据追加方式的写操作。
+高性能的稳定网络带宽 远比 低延迟 重要。
+GFS的追加操作并不保证“副本字节级完全一致”，只是保证至少一次原子操作
+所以，每个Chunkserver必须通过维护检验和来独立地验证自己副本的完整性 
+
+1.GFS(Google File System)
+
+GFS提供了一个与位置无关的名字空间，这使得数据可以为了负载均衡或灾难冗余等目的在不同位置间透明迁移。
+
+GFS并没有在文件系统层面提供任何Cache机制。
+
+GFS没有正对每个目录实现能够列出目录下所有文件的数据结构。
+
+GFS文件以分层目录的形式组织，用路径名来表示。支持的常用操作：
+创建新文件，删除文件，打开文件，关闭文件，读和写文件。
+
+Chunk服务器：
+
+     Chunk服务器上的元数据，大部分是用户数据（Chunk块所切分的64kb块）的Checksun，和Chunk的版本号。
+
+     Chunk服务器上保存有大量Chunk副本。
+
+     对新加入的Chunk服务器负载的调整：周期性检查，逐步调整。
+
+     Master服务器与Chunk服务器的心跳中，Chunk服务器在心跳信息中报告它所存储的Chunk子集，Master则通过比较版本号来确定那些Chunk块已经过期，Chunk服务器进行删除。
+
+Chunk块（64MB）：
+
+     GFS存储文件分割成固定大小的Chunk（64MB）。
+
+     每个Chunk有不变，唯一的64位标识。
+
+     每个Chunk副本都以普通Linux文件的形式保存在Chunk服务器上。
+
+Master服务器：
+     元数据：以前缀压缩模式存放的文件名，文件的所有者和权限，文件到Chunk的映射关系，每一个Chunk的当前版本号。
+
+     Master服务器内存中拥有完整的从文件到块的映射表。
+
+     元数据全部保存在内存中。
+
+     通过checkpoint和重演日志操作来进行灾难恢复。
+
+GFS使用租约（lease）机制来保持多个副本见变更顺序的一致性。
+     Master节点将主Chunk及副本位置返回给客户机。之后的数据传输，检验都在Chunk和客户机之间进行。
+
+     主Chunk服务器定义写顺序。
+
+GFS系统运行的2个基本流程：
+Master服务器与Chunk服务器的交互
+Chunk服务器周期性在心跳信息中向Master服务器汇报自己保存的Chunk信息。Master服务器指导Chunk服务器删除，复制Chunk块。
+当有新的Chunk服务器进入系统时，Master服务器会在负载均衡算法中会发现这个机器的负载很轻，然后逐步将其他Chunk块转移到次Chunk服务器上。
+当有Chunk服务器掉线时，Master服务器会根据掉线服务器导致的Chunk块数量离标准配置的差别确定优先级，
+来分配新的Chunk服务器存储丢失的Chunk块
+文件的存储过程
+当有一个新的文件需要存储时。Master服务器保存该文件与Chunk块的对应信息，并使用lease机制来写入数据。并且根据Chunk服务器的心跳信息来维护该文件的存储备份数量。
+
+2.BigTable
+
+BigTable使用Google的分布式文件系统（GFS）
+
+BigTable的客户不必通过Master服务器来获取Tablet的位置信息。
+
+BigTable：系数，分布式，持久化存储的多维度排序Map。
+
+一个BigTable集群有很多表，每个表是一个Tablet的集合。
+
+1.行：行操作是原子操作。
+
+一个表按行划分为不同的Tablet。
+
+一个Tablet只能分给一个Tablet
+
+一个Tablet服务器上可以有几十到上千个Tablet。
+
+对Tablet可以做的操作有读写，合并，分割。
+
+2.列：
+
+一个列族由多个列组成，存放在同一个列族下的所有数据通常都数据同一个类型。
+
+一张表可以有几百个列族，一张表可以有无限多个列。
+
+Tablet可以按照列族的相关性分类存储为不同的SSTable（数据的逻辑相关性决定其物理相关性）
+
+SSTable：持久化的，排序的，不可更改的Map结构
+可以对SSTable执行的操作:查询与一个可以值相关的value，遍历某个key值范围内的所有key-value对。
+从内部看：SSTable是一些列的数据块（64kb）：在SSTable中查找内容时可以在内存中加载块索引。
+部分特殊群组的SSTable可以设置一直存放在内存中（如METADATA）
+SSTable的大小可以有群组参数指定（可以自定义）
+SSTable可以压缩后存储，因为解压缩很快，不会很影响性能，而且事实上的压缩比很高
+可以通过对部分特定SSTable设置布隆过滤器来减少对磁盘的访问
+3.行+列：数据项
+
+表中每一个数据项都可以包含同一数据的不同版本（通过时间戳来进行索引）
+
+BigTable暴多三个主要的组件：连接到客户程序中的库，一个Master服务器和多个Tablet服务器。
+Master服务器的工作：
+
+     为Tablet服务器分配Tablets
+
+     监测新加入的或者过期失效的Table服务器
+
+     对Tablet服务器进行负载均衡
+
+     模式相关：新建表和列族
+
+针对系统工作负载的变化情况，BigTable可以动态的想集群中添加删除Tablet服务器。
+
+Master服务器记录了当前有哪些活跃的Tablet服务器，哪些Tablet分配给了那些Tablet服务器，那些Tablet还没有被分配。
+
+问题：Table分成Tablet是Master做的嘛？
+
+BigTable与GFS的关系：
+     GFS是分布式文件系统，BigTable 是建立在GFS之上的。就像文件系统需要数据库来存储结构化数据一样，GFS也需要Bigtable来存储结构化数据，每个Table都是一个多维的稀疏图，为了管理巨大的Table，把Table根据行分割，这些分割后的数据统称为：Tablets。每个Tablets大概有 100-200 MB，每个机器存储100个左右的 Tablets。底层的架构是：GFS。由于GFS是一种分布式的文件系统，采用Tablets的机制后，可以获得很好的负载均衡。比如：可以把经常响应的表移动到其他空闲机器上，然后快速重建。
+
+ 
+
+3.Hadoop与google三大件：
+
+Hadoop是很多组件的集合，主要包括但不限于MapReduce，HDFS，HBase，ZooKeeper。
+
+     MapReduce模仿了Google的MapReduce，
+
+     HDFS模仿了Google File System，
+
+     HBase模仿了BigTable，
+
+     所以下文只出现MapReduce、HDFS和HBase。
+     简单来讲， HDFS和HBase是依靠外存（即硬盘）的存储模型和实现。HDFS是一个云存储的文件系统，它会把一个文件分块并分别保存，取用时分别取出再合并。重要的是，这些分块通常会在3台节点（即机群内的电脑）上有3个备份，所以即使出现少数电脑的失效（硬盘损坏、掉电等），文件也不会失效。如果说HDFS是文件级别的存储，那HBase则是表级别的存储。HBase是一个表模型，但比SQL数据库的表要简单的多，没有连接、聚集等功能。HBase表的物理存储是依赖HDFS的，比如把一个表分成4个文件，存到HDFS中。由于HDFS级会做备份，所以HBase级不再备份。
+MapReduce则是一个计算模型，而不是存储模型；MapReduce与HDFS紧密配合，而非HBase。举个场景：如果你的手机通话信息保存在一个HDFS的文件callList.txt中，你想找到你与你同事A的所有通话记录并排序。因为HDFS会把callLst.txt分成几块分别存，比如说5块，那么对应的Map过程就是找到这5块所在的5台节点，让他们分别找自己存的那块中关于A的通话记录，对应的Reduce过程就是把5个节点过滤过的通话记录合并在一块并按时间排序。可见MapReduce的计算模型需要HDFS，但与HBase没有任何关系。
+ZooKeeper本身是一个非常牢靠的记事本，最好用于记录一些概要信息。Hadoop依靠这个记事本来记录当前哪些节点正在用，哪些已掉线，哪些还备用等，以此来管理机群。
+
+3大论文中文版下载：http://yunpan.cn/QDhPcnYVQt2hM
+
+
+
+
+大数据 是
+需要 新处理模式 
+才能 具有更强的 
+决策力、 洞察力 和 流程优化能力 
+的海量、高增长率 和 多样化的
+信息资产。
+
+大数据是 对 那些 超出正常处理范围 和 大小、迫使 用户 
+采用 非传统处理方法的 数据集
+所下的定义。
+
+区别于过去的 海量数据，
+大数据的特点
+可以概况为4个V：
+Volume、Variety、Value和Velocity，
+
+即大量、多样、价值密度低、快速。
+
+volume    英 [ˈvɒlju:m]   美 [ˈvɑ:lju:m]  
+n. 体积;卷;音量;量，大量
+adj. 大量的
+
+variety  n. 多样;种类;杂耍;变化，多样化
+
+velocity  英 [vəˈlɒsəti]   美 [vəˈlɑ:səti]  
+n. 速率，速度;周转率;高速，快速
+
+一、Volume：
+数据量大，包括采集、存储和计算的量都非常大。
+大数据的起始计量单位至少是P（1000个T）、E（100万个T）或Z（10亿个T）
+第一，数据体量大。
+大数据一般指在10TB(1TB=1024GB)规模以上的数据量，
+目前正在跃升到PB(1PB=1024TB)级别。
+不仅存储量大，计算量也大。
+
+二、Variety：
+种类和来源多样化。
+包括 结构化、半结构化和非结构化数据，
+具体表现为 网络日志、音频、视频、图片、地理位置信息等等，
+多类型的数据对数据的处理能力提出了更高的要求。
+
+variety  n. 多样;种类;杂耍;变化，多样化
+
+第二，数据类型多。
+除了数值数据，还有文字、声音、视频等，
+包括网络日志、视频、图片、地理位置信息等
+多种类型的格式。
+由于数据来自多种 数据源，数据种类 和 格式 日渐丰富，
+已 冲破 了以前所 限定的 结构化 数据范畴，
+囊括了半结构化和非结构化数据。
+
+三、Value：数据价值密度相对较低，或者说是浪里淘沙却又弥足珍贵
+第三，价值密度低。
+以视频为例，不间断监控视频中，有价值的数据可能仅有一两秒。
+找到有价值的信息有如沙里淘金，
+其价值却又弥足珍贵。
+
+第四，velocity 处理速度快。
+在数据量非常庞大的情况下，
+也能做到数据的实时处理。
+这一点和传统的数据挖掘技术有着本质的不同。
+velocity  英 [vəˈlɒsəti]   美 [vəˈlɑ:səti]  
+n. 速率，速度;周转率;高速，快速
+
+四、Velocity：数据增长速度快，处理速度也快，时效性要求高。比如搜索引擎要求几分钟前的新闻能够被用户查询到，个性化推荐算法尽可能要求实时完成推荐。这是大数据区别于传统数据挖掘的显著特征。
+
+五、Veracity：数据的准确性和可信赖度，即数据的质量。
+veracity     英 [vəˈræsəti]   美 [vəˈræsɪti]  
+n. 诚实，真实
+veracious （指人）诚实的 诚实地
+
+大数据技术是指
+从 各种类型的 大体量数据 中 
+快速 获得 有价值信息 的技术。
+这是大数据的核心问题。
+
+目前所说的大数据
+不仅指数据本身的规模，
+也包括采集数据的工具、平台和数据分析系统。
+
+大数据研发的目的是
+发展大数据技术并将其应用到相关领域，
+通过解决大体量数据处理问题促进其突破性发展。
+
+因此，大数据时代带来的挑战不仅体现在
+如何处理大体量数据并从中获取有价值的信息，
+也体现在
+如何加强大数据技术研发。
+大数据所涉及的关键技术大致包括6个方面：
+数据采集与数据管理、
+分布式存储和并行计算、
+大数据应用开发、
+数据分析与挖掘、
+大数据前端应用、
+数据服务和展现。
+
+大数据与Hadoop
+大数据技术正在向各行各业渗透。
+
+Hadoop作为
+数据分布式处理系统
+的典型代表，已经成为该领域事实的标准。
+
+但Hadoop并不等于大数据，
+它只是一个成功的处理离线数据的分布式系统，
+
+大数据领域还存在众多其他类型的处理系统。
+
+伴随大数据技术的普及，
+Hadoop因其 开源 的特点和 卓越的性能成为一时的新宠，
+甚至有人认为大数据就是Hadoop，其实这是一个误区。
+
+Hadoop只是
+处理离线数据的
+分布式存储
+和处理系统。
+
+除了Hadoop，
+还有用于处理流数据的Storm、
+处理关系型数据的Oracle、
+处理实时机器数据的Splunk
+目前主流的大数据系统很多，
+Hadoop只是其中的代表。
+
+2.1 Hadoop的核心模块
+Hadoop  Common：
+Hadoop的公用应用模块，
+是整个Hadoop项目的核心，
+为Hadoop各子项目提供各种工具，
+如 配置文件 和 日志操作 等，
+其他 Hadoop子项目 都是在此基础上发展起来的。
+
+distributed  英 [dɪs'trɪbju:tɪd]  美 [dɪ'strɪbju:tɪd]  
+adj. 分布式的
+v. 散发;分配( distribute的过去式和过去分词);分销;[常用被动语态]将…分类(into)
+
+Hadoop Distributed File  System(HDFS)：
+
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
+
+对外部客户机而言，
+HDFS就像一个传统的 分级文件系统，
+可以进行 增 删 改 查 或 重命名 等常规文件操作。
+
+但实际上HDFS中的文件被分成块，
+然后复制到多个计算机中，
+这与传统的RAID架构大不相同。
+
+HDFS特别适合
+需要一次写入、多次读取的超大规模数据集的应用程序。
+
+Hadoop YARN：一个作业调度和群集资源管理框架。
+
+MapReduce  映射化简;分布式计算系统;分布式计算;并行计算;计算系统
+reduce  减少;缩小;使还原;使变弱
+
+Map/Reduce
+Mapreduce是一种编程模型，是一种编程方法，抽象理论。
+Map和Reduce其实是两种操作
+Mapreduce是针对分布式并行计算的一套编程模型,
+由 Map 和Reduce 组成,
+Map是映射,
+把指令分发到多个worker上,
+
+Reduce 是规约,
+把worker计算出的结果合并
+
+Hadoop  MapReduce：基于YARN的大型数据分布式并行编程模式和程序执行框架，
+是Google的MapReduce的开源实现。
+它帮助用户 编写处理 大型数据集的 并行运行程序。
+
+MapReduce隐藏了分布式并行编程的底层细节，
+开发人员只需编写业务逻辑代码，
+而无需考虑程序并行执行的细节，从而大大提高了开发效率。
+
+Apache的其他与Hadoop相关的项目还有很多。
+
+2.2 Hadoop的特点
+作为分布式计算领域的典型代表，
+Hadoop比其他分布式框架有更多的优点。
+
+可扩展性：
+Hadoop可以在不停止集群服务的情况下，
+在可用的计算机集簇间分配数据并完成计算，
+这些集簇可以方便地扩展到数千节点中。
+
+简单性：
+Hadoop实现了简单并行编程模式，
+用户不需要了解 分布式存储 和 计算 
+的底层细节 即可 编写 和 运行分布式应用，
+在集群上处理大规模数据集，
+所以使用Hadoop的用户可以轻松搭建自己的分布式平台。
+
+高效性：
+Hadoop的分布式文件系统具有高效的 数据交互设计，
+可以通过并行处理加快处理速度。
+
+Hadoop还是可伸缩的，
+能够在 节点间 动态地移动数据，
+并保证各个节点的动态平衡，因此处理速度非常快。
+
+可靠性：
+Hadoop的 分布式 文件系统 将数据分块储存，
+每个数据块在集群节点上依据一定的策略冗余储存，
+确保能够针对失败的节点重新分布处理，
+从而保证了数据的可靠性。
+
+成本低：
+依赖于廉价服务器，它的成本比较低，任何人都可以使用。
+
+在大数据时代，
+Hadoop以其优越的性能受到业界的广泛关注，
+已经成为大数据处理领域事实上的标准。
+
+Hadoop就是一个实现了Google云计算系统的开源系统，
+包括并行计算模型Map/Reduce，
+分布式文件系统HDFS，
+以及分布式数据库Hbase，
+同时Hadoop的相关项目也很丰富，
+包括ZooKeeper，Pig，Chukwa，Hive，Hbase，Mahout，flume等.
+
+什么是Map/Reduce
+Mapreduce是一种编程模型，是一种编程方法，抽象理论。
+Map和Reduce其实是两种操作
+Mapreduce是针对分布式并行计算的一套编程模型,
+由 Map 和Reduce 组成,
+Map是映射,
+把指令分发到多个worker上,
+
+Reduce 是规约,
+把worker计算出的结果合并
+
+(1)MapReduce是hadoop的核心组件之一，
+hadoop 分布式 包括两部分，
+一是分布式文件系统hdfs,
+一部是分布式计算框，就是mapreduce,
+缺一不可，也就是说，
+可以通过mapreduce很容易在hadoop平台上进行分布式的计算编程。
+
+(2)Mapreduce是一种编程模型，是一种编程方法，抽象理论。
+Map和Reduce其实是两种操作
+执行一个Map操作 ----- Map（映射）
+
+pair  一副; （使…）成对，（使…）成双
+
+map函数和reduce函数是交给用户实现的，这两个函数定义了任务本身。 
+
+　　map函数：接受一个键值对（key-value pair），产生一组中间键值对。
+MapReduce框架会将map函数产生的中间键值对里 键相同的 值 传递给一个reduce函数。 
+
+　　reduce函数：接受一个键，以及相关的一组值，
+ 将这组值进行合并产生一组规模更小的值（通常只有一个或零个值）。 
+https://blog.csdn.net/oppo62258801/article/details/72884633
+
+大数据特性有哪些
+Volume (大体量)：可从数百TB到数十数百PB、甚至EB的规模
+Variety (多样性)：大数据包括各种格式和形态的数据
+Velocity (时效性)：很多大数据需要在一定的时间限度下得到及时处理
+Veracity (准确性)：处理的结果要保证一定的准确性
+Value (大价值)：大数据包含很多深度的价值，大数据分析挖掘和利用将带来巨大的商业价值
+
+ Hadoop常用组件以及核心组件有哪些
+
+HDFS：Hadoop分布式文件系统（核心组件）
+MapReduce：分布式计算框架（核心组件）
+Yarn：集群资源管理系统（核心组件）
+Zookeeper：分布式协作服务
+Hbase：分布式列存数据库
+Hive：基于Hadoop的数据仓库
+Sqoop：数据同步工具
+Pig：基于Hadoop的数据流系统
+Mahout：数据挖掘算法库
+Flume：日志收集工具
+
+
+[root@room9pc01 ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 465.8G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+sdb      8:16   1 117.2G  0 disk 
+└─sdb1   8:17   1 117.2G  0 part 
+loop0    7:0    0   3.8G  0 loop /var/ftp/rhel7
+loop1    7:1    0   8.1G  0 loop /var/ftp/CentOS7-1708
+
+[root@room9pc01 ~]# ls  /mnt/
+[root@room9pc01 ~]# mount.ntfs-3g   /dev/sdb1  /mnt/
+
+[root@room9pc01 ~]#  ls   -l   '/var/git/Hadoop.zip' 
+-rwxrwxrwx 1 root root 290007891 11月 27 09:23 /var/git/Hadoop.zip
+[root@room9pc01 ~]# du   -sh  '/var/git/Hadoop.zip'
+277M	/var/git/Hadoop.zip
+
+
+
+
+[root@Va1 ~]# service    iptables  status  |grep  -io  Active
+Redirecting to /bin/systemctl status iptables.service
+Unit iptables.service could not be found.
+[root@Va1 ~]# ps  -aux  |grep  iptable
+root      4212  0.0  0.0 112676   984 pts/0    S+   18:38   0:00 grep --color=auto iptable
+
+
+
+
+
+
+
+
+
+
+
