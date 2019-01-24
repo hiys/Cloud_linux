@@ -173,6 +173,32 @@ yarn.nodemanager.aux-services
 yarn.nodemanager.aux-services.mapreduce.shuffle.class
 yarn.resourcemanager.hostname
 
+数据量越来越多，
+在一个操作系统管辖的范围存不下了，
+那么就分配到更多的操作系统管理的磁盘中，
+但是不方便管理和维护，因此迫切需要一种系统来管理多台机器上的文件，
+这就是 
+分布式文件管理系统
+一种 管理 
+多台 机器 上的 多个 (操作系统管理的磁盘)中的
+文件 的系统
+
+是一种
+允许文件
+通过网络在多台主机上
+分享的
+文件系统，可让多机器上的多用户分享文件和存储空间
+
+通透性。
+让实际上是通过网络来访问文件的动作，
+由程序与用户看来，就像是访问本地的磁盘一般。
+
+容错。
+即使系统中有某些节点脱机，整体来说系统仍然可以持续运作而不会有数据损失。
+分布式文件管理系统很多，
+hdfs只是其中一种，不合适小文件。
+
+
 GFS是一个可扩展的分布式文件系统,
 用于大型的,分布式的,对大量数据进行访问
 的应用
@@ -349,11 +375,36 @@ Hadoop是很多组件的集合，主要包括但不限于MapReduce，HDFS，HBas
      HBase模仿了BigTable，
 
      所以下文只出现MapReduce、HDFS和HBase。
-     简单来讲， HDFS和HBase是依靠外存（即硬盘）的存储模型和实现。HDFS是一个云存储的文件系统，它会把一个文件分块并分别保存，取用时分别取出再合并。重要的是，这些分块通常会在3台节点（即机群内的电脑）上有3个备份，所以即使出现少数电脑的失效（硬盘损坏、掉电等），文件也不会失效。如果说HDFS是文件级别的存储，那HBase则是表级别的存储。HBase是一个表模型，但比SQL数据库的表要简单的多，没有连接、聚集等功能。HBase表的物理存储是依赖HDFS的，比如把一个表分成4个文件，存到HDFS中。由于HDFS级会做备份，所以HBase级不再备份。
-MapReduce则是一个计算模型，而不是存储模型；MapReduce与HDFS紧密配合，而非HBase。举个场景：如果你的手机通话信息保存在一个HDFS的文件callList.txt中，你想找到你与你同事A的所有通话记录并排序。因为HDFS会把callLst.txt分成几块分别存，比如说5块，那么对应的Map过程就是找到这5块所在的5台节点，让他们分别找自己存的那块中关于A的通话记录，对应的Reduce过程就是把5个节点过滤过的通话记录合并在一块并按时间排序。可见MapReduce的计算模型需要HDFS，但与HBase没有任何关系。
-ZooKeeper本身是一个非常牢靠的记事本，最好用于记录一些概要信息。Hadoop依靠这个记事本来记录当前哪些节点正在用，哪些已掉线，哪些还备用等，以此来管理机群。
+     简单来讲， HDFS和HBase是依靠外存（即硬盘）的存储模型和实现。
+HDFS是一个云存储的文件系统，它会把一个文件分块并分别保存，取用时分别取出再合并。
+重要的是，这些分块通常会在3台节点（即机群内的电脑）上有3个备份，
+所以即使出现少数电脑的失效（硬盘损坏、掉电等），文件也不会失效。
 
-3大论文中文版下载：http://yunpan.cn/QDhPcnYVQt2hM
+如果说HDFS是文件级别的存储，
+那HBase则是表级别的存储。
+HBase是一个表模型，
+但比SQL数据库的表要简单的多，没有连接、聚集等功能。
+HBase表的物理存储是依赖HDFS的，
+比如把一个表分成4个文件，存到HDFS中。
+由于HDFS级会做备份，所以HBase级不再备份。
+
+MapReduce则是一个计算模型，而不是存储模型；
+MapReduce与HDFS紧密配合，而非HBase。
+举个场景：如果你的手机通话信息保存在一个HDFS的文件callList.txt中，
+你想找到你与你同事A的所有通话记录并排序。
+因为HDFS会把callLst.txt分成几块分别存，比如说5块，
+那么对应的Map过程就是找到这5块所在的5台节点，
+让他们分别找自己存的那块中关于A的通话记录，
+对应的Reduce过程就是把5个节点过滤过的通话记录合并在一块并按时间排序。
+
+可见MapReduce的计算模型需要HDFS，
+但与HBase没有任何关系。
+
+ZooKeeper本身是一个非常牢靠的记事本，最好用于记录一些概要信息。
+Hadoop依靠这个记事本来记录当前哪些节点正在用，哪些已掉线，哪些还备用等，
+以此来管理机群。
+
+
 
 
 
@@ -613,6 +664,364 @@ MapReduce框架会将map函数产生的中间键值对里 键相同的 值 传�
  将这组值进行合并产生一组规模更小的值（通常只有一个或零个值）。 
 https://blog.csdn.net/oppo62258801/article/details/72884633
 
+Spark是一个内存计算的框架。
+目前一个大的趋势。
+MapReduce会有很大的IO操作，而Spark是在内存中计算。
+速度是Hadoop的10倍（官网上这样说的）。
+Spark是目前一个趋势，是需要了解的。
+
+4 Pig/Hive（Hadoop编程）：
+
+Pig是一种高级编程语言，在处理半结构化数据上拥有非常高的性能，可以帮助我们缩短开发周期。
+
+Hive是数据分析查询工具，尤其在使用类SQL查询分析时显示是极高的性能。
+可以在分分钟完成ETL要一晚上才能完成的事情，这就是优势，占了先机！
+
+HDFS：Hadoop Distributed File System ，
+Hadoop分布式文件系统，
+主要用来解决海量数据的存储问题
+
+设计思想
+1、分散均匀存储 dfs.blocksize = 128M
+2、备份冗余存储 dfs.replication = 3
+在大数据系统中作用
+为各类分布式运算框架（如：mapreduce，spark，tez，……）提供数据存储服务。
+
+ Hadoop 特点 
+高可靠性,高扩展性,高效率,高容错性,低成本
+
+1、支持超大文件 
+一般来说，HDFS存储的文件可以支持TB和PB级别的数据。 
+2、检测和快速应对硬件故障 
+在集群环境中，硬件故障是常见性问题。因为有上千台服务器连在一起，故障率高，因此故障检测和自动恢复hdfs文件系统的一个设计目标。假设某一个datanode节点挂掉之后，因为数据备份，还可以从其他节点里找到。namenode通过心跳机制来检测datanode是否还存在 
+3、流式数据访问 
+HDFS的数据处理规模比较大，应用一次需要大量的数据，同时这些应用一般都是批量处理，而不是用户交互式处理，应用程序能以流的形式访问数据库。主要的是数据的吞吐量，而不是访问速度。访问速度最终是要受制于网络和磁盘的速度，机器节点再多，也不能突破物理的局限，HDFS不适合于低延迟的数据访问，HDFS的是高吞吐量。 
+4、简化的一致性模型 
+对于外部使用用户，不需要了解hadoop底层细节，比如文件的切块，文件的存储，节点的管理。 
+一个文件存储在HDFS上后，适合一次写入，多次写出的场景once-write-read-many。因为存储在HDFS上的文件都是超大文件，当上传完这个文件到hadoop集群后，会进行文件切块，分发，复制等操作。如果文件被修改，会导致重新出发这个过程，而这个过程耗时是最长的。所以在hadoop里，不允许对上传到HDFS上文件做修改（随机写），在2.0版本时可以在后面追加数据。但不建议。 
+5、高容错性 
+数据自动保存多个副本，副本丢失后自动恢复。可构建在廉价机上，实现线性（横向）扩展，当集群增加新节点之后，namenode也可以感知，将数据分发和备份到相应的节点上。 
+6、商用硬件 
+Hadoop并不需要运行在昂贵且高可靠的硬件上，它是设计运行在商用硬件的集群上的，因此至少对于庞大的集群来说，节点故障的几率还是非常高的。HDFS遇到上述故障时，被设计成能够继续运行且不让用户察觉到明显的中断。 
+
+二、HDFS缺点 
+1、不能做到低延迟 
+由于hadoop针对高数据吞吐量做了优化，牺牲了获取数据的延迟，所以对于低延迟数据访问，不适合hadoop，对于低延迟的访问需求，HBase是更好的选择， 
+
+2、不适合大量的小文件存储 
+由于namenode将文件系统的元数据存储在内存中，因此该文件系统所能存储的文件总数受限于namenode的内存容量，根据经验，每个文件、目录和数据块的存储信息大约占150字节。因此，如果大量的小文件存储，每个小文件会占一个数据块，会使用大量的内存，有可能超过当前硬件的能力。
+ 
+3、不适合多用户写入文件，修改文件 
+Hadoop2.0虽然支持文件的追加功能，但是还是不建议对HDFS上的 文件进行修改，因为效率低。 
+对于上传到HDFS上的文件，不支持修改文件，HDFS适合一次写入，多次读取的场景。 
+HDFS不支持多用户同时执行写操作，即同一时间，只能有一个用户执行写操作。
+
+
+
+重点概念
+文件切块，副本存放，元数据
+HDFS的概念和特性
+概念
+首先，它是一个文件系统，用于存储文件，通过统一的命名空间——目录树来定位文件
+其次，它是分布式的，由很多服务器联合起来实现其功能，集群中的服务器有各自的角色；
+重要特性
+（1）HDFS中的文件在物理上是分块存储（block），块的大小可以通过配置参数( dfs.blocksize)来规定，
+默认大小在hadoop2.x版本中是128M，老版本中是64M
+
+（2）HDFS文件系统会给客户端提供一个统一的抽象目录树，客户端通过路径来访问文件，
+形如：hdfs://namenode:port/dir-a/dir-b/dir-c/file.data
+
+（3）目录结构及文件分块信息(元数据)的管理由namenode节点承担
+——namenode是HDFS集群主节点，负责维护整个hdfs文件系统的目录树，
+以及每一个路径（文件）所对应的block块信息（block的id，及所在的datanode服务器）
+
+（4）文件的各个block的存储管理由datanode节点承担
+---- datanode是HDFS集群从节点，每一个block都可以在多个datanode上存储多个副本
+   （副本数量也可以通过参数设置dfs.replication）
+
+（5）HDFS是设计成适应一次写入，多次读出的场景，且不支持文件的修改
+(注：适合用来做数据分析，并不适合用来做网盘应用，因为，不便修改，延迟大，网络开销大，成本太高)
+
+图解HDFS
+通过上面的描述我们知道，hdfs很多特点：
+保存多个副本，且提供容错机制，副本丢失或宕机自动恢复（默认存3份）。
+运行在廉价的机器上
+适合大数据的处理。
+HDFS默认会将文件分割成block，
+在hadoop2.x以上版本默认128M为1个block。
+然后将block按键值对存储在HDFS上，并将键值对的映射存到内存中。
+如果小文件太多，那内存的负担会很重。
+
+如上图所示，HDFS也是按照Master和Slave的结构。
+分NameNode、SecondaryNameNode、DataNode这几个角色。
+
+  NameNode：是Master节点，是大领导。 
+管理HDFS的名称空间(fsimage:元数据镜像文件)；
+管理数据块映射；
+配置副本策略；
+处理客户端的读写请求；
+
+　SecondaryNameNode：是一个小弟，非 NameNode的热备份
+分担大哥namenode的工作量；
+负责定时默认1小时，
+是NameNode的 " 冷 备份 "；
+从namenode上，获取fsimage和edits,定期合并fsimage(即名称空间) 和fsedits(即变更日志)
+然后再发给namenode,减少namenode的工作量。
+紧急情况下,可辅助恢复NameNode
+
+
+  DataNode：Slave节点，数据存储节点,存储实际的数据。
+负责存储client发来的数据块block；
+执行数据块的读写操作,汇报存储信息给 NameNode　　　　
+
+ Client 切分文件,访问HDFS,
+与 NameNode交互,获取文件位置信息
+与DataNode交互,读取和写入数据
+
+热备份：b是a的热备份，如果a坏掉。那么b马上运行代替a的工作。　　　　
+
+冷备份：b是a的冷备份，如果a坏掉。那么b不能马上代替a工作。
+但是b上存储a的一些信息，减少a坏掉之后的损失。　　　
+
+　fsimage:元数据镜像文件（文件系统的目录树。）,即名称空间　　　
+
+　edits：元数据的操作日志（针对文件系统做的修改操作记录）,即变更日志　
+　　
+　namenode内存中存储的是=fsimage+edits。　　　
+
+　SecondaryNameNode负责定时默认1小时，
+从namenode上，获取fsimage和edits来进行合并，
+然后再发送给namenode。
+减少namenode的工作量。
+
+  Block  每块默认值 128M,每块可以有多个副本
+
+HDFS中的文件在物理上是分块存储（block），块的大小可以通过配置参数( dfs.blocksize)来规定，
+默认大小在hadoop2.x版本中是128M，老版本中是64M
+
+edits和fsimage文件的概念：
+　　（1）、fsimage文件其实是Hadoop文件系统元数据的一个永久性的检查点，
+其中包含Hadoop文件系统中的所有目录和文件idnode的序列化信息；
+　　（2）、edits文件存放的是Hadoop文件系统的所有更新操作的路径，
+文件系统客户端执行的所以写操作首先会被记录到edits文件中。
+　　
+　　fsimage和edits文件都是经过序列化的，在NameNode启动的时候，它会将fsimage文件中的内容加载到内存中，之后再执行edits文件中的各项操作，使得内存中的元数据和实际的同步，存在内存中的元数据支持客户端的读操作。
+
+　　NameNode起来之后，HDFS中的更新操作会重新写到edits文件中，
+因为fsimage文件一般都很大（GB级别的很常见），
+如果所有的更新操作都往fsimage文件中添加，这样会导致系统运行的十分缓慢，
+但是如果往edits文件里面写就不会这样，每次执行写操作之后，
+且在向客户端发送成功代码之前，edits文件都需要同步更新。
+如果一个文件比较大，
+使得写操作需要向多台机器进行操作，只有当所有的写操作都执行完成之后，写操作才会返回成功，
+这样的好处是任何的操作都不会因为机器的故障而导致元数据的不同步。
+
+　　fsimage包含Hadoop文件系统中的所有目录和文件idnode的序列化信息；
+对于文件来说，包含的信息有修改时间、访问时间、块大小和组成一个文件块信息等；
+而对于目录来说，包含的信息主要有修改时间、访问控制权限等信息。
+fsimage并不包含DataNode的信息，而是包含DataNode上块的映射信息，并存放到内存中，
+当一个新的DataNode加入到集群中，
+DataNode都会向NameNode提供块的信息，
+而NameNode会定期的“索取”块的信息，
+以使得NameNode拥有最新的块映射。
+因为fsimage包含Hadoop文件系统中的所有目录和文件idnode的序列化信息，
+所以如果fsimage丢失或者损坏了，
+那么即使DataNode上有块的数据，
+但是我们没有文件到块的映射关系，
+我们也无法用DataNode上的数据！
+所以定期及时的备份fsimage和edits文件非常重要！
+
+
+
+Hadoop3-MapReduce1.x-框架
+
+1.主要成员
+
+1）Client
+
+Ø用户编写的MapReduce程序通过Client提交到JobTracker端；
+同时，用户可通过Client提供的一些接口查看作业的运行状态。
+在Hadoop内部用“作业”（Job）表示MapReduce程序。
+一个MapReduce程序可对应若干个作业，而每个作业会被分解成若干个Map/Reduce任务（Task）。
+
+2）JobTracker
+ØJobTracke负责资源监控和作业调度。
+Master节点 只有一个JobTracker
+
+JobTracker 监控所有TaskTracker 与job的健康状况，
+一旦发现失败，就将相应的任务转移到其他节点；
+同时，JobTracker 会跟踪任务的执行进度、资源使用量等信息，并将这些信息告诉任务调度器，
+而调度器会在资源出现空闲时，选择合适的任务使用这些资源。
+在Hadoop 中，任务调度器是一个可插拔的模块，
+用户可以根据自己的需要设计相应的调度器。
+
+3）TaskTracker
+ Slave节点,一般有多台
+ØTaskTracker 会周期性地通过Heartbeat 
+将本节点上资源的使用情况和任务的运行进度汇报给JobTracker，
+同时接收JobTracker 发送过来的命令并执行相应的操作（如启动新任务、杀死任务等）。
+TaskTracker 使用“slot”等量划分本节点上的资源量。
+
+“slot”代表计算资源（CPU、内存等）。
+一个Task 获取到一个slot 后才有机会运行，
+而Hadoop 调度器的作用就是将各个TaskTracker 上的空闲slot 分配给Task 使用。
+slot 分为Map slot 和Reduce slot 两种，
+分别供MapTask 和Reduce Task 使用。
+TaskTracker 通过slot 数目（可配置参数）限定Task 的并发度。
+
+4）Task
+
+ØTask 分为Map Task 和Reduce Task 两种，均由TaskTracker 启动。
+
+
+HDFS 以固定大小的block 为基本单位存储数据，
+而对于MapReduce 而言，其处理单位是split。
+split 是一个逻辑概念，它只包含一些元数据信息，比如数据起始位置、数据长度、数据所在节点等。
+它的划分方法完全由用户自己决定。
+但需要注意的是，split 的多少决定了Map Task 的数目，
+因为每个split 只会交给一个Map Task 处理。
+
+2.主要过程
+
+
+run job
+​ 在客户端，用户编写Java程序，编写完成后，打包为jar包，然后提交。JobClient的run job()方法是用于新建JobClient实例，并调用其submitjob()方法的快捷方式 也可以用 job.waitcomplication()。提交作业后，run job（）每秒轮询作业的进度，如果发现自上次报告后有改变，便把进度打印到控制台，作业完成后，如果成功，就显示作业计数器，如果失败，导致错误的原因打印到控制台。
+
+get new job id
+​ -->向jobTracker请求一个job id （JobTracker.getNewJobId());
+
+​ -->检查作业的输出说明，如果输出目录已经存在或者没有指定输出目录，则抛出异常给客户端，
+
+​ -->检查作业的输入切片，如果输入分片不能计算如没有指定输入目录，如抛出异常给客户端。
+
+copy job resources
+​ 将运行作业所需要的资源包括
+
+​ -->打包好的jar包（运行程序）
+
+​ -->配置文件（xml)
+
+​ -->计算所得的输入分片
+
+​ 复制到一job id 命名的目录下jobtracker的文件系统中，作业jar的副本较多（由mapred.submin.replication)控制默认为10
+
+​ 因此在运行作业的时候，集群中有许多tasktracker访问
+
+summit job
+​ 通知JobTracker 作业准备执行。（通过调用jobtracker的submitjob()方法实现）
+
+initlialize job （初始化）
+​ 当JobTracker接收到对其submitjob（）方法的调用后，会把此调用放入一个内部队列中，交由作业调度器（job scheduler)进行调度
+
+​ 并对其进行初始化。初始化包括创建一个表示正在运行的作业对象--封装任务和记录信息，以便跟踪任务的状态和进程。
+
+retrieve input splits (检索 恢复）
+​ --> 为了创建任务运行列表，作业调度器首先从共享文件系统中获取JobClient以计算好的输入分片信息，然后为每个分片分配一个 map 任 务
+
+​ --> 创建的reduce任务数量有job的mapred.reduce.task属性决定（setNumReduceTask()设置），scheduler创建相应数量的r educe任 务，任务在此时被分配ID
+
+​ --> 除了map任务和reduce任务，还有setupJob,cleanupJob需要建立，有tasktracker在所有map开始前和所有reduce结束后分别 执行，这两个方法在OutPutCommitter中（默认是FileOutputCommiter),setupjob()创建输出目录和任务的临时工作目录， cleanupjob删除临时工作目录
+
+heartbeat(returns task)
+​ -->TaskTracker运行一个简单的循环来定期发送心跳给JobTasker."心跳"告知JobTracker,tasktacker是否还存活，同时也充当着两 者 之间的消息通道，作为心跳的一部分，tasktracker 还会指明他自己是否准备好运行下一次任务，如果是，jobtracker会为他分 配一 个新的任务，并通过心跳的返回值与tasktracker进行通信
+
+​ -->每个tasktracker会有固定的map和reduce任务槽，数量由tasktracker核的数量和内存的大小来决定，jobtracker会先将 tasktracker的所有map槽填满，然后再填reduce槽
+
+​ -->jobtracker分配map任务时，会选取与输入分片最近的tasktracker，分配reduce任务用不着考虑数据本地化。
+
+retrieve job resources
+​ -->通过从共享文件系统把作业的JAR文件复制到tasktracker所在的文件系统，从而实现作业的jar文件本地化，同时 tasktracker将 应用程序所需要的全部文件从分布式缓存复制到本地磁盘。
+
+​ -->tasktracker为任务新建一个本地工作目录，并把jar文件中的内容解压到这个文件夹下
+
+launch(发起）
+​ Tasktracker新建一个TaskRunner实例来运行该任务
+
+run
+​ TaskRunner启动一个新的JVM来运行每个任务，以便客户的map/reduce不会影响到tasktracker
+
+
+Yarn把JobTracker划分为了管理集群资源的ResourceManager（以下简称RM）
+和管理集群上运行任务的生命周期的AppMaster（以下简称AM）。
+此外，还有一个负责管理上报所在节点资源、响应处理AM的任务启停请求的角色NodeManager
+（以下简称NM）。
+
+Yarn本来只是MapReduce的一部分,
+后来变成了Hadoop一个独立的项目 
+概括来说，Hadoop YARN的目的
+是使得Hadoop数据处理能力超越MapReduce。
+ Hadoop HDFS是Hadoop的数据存储层，
+ Hadoop MapReduce是数据处理层。
+
+然而，MapReduce 已经 不能 满足 今天广泛的数据处理需求，
+如实时/准实时计算，图计算等。
+
+而Hadoop YARN
+提供了一个更加通用的资源管理和分布式应用框架。
+在这个框架上，用户可以根据自己需求，实现定制化的数据处理应用。
+而Hadoop MapReduce也是YARN上的一个应用。
+我们将会看到MPI，图处理，在线服务等（例如Spark，Storm，HBase）
+都会和Hadoop MapReduce一样成为YARN上的应用。
+
+YARN的最基本思想是
+将JobTracker的 两个 主要职责：
+资源管理 和 Job调度管理 分别交给两个角色负责。
+一个是全局的ResourceManager，
+一个是每个应用一个的ApplicationMaster。
+
+ResourceManager以及
+每个节点一个的NodeManager构成了新的通用系统，
+实现以分布式方式管理应用。
+
+
+
+
+
+HDFS的局限性
+1）低延时数据访问。
+在用户交互性的应用中，应用需要在ms或者几个s的时间内得到响应。
+由于HDFS为高吞吐率做了设计，
+也因此牺牲了快速响应。
+对于低延时的应用，
+可以考虑使用HBase或者Cassandra。　　
+
+2）大量的小文件。
+标准的HDFS数据块的大小是64M，存储小文件并不会浪费实际的存储空间，
+但是无疑会增加了在NameNode上的元数据，
+大量的小文件会影响整个集群的性能。
+
+ Btrfs为小文件做了优化-inline file，
+对于小文件有很好的空间优化和访问时间优化。　
+
+　3）多用户写入，修改文件。
+HDFS的文件只能有一个写入者，
+而且写操作只能在文件结尾以追加的方式进行。
+它不支持多个写入者，
+也不支持在文件写入后，
+对文件的任意位置的修改。　　　
+　但是在大数据领域，分析的是已经存在的数据，这些数据一旦产生就不会修改，
+因此，HDFS的这些特性和设计局限也就很容易理解了。
+
+HDFS为大数据领域的数据分析，提供了非常重要而且十分基础的文件存储功能。
+
+HDFS保证可靠性的措施
+1）冗余备份
+每个文件存储成一系列数据块（Block）。
+为了容错，文件的所有数据块都会有副本（副本数量即复制因子，课配置）（dfs.replication）
+
+2）副本存放
+采用机架感知（Rak-aware）的策略来改进数据的可靠性、高可用和网络带宽的利用率
+
+3）心跳检测
+NameNode周期性地从集群中的每一个DataNode接受心跳包和块报告，收到心跳包说明该DataNode工作正常
+
+4）安全模式
+系统启动时，NameNode会进入一个安全模式。此时不会出现数据块的写操作。
+
+5）数据完整性检测
+HDFS客户端软件实现了对HDFS文件内容的校验和（Checksum）检查（dfs.bytes-per-checksum）。
+
+
 大数据特性有哪些
 Volume (大体量)：可从数百TB到数十数百PB、甚至EB的规模
 Variety (多样性)：大数据包括各种格式和形态的数据
@@ -620,11 +1029,17 @@ Velocity (时效性)：很多大数据需要在一定的时间限度下得到及
 Veracity (准确性)：处理的结果要保证一定的准确性
 Value (大价值)：大数据包含很多深度的价值，大数据分析挖掘和利用将带来巨大的商业价值
 
+
+Hadoop Distributed File  System(HDFS)：
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
+
  Hadoop常用组件以及核心组件有哪些
 
 HDFS：Hadoop分布式文件系统（核心组件）
 MapReduce：分布式计算框架（核心组件）
 Yarn：集群资源管理系统（核心组件）
+
 Zookeeper：分布式协作服务
 Hbase：分布式列存数据库
 Hive：基于Hadoop的数据仓库

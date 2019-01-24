@@ -1,0 +1,1000 @@
+hadoop 安装 （单机模式）
+
+禁用 selinux 和 iptables
+禁用 selinux 和 iptables
+禁用 selinux 和 iptables
+配置 /etc/hosts 保证所有主机域名能够相互解析
+配置 /etc/hosts 保证所有主机域名能够相互解析
+配置 /etc/hosts 保证所有主机域名能够相互解析
+
+1、安装 java 
+yum install java-1.8.0-openjdk -y
+
+验证：
+java -version
+
+2、安装 jps
+yum install java-1.8.0-openjdk-devel -y
+
+验证：
+jps
+
+3、安装 hadoop 
+tar zxf hadoop-2.7.3.tar.gz
+mv hadoop-2.7.3 /usr/local/hadoop
+
+修改配置文件的运行环境：
+/usr/local/hadoop/etc/hadoop/hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+验证：
+cd /usr/local/hadoop
+./bin/hadoop version
+
+统计分析热词
+创建数据源
+mkdir input
+在这个文件夹里面放入需要统计分析的数据
+cp *.txt input/
+
+统计分析1  单词出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+统计分析2  某一个关键词出现的频率，例如 dfs 这个词前面字母是 h 的出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep input output1 '(?<=h)dfs'
+
+排错 1
+提示  JAVA_HOME is not set and could not be found
+表示  JAVA_HOME 没有设置
+解决方法：
+设置 hadoop-env.sh 里面的 JAVA_HOME 或在运行脚本前面加入前置变量设置
+JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre" ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+排错 2
+提示 java.net.UnknownHostException: host: host: unknown error
+	at java.net.InetAddress.getLocalHost(InetAddress.java:1505)
+表示主机名没有 IP 解析
+解决方法：
+在 /etc/hosts 里面增加 主机名 IP 对应关系
+
+排错 3
+提示：17/07/24 23:10:46 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory file:/usr/local/hadoop/output already exists
+表示输出的文件目录已经存在
+解决方法：
+删除已经存在的目录或更改结果保存位置
+
+伪分布式配置：
+
+xml 配置格式
+<property>
+        <name>关键字</name>
+        <value>变量值</value>
+        <description> 描述 </description>
+</property>
+
+配置文件路径 /usr/local/hadoop/etc/hadoop/
+1 配置 hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+查找 JAVA_HOME
+readlink -f $(which java)
+
+2 配置 core-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-common/core-default.xml
+
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>file:///</value>
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+    </property>
+</configuration>
+
+3 配置 hdfs-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+        <description> 文件复制份数 </description>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address</name>
+        <value>192.168.4.10:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.secondary.http-address</name>
+        <value>192.168.4.10:50090</value>
+    </property>
+</configuration>
+
+常用配置选项
+dfs.namenode.name.dir
+dfs.datanode.data.dir
+dfs.namenode.http-address
+dfs.namenode.secondary.http-address
+dfs.webhdfs.enabled
+dfs.permissions.enabled
+
+4 配置 mapred-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-mapreduce-client/hadoop-mapreduce-client-core/mapred-default.xml
+
+<configuration>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>mapreduce.jobtracker.http.address</name>
+        <value>master:50030</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>master:10020</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>master:19888</value>
+    </property>
+</configuration>
+
+常用配置选项
+mapreduce.framework.name
+mapreduce.jobtracker.http.address
+mapreduce.jobhistory.address
+mapreduce.jobhistory.webapp.address
+
+5 配置 yarn-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-yarn/hadoop-yarn-common/yarn-default.xml
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>myhadoop</value>
+    </property>
+
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>master</value>
+    </property>
+</configuration>
+
+
+常用配置选项
+yarn.nodemanager.aux-services
+yarn.nodemanager.aux-services.mapreduce.shuffle.class
+yarn.resourcemanager.hostname
+
+数据量越来越多，
+在一个操作系统管辖的范围存不下了，
+那么就分配到更多的操作系统管理的磁盘中，
+但是不方便管理和维护，因此迫切需要一种系统来管理多台机器上的文件，
+这就是 
+分布式文件管理系统
+一种 管理 
+多台 机器 上的 多个 (操作系统管理的磁盘)中的
+文件 的系统
+
+是一种
+允许文件
+通过网络在多台主机上
+分享的
+文件系统，可让多机器上的多用户分享文件和存储空间
+
+通透性。
+让实际上是通过网络来访问文件的动作，
+由程序与用户看来，就像是访问本地的磁盘一般。
+
+容错。
+即使系统中有某些节点脱机，整体来说系统仍然可以持续运作而不会有数据损失。
+分布式文件管理系统很多，
+hdfs只是其中一种，不合适小文件。
+
+
+GFS是一个可扩展的分布式文件系统,
+用于大型的,分布式的,对大量数据进行访问
+的应用
+GFS可以运行在廉价的普通硬件上,提供容错功能
+
+GFS(Google File System)
+Google三驾马车——GFS、MapReduce、Bigtable
+
+GFS是一个可扩展的分布式文件系统,
+用于大型的,分布式的,对大量数据进行访问
+的应用
+GFS可以运行在廉价的普通硬件上,提供容错功能
+
+Map/Reduce
+Mapreduce是一种编程模型，是一种编程方法，抽象理论。
+Map和Reduce其实是两种操作
+Mapreduce是针对分布式并行计算的一套编程模型,
+由 Map 和Reduce 组成,
+Map是映射,
+把指令分发到多个worker上,
+Reduce 是规约,
+把worker计算出的结果合并
+
+BigTable存储结构化数据,是一个数据库
+BigTable建立在GFS,Scheduler,Lock Service 和MapReduce之上
+每个Table都是一个多维的稀疏图
+
+Hadoop就是一个实现了Google云计算系统的开源系统，
+包括并行计算模型Map/Reduce，
+分布式文件系统HDFS，
+以及分布式数据库Hbase，
+同时Hadoop的相关项目也很丰富，
+包括ZooKeeper，Pig，Chukwa，Hive，Hbase，Mahout，flume等.
+
+
+Google三驾马车——GFS、MapReduce、Bigtable
+
+Hadoop与google三大件：
+
+Hadoop是很多组件的集合，主要包括但不限于MapReduce，HDFS，HBase，ZooKeeper。
+
+     MapReduce模仿了Google的MapReduce，
+
+     HDFS模仿了Google File System，
+
+     HBase模仿了BigTable，
+
+HDFS也是按照Master和Slave的结构。
+分NameNode、SecondaryNameNode、DataNode这几个角色。
+
+  NameNode：是Master节点，是大领导。 
+管理HDFS的名称空间(fsimage:元数据镜像文件)；
+管理数据块映射；
+配置副本策略；
+处理客户端的读写请求；
+
+
+　SecondaryNameNode：是一个小弟，非 NameNode的热备份
+分担大哥namenode的工作量；
+负责定时默认1小时，
+是NameNode的 " 冷 备份 "；
+从namenode上，获取fsimage和edits,定期合并fsimage(即名称空间) 和fsedits(即变更日志)
+然后再发给namenode,减少namenode的工作量。
+紧急情况下,可辅助恢复NameNode
+
+  Datanode 提供真实文件数据的存储服务。
+文件块（block）：最基本的存储单位。
+对于文件内容而言，一个文件的长度大小是size，那
+么从文件的０偏移开始，按照固定的大小，顺序对文件进行划分并编号，
+划分好的每一个块称一个Block。
+HDFS默认Block大小是128MB(dfs.blocksize,dfs.block.size)
+
+  DataNode：Slave节点，数据存储节点,存储实际的数据。
+负责存储client发来的数据块block；
+执行数据块的读写操作,汇报存储信息给 NameNode　　　　
+
+ Client 切分文件,访问HDFS,
+与 NameNode交互,获取文件位置信息
+与DataNode交互,读取和写入数据
+
+热备份：b是a的热备份，如果a坏掉。那么b马上运行代替a的工作。　　　　
+
+冷备份：b是a的冷备份，如果a坏掉。那么b不能马上代替a工作。
+但是b上存储a的一些信息，减少a坏掉之后的损失。　　
+
+  Block  每块默认值 128MB,每块可以有多个副本
+
+HDFS中的文件在物理上是分块存储（block），块的大小可以通过配置参数( dfs.blocksize)来规定，
+默认大小在hadoop2.x版本中是128MB，老版本中是64M
+
+大数据是 对 那些 超出正常处理范围 和 大小、迫使 用户 
+采用 非传统处理方法的 数据集
+所下的定义。
+
+Hadoop Distributed File  System(HDFS)：
+ Hadoop 特点 
+高可靠性,高扩展性,高效率,高容错性,低成本
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
+
+对外部客户机而言，
+HDFS就像一个传统的 分级文件系统，
+可以进行 增 删 改 查 或 重命名 等常规文件操作。
+
+但实际上HDFS中的文件被分成块，
+然后复制到多个计算机中，
+这与传统的RAID架构大不相同。
+
+HDFS默认会将文件分割成block，
+在hadoop2.x以上版本默认128M为1个block。
+
+客户端对hdfs进行写文件时会首先被记录在edits文件中。
+edits(即变更日志)修改时元数据也会更新。
+
+每次hdfs更新时edits(即变更日志)先更新后客户端才会看到最新信息。
+
+fsimage:是Namenode中关于元数据的镜像，一般称为检查点,
+记录了 (处理后的) 数据块block 与 (来源于原始客户端的) 数据 的映射关系,
+保存了原始数据的在各个服务器节点中的存放路径的信息
+
+一般开始时对namenode的操作都放在edits(即变更日志)中，为什么不放在fsimage中呢？
+
+因为fsimage是namenode的完整的镜像，内容很大，
+如果每次都加载到内存的话生成树状拓扑结构，这是非常耗内存和CPU。
+
+内容包含了
+namenode管理下的
+所有datanode中
+文件及文件block及block所在的datanode的元数据信息。
+随着edits内容增大，就需要在一定时间点和fsimage合并。
+
+edits和fsimage文件的概念：
+　　（1）、fsimage文件其实是Hadoop文件系统元数据的一个永久性的检查点，
+其中包含Hadoop文件系统中的所有目录和文件idnode的序列化信息；
+
+　　（2）、edits文件存放的是Hadoop文件系统的所有更新操作的路径，
+文件系统客户端执行的所以写操作首先会被记录到edits文件中。
+　　
+　　fsimage和edits文件都是经过序列化的，
+在NameNode启动的时候，它会将fsimage文件中的内容加载到内存中，
+之后再执行edits文件中的各项操作，
+使得内存中的元数据和实际的同步，
+存在内存中的元数据支持客户端的读操作。
+
+　　fsimage包含Hadoop文件系统中的所有目录和文件idnode的序列化信息；
+对于文件来说，包含的信息有修改时间、访问时间、块大小和组成一个文件块信息等；
+而对于目录来说，包含的信息主要有修改时间、访问控制权限等信息。
+fsimage并不包含DataNode的信息，而是包含DataNode上块的映射信息，并存放到内存中，
+
+map/reduce相关术语
+
+键/值对：一般键是 偏移量，而值是文本。
+
+CLASS_PATH： 环境变量：添加的应用程序的路径。
+
+map函数：map任务的实现
+
+reduce函数：reduce任务的实现
+
+main函数：程序入口
+
+jobtracker：调度tasktracker上运行的任务，来协调所有运行在系统上的作业。
+
+tasktracker：运行任务的同时，将运行的结果和状态发送给jobtracker
+
+
+
+分片input split：将数据划分为等长的数据块，然后每个分片构建一个map任务
+
+数据本地化优化：在hdfs的本地节点的数据上运行map任务，可以获取最优性能
+
+分区partition：多个reduce任务，每个reduce任务需建立一个分区
+
+混洗shuffle：map与reduce任务之间的数据流相互混杂，多对多的关系
+
+combiner 合并函数：其输出作为reduce的输入， 节省带宽，减少输出的数据量
+
+map函数和reduce函数是交给用户实现的，这两个函数定义了任务本身。 
+
+　　map函数：接受一个键值对（key-value pair），产生一组中间键值对。
+MapReduce框架会将map函数产生的中间键值对里 键相同的 值 传递给一个reduce函数。 
+
+　　reduce函数：接受一个键，以及相关的一组值，
+ 将这组值进行合并产生一组规模更小的值（通常只有一个或零个值）。 
+https://blog.csdn.net/oppo62258801/article/details/72884633
+
+Spark是一个内存计算的框架。
+目前一个大的趋势。
+MapReduce会有很大的IO操作，而Spark是在内存中计算。
+速度是Hadoop的10倍（官网上这样说的）。
+Spark是目前一个趋势，是需要了解的。
+
+4 Pig/Hive（Hadoop编程）：
+
+Pig是一种高级编程语言，在处理半结构化数据上拥有非常高的性能，可以帮助我们缩短开发周期。
+
+Hive是数据分析查询工具，尤其在使用类SQL查询分析时显示是极高的性能。
+可以在分分钟完成ETL要一晚上才能完成的事情，这就是优势，占了先机！
+
+tracker
+英 [ˈtrækə(r)]   美 ['trækər]  
+n. 追踪者，追踪系统，纤夫
+
+JobTracke负责资源监控和作业调度。
+Master节点 只有一个JobTracker
+管理所有作业/任务的监控,错误处理等
+将任务分解成一系列任务,并且分派给TaskTracker
+
+JobTracker 监控所有TaskTracker 与job的健康状况，
+一旦发现失败，就将相应的任务转移到其他节点；
+同时，JobTracker 会跟踪任务的执行进度、资源使用量等信息，并将这些信息告诉任务调度器，
+而调度器会在资源出现空闲时，选择合适的任务使用这些资源。
+在Hadoop 中，任务调度器是一个可插拔的模块，
+用户可以根据自己的需要设计相应的调度器。
+
+TaskTracker
+ Slave节点,一般有多台
+运行Map Task 和Reduce Task,并与JobTracker交互,
+汇报任务状态
+
+ØTaskTracker 会周期性地通过Heartbeat 
+将本节点上资源的使用情况和任务的运行进度汇报给JobTracker，
+同时接收JobTracker 发送过来的命令并执行相应的操作（如启动新任务、杀死任务等）。
+TaskTracker 使用“slot”等量划分本节点上的资源量。
+
+Task 分为Map Task 和Reduce Task 两种，均由TaskTracker 启动
+
+mapreduce就是一个分布式程序的通用框架：一个完整的mapreduce程序在分布式运行时有三类实例进程：（根据hadoop2.0以后版本进行讲述）
+
+1、MRAppMaster：负责整个程序的过程调度及状态协调；
+
+2、mapTask：负责map阶段的整个数据处理流程；
+
+3、ReduceTask：负责reduce阶段的整个数据处理流程；
+
+具体流程解析如下：
+
+1. 一个MapReduce程序启动的时候，通过yarn的ResourceManager
+最先启动的是MRAppMaster，
+MRAppMaster启动后根据本次job的描述信息
+（主要是jobsplit文件，另外还包括job.xml,以及相应的程序jar文件），
+计算出需要的maptask实例的数量，
+然后向集群中申请机器启动相应数量的map task进程；
+
+2. map task进程启动后，根据给定的数据切片范围进行数据处理，主要流程如下：
+
+1）利用客户端指定的inputformat来获取RecordReader读取数据，形成输入Key-Value对；
+
+2）将输入的Key-Value对传递给客户端定义的map（）方法，做逻辑运算，
+并将map（）方法输出的Key-Value对收集到缓存；
+
+3）将缓存中的Key-Value对按照key分区排序后不断溢写spill到磁盘文件；
+
+3. MRAppMaster监控到所有maptask进程任务完成后，
+会根据客户指定的参数启动相应数量的reducetask进程，
+并告知reducetask进程要处理的数据范围；
+
+4. Reduce task进程启动之后，
+根据MRAppMaster告知的待处理数据所在的位置，
+从若干台maptask运行的机器上获取到若干个maptask输出结果文件，
+并在本地进行重新归并排序，
+然后按照相同的key的Key-Value对为一个组，
+调用客户端定义的reduce（）方法进行逻辑运算，并收集运算输出的结果Key-Value对，
+然后调用客户指定的outputformat将结果数据输出到外部存储；
+
+
+Hadoop Distributed File  System(HDFS)：
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
+
+ Hadoop常用组件以及核心组件有哪些
+
+HDFS：Hadoop分布式文件系统（核心组件）
+MapReduce：分布式计算框架（核心组件）
+Yarn：集群资源管理系统（核心组件）
+
+Zookeeper：分布式协作服务
+Hbase：分布式列存数据库
+Hive：基于Hadoop的数据仓库
+Sqoop：数据同步工具
+Pig：基于Hadoop的数据流系统
+Mahout：数据挖掘算法库
+Flume：日志收集工具
+
+Yarn，英文全名是 Yet Another Resource Negotiator，
+是由雅虎开发的第二代集群资源调度器
+Yarn：集群资源管理系统（核心组件）
+YARN基本架构
+
+YARN总体上仍然是Master/Slave结构，
+在整个资源管理框架中，
+ResourceManager为Master，
+NodeManager为Slave，
+ResourceManager负责对各个NodeManager上的资源进行统一管理和调度。
+当用户提交一个应用程序时，需要提供一个用以跟踪和管理这个程序的ApplicationMaster，
+它负责向ResourceManager申请资源，
+并要求NodeManager启动可以占用一定资源的任务。
+由于不同的ApplicationMaster被分布到不同的节点上，因此它们之间不会相互影响。
+
+YARN主要由
+ResourceManager、NodeManager、
+ApplicationMaster 和 Container等几个组件构成。
+
+ MapReduce和MPI两种计算框架的ApplicationMaster，
+分别为MRAppMstr 和 MPI AppMstr
+
+Yarn，英文全名是 Yet Another Resource Negotiator，
+是由雅虎开发的第二代集群资源调度器
+
+ResourceManager
+处理客户端请求
+启动监控ApplicationMaster
+监控NodeManager
+管理集群资源,资源分配与调度
+
+NodeManager
+单个节点上的资源管理
+处理来自ResourceManager  的命令
+处理来自ApplicationMaster的命令
+
+NodeManager是YARN中每个节点上的代理，
+它管理Hadoop集群中单个计算节点，
+根据相关的设置来启动容器的。
+
+NodeManager会定期向ResourceManager发送心跳信息来更新其健康状态。
+同时其也会监督Container的生命周期管理，
+监控每个Container的资源使用（内存、CPU等）情况，
+追踪节点健康状况，管理日志
+和不同应用程序用到的附属服务（auxiliary service）
+
+
+
+ApplicationMaster 
+数据切分
+为应用程序shenqing资源,并分配给内部任务
+任务监控与容错
+ApplicationMaster是应用程序级别的，
+每个ApplicationMaster管理运行在YARN上的应用程序。
+YARN 将 ApplicationMaster看做是第三方组件，
+
+ApplicationMaster负责和ResourceManager scheduler协商资源，
+并且和NodeManager通信来运行相应的task。
+ResourceManager 为 ApplicationMaster 分配容器，
+这些容器将会用来运行task。
+ApplicationMaster 也会追踪应用程序的状态，监控容器的运行进度。
+当容器运行完成， ApplicationMaster 将会向 ResourceManager 注销这个容器；
+如果是整个作业运行完成，其也会向 ResourceManager 注销自己，
+这样这些资源就可以分配给其他的应用程序使用了。
+
+
+ Container
+对任务运行环境的抽象化,封装了CPU,内存等
+多维资源,环境变量,启动命令等任务运行相关的信息资源分配与调度
+
+Container是与特定节点绑定的，其包含了内存、CPU磁盘等逻辑资源。
+不过在现在的容器实现中，这些资源只包括了内存和CPU。
+
+容器是由 ResourceManager scheduler 服务动态分配的资源构成。
+容器授予 ApplicationMaster 使用特定主机的特定数量资源的权限。
+ApplicationMaster 也是在容器中运行的，
+其在应用程序分配的第一个容器中运行
+
+
+ Client
+用户与Yarn交互的客户端程序
+提交应用程序,监控应用程序状态,
+杀死应用程序等
+
+YARN的优点
+
+可扩展性
+MapReduce 1 最多可支持4000个节点的集群.因为JobTracker负责的职责太多而成为瓶颈
+Yarn 可以支持10000个节点,并行100000个task.
+
+可靠性
+Yarn的ResourceManager职责很简单,很容易实现HA；
+MapReduce 1 的JobTracker的状态变化非常迅速(想象下每个Task过几秒都会想它报告状态). 
+这使得JotTracker很难实现HA(高可用性).
+通常HA都是通过备份当前系统的状态然后当系统失败备用系统用备份的状态来继续工作.
+
+并行性
+MapReduce 1只能运行MapReduce应用
+Yarn最大的好处之一就是职称很多其他类型的分布式Application. 
+
+YARN运行机制
+流程说明：
+Client提交一个application，以及必要的specification来启动ApplicationMaster
+ResourceManager敲定一个用来启动ApplicationMaster的container。
+然后启动ApplicationMaster
+
+ApplicationMaster启动时会向ResourceManager注册。 
+注册后，client可以向ResourceManager查询ApplicationMaster的详细信息，
+并且client可以直接和ApplicationMaster通信。
+
+ApplicationMaster通过resourcerequest 协议来敲定更多的Container资源
+
+ApplicationMaster向NodeManager提供详细的信息来启动Container。
+之后Container可以和ApplicationMaster通信
+
+application会在Container里面执行，
+并根据applicaion-specific的协议来向ApplicationMaster报告状态
+在appliation运行期间，
+client直接通过application-specific协议来和ApplicationMaster通信去获取运行状态以及进展
+
+application结束后，
+ApplicationMater会向ResourceManager注销然后释放资源。
+
+
+ HBase/Sqoop/Flume（数据导入与导出）:
+
+HBase是运行在HDFS架构上的列存储数据库，并且已经与Pig/Hive很好地集成。通过Java API可以近无缝地使用HBase。
+
+Sqoop设计的目的是方便从传统数据库导入数据到Hadoop数据集合(HDFS/Hive)。
+
+Flume设计的目的是便捷地从日志文件系统直接把数据导到Hadoop数据集合(HDFS)中。
+
+以上这些数据转移工具都极大的方便了使用的人，提高了工作效率，把经历专注在业务分析上
+
+
+ MapReduce/Spark（并行计算架构）：
+它可以将计算任务拆分成大量可以独立运行的子任务，
+接着并行运算，另外会有一个系统调度的架构负责收集和汇总每个子任务的分析结果。
+其中 包含映射算法与规约算法
+
+
+
+/************ 仅仅是主机名介绍,对 本实验无影响*****
+### 192.168.1.10    hadoop-nn01  对应  192.168.0.11  Va1
+
+[root@room9pc01 ~]# unzip   /var/git/Hadoop.zip   -d   /var/ftp/
+Archive:  /var/git/Hadoop.zip
+  inflating: /var/ftp/hadoop/hadoop-2.7.6.tar.gz  
+ extracting: /var/ftp/hadoop/kafka_2.10-0.10.2.1.tgz  
+  inflating: /var/ftp/hadoop/zookeeper-3.4.10.tar.gz  
+
+[root@room9pc01 ~]# ls  /var/ftp/
+ansible  CentOS7-1708  elk  hadoop  pub  rhel7  share
+
+[root@room9pc01 ~]# ls  /var/ftp/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+root@192.168.0.11's password: 
+Last login: Wed Jan 23 13:43:29 2019 from 192.168.0.254
+[root@Va1 ~]# free -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         854         857           8         272         946
+Swap:          2047           0        2047
+
+/**************** 这 些服务应用与 本实验无关 ******************
+[root@Va1 ~]# systemctl  is-active  elasticsearch.service 
+active
+[root@Va1 ~]# systemctl  is-active  kibana.service 
+active
+[root@Va1 ~]# netstat   -npult  |grep java   # 查看 es 监听端口
+tcp6       0      0 192.168.0.11:9200       :::*                    LISTEN      1121/java           
+tcp6       0      0 192.168.0.11:9300       :::*                    LISTEN      1121/java           
+[root@Va1 ~]# netstat   -npult  |grep   5601   # 查看 kibana 监听端口
+tcp        0      0 0.0.0.0:5601            0.0.0.0:*               LISTEN      662/node   
+*****************************/
+
+[root@Va1 ~]# cat  /etc/resolv.conf 
+nameserver  192.168.0.254
+nameserver  192.168.1.254
+search  vbr
+search localdomain
+[root@Va1 ~]# cat  /etc/hosts  #hadoop 对主机名强依赖,必须添加域名解析配置
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+
+[root@Va1 ~]# ping  -c1  Va1
+PING Va1 (192.168.0.11) 56(84) bytes of data.
+64 bytes from Va1 (192.168.0.11): icmp_seq=1 ttl=64 time=0.057 ms
+..............
+[root@Va1 ~]# which  lftp
+/usr/bin/lftp
+[root@Va1 ~]# rpm  -ql  lftp
+/etc/lftp.conf
+/usr/bin/lftp
+/usr/bin/lftpget
+/usr/lib64/lftp
+.............
+[root@Va1 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> pwd
+ftp://192.168.0.254
+lftp 192.168.0.254:~> ls hadoop/
+-rw-r--r--    1 0        0        216745683 May 29  2018 hadoop-2.7.6.tar.gz
+-rw-r--r--    1 0        0        38424081 Apr 26  2017 kafka_2.10-0.10.2.1.tgz
+-rw-r--r--    1 0        0        35042811 Apr 01  2017 zookeeper-3.4.10.tar.gz
+lftp 192.168.0.254:/> mget  hadoop/*
+290212575 bytes transferred                                     
+Total 3 files transferred
+lftp 192.168.0.254:/> bye 
+-------------------------------------------------
+[root@Va1 ~]# mkdir   /root/hadoop
+[root@Va1 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> lcd  /root/hadoop/  #选择下载的家目录
+lcd 成功, 本地目录=/root/hadoop
+lftp 192.168.0.254:~> mget   hadoop/* #从 lftp服务器上一次下载多个文件
+290212575 bytes transferred                                     
+Total 3 files transferred
+lftp 192.168.0.254:/> exit
+[root@Va1 ~]# ls  /root/hadoop
+hadoop/              hadoop-2.7.6.tar.gz  
+
+[root@Va1 ~]# ls  /root/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# du  -sh  /root/hadoop/hadoop-2.7.6.tar.gz 
+207M	/root/hadoop/hadoop-2.7.6.tar.gz
+
+ ------------------------------------------- 安装java环境 -----------------------
+[root@Va1 ~]# yum  -y  install  java-1.8.0-openjdk  java-1.8.0-openjdk-devel
+.................
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                                
+
+完毕！
+[root@Va1 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+JAVA JPS 命令详解
+
+JPS 名称: jps - Java Virtual Machine Process Status Tool
+
+jps 命令类似与 linux 的 ps 命令，
+但是它只列出系统中所有的 Java 应用程序。 
+通过 jps 命令可以方便地查看 Java 进程的启动类、传入参数和 Java 虚拟机参数等信息。
+
+如果在 linux 中想查看 java 的进程，一般我们都需要 ps -ef | grep java 来获取进程 ID。
+
+如果只想获取 Java 程序的进程，可以直接使用 jps 命令来直接查看。
+
+命令用法: jps [options] [hostid]
+              options:命令选项，用来对输出格式进行控制
+              hostid:指定特定主机，可以是ip地址和域名, 也可以指定具体协议，端口。
+              [protocol:][[//]hostname][:port][/servername]
+
+功能描述: jps是用于查看有权访问的hotspot虚拟机的进程. 
+当未指定hostid时，默认查看本机jvm进程，
+否者查看指定的hostid机器上的jvm进程，
+此时hostid所指机器必须开启jstatd服务。 
+jps可以列出jvm进程lvmid，主类类名，main函数参数, jvm参数，jar名称等信息。
+参数说明
+-q：只输出进程 ID
+-m：输出传入 main 方法的参数
+-l：输出完全的包名，应用主类名，jar的完全路径名
+-v：输出jvm参数
+-V：输出通过flag文件传递到JVM中的参数
+
+没添加option的时候，默认列出VM标示符号和简单的class或jar名称.如下:
+[root@Va1 ~]# jps  #
+1121 Elasticsearch
+6158 Jps
+[root@Va1 ~]# echo  $$
+1492
+[root@Va1 ~]# netstat  -npult  |grep  1121
+tcp6       0      0 192.168.0.11:9200       :::*                    LISTEN      1121/java           
+tcp6       0      0 192.168.0.11:9300       :::*                    LISTEN      1121/java      
+[root@Va1 ~]# jps  -q  # -q  :仅仅显示VM 标示，不显示jar,class, main参数等信息.
+1121
+6278
+
+    #  -m: 输出主函数传入的参数 
+[root@Va1 ~]# jps  -m
+1121 Elasticsearch start -Des.pidfile=/var/run/elasticsearch/elasticsearch.pid -Des.default.path.home=/usr/share/elasticsearch -Des.default.path.logs=/var/log/elasticsearch -Des.default.path.data=/var/lib/elasticsearch -Des.default.path.conf=/etc/elasticsearch
+6325 Jps -m
+
+[root@Va1 ~]# jps  -l  # -l: 输出应用程序主类完整package名称或jar完整名称.
+1121 org.elasticsearch.bootstrap.Elasticsearch
+6355 sun.tools.jps.Jps
+
+[root@Va1 ~]# jps  -v  # 列出jvm参数
+1121 Elasticsearch -Xms256m -Xmx1g -Djava.awt.headless=true -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly -XX:+HeapDumpOnOutOfMemoryError -XX:+DisableExplicitGC -Dfile.encoding=UTF-8 -Djna.nosys=true -Des.path.home=/usr/share/elasticsearch
+6377 Jps -Dapplication.home=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64 -Xms8m
+[root@Va1 ~]# ps  -ef  |grep java
+elastic+  1121     1  0 08:57 ?        00:03:49 /bin/java -Xms256m -Xmx1g -Djava.awt.headless=true -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSIn............... start -Des.pidfile=/var/run/elasticsearch/elasticsearch.pid -Des.default.path.home=/usr/share/elasticsearch -Des.default.path.logs=/var/log/elasticsearch -Des.default.path.data=/var/lib/elasticsearch -Des.default.path.conf=/etc/elasticsearch
+root      6436  1492  0 17:28 pts/0    00:00:00 grep --color=auto java
+
+----------------------------------  安装hadoop  ---------------------------
+
+[root@Va1 ~]# ls  /root/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# du  -sh  /root/hadoop/hadoop-2.7.6.tar.gz 
+207M	/root/hadoop/hadoop-2.7.6.tar.gz
+
+[root@Va1 ~]# tar  -xzvf  /root/hadoop/hadoop-2.7.6.tar.gz  -C   /usr/local/
+..............
+hadoop-2.7.6/share/doc/hadoop-project/hadoop-dist/
+hadoop-2.7.6/share/doc/hadoop-project/
+
+[root@Va1 ~]# mv   /usr/local/hadoop-2.7.6/    /usr/local/hadoop/
+[root@Va1 ~]# ls  /usr/local/hadoop/
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984        1622          76           1         285         168
+Swap:          2047          10        2037
+
+[root@Va1 ~]# systemctl  stop  elasticsearch  kibana && systemctl  disable  elasticsearch  kibana.service 
+
+Removed symlink /etc/systemd/system/multi-user.target.wants/elasticsearch.service.
+Removed symlink /etc/systemd/system/multi-user.target.wants/kibana.service.
+
+[root@Va1 ~]# netstat   -npult  |grep  java
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         128        1572           1         283        1662
+Swap:          2047          10        2037
+
+[root@Va1 ~]# ls  /usr/local/hadoop/sbin/
+distribute-exclude.sh    start-all.cmd        stop-balancer.sh
+hadoop-daemon.sh         start-all.sh         stop-dfs.cmd
+hadoop-daemons.sh        start-balancer.sh    stop-dfs.sh
+hdfs-config.cmd          start-dfs.cmd        stop-secure-dns.sh
+hdfs-config.sh           start-dfs.sh         stop-yarn.cmd
+httpfs.sh                start-secure-dns.sh  stop-yarn.sh
+kms.sh                   start-yarn.cmd       yarn-daemon.sh
+mr-jobhistory-daemon.sh  start-yarn.sh        yarn-daemons.sh
+refresh-namenodes.sh     stop-all.cmd
+slaves.sh                stop-all.sh
+
+[root@Va1 ~]# ls  /usr/local/hadoop/bin/
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
+
+[root@Va1 ~]# cd   /usr/local/hadoop/
+[root@Va1 hadoop]# ./bin/hadoop   version   ## 查看 hadoop 版本
+Error: JAVA_HOME is not set and could not be found.
+            Java_Home未设置，找不到
+
+[root@Va1 hadoop]# ls   /usr/local/hadoop/etc/hadoop/  # 全是hadoop配置文件
+capacity-scheduler.xml      httpfs-env.sh            mapred-env.sh
+configuration.xsl           httpfs-log4j.properties  mapred-queues.xml.template
+container-executor.cfg      httpfs-signature.secret  mapred-site.xml.template
+core-site.xml               httpfs-site.xml          slaves
+hadoop-env.cmd              kms-acls.xml             ssl-client.xml.example
+hadoop-env.sh               kms-env.sh               ssl-server.xml.example
+hadoop-metrics2.properties  kms-log4j.properties     yarn-env.cmd
+hadoop-metrics.properties   kms-site.xml             yarn-env.sh
+hadoop-policy.xml           log4j.properties         yarn-site.xml
+hdfs-site.xml               mapred-env.cmd
+
+[root@Va1 hadoop]# cd   /usr/local/hadoop/etc/hadoop/  #hadoop配置文件路径
+
+[root@Va1 hadoop]# ll  hadoop-env.sh              #hadoop 运行环境变量的配置文件
+-rw-r--r-- 1 20415 101 4224 4月  18 2018 hadoop-env.sh
+
+[root@Va1 hadoop]# grep  -n  "JAVA_HOME="  /usr/local/hadoop/etc/hadoop/hadoop-env.sh 
+25:export JAVA_HOME=${JAVA_HOME}
+
+[root@Va1 hadoop]# grep  -n  "JAVA_HOME="  hadoop-env.sh 
+25:export JAVA_HOME=${JAVA_HOME}
+
+[root@Va1 hadoop]# rpm  -ql  java-1.8.0-openjdk
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/policytool
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libawt_xawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjsoundalsa.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libsplashscreen.so
+/usr/share/applications/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64-policytool.desktop
+/usr/share/icons/hicolor/16x16/apps/java-1.8.0.png
+/usr/share/icons/hicolor/24x24/apps/java-1.8.0.png
+/usr/share/icons/hicolor/32x32/apps/java-1.8.0.png
+/usr/share/icons/hicolor/48x48/apps/java-1.8.0.png
+
+[root@Va1 hadoop]# rpm  -ql  java-1.8.0-openjdk  |grep  jre  #查看 Java_Home 家目录路径
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/policytool
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libawt_xawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjsoundalsa.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libsplashscreen.so
+
+[root@Va1 hadoop]# sed   -n  "/JAVA_HOME=/s?\(=\).*?\1 /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre?p"  hadoop-env.sh  #测试sed 自定义分隔符"/" ,"?","#"
+
+export JAVA_HOME= /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre
+
+[root@Va1 hadoop]# sed   -n   "/JAVA_HOME=/s#\(=\).*#\1\"/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre\"#p"   hadoop-env.sh
+
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+
+[root@Va1 hadoop]# sed  -n  "/JAVA_HOME=/p;/HADOOP_CONF_DIR=/p"  hadoop-env.sh
+export JAVA_HOME=${JAVA_HOME}                   #查看 Java_Home 家目录路径
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"/etc/hadoop"} #hadoop配置文件路径
+
+
+                                          # 设置 Java_Home 家目录路径
+[root@Va1 hadoop]# sed  -i   "/JAVA_HOME=/s#\(=\).*#\1\"/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre\"#"   hadoop-env.sh
+
+[root@Va1 hadoop]# grep  -n  "JAVA_HOME="   hadoop-env.sh  #查看 Java_Home 家目录路径
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+
+
+[root@Va1 hadoop]# ls   /usr/local/hadoop/etc/hadoop/  # 全是hadoop配置文件
+........................
+[root@Va1 hadoop]# sed -n "/HADOOP_CONF_DIR=\${/s#\(\${HADOOP_CONF_DIR:-\).*#\1\"/usr/local/hadoop/etc/hadoop/\"}#p"   hadoop-env.sh
+
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"/usr/local/hadoop/etc/hadoop/"}
+
+[root@Va1 hadoop]# sed  -n  "/HADOOP_CONF_DIR=\${/s#\${HADOOP_CONF_DIR:-.*#\"/usr/local/hadoop/etc/hadoop/\"#p"  hadoop-env.sh
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"
+
+[root@Va1 hadoop]# sed   -i   "/HADOOP_CONF_DIR=\${/s#\${HADOOP_CONF_DIR:-.*#\"/usr/local/hadoop/etc/hadoop/\"#"   hadoop-env.sh
+
+[root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"  #Java_Home 家目录路径
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
+
+[root@Va1 hadoop]# egrep  -Env "^(\s*#|$)"  hadoop-env.sh   #查看 Java_Home 家目录路径 #hadoop配置文件路径
+
+                            #查看 Java_Home 家目录路径
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"  #hadoop配置文件路径
+
+36:for f in $HADOOP_HOME/contrib/capacity-scheduler/*.jar; do
+37:  if [ "$HADOOP_CLASSPATH" ]; then
+38:    export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$f
+39:  else
+40:    export HADOOP_CLASSPATH=$f
+41:  fi
+42:done
+49:export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
+52:export HADOOP_NAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,RFAS} -Dhdfs.audit.logger=${HDFS_AUDIT_LOGGER:-INFO,NullAppender} $HADOOP_NAMENODE_OPTS"
+53:export HADOOP_DATANODE_OPTS="-Dhadoop.security.logger=ERROR,RFAS $HADOOP_DATANODE_OPTS"
+55:export HADOOP_SECONDARYNAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,RFAS} -Dhdfs.audit.logger=${HDFS_AUDIT_LOGGER:-INFO,NullAppender} $HADOOP_SECONDARYNAMENODE_OPTS"
+57:export HADOOP_NFS3_OPTS="$HADOOP_NFS3_OPTS"
+58:export HADOOP_PORTMAP_OPTS="-Xmx512m $HADOOP_PORTMAP_OPTS"
+61:export HADOOP_CLIENT_OPTS="-Xmx512m $HADOOP_CLIENT_OPTS"
+69:export HADOOP_SECURE_DN_USER=${HADOOP_SECURE_DN_USER}
+75:export HADOOP_SECURE_DN_LOG_DIR=${HADOOP_LOG_DIR}/${HADOOP_HDFS_USER}
+94:export HADOOP_PID_DIR=${HADOOP_PID_DIR}
+95:export HADOOP_SECURE_DN_PID_DIR=${HADOOP_PID_DIR}
+98:export HADOOP_IDENT_STRING=$USER
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop  version
+...................
+[root@Va1 hadoop]# cd   /usr/local/hadoop/bin/
+[root@Va1 bin]# ls
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
+
+[root@Va1 bin]# /usr/local/hadoop/bin/hadoop   version   ## 查看 hadoop 版本
+Hadoop 2.7.6
+Subversion https://shv@git-wip-us.apache.org/repos/asf/hadoop.git -r 085099c66cf28be31604560c376fa282e69282b8
+Compiled by kshvachk on 2018-04-18T01:33Z
+Compiled with protoc 2.5.0
+From source with checksum 71e2695531cb3360ab74598755d036
+This command was run using /usr/local/hadoop/share/hadoop/common/hadoop-common-2.7.6.jar
+
+[root@Va1 bin]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
