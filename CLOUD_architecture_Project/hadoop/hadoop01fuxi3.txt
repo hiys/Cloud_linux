@@ -387,7 +387,7 @@ hadoop-env.sh               kms-env.sh               ssl-server.xml.example
 25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"  #Java_Home 家目录路径
 33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
 
-[root@Va1 hadoop]# egrep  -Env "^(\s*#|$)"  hadoop-env.sh   #查看 Java_Home 家目录路径 #hadoop配置文件路径
+[root@Va1 hadoop]# grep  -Env "^(\s*#|$)"  hadoop-env.sh   #查看 Java_Home 家目录路径 #hadoop配置文件路径
 
                             #查看 Java_Home 家目录路径
 25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
@@ -629,20 +629,129 @@ etc  lib      LICENSE.txt  newdir2  NOTICE.txt  README.txt  share
 part-r-00000  _SUCCESS
 [root@Va1 hadoop]# cat  newdir3/part-r-00000 
 891	he
-[root@Va1 hadoop]# 
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         107        1736           8         140        1717
+Swap:          2047           0        2047
+[root@Va1 ~]# echo  "scale=2;1024/128" |bc
+8.00
+[root@Va1 ~]# echo  "scale=2;1024%128" |bc
+0
+[root@Va1 ~]# echo  "scale=2;128*8" |bc
+1024
+ [root@Va1 ~]# egrep  -nv  "^(\s*#|$)"  /usr/local/hadoop/etc/hadoop/hadoop-env.sh 
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"
+36:for f in $HADOOP_HOME/contrib/capacity-scheduler/*.jar; do
+37:  if [ "$HADOOP_CLASSPATH" ]; then
+38:    export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$f
+39:  else
+40:    export HADOOP_CLASSPATH=$f
+41:  fi
+42:done
+49:export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
+52:export HADOOP_NAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,RFAS} -Dhdfs.audit.logger=${HDFS_AUDIT_LOGGER:-INFO,NullAppender} $HADOOP_NAMENODE_OPTS"
+53:export HADOOP_DATANODE_OPTS="-Dhadoop.security.logger=ERROR,RFAS $HADOOP_DATANODE_OPTS"
+55:export HADOOP_SECONDARYNAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,RFAS} -Dhdfs.audit.logger=${HDFS_AUDIT_LOGGER:-INFO,NullAppender} $HADOOP_SECONDARYNAMENODE_OPTS"
+57:export HADOOP_NFS3_OPTS="$HADOOP_NFS3_OPTS"
+58:export HADOOP_PORTMAP_OPTS="-Xmx512m $HADOOP_PORTMAP_OPTS"
+61:export HADOOP_CLIENT_OPTS="-Xmx512m $HADOOP_CLIENT_OPTS"
+69:export HADOOP_SECURE_DN_USER=${HADOOP_SECURE_DN_USER}
+75:export HADOOP_SECURE_DN_LOG_DIR=${HADOOP_LOG_DIR}/${HADOOP_HDFS_USER}
+94:export HADOOP_PID_DIR=${HADOOP_PID_DIR}
+95:export HADOOP_SECURE_DN_PID_DIR=${HADOOP_PID_DIR}
+98:export HADOOP_IDENT_STRING=$USER
 
+[root@Va1 ~]# ls  /usr/local/hadoop/
+bin  include  libexec      newdir   newdir3     olddir      sbin
+etc  lib      LICENSE.txt  newdir2  NOTICE.txt  README.txt  share
 
+[root@Va1 ~]# cd   /usr/local/hadoop/bin/ ;ls
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
 
+[root@Va1 bin]# head  -4 /usr/local/hadoop/bin/hadoop
+#!/usr/bin/env bash
 
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
 
+[root@Va1 bin]# tail  -4 /usr/local/hadoop/bin/hadoop
 
+    exec "$JAVA" $JAVA_HEAP_MAX $HADOOP_OPTS $CLASS "$@"
+    ;;
 
+esac
+[root@Va1 bin]# file  /usr/bin/env
+/usr/bin/env: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked 
+(uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=4279a25ddbac2a7480923cd05d70e33a73dce721, stripped
+ ELF 电子测位器，电子定位器(Electronic Location Finder)
+一种为Linux系统所采用的通用文件格式，支持动态连接
 
+[root@Va1 bin]# file   /usr/local/hadoop/bin/hadoop
+/usr/local/hadoop/bin/hadoop: a /usr/bin/env bash script, ASCII text executable
 
+ ###  /usr/local/hadoop/bin/hadoop  version ## 查看 hadoop 版本
 
+[root@Va1 bin]# cd    /usr/local/hadoop/etc/hadoop/
+[root@Va1 hadoop]# ls
+capacity-scheduler.xml      kms-env.sh
+configuration.xsl           kms-log4j.properties
+container-executor.cfg      kms-site.xml
+core-site.xml               log4j.properties
+hadoop-env.cmd              mapred-env.cmd
+hadoop-env.sh               mapred-env.sh
+hadoop-metrics2.properties  mapred-queues.xml.template
+hadoop-metrics.properties   mapred-site.xml.template
+hadoop-policy.xml           slaves
+hdfs-site.xml               ssl-client.xml.example
+httpfs-env.sh               ssl-server.xml.example
+httpfs-log4j.properties     yarn-env.cmd
+httpfs-signature.secret     yarn-env.sh
+httpfs-site.xml             yarn-site.xml
+kms-acls.xml
 
+Hadoop Distributed File  System(HDFS)：
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
 
+ Hadoop常用组件以及核心组件有哪些
 
+HDFS：Hadoop分布式文件系统（核心组件）
+MapReduce：分布式计算框架（核心组件）
+Yarn：集群资源管理系统（核心组件）
+
+Zookeeper：分布式协作服务
+Hbase：分布式列存数据库
+Hive：基于Hadoop的数据仓库
+Sqoop：数据同步工具
+Pig：基于Hadoop的数据流系统
+Mahout：数据挖掘算法库
+Flume：日志收集工具
+
+Yarn，英文全名是 Yet Another Resource Negotiator，
+是由雅虎开发的第二代集群资源调度器
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop/etc/hadoop
+[root@Va1 hadoop]# cp   mapred-site.xml.template  mapred-site.xml
+[root@Va1 hadoop]# ll  mapred-site.xml
+-rw-r--r-- 1 root root 758 1月  25 15:24 mapred-site.xml
+[root@Va1 hadoop]# ll  core-site.xml   hadoop-env.sh   hdfs-site.xml   mapred-site.xml   slaves   yarn-site.xml 
+-rw-r--r-- 1 20415  101  774 4月  18 2018 core-site.xml # 全局配置文件
+-rw-r--r-- 1 20415  101 4275 1月  24 19:06 hadoop-env.sh
+-rw-r--r-- 1 20415  101  775 4月  18 2018 hdfs-site.xml  # HDFS：Hadoop分布式文件系统（核心组件）
+-rw-r--r-- 1 root  root  758 1月  25 15:24 mapred-site.xml # MapReduce：分布式计算框架（核心组件）
+-rw-r--r-- 1 20415  101   10 4月  18 2018 slaves  # 节点配置文件(主机名)
+-rw-r--r-- 1 20415  101  690 4月  18 2018 yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
+
+                          #查看 Java_Home 家目录路径 #hadoop配置文件路径
+[root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre" 
+         #Java_Home 家目录路径
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
 
 
 
