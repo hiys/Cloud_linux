@@ -1946,6 +1946,11 @@ lftp 192.168.0.254:/> bye
 [root@Va1 ~]# vimdiff  hadp/slaves   hadp/slaves  #对比文件内容 vim 小技巧
 :qa!退出
 --------------------------------------------------------------------------------
+[root@Va1 ~]# for  i  in  Va{2..4};do  ssh  $i  shutdown  -h  now;done
+Connection to va2 closed by remote host.
+Connection to va3 closed by remote host.
+Connection to va4 closed by remote host.
+[root@Va1 ~]# shutdown  -h  now
 
 
 
