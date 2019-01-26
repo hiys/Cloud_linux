@@ -1,0 +1,2154 @@
+hadoop 安装 （单机模式）
+
+禁用 selinux 和 iptables
+
+配置 /etc/hosts 保证所有主机域名能够相互解析
+
+1、安装 java 
+yum install java-1.8.0-openjdk -y
+
+验证：
+java -version
+
+2、安装 jps
+yum install java-1.8.0-openjdk-devel -y
+
+验证：
+jps
+
+3、安装 hadoop 
+tar zxf hadoop-2.7.3.tar.gz
+mv hadoop-2.7.3 /usr/local/hadoop
+
+修改配置文件的运行环境：
+/usr/local/hadoop/etc/hadoop/hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+验证：
+cd /usr/local/hadoop
+./bin/hadoop version
+
+统计分析热词
+创建数据源
+mkdir input
+在这个文件夹里面放入需要统计分析的数据
+cp *.txt input/
+
+统计分析1  单词出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+统计分析2  某一个关键词出现的频率，例如 dfs 这个词前面字母是 h 的出现的频率
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep input output1 '(?<=h)dfs'
+
+排错 1
+提示  JAVA_HOME is not set and could not be found
+表示  JAVA_HOME 没有设置
+解决方法：
+设置 hadoop-env.sh 里面的 JAVA_HOME 或在运行脚本前面加入前置变量设置
+JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre" ./bin/hadoop jar ./share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar wordcount input output
+
+排错 2
+提示 java.net.UnknownHostException: host: host: unknown error
+	at java.net.InetAddress.getLocalHost(InetAddress.java:1505)
+表示主机名没有 IP 解析
+解决方法：
+在 /etc/hosts 里面增加 主机名 IP 对应关系
+
+排错 3
+提示：17/07/24 23:10:46 INFO jvm.JvmMetrics: Cannot initialize JVM Metrics with processName=JobTracker, sessionId= - already initialized
+org.apache.hadoop.mapred.FileAlreadyExistsException: Output directory file:/usr/local/hadoop/output already exists
+表示输出的文件目录已经存在
+解决方法：
+删除已经存在的目录或更改结果保存位置
+
+伪分布式配置：
+
+xml 配置格式
+<property>
+        <name>关键字</name>
+        <value>变量值</value>
+        <description> 描述 </description>
+</property>
+
+配置文件路径 /usr/local/hadoop/etc/hadoop/
+1 配置 hadoop-env.sh
+export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.65-3.b17.el7.x86_64/jre"
+export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop"
+
+查找 JAVA_HOME
+readlink -f $(which java)
+
+[root@Va1 ~]# which  readlink 
+/usr/bin/readlink
+[root@Va1 ~]# type  readlink
+readlink 是 /usr/bin/readlink
+[root@Va1 ~]# which   java
+/usr/bin/java
+[root@Va1 ~]# type java
+java 是 /usr/bin/java
+[root@Va1 ~]# readlink   -f  /usr/bin/java
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/java
+
+http://hadoop.apache.org/docs/r2.7.6/
+ 靠近网页左下角 的链接文档
+Configuration
+ core-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/core-site.xml
+
+ hdfs-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+ mapred-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/mapred-site.xml
+ yarn-default.xml  对应配置文件   /usr/local/hadoop/etc/hadoop/yarn-site.xml 
+
+点击 core-default.xml 打开网页
+http://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-common/core-default.xml
+
+2 配置 core-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-common/core-default.xml
+
+------------- /usr/local/hadoop/etc/hadoop/core-site.xml  ----
+
+[root@Va1 hadoop]# tail   -10  /usr/local/hadoop/etc/hadoop/core-site.xml 
+<configuration>
+ <property>
+  <name>fs.defaultFS</name>
+  <value>hdfs://Va1:9000</value>
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value>
+ </property>
+</configuration>
+
+
+点击  hdfs-default.xml  打开网页
+http://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+3 配置 hdfs-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+--------------------------/usr/local/hadoop/etc/hadoop/hdfs-site.xml -----------------
+
+[root@Va1 hadoop]# tail  -15  /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+
+<configuration>
+ <property>
+  <name>dfs.namenode.http-address</name>
+  <value>Va1:50070</value>
+ </property>
+ <property>
+  <name>dfs.namenode.secondary.http-address</name>
+  <value>Va1:50090</value>
+ </property>
+ <property>
+  <name>dfs.replication</name>
+  <value>2</value>
+ </property>
+</configuration>
+
+[root@Va1 hadoop]# 
+
+
+常用配置选项
+dfs.namenode.name.dir
+dfs.datanode.data.dir
+dfs.namenode.http-address
+dfs.namenode.secondary.http-address
+dfs.webhdfs.enabled
+dfs.permissions.enabled
+
+4 配置 mapred-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-mapreduce-client/hadoop-mapreduce-client-core/mapred-default.xml
+
+<configuration>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>mapreduce.jobtracker.http.address</name>
+        <value>master:50030</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>master:10020</value>
+    </property>
+    <property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>master:19888</value>
+    </property>
+</configuration>
+
+常用配置选项
+mapreduce.framework.name
+mapreduce.jobtracker.http.address
+mapreduce.jobhistory.address
+mapreduce.jobhistory.webapp.address
+
+5 配置 yarn-site.xml
+https://hadoop.apache.org/docs/r2.7.3/hadoop-yarn/hadoop-yarn-common/yarn-default.xml
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>myhadoop</value>
+    </property>
+
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>master</value>
+    </property>
+</configuration>
+
+
+常用配置选项
+yarn.nodemanager.aux-services
+yarn.nodemanager.aux-services.mapreduce.shuffle.class
+yarn.resourcemanager.hostname
+
+
+Google三驾马车——GFS、MapReduce、Bigtable
+
+
+[root@room9pc01 ~]# unzip   /var/git/Hadoop.zip   -d   /var/ftp/
+Archive:  /var/git/Hadoop.zip
+  inflating: /var/ftp/hadoop/hadoop-2.7.6.tar.gz  
+ extracting: /var/ftp/hadoop/kafka_2.10-0.10.2.1.tgz  
+  inflating: /var/ftp/hadoop/zookeeper-3.4.10.tar.gz  
+
+[root@room9pc01 ~]# ls  /var/ftp/
+ansible  CentOS7-1708  elk  hadoop  pub  rhel7  share
+
+[root@room9pc01 ~]# ls  /var/ftp/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# cat  /etc/hosts  #hadoop 对主机名强依赖,必须添加域名解析配置
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+
+-------------------------------------------------
+[root@Va1 ~]# mkdir   /root/hadoop
+[root@Va1 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> lcd  /root/hadoop/  #选择下载保存文件的家目录
+lcd 成功, 本地目录=/root/hadoop
+lftp 192.168.0.254:~> mget   hadoop/* #从 lftp服务器上一次下载多个文件
+290212575 bytes transferred                                     
+Total 3 files transferred
+lftp 192.168.0.254:/> exit
+[root@Va1 ~]# ls  /root/hadoop
+hadoop/              hadoop-2.7.6.tar.gz  
+
+[root@Va1 ~]# ls  /root/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# du  -sh  /root/hadoop/hadoop-2.7.6.tar.gz 
+207M	/root/hadoop/hadoop-2.7.6.tar.gz
+
+ ------------------------------------------- 安装java环境 -----------------------
+[root@Va1 ~]# yum  -y  install  java-1.8.0-openjdk  java-1.8.0-openjdk-devel
+........
+已安装:
+  java-1.8.0-openjdk-devel.x86_64 1:1.8.0.131-11.b12.el7                                
+
+完毕！
+[root@Va1 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+ 
+没添加option的时候，默认列出VM标示符号和简单的class或jar名称.如下:
+[root@Va1 ~]# jps  #
+1121 Elasticsearch
+6158 Jps
+
+----------------------------------  安装hadoop  ---------------------------
+
+[root@Va1 ~]# ls  /root/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+[root@Va1 ~]# du  -sh  /root/hadoop/hadoop-2.7.6.tar.gz 
+207M	/root/hadoop/hadoop-2.7.6.tar.gz
+
+[root@Va1 ~]# tar  -xzvf  /root/hadoop/hadoop-2.7.6.tar.gz  -C   /usr/local/
+..............
+[root@Va1 ~]# mv   /usr/local/hadoop-2.7.6/    /usr/local/hadoop/
+[root@Va1 ~]# ls  /usr/local/hadoop/
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+
+[root@Va1 ~]# systemctl  stop  elasticsearch  kibana && systemctl  disable  elasticsearch  kibana.service 
+
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         128        1572           1         283        1662
+Swap:          2047          10        2037
+
+[root@Va1 ~]# ls  /usr/local/hadoop/sbin/
+distribute-exclude.sh    start-all.cmd        stop-balancer.sh
+.........................
+slaves.sh                stop-all.sh
+
+[root@Va1 ~]# ls  /usr/local/hadoop/bin/
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
+
+[root@Va1 ~]# cd   /usr/local/hadoop/
+
+[root@Va1 hadoop]# ./bin/hadoop   version   ## 查看 hadoop 版本
+Error: JAVA_HOME is not set and could not be found.
+            Java_Home未设置，找不到
+
+[root@Va1 hadoop]# rpm  -ql  java-1.8.0-openjdk  |grep  jre  #查看 Java_Home 家目录路径
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/bin/policytool
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libawt_xawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjawt.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libjsoundalsa.so
+/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre/lib/amd64/libsplashscreen.so
+
+[root@Va1 hadoop]# cd   /usr/local/hadoop/etc/hadoop/  #hadoop配置文件路径
+
+[root@Va1 hadoop]# ll  hadoop-env.sh              #hadoop 运行环境变量的配置文件
+-rw-r--r-- 1 20415 101 4224 4月  18 2018 hadoop-env.sh
+
+
+[root@Va1 hadoop]# sed  -n  "/JAVA_HOME=/p;/HADOOP_CONF_DIR=/p"  hadoop-env.sh
+export JAVA_HOME=${JAVA_HOME}                   #查看 Java_Home 家目录路径
+export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"/etc/hadoop"} #hadoop配置文件路径
+
+--------------------------------- 修改配置文件的运行环境： ----------------------------------------
+
+                                          # 设置 Java_Home 家目录路径
+[root@Va1 hadoop]# sed  -i   "/JAVA_HOME=/s#\(=\).*#\1\"/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre\"#"   hadoop-env.sh
+
+[root@Va1 hadoop]# ls   /usr/local/hadoop/etc/hadoop/  # 全是hadoop配置文件
+........................
+[root@Va1 hadoop]# ls   /usr/local/hadoop/etc/hadoop/  # 全是hadoop配置文件
+.......................   
+                                                      # 设置 hadoop配置文件路径
+[root@Va1 hadoop]# sed  -i  "/HADOOP_CONF_DIR=\${/s#\${HADOOP_CONF_DIR:-.*#\"/usr/local/hadoop/etc/hadoop/\"#"  hadoop-env.sh
+
+                                                   #查看 Java_Home 家目录路径 #hadoop配置文件路径
+[root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"  #Java_Home 家目录路径
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
+
+[root@Va1 hadoop]# grep  -Env "^(\s*#|$)"  hadoop-env.sh   #查看 Java_Home 家目录路径 #hadoop配置文件路径
+
+                            #查看 Java_Home 家目录路径
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"  #hadoop配置文件路径
+
+36:for f in $HADOOP_HOME/contrib/capacity-scheduler/*.jar; do
+37:  if [ "$HADOOP_CLASSPATH" ]; then
+38:    export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$f
+39:  else
+40:    export HADOOP_CLASSPATH=$f
+41:  fi
+42:done
+.....................
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop  version ## 查看 hadoop 版本
+...................
+[root@Va1 hadoop]# cd   /usr/local/hadoop/bin/
+[root@Va1 bin]# ls
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
+
+[root@Va1 bin]# /usr/local/hadoop/bin/hadoop   version   ## 查看 hadoop 版本
+Hadoop 2.7.6
+Subversion https://shv@git-wip-us.apache.org/repos/asf/hadoop.git -r 085099c66cf28be31604560c376fa282e69282b8
+Compiled by kshvachk on 2018-04-18T01:33Z
+Compiled with protoc 2.5.0
+From source with checksum 71e2695531cb3360ab74598755d036
+This command was run using /usr/local/hadoop/share/hadoop/common/hadoop-common-2.7.6.jar
+
+[root@Va1 bin]# pwd
+/usr/local/hadoop/bin
+[root@Va1 bin]# cd  ../
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop
+[root@Va1 hadoop]# ls
+bin  etc  include  lib  libexec  LICENSE.txt  NOTICE.txt  README.txt  sbin  share
+
+[root@Va1 hadoop]# mkdir  newtest  # 创建数据源
+
+[root@Va1 hadoop]# cp  *.txt  newtest/ # 创建数据源
+[root@Va1 hadoop]# ls   newtest/
+LICENSE.txt  NOTICE.txt  README.txt
+
+[root@Va1 hadoop]# ./bin/hadoop  --help  |grep  -A2  "jar <jar>"
+  jar <jar>            run a jar file
+                       note: please use "yarn jar" to launch
+                             YARN applications, not this command.
+           请使用“yarn jar”启动 yarn 应用程序，而不是此命令。
+
+[root@Va1 hadoop]# ./bin/hadoop  jar  share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar
+  
+An example program must be given as the first argument.
+必须给出一个示例程序作为第一个参数。
+Valid program names are:
+有效的程序名是：
+  aggregatewordcount: An Aggregate based map/reduce program that counts the words in the input files.
+...........................
+  distbbp: A map/reduce program that uses a BBP-type formula to compute exact bits of Pi.
+  grep: A map/reduce program that counts the matches of a regex in the input.
+  join: A job that effects a join over sorted, equally partitioned datasets
+................
+  sort: A map/reduce program that sorts the data written by the random writer.
+..................
+  wordcount: A map/reduce program that counts the words in the input files.
+  wordmean: A map/reduce program that counts the average length of the words in the input files.
+...............
+[root@Va1 hadoop]# ./bin/hadoop  jar  share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   |grep  wordcount
+
+聚合字计数 : 一种基于聚合的映射/减少程序，对输入文件中的字进行计数。
+  aggregatewordcount: An Aggregate based map/reduce program that counts the words in the input files.
+  wordcount: A map/reduce program that counts the words in the input files.
+                对输入文件中的字进行计数的映射/减少程序。
+
+
+# 可执行文件/usr/local/hadoop/bin/hadoop  jar（使用hadoop运行jar包）   运行的jar文件(.jar包)   (要使用的类名)程序名wordcount  (参数)输入的文件路径(已有的)   (参数)输出的文件路径(可以是还不存在的文件夹)
+
+[root@Va1 hadoop]# ./bin/hadoop  jar  share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   wordcount
+Usage: wordcount <in> [<in>...] <out>
+
+# 可执行文件/usr/local/hadoop/bin/hadoop  jar  运行的jar文件(.jar包)   (参数)程序名wordcount  输入的文件路径(已有的)   输出的文件路径(可以是还不存在的文件夹)
+  ----------------------------统计分析1  单词出现的频率 ----------------------------
+
+[root@Va1 hadoop]# ./bin/hadoop  jar  share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   wordcount  newtest  new2  # 统计出现频率(对输入文件中的字进行计数)
+...................
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=102768
+	File Output Format Counters 
+		Bytes Written=30538
+[root@Va1 hadoop]# ll  new2/
+总用量 32
+-rw-r--r-- 1 root root 30290 1月  24 19:57 part-r-00000
+-rw-r--r-- 1 root root     0 1月  24 19:57 _SUCCESS
+
+[root@Va1 hadoop]# head  -2  new2/part-r-00000
+""AS	2
+"AS	17
+[root@Va1 hadoop]# tail   -3  new2/part-r-00000
+“You”	2
+“commercial	3
+“control”	1
+
+[root@Va1 hadoop]# grep  701  new2/part-r-00000 ##查看结果中 统计出现频率最大的字词
+252.227-7014(a)(1))	1
+the	701
+ 252.227-7014(a)(1))	1
+
+
+[root@Va1 hadoop]# mkdir   olddir/   # 创建数据源
+[root@Va1 hadoop]# cp  *.txt   olddir/
+
+                    -------------------------------------- 统计分析1  单词出现的频率 ------------------------------------
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop  jar    share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   wordcount   olddir/   newdir
+
+# 可执行文件/usr/local/hadoop/bin/hadoop  jar（使用hadoop运行jar包）   运行的jar文件(.jar包)   (要使用的类名)程序名wordcount  (参数)输入的文件路径(已有的)   (参数)输出的文件路径(可以是还不存在的文件夹)
+
+....................
+
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=102768
+	File Output Format Counters 
+		Bytes Written=30538
+[root@Va1 hadoop]#  ll  newdir/
+总用量 32
+-rw-r--r-- 1 root root 30290 1月  24 20:51 part-r-00000
+-rw-r--r-- 1 root root     0 1月  24 20:51 _SUCCESS
+
+非打印字符
+非打印字符也可以是正则表达式的组成部分。下表列出了表示非打印字符的转义序列：
+\s	匹配任何空白字符，包括空格、制表符、换页符等等。等价于 [ \f\n\r\t\v]。注意 Unicode 正则表达式会匹配全角空格符。
+\S	匹配任何非空白字符。等价于 [^ \f\n\r\t\v]。
+\t	匹配一个制表符。等价于 \x09 和 \cI。
+\v	匹配一个垂直制表符。等价于 \x0b 和 \cK。
+\f	匹配一个换页符。等价于 \x0c 和 \cL。
+\n	匹配一个换行符。等价于 \x0a 和 \cJ。
+\r	匹配一个回车符。等价于 \x0d 和 \cM。
+http://www.runoob.com/regexp/regexp-syntax.html
+
+[root@Va1 hadoop]# egrep  -n  "\s([0-9]){3,}"   newdir/part-r-00000 
+124:*	174
+768:OF	169
+770:OR	170
+930:THE	116
+1028:You	125
+1037:a	157
+1105:and	285
+1110:any	129
+1197:by	134
+1657:in	174
+1710:is	100
+1920:of	448
+1941:or	277
+2265:that	119
+2267:the	701
+2283:this	183
+2289:to	253
+2369:with	105
+[root@Va1 hadoop]# ls  newdir/
+part-r-00000  _SUCCESS
+[root@Va1 hadoop]# ls  olddir/
+LICENSE.txt  NOTICE.txt  README.txt
+
+[root@Va1 hadoop]# cat  newdir/_SUCCESS 
+[root@Va1 hadoop]# ll  newdir/_SUCCESS
+-rw-r--r-- 1 root root 0 1月  24 20:51 newdir/_SUCCESS
+
+# 可执行文件/usr/local/hadoop/bin/hadoop  jar（使用hadoop运行jar包）   运行的jar文件(.jar包)   (要使用的类名)程序名wordcount  (参数)输入的文件路径(已有的)   (参数)输出的文件路径(可以是还不存在的文件夹)
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop  jar    share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   wordcount   olddir/   newdir  
+         # 报错提示文件已经存在/usr/local/hadoop/newdir already exists
+........................
+
+[root@Va1 hadoop]# 统计分析2  某一个关键词出现的频率，例如 dfs 这个词前面字母是 h 的出现的频率
+
+# 可执行文件/usr/local/hadoop/bin/hadoop  jar（使用hadoop运行jar包）   运行的jar文件(.jar包)   (要使用的类名)程序名wordcount  (参数)输入的文件路径(已有的)   (参数)输出的文件路径(可以是还不存在的文件夹)
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop  jar    share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   grep   olddir/  newdir2   '(?<=h)dfs'
+.......................
+[root@Va1 hadoop]# ls   
+bin  include  libexec      newdir   NOTICE.txt  README.txt  share
+etc  lib      LICENSE.txt  newdir2  olddir      sbin
+[root@Va1 hadoop]# ls   newdir2/
+part-r-00000  _SUCCESS
+
+[root@Va1 hadoop]# cat  newdir2/part-r-00000
+10	dfs
+------------- 统计分析  某一个关键词出现的频率，例如 he 这个词前面字母是 t 的出现的频率 ----------
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hadoop  jar    share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.6.jar   grep   olddir/  newdir3  '(?<=t)he'
+..............
+	      WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=117
+	File Output Format Counters 
+		Bytes Written=19
+[root@Va1 hadoop]# ls
+bin  include  libexec      newdir   newdir3     olddir      sbin
+etc  lib      LICENSE.txt  newdir2  NOTICE.txt  README.txt  share
+[root@Va1 hadoop]# ls   newdir3/
+part-r-00000  _SUCCESS
+[root@Va1 hadoop]# cat  newdir3/part-r-00000 
+891	he
+[root@Va1 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1984         107        1736           8         140        1717
+Swap:          2047           0        2047
+[root@Va1 ~]# echo  "scale=2;1024/128" |bc
+8.00
+[root@Va1 ~]# echo  "scale=2;1024%128" |bc
+0
+[root@Va1 ~]# echo  "scale=2;128*8" |bc
+1024
+ [root@Va1 ~]# egrep  -nv  "^(\s*#|$)"  /usr/local/hadoop/etc/hadoop/hadoop-env.sh 
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"
+36:for f in $HADOOP_HOME/contrib/capacity-scheduler/*.jar; do
+37:  if [ "$HADOOP_CLASSPATH" ]; then
+38:    export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$f
+39:  else
+40:    export HADOOP_CLASSPATH=$f
+41:  fi
+42:done
+...................
+
+[root@Va1 ~]# ls  /usr/local/hadoop/
+bin  include  libexec      newdir   newdir3     olddir      sbin
+etc  lib      LICENSE.txt  newdir2  NOTICE.txt  README.txt  share
+
+[root@Va1 ~]# cd   /usr/local/hadoop/bin/ ;ls
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
+
+[root@Va1 bin]# head  -4 /usr/local/hadoop/bin/hadoop
+#!/usr/bin/env bash
+.............
+
+[root@Va1 bin]# file  /usr/bin/env
+/usr/bin/env: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked 
+(uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=4279a25ddbac2a7480923cd05d70e33a73dce721, stripped
+ ELF 电子测位器，电子定位器(Electronic Location Finder)
+一种为Linux系统所采用的通用文件格式，支持动态连接
+
+[root@Va1 bin]# file   /usr/local/hadoop/bin/hadoop
+/usr/local/hadoop/bin/hadoop: a /usr/bin/env bash script, ASCII text executable
+
+ ###  /usr/local/hadoop/bin/hadoop  version ## 查看 hadoop 版本
+
+---------------------------- rsync 本地同步至远程 ------------------------- 
+daemon模式
+1、服务启动方式
+1.1、对于负荷较重的 rsync 服务器应该使用独立运行方式
+# yum install rsync xinetd --服务安装
+# /usr/bin/rsync --daemon
+
+1.2、对于负荷较轻的 rsync 服务器可以使用 xinetd 运行方式
+# yum install rsync xinetd --服务安装
+# vim /etc/xinetd.d/rsync --配置托管服务，将下项改为 no
+disable = no
+# /etc/init.d/xinetd start --启动托管服务 xinetd
+# chkconfig rsync on
+# netstat -ntpl | grep 873 --查看服务是否启动
+..........
+服务端配置
+# vim /etc/rsyncd.conf --为 rsyncd 服务编辑配置文件，默认没有，需自己编辑
+uid = root --rsync运行权限为root
+gid = root --rsync运行权限为root
+use chroot = no --是否让进程离开工作目录
+max connections = 5 --最大并发连接数，0为不限制
+........................
+[web1] --模块名称
+path = /data/test/src --该模块存放文件的基础路径
+ignore errors = yes --忽略一些无关的I/O错误
+read only = no --客户端可以上传
+write only = no --客户端可以下载
+hosts allow = 192.168.22.12 --允许连接的客户端主机ip
+hosts deny = * --黑名单，*表示任何主机
+list = yes
+auth users = web --认证此模块的用户名
+secrets file = /etc/web.passwd --指定存放“用户名：密码”格式的文件
+# mkdir /data/test/src --创建基础目录
+# mkdir /data/test/src/george --再创建一个目录
+# touch /data/test/src/{1,2,3}
+# echo "web:123" > /etc/web.passwd --创建密码文件
+# chmod 600 /etc/web.passwd
+
+# service xinetd restart
+................
+# rsync -ir --password-file=/tmp/rsync.password web@192.168.22.11::web1 --递归列出服务端 web1 模块的文件
+# rsync -avzP --exclude="*3*" --password-file=/tmp/rsync.password web@192.168.22.11::web1  /data/test/ --同步除了路径以及文件名中包含 “3” *的所有文件
+
+、通过密码文件同步
+# echo "123"> /tmp/rsync.password
+# chmod 600 /tmp/rsync.password
+# rsync -avzP --delete --password-file=/tmp/rsync.password web@192.168.22.11::web1 /data/test/ --调用密码文件
+
+http://www.cnblogs.com/george-guo/p/7718515.html
+
+rsync 参数说明：
+-a --参数，相当于-rlptgoD， 
+-r --是递归 
+-l --是链接文件，意思是拷贝链接文件
+-i --列出 rsync 服务器中的文件
+-p --表示保持文件原有权限
+-t --保持文件原有时间 
+-g --保持文件原有用户组 
+-o --保持文件原有属主 
+-D --相当于块设备文件 
+-z --传输时压缩
+-P --传输进度 
+-v --传输时的进度等信息，和-P有点关系 
+
+[root@Va1 ~]# for  i  in  192.168.0.1{2..9};
+do rsync  -av   /etc/yum.repos.d/local.repo '-e  ssh  -p22'  root@${i}:/etc/yum.repos.d/;
+done
+root@192.168.0.12's password: 1
+
+[root@Va1 bin]# cd    /usr/local/hadoop/etc/hadoop/
+[root@Va1 hadoop]# ls
+...........................
+====================================================
+配置 /etc/hosts 保证所有主机域名能够相互解析
+==========   完全分布式 系统规划 =======================
+主机                            角色                 软件 
+192.168.0.11 Va1       NameNode           HDFS
+                   SecondaryNameNode
+192.168.0.12 Va2      DataNode            HDFS
+192.168.0.13 Va3      DataNode            HDFS
+192.168.0.14 Va4      DataNode            HDFS
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop/etc/hadoop
+
+[root@Va1 hadoop]# cp   mapred-site.xml.template  mapred-site.xml
+
+[root@Va1 hadoop]# ll  mapred-site.xml
+-rw-r--r-- 1 root root 758 1月  25 15:24 mapred-site.xml
+[root@Va1 hadoop]# ll  core-site.xml   hadoop-env.sh   hdfs-site.xml   mapred-site.xml   slaves   yarn-site.xml 
+-rw-r--r-- 1 20415  101  774 4月  18 2018 core-site.xml # 全局配置文件
+-rw-r--r-- 1 20415  101 4275 1月  24 19:06 hadoop-env.sh
+-rw-r--r-- 1 20415  101  775 4月  18 2018 hdfs-site.xml  # HDFS：Hadoop分布式文件系统（核心组件）
+-rw-r--r-- 1 root  root  758 1月  25 15:24 mapred-site.xml # MapReduce：分布式计算框架（核心组件）
+-rw-r--r-- 1 20415  101   10 4月  18 2018 slaves  # 节点配置文件(主机名)
+-rw-r--r-- 1 20415  101  690 4月  18 2018 yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
+
+                          #查看 Java_Home 家目录路径 #hadoop配置文件路径
+[root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre" 
+         #Java_Home 家目录路径
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
+
+[root@Va1 ~]# ping  -c1  Va2 >/dev/null  && echo Va2 ok;ping -c1 Va3 >/dev/null && echo Va3 ok ;ping  -c1  Va4 >/dev/null  && echo Va4 ok
+Va2 ok
+Va3 ok
+Va4 ok
+
+[root@Va1 .ssh]# >  known_hosts
+[root@Va1 .ssh]# ssh-keygen  -t  rsa  -b  2048  -N  ''  ##注意-N 空格''
+# ssh-keygen  -t 指定密钥的类型  -b 指定密钥长度  -N new_passphrase提供一个新的密码
+
+[root@Va1 ~]# ls  /root/.ssh/
+id_rsa  id_rsa.pub  known_hosts
+
+ssh-copy-id 命令可以把本地的ssh公钥文件安装到远程主机对应的账户下。
+用ssh-copy-id -i  ~/.ssh/id_rsa.pub  root@192.168.0.12将公钥复制到远程机器中
+“-i”选项 指定 这个认证文件（默认是~/.ssh/id_rsa.pub）被使用，
+                     不管在你的ssh-agent那里是否有任何密钥
+
+ssh-copy-id 将key写到远程机器的 ~/ .ssh/authorized_key 文件中
+
+[root@Va2 ~]# ls  /root/.ssh/
+authorized_keys
+[root@Va2 ~]# ls  ~/.ssh/
+authorized_keys
+[root@Va2 ~]# rm  -f  ~/.ssh/authorized_keys 
+[root@Va1 ~]# rm  -f /root/.ssh/*
+[root@Va1 ~]# ls  /root/.ssh/
+[root@Va1 ~]# vim   /etc/ssh/ssh_config  #客户端配置文件
+[root@Va1 ~]# egrep   -nA2  "^Host *"   /etc/ssh/ssh_config
+58:Host *
+59-	GSSAPIAuthentication yes
+60-        StrictHostKeyChecking no
+
+[root@Va1 ~]# ssh-keygen   -t  rsa  -b 2048 -N ''   # 生成免密码登陆的密码钥匙
+
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:直接回车
+SHA256:Yg1RJNIpI6nfu28eUNTKHLyPfIqU5JGdEELhC9dXy2M root@Va1
+The key's randomart image is:
++---[RSA 2048]----+
+| .+oo++=+        |
+| .oo+o==..       |
+|..o..O+=E        |
+|.o .+oB+ .       |
+| ..+.+ooS        |
+|  . =oo.o        |
+|   . o.o         |
+|    o o.         |
+|    .=o          |
++----[SHA256]-----+
+
+[root@Va1 ~]# ls  /root/.ssh/
+id_rsa  id_rsa.pub
+                             # 批量传递公钥
+[root@Va1 ~]# for  i in  Va{2..4}; do 
+> ssh-copy-id  -i  ~/.ssh/id_rsa.pub  root@$i
+> done
+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@va2's password:  输入密码
+.........
+[root@Va1 ~]# ls  /root/.ssh/
+id_rsa  id_rsa.pub  known_hosts
+
+[root@Va1 ~]# cat  /root/.ssh/known_hosts 
+va2,192.168.0.12 ecdsa-sha2-nistp256 AAAAE2VjZHNhLX...............
+va3,192.168.0.13 ecdsa-sha2-nistp256 AAAAE2VjZHNhL.............
+va4,192.168.0.14 ecdsa-sha2-nistp256 AAAAE2................
+
+[root@Va1 ~]#  cat  /root/.ssh/id_rsa.pub 
+ssh-rsa AAAAB3Nza.............5WuZ root@Va1
+
+[root@Va2 ~]# cat   ~/.ssh/authorized_keys 
+ssh-rsa AAAAB3Nz............WuZ root@Va1
+
+---------- 注意必须同时给自己本身复制一份公钥  配置ssh信任关系,包括本机都不能出现 输入yes 的现象----------------
+
+[root@Va1 ~]#  ssh-copy-id  -i  ~/.ssh/id_rsa.pub  Va1  #给自己本身复制一份公钥(非常重要)
+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+root@va1's password: 输入密码
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'Va1'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@Va1 ~]# ls  /root/.ssh/
+authorized_keys  id_rsa  id_rsa.pub  known_hosts
+[root@Va1 ~]# cat   /root/.ssh/known_hosts 
+va2,192.168.0.12 ecdsa-sha2-nistp256 AAAAE2Vj............WMY=
+va3,192.168.0.13 ecdsa-sha2-nistp256 AAAAE2Vj............MY=
+va4,192.168.0.14 ecdsa-sha2-nistp256 AAAAE2V..............WWMY=
+va1,192.168.0.11 ecdsa-sha2-nistp256 AAAAE2V..............WMY=
+
+--------------------------  批量远程执行命令 --------------------------
+[root@Va1 ~]# for  i   in  Va{2..4};do
+> ssh -lroot -p22  root@$i   hostname;done
+Va2
+Va3
+Va4
+[root@Va1 ~]# function  sshhost(){
+> for  i   in  Va{2..4};do
+> ssh -lroot -p22  root@$i   hostname;done
+> }
+[root@Va1 ~]# type  sshhost 
+sshhost 是函数
+sshhost () 
+{ 
+    for i in Va{2..4};
+    do
+        ssh -lroot -p22 root@$i hostname;
+    done
+}
+[root@Va1 ~]# which  sshhost
+/usr/bin/which: no sshhost in (/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+[root@Va1 ~]# sshhost
+Va2
+Va3
+Va4
+[root@Va1 ~]#  cd  /usr/local/hadoop/etc/hadoop/
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop/etc/hadoop
+
+[root@Va1 hadoop]# ll  core-site.xml   hadoop-env.sh   hdfs-site.xml   mapred-site.xml   slaves   yarn-site.xml 
+-rw-r--r-- 1 20415  101  774 4月  18 2018 core-site.xml # 全局配置文件
+-rw-r--r-- 1 20415  101 4275 1月  24 19:06 hadoop-env.sh
+-rw-r--r-- 1 20415  101  775 4月  18 2018 hdfs-site.xml  # HDFS：Hadoop分布式文件系统（核心组件）
+-rw-r--r-- 1 root  root  758 1月  25 15:24 mapred-site.xml # MapReduce：分布式计算框架（核心组件）
+-rw-r--r-- 1 20415  101   10 4月  18 2018 slaves  # 节点配置文件(主机名)
+-rw-r--r-- 1 20415  101  690 4月  18 2018 yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
+
+                          #查看 Java_Home 家目录路径 #hadoop配置文件路径
+[root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre" 
+         #Java_Home 家目录路径
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
+
+
+]# /usr/local/hadoop/bin/hadoop   version   ## 查看 hadoop 版本
+Hadoop 2.7.6
+
+http://hadoop.apache.org/   # hadoop 官网网页链接较慢
+http://hadoop.apache.org/doc
+Index of /docs
+.............
+[DIR]	r2.7.6/	2018-09-07 15:17	- # 点击链接 [r2.7.6/]
+
+http://hadoop.apache.org/docs/r2.7.6/
+ 靠近网页左下角 的链接文档
+Configuration
+ core-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/core-site.xml
+
+ hdfs-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+ mapred-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/mapred-site.xml
+ yarn-default.xml  对应配置文件   /usr/local/hadoop/etc/hadoop/yarn-site.xml 
+ Deprecated Properties 对应配置文件?
+
+点击 core-default.xml 打开网页
+http://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-common/core-default.xml
+ name {<name>...}   value {<value> ...}   description{相当于注释类的作用,可省略<description>...}
+
+ name                                value      description
+hadoop.common.configuration.version   0.23.0     version of this configuration file
+
+hadoop.tmp.dir  /tmp/hadoop-${user.name}  其他临时目录的基础(相当于/var/lib/mysql/ 所有数据的根目录)
+...........
+hdfs 规定了hadoop使用的存储方式(默认本地文件file:///存储方式,即本地硬盘存储 )
+
+fs.defaultFS    file:///     默认文件系统的名称。其方案和权限决定文件系统实现的URI。
+                             URI的方案确定了命名文件系统实现类的配置属性（fs.scheme.impl）。
+                             URI的权限用于确定文件系统的主机、端口等。
+
+
+property    n. 特性，属性;财产，地产;[戏]道具;所有权
+<configuration>
+ <property>
+  <name> </name>
+  <value> </value>
+  <description> </description>
+ </property>
+</configuration>
+
+Hadoop Distributed File  System(HDFS)
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
+
+----------------------------------------------  core-site.xml --------------------
+[root@Va1 hadoop]# vim   core-site.xml
+
+<configuration>
+ <property>
+  <name>fs.defaultFS</name> # hdfs 规定了hadoop使用的存储方式(默认本地文件file:///存储方式)
+  <value>hdfs://Va1:9000</value> # 修改为 默认的文件系统使用 hdfs(Hadoop分布式文件系统)
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value> #创建单独的所有数据文件根目录(mount 单独分区,使用分区)
+                     # 配置 hadoop.tmp.dir 路径到持久化目录/var/hadoop
+ </property>
+</configuration>
+配置过后不需要自己去创建这样的目录/var/hadoop ，格式化hdfs系统时，会自动为你创建
+Hadoop 找到dfs/name 这个dfs文件系统的域名空间文件。
+hadoop.tmp.dir 是 hadoop文件系统依赖的基本配置，很多配置路径都依赖它，它的默认位置在/tmp/hadoop-${user.name}下面。
+
+由于重新配置了hadoop.tmp.dir 目录，意味着，必须重新格式hdfs
+
+#bin/hadoop namenode -format
+
+[root@Va1 hadoop]# ll  ../../bin/hadoop
+-rwxr-xr-x 1 20415 101 6488 4月  18 2018 ../../bin/hadoop
+
+----------------------------- /usr/local/hadoop/etc/hadoop/core-site.xml  ------- 
+
+[root@Va1 hadoop]# tail   -10  /usr/local/hadoop/etc/hadoop/core-site.xml 
+
+<configuration>
+ <property>
+  <name>fs.defaultFS</name>
+  <value>hdfs://Va1:9000</value>
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value>
+ </property>
+</configuration>
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop/etc/hadoop
+[root@Va1 hadoop]# ll   /usr/local/hadoop/bin/hadoop
+-rwxr-xr-x 1 20415 101 6488 4月  18 2018 /usr/local/hadoop/bin/hadoop
+
+[root@Va1 hadoop]# ls  ../../
+bin  include  libexec      newdir   newdir3     olddir      sbin
+etc  lib      LICENSE.txt  newdir2  NOTICE.txt  README.txt  share
+[root@Va1 hadoop]# ll  ../../bin/hadoop
+-rwxr-xr-x 1 20415 101 6488 4月  18 2018 ../../bin/hadoop
+
+http://hadoop.apache.org/docs/r2.7.6/
+ 靠近网页左下角 的链接文档
+Configuration
+ core-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/core-site.xml
+ hdfs-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+ mapred-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/mapred-site.xml
+ yarn-default.xml  对应配置文件   /usr/local/hadoop/etc/hadoop/yarn-site.xml 
+ Deprecated Properties 对应配置文件?
+
+点击  hdfs-default.xml  打开网页
+http://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-hdfs/hdfs-default.xml
+
+dfs.namenode.name.dir  file://${hadoop.tmp.dir}/dfs/name  确定DFS名称节点应在本地文件系统上存储名称表（fsimage）的位置。
+如果这是一个以逗号分隔的目录列表，那么将在所有目录中复制名称表，以实现冗余。
+
+dfs.namenode.http-address  0.0.0.0:50070  DFS namenode  Web UI将侦听的地址和基本端口
+
+dfs.secondary.namenode.kerberos.internal.spnego.principal   ${dfs.web.authentication.kerberos.principal}
+服务器主体 由辅助名称节点使用 对于 web UI SPNEGO 身份验证 when Kerberos security is enabled.  
+与所有其他辅助名称节点设置一样，它在HA设置中被忽略  
+如果值为“*”，Web服务器将尝试使用keytab文件df.web.authentication.kerberos.keytab中指定的每个主体登录。
+
+dfs.namenode.secondary.http-address  0.0.0.0:50090  辅助名称节点HTTP服务器地址和端口。
+dfs.namenode.secondary.https-address	0.0.0.0:50091	The secondary namenode HTTPS server address and port.
+
+dfs.replication   3  默认块复制。创建文件时可以指定实际复制数。
+                          如果在创建时间中未指定复制，则使用默认值。
+
+  NameNode：是Master节点，是大领导。 
+SecondaryNameNode：是一个小弟，非 NameNode的热备份
+  Datanode 提供真实文件数据的存储服务。
+
+principal  adj. 主要的;本金的;最重要的;资本的
+n. 本金;首长，负责人;主要演员，主角;
+
+Hadoop Distributed File  System(HDFS)
+Hadoop分布式文件系统，
+提供 高吞吐量 应用程序 数据访问，并具有高容错性。
+ <property>
+  <name> </name>
+  <value> </value>
+ </property>
+ <property>
+  <name> </name>
+  <value> </value>
+ </property>
+
+
+/******************************
+有关hadoop的配置，但是这些配置多数是将namenode和secondaryNameNode配置在同一台计算机上，
+这种配置方法如果是做做实验的还可以，如果应用到实际中，存在较大风险，
+如果存放namenode的主机出现问题，整个文件系统将被破坏，严重的情况是所有文件都丢失。
+现在来配置hadoop2.2,
+------------------------------------将namenode和secondaryNameNode配置在
+不同的机器上，这样的实用价值更大。----------------------------------------------------------------------------------------
+
+hadoop/hdfs-site.xml 
+此处将cloud002作为secondaryNameNode的主机。
+3.修改hdfs-site.xml的内容
+
+<property>
+<name>dfs.namenode.http-address</name>
+<value>cloud001:50070</value>
+<description>
+DFS名称节点Web UI将侦听的地址和基本端口。
+</description>
+</property>
+<property>
+<name>dfs.namenode.secondary.http-address</name>
+<value>cloud002:50090</value>
+</property>
+
+网上也有说要修改core-site.xml的代码
+******************/
+
+------------------------ etc/hadoop/hdfs-site.xml  -------------------
+
+[root@Va1 hadoop]# vim  /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+<configuration>
+ <property>
+  <name>dfs.namenode.http-address</name>  #寻找 NameNode 节点
+  <value>Va1:50070</value> #向所有的主机节点声明 namenode的ip 地址和基本端口
+ </property>
+ <property>
+
+SecondaryNameNode：是一个小弟，非 NameNode的热备份
+分担大哥namenode的工作量；
+负责定时默认1小时，
+是NameNode的 " 冷 备份 "；
+从namenode上，获取fsimage和edits,定期合并fsimage(即名称空间) 和fsedits(即变更日志)
+然后再发给namenode,减少namenode的工作量。
+
+  <name>dfs.namenode.secondary.http-address</name>
+  <value>Va1:50090</value>  # SecondaryNameNode HTTP服务器地址和端口
+ </property>
+
+<!--指定DataNode存储block的副本数量-->
+文件的各个block的存储管理由datanode节点承担
+---- datanode是HDFS集群从节点，每一个block都可以在多个datanode上存储多个副本
+   （副本数量也可以通过参数设置dfs.replication）
+
+ <property>
+  <name>dfs.replication</name> #NameNode 告诉客户端 数据默认存多少备份
+  <value>2</value>
+ </property>
+</configuration>
+--------------------------/usr/local/hadoop/etc/hadoop/hdfs-site.xml -----------------
+
+[root@Va1 hadoop]# tail  -15  /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+
+<configuration>
+ <property>
+  <name>dfs.namenode.http-address</name>
+  <value>Va1:50070</value>
+ </property>
+ <property>
+  <name>dfs.namenode.secondary.http-address</name>
+  <value>Va1:50090</value>
+ </property>
+ <property>
+  <name>dfs.replication</name>
+  <value>2</value>
+ </property>
+</configuration>
+
+[root@Va1 hadoop]# 
+
+---------------/usr/local/hadoop/etc/hadoop/hdfs-site.xml --------
+
+----------------------------------------------  core-site.xml --------------------
+[root@Va1 hadoop]# vim   core-site.xml
+
+<configuration>
+ <property>
+  <name>fs.defaultFS</name> # hdfs 规定了hadoop使用的存储方式(默认本地文件file:///存储方式)
+  <value>hdfs://Va1:9000</value> # 修改为 默认的文件系统使用 hdfs(Hadoop分布式文件系统)
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value> #创建单独的所有数据文件根目录(mount 单独分区,使用分区)
+                     # 配置 hadoop.tmp.dir 路径到持久化目录/var/hadoop
+ </property>
+</configuration>
+配置过后不需要自己去创建这样的目录/var/hadoop ，格式化hdfs系统时，会自动为你创建
+Hadoop 找到dfs/name 这个dfs文件系统的域名空间文件。
+hadoop.tmp.dir 是 hadoop文件系统依赖的基本配置，很多配置路径都依赖它，它的默认位置在/tmp/hadoop-${user.name}下面。
+
+
+------------- /usr/local/hadoop/etc/hadoop/core-site.xml  ----
+
+[root@Va1 hadoop]# tail   -10  /usr/local/hadoop/etc/hadoop/core-site.xml 
+<configuration>
+ <property>
+  <name>fs.defaultFS</name>
+  <value>hdfs://Va1:9000</value>
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value>
+ </property>
+</configuration>
+
+[root@Va1 hadoop]# ll  core-site.xml   hadoop-env.sh   hdfs-site.xml   mapred-site.xml   slaves   yarn-site.xml 
+-rw-r--r-- 1 20415  101  774 4月  18 2018 core-site.xml # 全局配置文件
+
+-rw-r--r-- 1 20415  101 4275 1月  24 19:06 hadoop-env.sh
+-rw-r--r-- 1 20415  101  775 4月  18 2018 hdfs-site.xml  # HDFS：Hadoop分布式文件系统（核心组件）
+
+-rw-r--r-- 1 root  root  758 1月  25 15:24 mapred-site.xml # MapReduce：分布式计算框架（核心组件）
+-rw-r--r-- 1 20415  101   10 4月  18 2018 slaves  # 节点配置文件(主机名)
+
+-rw-r--r-- 1 20415  101  690 4月  18 2018 yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
+
+[root@Va1 hadoop]# vim  /usr/local/hadoop/etc/hadoop/slaves 
+[root@Va1 hadoop]# cat  /usr/local/hadoop/etc/hadoop/slaves
+Va2
+Va3
+Va4
+
+https://wenku.baidu.com/view/860d41d4a6c30c2259019ee3.html
+
+rsync   -aSH  --delete  
+
+rsync参数的具体解释如下：
+-a, --archive 	归档模式，表示以递归方式传输文件，并保留所有文件属性，等于-rlptgoD
+-H, --hard-links   保留硬链结
+-S, --sparse 	handle sparse files efficiently 有效率处理稀疏文件
+-v, --verbose 	显示同步过程详细信息
+--delete 		删除那些DST中SRC没有的文件
+
+[root@Va1 hadoop]# for  i  in  Va{2..4};do  ssh $i mkdir  /var/hadoop;done
+[root@Va1 hadoop]# mkdir   /var/hadoop
+[root@Va1 hadoop]# cd  /usr/local/  复制 /usr/local/hadoop 到所有的主机上
+[root@Va1 local]# rsync   -aSH  --delete  /usr/local/hadoop  Va2:/usr/local/  &
+[1] 6639
+[root@Va1 local]# rsync   -aSH  --delete  /usr/local/hadoop  Va3:/usr/local/  &
+[2] 6642
+[root@Va1 local]# rsync   -aSH  --delete  /usr/local/hadoop  Va4:/usr/local/  &
+[3] 6644
+[root@Va1 local]# jobs
+[1]   运行中               rsync -aSH --delete /usr/local/hadoop Va2:/usr/local/ &
+[2]-  运行中               rsync -aSH --delete /usr/local/hadoop Va3:/usr/local/ &
+[3]+  运行中               rsync -aSH --delete /usr/local/hadoop Va4:/usr/local/ &
+[root@Va1 local]# wait
+[1]   完成                  rsync -aSH --delete /usr/local/hadoop Va2:/usr/local/
+[2]-  完成                  rsync -aSH --delete /usr/local/hadoop Va3:/usr/local/
+[3]+  完成                  rsync -aSH --delete /usr/local/hadoop Va4:/usr/local/
+[root@Va1 local]# jobs
+[root@Va1 local]#  
+[root@Va1 local]# pwd
+/usr/local
+[root@Va1 local]# cd  /usr/local/hadoop/
+[root@Va1 hadoop]# ls
+bin  include  libexec      newdir   newdir3     olddir      sbin
+etc  lib      LICENSE.txt  newdir2  NOTICE.txt  README.txt  share
+
+[root@Va1 hadoop]# ls  /usr/local/hadoop/bin/
+container-executor  hdfs      mapred.cmd               yarn
+hadoop              hdfs.cmd  rcc                      yarn.cmd
+hadoop.cmd          mapred    test-container-executor
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs   #注意帮助  bin/hdfs  
+Usage: hdfs [--config confdir] [--loglevel loglevel] COMMAND
+       where COMMAND is one of:
+  dfs                  run a filesystem command on the file systems supported in Hadoop.
+  classpath            prints the classpath
+  namenode -format     format the DFS filesystem
+  secondarynamenode    run the DFS secondary namenode
+  namenode             run the DFS namenode
+.....................
+  datanode             run a DFS datanode
+.....................
+  version              print the version
+
+Most commands print help when invoked w/o parameters.
+[root@Va1 hadoop]# 
+
+ ###  /usr/local/hadoop/bin/hadoop  version ## 查看 hadoop 版本
+
+----------------------------   格式化[只在namenode上执行]#格式化存储目录 ------------------------------------
+
+[root@Va1 hadoop]# ./bin/hadoop  namenode  -format  格式化[只在namenode上执行]#格式化存储目录
+
+DEPRECATED: Use of this script to execute hdfs command is deprecated.
+Instead use the hdfs command for it.
+
+19/01/25 21:43:47 INFO namenode.NameNode: STARTUP_MSG: 
+/************************************************************
+STARTUP_MSG: Starting NameNode
+STARTUP_MSG:   host = Va1/192.168.0.11
+STARTUP_MSG:   args = [-format]
+STARTUP_MSG:   version = 2.7.6
+STARTUP_MSG:   classpath = /usr/local/hadoop/etc/hadoop/:/usr/local/hadoop/share/hadoop/common/lib/commons-compress-1.4.1.jar:.............
+..............
+19/01/25 21:43:48 INFO namenode.NNStorageRetentionManager: Going to retain 1 images with txid >= 0
+19/01/25 21:43:48 INFO util.ExitUtil: Exiting with status 0
+19/01/25 21:43:48 INFO namenode.NameNode: SHUTDOWN_MSG: 
+/************************************************************
+SHUTDOWN_MSG: Shutting down NameNode at Va1/192.168.0.11
+************************************************************/
+[root@Va1 hadoop]# echo  $?
+0
+[root@Va1 hadoop]#   pwd
+/usr/local/hadoop
+[root@Va1 hadoop]# ls  /usr/local/hadoop/sbin/start-dfs.sh   
+/usr/local/hadoop/sbin/start-dfs.sh
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/start-dfs.sh  # 启动集群 [在namenode主机上执行]
+Starting namenodes on [Va1]
+Va1: starting namenode, logging to /usr/local/hadoop/logs/hadoop-root-namenode-Va1.out
+Va4: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va4.out
+Va2: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va2.out
+Va3: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va3.out
+Starting secondary namenodes [Va1]
+Va1: starting secondarynamenode, logging to /usr/local/hadoop/logs/hadoop-root-secondarynamenode-Va1.out
+
+[root@Va1 hadoop]# jps    # 验证角色
+7216 Jps
+6913 NameNode
+7101 SecondaryNameNode
+[root@Va1 hadoop]# ssh  Va2  jps   # 验证角色
+6308 Jps
+6233 DataNode
+[root@Va1 hadoop]# ssh  Va3  jps   # 验证角色
+6258 Jps
+6184 DataNode
+[root@Va1 hadoop]# ssh  Va4  jps   # 验证角色
+4906 DataNode
+4989 Jps
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  dfsadmin  -report  #验证集群[在namenode主机上执行]
+Configured Capacity: 54716792832 (50.96 GB)
+Present Capacity: 43628851200 (40.63 GB)
+DFS Remaining: 43628838912 (40.63 GB)
+DFS Used: 12288 (12 KB)
+DFS Used%: 0.00%
+Under replicated blocks: 0
+Blocks with corrupt replicas: 0
+Missing blocks: 0
+Missing blocks (with replication factor 1): 0
+
+-------------------------------------------------
+Live datanodes (3):
+
+Name: 192.168.0.14:50010 (Va4)
+Hostname: Va4
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3699933184 (3.45 GB)
+DFS Remaining: 14538993664 (13.54 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.71%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Fri Jan 25 21:49:35 CST 2019
+
+
+Name: 192.168.0.12:50010 (Va2)
+Hostname: Va2
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3714936832 (3.46 GB)
+DFS Remaining: 14523990016 (13.53 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.63%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Fri Jan 25 21:49:35 CST 2019
+
+
+Name: 192.168.0.13:50010 (Va3)
+Hostname: Va3
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3673071616 (3.42 GB)
+DFS Remaining: 14565855232 (13.57 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.86%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Fri Jan 25 21:49:35 CST 2019
+
+
+
+
+[root@Va1 hadoop]# ll  /usr/local/hadoop/bin/hadoop
+-rwxr-xr-x 1 20415 101 6488 4月  18 2018 /usr/local/hadoop/bin/hadoop
+[root@Va1 hadoop]# ll /usr/local/hadoop/bin/hdfs
+-rwxr-xr-x 1 20415 101 12223 4月  18 2018 /usr/local/hadoop/bin/hdfs
+
+ ###  /usr/local/hadoop/bin/hadoop  version ## 查看 hadoop 版本
+
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  namenode  -format  # 重新格式化存储目录
+19/01/26 14:22:00 INFO namenode.NameNode: STARTUP_MSG: 
+/************************************************************
+STARTUP_MSG: Starting NameNode
+STARTUP_MSG:   host = Va1/192.168.0.11
+STARTUP_MSG:   args = [-format]
+STARTUP_MSG:   version = 2.7.6
+STARTUP_MSG:   classpath = /usr/local/hadoop/etc/hadoop/:/usr/local/hadoop/share/hadoop/common/lib/commons-compress-1.4.1.jar:.........
+.................................................
+Re-format filesystem in Storage Directory /var/hadoop/dfs/name ? (Y or N) 输入Y
+重新格式化存储目录/var/hadoop/dfs/name中的文件系统？（Y或N）
+
+19/01/26 14:25:50 INFO namenode.FSImage: Allocated new BlockPoolId: BP-1702612202-192.168.0.11-1548483950803
+19/01/26 14:25:50 INFO common.Storage: Storage directory /var/hadoop/dfs/name has been successfully formatted.
+存储目录/var/hadoop/dfs/name 已成功格式化
+
+19/01/26 14:25:50 INFO namenode.FSImageFormatProtobuf: Saving image file /var/hadoop/dfs/name/current/fsimage.ckpt_0000000000000000000 using no compression
+19/01/26 14:25:50 INFO namenode.FSImageFormatProtobuf: Image file /var/hadoop/dfs/name/current/fsimage.ckpt_0000000000000000000 of size 321 bytes saved in 0 seconds.
+19/01/26 14:25:50 INFO namenode.NNStorageRetentionManager: Going to retain 1 images with txid >= 0
+19/01/26 14:25:50 INFO util.ExitUtil: Exiting with status 0
+19/01/26 14:25:50 INFO namenode.NameNode: SHUTDOWN_MSG: 
+/************************************************************
+SHUTDOWN_MSG: Shutting down NameNode at Va1/192.168.0.11
+************************************************************/
+
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/start-dfs.sh   # 启动集群[在namenode主机上执行]
+Starting namenodes on [Va1]
+Va1: starting namenode, logging to /usr/local/hadoop/logs/hadoop-root-namenode-Va1.out
+Va2: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va2.out
+Va3: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va3.out
+Va4: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va4.out
+Starting secondary namenodes [Va1]
+Va1: starting secondarynamenode, logging to /usr/local/hadoop/logs/hadoop-root-secondarynamenode-Va1.out
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+tcp        0      0 192.168.0.11:50070      0.0.0.0:*               LISTEN      3504/java           
+tcp        0      0 192.168.0.11:9000       0.0.0.0:*               LISTEN      3504/java           
+tcp        0      0 192.168.0.11:50090      0.0.0.0:*               LISTEN      3698/java           
+
+[root@Va1 hadoop]# jps    # 验证角色
+7216 Jps
+6913 NameNode
+7101 SecondaryNameNode
+[root@Va1 hadoop]# ssh  Va2  jps   # 验证角色
+6308 Jps
+6233 DataNode
+[root@Va1 hadoop]# ssh  Va3  jps   # 验证角色
+6258 Jps
+6184 DataNode
+[root@Va1 hadoop]# ssh  Va4  jps   # 验证角色
+4906 DataNode
+4989 Jps
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  dfsadmin  -report  #验证集群[在namenode主机上执行]
+................
+[root@Va1 hadoop]# function  testjps {
+> for  i  in  Va{2..4};do ssh  $i  jps;done
+> }
+[root@Va1 hadoop]# type  test
+test 是 shell 内嵌
+[root@Va1 hadoop]# type  testjps 
+testjps 是函数
+testjps () 
+{ 
+    for i in Va{2..4};
+    do
+        ssh $i jps;
+    done
+}
+[root@Va1 hadoop]# testjps  # 验证角色
+3636 Jps
+3599 Jps
+3662 Jps
+[root@Va1 hadoop]# 
+===========================================
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/stop-all.sh    # 停止集群和节点的命令
+
+This script is Deprecated. Instead use stop-dfs.sh and stop-yarn.sh 
+Stopping namenodes on [Va1]
+Va1: stopping namenode
+Va4: no datanode to stop
+Va2: no datanode to stop
+Va3: no datanode to stop
+Stopping secondary namenodes [Va1]
+Va1: stopping secondarynamenode
+stopping yarn daemons
+no resourcemanager to stop
+Va4: no nodemanager to stop
+Va2: no nodemanager to stop
+Va3: no nodemanager to stop
+no proxyserver to stop
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+[root@Va1 hadoop]# 
+
+[root@Va4 ~]# ls  /var/hadoop/dfs/data/current/
+BP-518428105-192.168.0.11-1548423828736  VERSION
+[root@Va4 ~]# ls  /var/hadoop/dfs/data/current/BP-518428105-192.168.0.11-1548423828736/
+current  scanner.cursor  tmp
+
+hadoop中重新格式化namenode
+
+因为之前正常启动过hadoop集群。
+所以在hadoop的对应data目录中，已经有很多相关文件夹了。我们在格式化之前得先删除相关文件夹才行。
+
+一、对于master主节点进行操作
+1、删除data、name、namesecondary三个文件夹。
+
+[root@Va1 hadoop]# ls  /var/hadoop/dfs/
+name  namesecondary
+[root@Va1 hadoop]# ls  /var/hadoop/dfs/name
+current  in_use.lock
+[root@Va1 hadoop]# ls  /var/hadoop/dfs/name
+name/          namesecondary/ 
+[root@Va1 hadoop]# ls  /var/hadoop/dfs/name/current/
+edits_0000000000000000001-0000000000000000002
+................
+edits_0000000000000000049-0000000000000000050
+edits_inprogress_0000000000000000051
+fsimage_0000000000000000000
+fsimage_0000000000000000000.md5
+seen_txid
+VERSION
+---------------/usr/local/hadoop/etc/hadoop/hdfs-site.xml --------
+
+----------------------------------------------  core-site.xml --------------------
+[root@Va1 hadoop]# tail  -10  core-site.xml
+
+<configuration>
+ <property>
+  <name>fs.defaultFS</name> # hdfs 规定了hadoop使用的存储方式(默认本地文件file:///存储方式)
+  <value>hdfs://Va1:9000</value> # 修改为 默认的文件系统使用 hdfs(Hadoop分布式文件系统)
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value> #创建单独的所有数据文件根目录(mount 单独分区,使用分区)
+                     # 配置 hadoop.tmp.dir 路径到持久化目录/var/hadoop
+ </property>
+</configuration>
+
+[root@Va1 hadoop]# rm  -rf  /var/hadoop/dfs/
+[root@Va1 hadoop]# ls  /var/hadoop/
+
+[root@Va1 hadoop]# rm  -rf  /var/hadoop/dfs/  删除dfs/data中的所有文件
+[root@Va1 hadoop]# ls  /var/hadoop/
+[root@Va1 hadoop]# function  testrm(){
+> for  i  in  Va{2..4};do ssh  $i  rm  -rf  /var/hadoop/dfs/;done
+> }
+[root@Va1 hadoop]# testrm   删除dfs/data中的所有文件
+
+基本删除完成后。开始重新格式化namenode
+格式化namenode
+
+[root@Va1 ~]# netstat   -npult  |egrep  "50070|50090|9000"
+[root@Va1 ~]# ls  /var/hadoop/
+[root@Va1 ~]# /usr/local/hadoop/bin/hadoop  namenode  -format  # 重新格式化存储目录
+................
+19/01/26 15:47:00 INFO common.Storage: Storage directory /var/hadoop/dfs/name has been successfully formatted.
+19/01/26 15:47:00 INFO namenode.FSImageFormatProtobuf: Saving image file /var/hadoop/dfs/name/current/fsimage.ckpt_0000000000000000000 using no compression
+19/01/26 15:47:00 INFO namenode.FSImageFormatProtobuf: Image file /var/hadoop/dfs/name/current/fsimage.ckpt_0000000000000000000 of size 321 bytes saved in 0 seconds.
+19/01/26 15:47:00 INFO namenode.NNStorageRetentionManager: Going to retain 1 images with txid >= 0
+19/01/26 15:47:00 INFO util.ExitUtil: Exiting with status 0
+19/01/26 15:47:00 INFO namenode.NameNode: SHUTDOWN_MSG: 
+/************************************************************
+SHUTDOWN_MSG: Shutting down NameNode at Va1/192.168.0.11
+************************************************************/
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop
+
+[root@Va4 ~]#  /usr/local/hadoop/sbin/start-dfs.sh
+Starting namenodes on [Va1]
+
+-------------------------------------  # 启动集群[在namenode主机上执行] --------------------------------
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/start-dfs.sh   # 启动集群[在namenode主机上执行]
+
+Starting namenodes on [Va1]
+Va1: starting namenode, logging to /usr/local/hadoop/logs/hadoop-root-namenode-Va1.out
+Va2: datanode running as process 4219. Stop it first.
+Va3: datanode running as process 4170. Stop it first.
+Va4: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va4.out
+Starting secondary namenodes [Va1]
+Va1: starting secondarynamenode, logging to /usr/local/hadoop/logs/hadoop-root-secondarynamenode-Va1.out
+
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+tcp        0      0 192.168.0.11:50070      0.0.0.0:*               LISTEN      5170/java           
+tcp        0      0 192.168.0.11:9000       0.0.0.0:*               LISTEN      5170/java           
+tcp        0      0 192.168.0.11:50090      0.0.0.0:*               LISTEN      5364/java           
+[root@Va1 hadoop]# 
+[root@Va1 hadoop]# type  testjps 
+testjps 是函数
+testjps () 
+{ 
+    for i in Va{2..4};
+    do
+        ssh $i jps;
+    done
+}
+[root@Va1 hadoop]# testjps  # 验证角色
+4433 Jps
+4383 Jps
+4801 Jps
+4698 DataNode
+[root@Va1 hadoop]# jps
+5170 NameNode
+5364 SecondaryNameNode
+5532 Jps
+[root@Va1 hadoop]# ssh  Va2  jps
+4459 Jps
+[root@Va1 hadoop]# ssh  Va3  jps
+4409 Jps
+[root@Va1 hadoop]# ssh  Va4  jps
+4698 DataNode
+4827 Jps
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/stop-all.sh    # 停止集群和节点的命令
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/start-all.sh 
+...........
+[root@Va1 hadoop]# testjps 
+5236 DataNode
+5336 NodeManager
+5448 Jps
+5426 DataNode
+5526 NodeManager
+5640 Jps
+5541 DataNode
+5641 NodeManager
+5755 Jps
+[root@Va1 hadoop]# jps
+6984 SecondaryNameNode
+6781 NameNode
+7422 Jps
+7135 ResourceManager
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/stop-all.sh 
+..................
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+
+-------------------------------------  # 启动集群[在namenode主机上执行] --------------------------------
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/start-dfs.sh   # 启动集群[在namenode主机上执行]
+Starting namenodes on [Va1]
+Va1: starting namenode, logging to /usr/local/hadoop/logs/hadoop-root-namenode-Va1.out
+Va2: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va2.out
+Va3: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va3.out
+Va4: starting datanode, logging to /usr/local/hadoop/logs/hadoop-root-datanode-Va4.out
+Starting secondary namenodes [Va1]
+Va1: starting secondarynamenode, logging to /usr/local/hadoop/logs/hadoop-root-secondarynamenode-Va1.out
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+tcp        0      0 192.168.0.11:50070      0.0.0.0:*               LISTEN      8035/java           
+tcp        0      0 192.168.0.11:9000       0.0.0.0:*               LISTEN      8035/java           
+tcp        0      0 192.168.0.11:50090      0.0.0.0:*               LISTEN      8231/java           
+[root@Va1 hadoop]# jps
+8035 NameNode
+8231 SecondaryNameNode
+8348 Jps
+[root@Va1 hadoop]# type  testjps 
+testjps 是函数
+testjps () 
+{ 
+    for i in Va{2..4};
+    do
+        ssh $i jps;
+    done
+}
+[root@Va1 hadoop]# testjps
+5617 DataNode
+5694 Jps
+5879 Jps
+5803 DataNode
+5995 Jps
+5919 DataNode
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  dfsadmin  -report  #验证集群[在namenode主机上执行]
+................
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  dfsadmin  -report
+
+Configured Capacity: 54716792832 (50.96 GB)
+Present Capacity: 43636707328 (40.64 GB)
+DFS Remaining: 43636690944 (40.64 GB)
+DFS Used: 16384 (16 KB)
+DFS Used%: 0.00%
+Under replicated blocks: 0
+Blocks with corrupt replicas: 0
+Missing blocks: 0
+Missing blocks (with replication factor 1): 0
+
+-------------------------------------------------
+Live datanodes (3):
+
+Name: 192.168.0.12:50010 (Va2)
+Hostname: Va2
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3712405504 (3.46 GB)
+DFS Remaining: 14526521344 (13.53 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.65%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Sat Jan 26 16:27:52 CST 2019
+
+
+Name: 192.168.0.13:50010 (Va3)
+Hostname: Va3
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3672506368 (3.42 GB)
+DFS Remaining: 14566420480 (13.57 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.86%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Sat Jan 26 16:27:52 CST 2019
+
+
+Name: 192.168.0.14:50010 (Va4)
+Hostname: Va4
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 8192 (8 KB)
+Non DFS Used: 3695173632 (3.44 GB)
+DFS Remaining: 14543749120 (13.54 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.74%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Sat Jan 26 16:27:52 CST 2019
+
+
+[root@Va1 hadoop]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   20G  0 disk 
+vdc           252:32   0   20G  0 disk 
+[root@Va1 hadoop]# 
+----------------stop-dfs.sh  # 停止服务-----------------------------------------
+---------------- rm  -rf  /var/hadoop/dfs/  删除NameNode节点中的所有文件 ---------
+---------------------- 删除 rm  -rf   /var/hadoop/*  DataNode 节点中的所有文件 --------------
+--------------- bin/hdfs  namenode  -format  # 重新格式化存储目录  -------------------
+--------------- sbin/start-dfs.sh  #启动集群             -----------------------
+--------------- bin/hdfs  dfsadmin  -report  # 验证集群--------------
+
+[root@Va1 hadoop]# ll  /usr/local/hadoop/sbin/stop-dfs.sh  # 停止服务文件
+
+-rwxr-xr-x 1 20415 101 3206 4月  18 2018 /usr/local/hadoop/sbin/stop-dfs.sh
+
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/stop-dfs.sh  # 停止服务
+
+Stopping namenodes on [Va1]
+Va1: stopping namenode
+Va2: stopping datanode
+Va4: stopping datanode
+Va3: stopping datanode
+Stopping secondary namenodes [Va1]
+Va1: stopping secondarynamenode
+[root@Va1 hadoop]# ls  /var/hadoop/
+dfs
+[root@Va1 hadoop]# ls  /var/hadoop/dfs/
+name  namesecondary
+
+[root@Va1 hadoop]# rm  -rf  /var/hadoop/dfs/  删除NameNode节点中的所有文件
+
+[root@Va1 hadoop]# ls  /var/hadoop/
+
+[root@Va1 hadoop]# function  testrm(){
+> for  i  in  Va{2..4};do ssh  $i  rm  -rf  /var/hadoop/dfs/;done
+> }
+
+[root@Va1 hadoop]# testrm   删除 DataNode 节点中的所有文件
+[root@Va1 hadoop]# ssh  Va2  rm  -rf   /var/hadoop/*
+[root@Va1 hadoop]# ssh  Va3  rm  -rf   /var/hadoop/*
+[root@Va1 hadoop]# ssh  Va4  rm  -rf   /var/hadoop/*
+
+基本删除完成后。开始重新格式化namenode
+格式化namenode
+
+[root@Va1 ~]# netstat   -npult  |egrep  "50070|50090|9000"
+[root@Va1 ~]# ls  /var/hadoop/
+
+[root@Va1 ~]# /usr/local/hadoop/bin/hadoop  namenode  -format  # 重新格式化存储目录
+或者
+[root@Va1 ~]# /usr/local/hadoop/bin/hdfs  namenode  -format  # 重新格式化存储目录
+...................
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  namenode  -format
+
+19/01/26 17:31:07 INFO namenode.NameNode: STARTUP_MSG: 
+/************************************************************
+STARTUP_MSG: Starting NameNode
+STARTUP_MSG:   host = Va1/192.168.0.11
+STARTUP_MSG:   args = [-format]
+STARTUP_MSG:   version = 2.7.6
+...............
+[root@Va1 hadoop]# /usr/local/hadoop/sbin/start-dfs.sh  #启动集群
+
+Starting namenodes on [Va1]
+Va1: namenode running as process 9650. Stop it first.
+Va4: datanode running as process 6753. Stop it first.
+Va2: datanode running as process 6483. Stop it first.
+Va3: datanode running as process 6624. Stop it first.
+Starting secondary namenodes [Va1]
+Va1: secondarynamenode running as process 9847. Stop it first.
+
+[root@Va1 hadoop]#  netstat   -npult  |egrep  "50070|50090|9000"
+
+tcp        0      0 192.168.0.11:50070      0.0.0.0:*               LISTEN      9650/java           
+tcp        0      0 192.168.0.11:9000       0.0.0.0:*               LISTEN      9650/java           
+tcp        0      0 192.168.0.11:50090      0.0.0.0:*               LISTEN      9847/java           
+[root@Va1 hadoop]# /usr/local/hadoop/bin/hdfs  dfsadmin  -report  # 验证集群
+
+Configured Capacity: 54716792832 (50.96 GB)
+Present Capacity: 43636379648 (40.64 GB)
+DFS Remaining: 43636367360 (40.64 GB)
+DFS Used: 12288 (12 KB)
+DFS Used%: 0.00%
+Under replicated blocks: 0
+Blocks with corrupt replicas: 0
+Missing blocks: 0
+Missing blocks (with replication factor 1): 0
+
+-------------------------------------------------
+Live datanodes (3):
+
+Name: 192.168.0.12:50010 (Va2)
+Hostname: Va2
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3712507904 (3.46 GB)
+DFS Remaining: 14526418944 (13.53 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.65%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Sat Jan 26 17:39:20 CST 2019
+
+
+Name: 192.168.0.14:50010 (Va4)
+Hostname: Va4
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3695280128 (3.44 GB)
+DFS Remaining: 14543646720 (13.54 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.74%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Sat Jan 26 17:39:20 CST 2019
+
+
+Name: 192.168.0.13:50010 (Va3)
+Hostname: Va3
+Decommission Status : Normal
+Configured Capacity: 18238930944 (16.99 GB)
+DFS Used: 4096 (4 KB)
+Non DFS Used: 3672625152 (3.42 GB)
+DFS Remaining: 14566301696 (13.57 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 79.86%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 1
+Last contact: Sat Jan 26 17:39:20 CST 2019
+
+[root@Va1 hadoop]# 
+
+配置 /etc/hosts 保证所有主机域名能够相互解析
+==========   完全分布式 系统规划 =======================
+主机                            角色                 软件 
+192.168.0.11 Va1       NameNode           HDFS
+                   SecondaryNameNode      YARN
+                    ResourceManager
+192.168.0.12 Va2      DataNode            HDFS
+                    NodeManager           YARN
+
+192.168.0.13 Va3      DataNode            HDFS
+                    NodeManager           YARN
+
+192.168.0.14 Va4      DataNode            HDFS
+                    NodeManager           YARN
+
+https://www.cnblogs.com/ljy2013/articles/4380355.html
+SecondaryNameNode部署在那个节点上的问题：
+
+如果SecondaryNameNode部署在datanode节点上的话，
+我们主要考虑的是cpu和内存的问题。
+下面我们来分析一下datanode内存使用情况：
+首先hadoop默认是给每一个进行分配1000M的内存，
+假如我们是八核的处理器，map和reducer的最大数目设置为7个，
+每个任务分配的是200M的内存，
+那么需要的最大内存为：14*400M，
+再加上datanode和tasktracker进行各1000M，共计：7600M。
+若datanode采用默认参数的话，默认map和reducer的最大数目是2.则对应的需要的内存是：2800M
+
+ 如果SecondaryNameNode部署在namenode节点上的话，
+此时namenode内存消耗是：
+仅仅一个namenode的进程：默认是1000M（但是实际情况可能不同）。
+但是这样部署都不是很合理，
+因为如果namenode磁盘坏掉，
+此时SecondaryNameNode的备份检查点数据也跟着坏掉，
+这样子就没有达到我们最终的目的。
+----------------------------------------------
+===================
+[root@Va1 hadoop]# ls
+bin  include  libexec      logs    newdir2  NOTICE.txt  README.txt  share
+etc  lib      LICENSE.txt  newdir  newdir3  olddir      sbin
+
+[root@Va1 hadoop]# pwd
+/usr/local/hadoop
+
+[root@Va1 hadoop]# cd  /usr/local/hadoop/etc/hadoop/
+[root@Va1 hadoop]# ls
+capacity-scheduler.xml      httpfs-env.sh            mapred-env.sh
+configuration.xsl           httpfs-log4j.properties  mapred-queues.xml.template
+container-executor.cfg      httpfs-signature.secret  mapred-site.xml
+core-site.xml               httpfs-site.xml          mapred-site.xml.template
+hadoop-env.cmd              kms-acls.xml             slaves
+hadoop-env.sh               kms-env.sh               ssl-client.xml.example
+hadoop-metrics2.properties  kms-log4j.properties     ssl-server.xml.example
+hadoop-metrics.properties   kms-site.xml             yarn-env.cmd
+hadoop-policy.xml           log4j.properties         yarn-env.sh
+hdfs-site.xml               mapred-env.cmd           yarn-site.xml
+
+[root@Va1 hadoop]# cp  hadoop-env.sh   /root/
+[root@Va1 hadoop]# cp   core-site.xml  /root/
+[root@Va1 hadoop]# cp  hdfs-site.xml  slaves   /root/
+
+[root@Va1 hadoop]# ll   /root/{hadoop-env.sh,core-site.xml,hdfs-site.xml,slaves}
+-rw-r--r-- 1 root root  944 1月  26 17:56 /root/core-site.xml
+-rw-r--r-- 1 root root 4275 1月  26 17:56 /root/hadoop-env.sh
+-rw-r--r-- 1 root root 1045 1月  26 17:57 /root/hdfs-site.xml
+-rw-r--r-- 1 root root   12 1月  26 17:57 /root/slaves
+
+------------------------------------- #批量上传文件 (#lftp上传 文件夹 ---------------------------------
+[root@Va1 ~]# ls  hadp/
+core-site.xml  hadoop-env.sh  hdfs-site.xml  slaves
+
+[root@Va1 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> lcd   /root/  #设置源 本地 目录
+lcd 成功, 本地目录=/root
+lftp 192.168.0.254:~> mirror  -R  had
+hadoop/  hadp/
+lftp 192.168.0.254:~> mirror  -R  hadp/  elk/
+mirror: Access failed: 550 Failed to change directory. (/elk/hadp)
+1 error detected
+lftp 192.168.0.254:/> cd  elk/  # 切换到目标目录
+
+lftp 192.168.0.254:/elk> mput  hadp/*    #批量上传文件 ( 失败原因)
+mput: Access failed: 553 Could not create file. (core-site.xml)
+mput: Access failed: 553 Could not create file. (hadoop-env.sh)
+mput: Access failed: 553 Could not create file. (hdfs-site.xml)
+mput: Access failed: 553 Could not create file. (slaves)
+
+----------------------- #批量上传文件 ( 失败原因) -----------------------
+[root@room9pc01 ~]# ls  -ld   /var/ftp/elk/  # 没有写入权限
+drwxr-xr-x 2 root root 4096 1月  15 16:46 /var/ftp/elk/
+
+[root@room9pc01 ~]# chmod  777  /var/ftp/elk/  #添加写权限
+[root@room9pc01 ~]# ls  -ld   /var/ftp/elk/
+drwxrwxrwx 2 root root 4096 1月  15 16:46 /var/ftp/elk/
+----------------------------------------
+lftp 192.168.0.254:/elk> mput  hadp/*     #批量上传文件 (成功)
+6276 bytes transferred           
+Total 4 files transferred
+
+lftp 192.168.0.254:/elk> cd
+cd 成功, 当前目录=/
+
+　下载：mirror rdir ldir　　// 将远程目录rdir下载到本地目录ldir
+
+lftp 192.168.0.254:/> mirror   -R   hadp/   elk/  #lftp上传 文件夹
+参数说明 mirror  -R, --reverse          reverse mirror (put files)
+reverse 颠倒   mirror  镜子
+
+Total: 1 directory, 4 files, 0 symlinks         
+New: 4 files, 0 symlinks
+6276 bytes transferred
+
+lftp 192.168.0.254:/> ls   elk/hadp/
+-rw-r--r--    1 14       50            944 Jan 26 10:41 core-site.xml
+-rw-r--r--    1 14       50           4275 Jan 26 10:41 hadoop-env.sh
+-rw-r--r--    1 14       50           1045 Jan 26 10:41 hdfs-site.xml
+-rw-r--r--    1 14       50             12 Jan 26 10:41 slaves
+lftp 192.168.0.254:/> bye
+
+[root@Va1 ~]# 
+====================================
+[root@Va1 ~]# vimdiff  hadp/slaves   hadp/slaves  #对比文件内容 vim 小技巧
+--------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.12
+root@192.168.0.12's password: 
+Last login: Thu Jan 24 21:52:50 2019 from 192.168.0.11
+[root@Va2 ~]# getenforce 
+Disabled
+[root@Va2 ~]# sed  -n 7p   /etc/selinux/config 
+SELINUX=disabled
+[root@Va2 ~]# systemctl  is-active  firewalld
+unknown
+[root@Va2 ~]# yum -y install  java-1.8.0-openjdk-devel >/dev/null
+[root@Va2 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+[root@Va2 ~]# jps
+3125 Jps
+1111 Elasticsearch
+[root@Va2 ~]# systemctl  stop  elasticsearch.service  && systemctl  disable  elasticsearch
+Removed symlink /etc/systemd/system/multi-user.target.wants/elasticsearch.service.
+
+[root@Va2 ~]# 配置 /etc/hosts 保证所有主机域名能够相互解析
+==========   完全分布式 系统规划 =======================
+主机                            角色                 软件 
+192.168.0.11 Va1       NameNode           HDFS
+                   SecondaryNameNode
+192.168.0.12 Va2      DataNode            HDFS
+192.168.0.13 Va3      DataNode            HDFS
+192.168.0.14 Va4      DataNode            HDFS
+
+[root@Va2 ~]# ping  -c1  Va1 >/dev/null  && echo Va1-Va2 ok;ping -c1 Va3 >/dev/null && echo Va2-Va3 ok ;ping  -c1  Va4 >/dev/null  && echo Va4-Va2 ok
+Va1-Va2 ok
+Va2-Va3 ok
+Va4-Va2 ok
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.13
+root@192.168.0.13's password: 
+Last login: Thu Jan 24 21:52:49 2019 from 192.168.0.11
+[root@Va3 ~]# getenforce 
+Disabled
+[root@Va3 ~]# grep  -n  "^SELINUX="  /etc/selinux/config 
+7:SELINUX=disabled
+[root@Va3 ~]# service  iptables  status  |grep -io active
+Redirecting to /bin/systemctl status iptables.service
+Unit iptables.service could not be found.
+
+[root@Va3 ~]# systemctl  stop  firewalld && systemctl mask  firewalld
+Failed to stop firewalld.service: Unit firewalld.service not loaded.
+
+[root@Va3 ~]# yum -y  install  java-1.8.0-openjdk-devel  >/dev/null
+
+[root@Va3 ~]# rpm  -qa  |grep  java
+tzdata-java-2017b-1.el7.noarch
+javapackages-tools-3.4.1-11.el7.noarch
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-devel-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+python-javapackages-3.4.1-11.el7.noarch
+
+[root@Va3 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@Va3 ~]# jps
+3113 Jps
+1113 Elasticsearch
+[root@Va3 ~]# systemctl  stop  elasticsearch && systemctl  disable  elasticsearch
+Removed symlink /etc/systemd/system/multi-user.target.wants/elasticsearch.service.
+
+[root@Va3 ~]# 配置 /etc/hosts 保证所有主机域名能够相互解析
+==========   完全分布式 系统规划 =======================
+主机                            角色                 软件 
+192.168.0.11 Va1       NameNode           HDFS
+                   SecondaryNameNode
+192.168.0.12 Va2      DataNode            HDFS
+192.168.0.13 Va3      DataNode            HDFS
+192.168.0.14 Va4      DataNode            HDFS
+
+
+
+
+
+
+
+
+
+
+==========   完全分布式 系统规划 =======================
+主机                            角色                 软件 
+192.168.0.11 Va1       NameNode           HDFS
+                   SecondaryNameNode
+192.168.0.12 Va2      DataNode            HDFS
+192.168.0.13 Va3      DataNode            HDFS
+192.168.0.14 Va4      DataNode            HDFS
+
+  NameNode：是Master节点，是大领导。 
+SecondaryNameNode：是一个小弟，非 NameNode的热备份
+  Datanode 提供真实文件数据的存储服务。
+
+禁用 selinux 和 iptables
+配置 /etc/hosts 保证所有主机域名能够相互解析
+
+1、安装 java 
+yum install java-1.8.0-openjdk -y
+
+验证：
+java -version
+
+2、安装 jps
+yum install java-1.8.0-openjdk-devel -y
+
+验证：jps
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.14
+..........
+[root@Va4 ~]# systemctl mask   firewalld
+Created symlink from /etc/systemd/system/firewalld.service to /dev/null.
+
+[root@Va4 ~]# getenforce 
+Disabled
+[root@Va4 ~]# sed  -n  7p  /etc/selinux/config
+SELINUX=disabled
+[root@Va4 ~]# grep  -n  "^SELINUX="   /etc/selinux/config
+7:SELINUX=disabled
+
+[root@Va4 ~]# service  iptables  status  |grep  -io active
+Redirecting to /bin/systemctl status iptables.service
+Unit iptables.service could not be found.
+
+[root@Va4 ~]# yum  -y  install  java-1.8.0-openjdk  java-1.8.0-openjdk-devel  |tail  -2
+
+完毕！
+[root@Va4 ~]# rpm  -qa  |grep  java
+tzdata-java-2017b-1.el7.noarch
+javapackages-tools-3.4.1-11.el7.noarch
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-devel-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+python-javapackages-3.4.1-11.el7.noarch
+
+[root@Va4 ~]# jps  #验证：jps
+1760 Jps
+1098 Elasticsearch
+
+[root@Va4 ~]# java  version
+错误: 找不到或无法加载主类 version
+[root@Va4 ~]# java  -version
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode)
+
+[root@Va4 ~]# systemctl  stop  elasticsearch.service  &&  systemctl disable   elasticsearch
+Removed symlink /etc/systemd/system/multi-user.target.wants/elasticsearch.service.
+
+[root@Va4 ~]# 配置 /etc/hosts 保证所有主机域名能够相互解析
+==========   完全分布式 系统规划 =======================
+主机                            角色                 软件 
+192.168.0.11 Va1       NameNode           HDFS
+                   SecondaryNameNode
+192.168.0.12 Va2      DataNode            HDFS
+192.168.0.13 Va3      DataNode            HDFS
+192.168.0.14 Va4      DataNode            HDFS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
