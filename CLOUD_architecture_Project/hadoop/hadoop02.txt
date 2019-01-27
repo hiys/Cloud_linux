@@ -89,9 +89,12 @@ netstat -ltunp 能看见 50075 被监听
 所有的日志在本机的 logs 里面，查看对应的角色日志
 
 通过 web 访问 hdfs角色
-http://192.168.4.10:50070/
-http://192.168.4.10:50090/
-http://192.168.4.12:50075/
+http://192.168.4.10:50070/  #namenode
+http://192.168.4.10:50090/  #secondarynamenode
+http://192.168.4.12:50075/  #datanode
+ http://master:8088/   #resourcemanager
+ http://node01:8042/   #nodemanager
+
 
 hdfs 基本使用
 ./bin/hadoop fs -ls /
@@ -126,9 +129,9 @@ hdfs 基本使用
 
 验证配置：
 在 master 上 jsp 能看见 resourecemanager，并且 netstat 可以看见  8088 端口打开
-可以访问 http://master:8088/
+可以访问 http://master:8088/   #resourcemanager
 在 node 上 jps 可以看见 nodemanager ，并且 netstat 可以看见  8042 端口打开
-可以访问 http://node01:8042/
+可以访问 http://node01:8042/   #nodemanager
 
 在集群上做数据分析
 ./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep hdfs://192.168.4.10:9000/input hdfs://192.168.4.10:9000/output '(?<=h)dfs'
@@ -151,6 +154,9 @@ nfs.wtmax (1048576)
 nfs.port.monitoring.disabled (false)
 
 这里要注意 关闭系统的 portmap 和 nfs 服务添加用户
-重启 hdfs 集群服务  ./bin/hdfs dfsadmin -report
+
+重启 hdfs 集群服务  ./bin/hdfs dfsadmin -report
 启动 portmap  ./sbin/hadoop-daemon.sh --script ./bin/hdfs start portmap 
-服务启动 nfs3 服务 sudo -u 你core-site里面配置的用户 ./sbin/hadoop-daemon.sh --script ./bin/hdfs start nfs3
+服务
+启动 nfs3 服务
+ sudo -u 你core-site里面配置的用户 ./sbin/hadoop-daemon.sh --script ./bin/hdfs start nfs3

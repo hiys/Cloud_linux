@@ -969,6 +969,10 @@ YARN的最基本思想是
 一个是全局的ResourceManager，
 一个是每个应用一个的ApplicationMaster。
 
+ApplicationMaster是一个框架特殊的库，
+对于Map-Reduce计算模型 而言 有它自己的ApplicationMaster实现，
+对于其他的想要运行在yarn上的计算模型而言，必须得实现针对该计算模型的ApplicationMaster用以向RM申请资源运行task
+
 ResourceManager以及
 每个节点一个的NodeManager构成了新的通用系统，
 实现以分布式方式管理应用。
