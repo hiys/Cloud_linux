@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<?xml version="1.0"?>
 <!--
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -13,28 +12,15 @@
   See the License for the specific language governing permissions and
   limitations under the License. See accompanying LICENSE file.
 -->
-
-<!-- Put site-specific property overrides in this file. -->
-
 <configuration>
+
+<!-- Site specific YARN configuration properties -->
  <property>
-  <name>dfs.namenode.http-address</name>
-  <value>Va1:50070</value>
+  <name>yarn.resourcemanager.hostname</name>
+  <value>Va1</value>
  </property>
  <property>
-  <name>dfs.namenode.secondary.http-address</name>
-  <value>Va1:50090</value>
- </property>
- <property>
-  <name>dfs.replication</name>
-  <value>2</value>
- </property>
- <property>
-  <name>dfs.datanode.balance.bandwidthPerSec</name>
-  <value>5242880</value>
- </property>
- <property>
-  <name>dfs.hosts.exclude</name>
-  <value>/usr/local/hadoop/etc/hadoop/exclude</value>
+  <name>yarn.nodemanager.aux-services</name>
+  <value>mapreduce_shuffle</value>
  </property>
 </configuration>
