@@ -2642,6 +2642,38 @@ hadoop-root-secondarynamenode-Va1.out  yarn-root-resourcemanager-Va1.out.3
 
 
 
+/usr/local/hadoop/etc/hadoop/{core-site.xml,hadoop-env.sh,hdfs-site.xml,slaves,mapred-site.xml,yarn-site.xml,exclude}
+
+[root@Va1 hadoop]# ls  /usr/local/hadoop/etc/hadoop/{core-site.xml,hadoop-env.sh,hdfs-site.xml,slaves,mapred-site.xml,yarn-site.xml,exclude}
+
+/usr/local/hadoop/etc/hadoop/core-site.xml
+/usr/local/hadoop/etc/hadoop/exclude
+/usr/local/hadoop/etc/hadoop/hadoop-env.sh
+/usr/local/hadoop/etc/hadoop/hdfs-site.xml
+/usr/local/hadoop/etc/hadoop/mapred-site.xml
+/usr/local/hadoop/etc/hadoop/slaves
+/usr/local/hadoop/etc/hadoop/yarn-site.xml
+
+[root@room9pc01 ~]# chmod  777  '/var/ftp/elk/hadp'
+
+[root@Va1 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> lcd  /usr/local/hadoop/etc/hadoop/
+lcd 成功, 本地目录=/usr/local/hadoop/etc/hadoop
+
+lftp 192.168.0.254:~> cd  elk/hadp/
+
+lftp 192.168.0.254:/elk/hadp> mput  core-site.xml  hadoop-env.sh  hdfs-site.xml  slaves  mapred-site.xml  yarn-site.xml  exclude 
+
+8227 bytes transferred                          
+Total 7 files transferred
+
+lftp 192.168.0.254:/elk/hadp> ls  slaves
+-rw-r--r--    1 14       50             16 Jan 28 13:51 slaves
+lftp 192.168.0.254:/elk/hadp> bye
+[root@Va1 ~]# 
+
+
+
 [root@room9pc01 ~]# mount.ntfs-3g  xx    xxx
 
 Hadoop的启动和停止说明
