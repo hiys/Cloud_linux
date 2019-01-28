@@ -29,4 +29,12 @@
   <name>dfs.replication</name>
   <value>2</value>
  </property>
+ <property>
+  <name>dfs.datanode.balance.bandwidthPerSec</name>
+  <value>5242880</value>
+ </property>
+ <property>
+  <name>dfs.hosts.exclude</name>
+  <value>/usr/local/hadoop/etc/hadoop/exclude</value>
+ </property>
 </configuration>
