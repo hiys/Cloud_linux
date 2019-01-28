@@ -357,7 +357,8 @@ export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-"/etc/hadoop"} #hadoop配置文件路�
                                                       # 设置 hadoop配置文件路径
 [root@Va1 hadoop]# sed  -i  "/HADOOP_CONF_DIR=\${/s#\${HADOOP_CONF_DIR:-.*#\"/usr/local/hadoop/etc/hadoop/\"#"  hadoop-env.sh
 
-                                                   #查看 Java_Home 家目录路径 #hadoop配置文件路径
+       ----------------- #查看 Java_Home 家目录路径 #hadoop配置文件路径 ------------
+
 [root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
 
 25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"  #Java_Home 家目录路径
@@ -815,7 +816,7 @@ Now try logging into the machine, with:   "ssh 'Va1'"
 and check to make sure that only the key(s) you wanted were added.
 
 [root@Va1 ~]# ls  /root/.ssh/
-authorized_keys  id_rsa  id_rsa.pub  known_hosts
+authorized_keys    id_rsa     id_rsa.pub    known_hosts
 [root@Va1 ~]# cat   /root/.ssh/known_hosts 
 va2,192.168.0.12 ecdsa-sha2-nistp256 AAAAE2Vj............WMY=
 va3,192.168.0.13 ecdsa-sha2-nistp256 AAAAE2Vj............MY=
