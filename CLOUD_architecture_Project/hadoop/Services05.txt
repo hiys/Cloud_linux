@@ -1,0 +1,168 @@
+
+
+
+rsync同步操作
+
+
+• 命令用法
+– rsync [选项...]   源目录    目标目录
+
+• 同步与复制的差异
+– 复制:完全拷贝源到目标
+– 同步:增量拷贝,只传输变化过的数据
+• rsync操作选项
+ – -n:测试同步过程,不做实际修改
+ – --delete:删除目标文件夹内多余的文档
+ – -a:归档模式,相当于-rlptgoD
+ – -v:显示详细操作信息
+ – -z:传输过程中启用压缩/解压
+
+
+
+[root@svr7 ~]# mkdir /stu01   /test01
+[root@svr7 ~]# cp /etc/passwd /etc/fstab /stu01/
+[root@svr7 ~]# ls /stu01/
+
+[root@svr7 ~]# rsync -avz /stu01/  /test01/
+[root@svr7 ~]# ls /test01/
+
+[root@svr7 ~]# touch /stu01/1.txt
+
+[root@svr7 ~]# rsync -avz /stu01/  /test01/
+[root@svr7 ~]# ls /test01/
+
+[root@svr7 ~]# echo haha  >> /stu01/fstab
+[root@svr7 ~]# rsync -avz /stu01/  /test01/
+[root@svr7 ~]# ls /test01/
+
+##################################################
+
+[root@svr7 ~]# ls /test01/
+[root@svr7 ~]# ls /stu01/
+[root@svr7 ~]# rsync --delete -avz  /stu01/  /test01
+
+
+[root@svr7 ~]# touch /test01/10.txt   /test01/a.txt   
+
+[root@svr7 ~]# ls /test01/
+[root@svr7 ~]# ls /stu01/
+[root@svr7 ~]# rsync --delete -avz  /stu01/  /test0
+[root@svr7 ~]# ls /test01/
+[root@svr7 ~]# ls /stu01/
+
+##################################################
+rsync+SSH同步(远程同步)
+
+• 与远程的 SSH目录保持同步
+– 下行:rsync [...]  user@host:远程目录      本地目录
+– 上行:rsync [...]  本地目录      user@host:远程目录
+
+虚拟机A
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+虚拟机B
+# ls /opt
+
+
+虚拟机A
+# touch /opt/{1..10}.txt
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+虚拟机B
+# ls /opt
+
+####################################################
+实时同步
+一、采用公钥与私钥，实现ssh无密码验证
+虚拟机A：
+1.生成的公钥与私钥
+[root@svr7 ~]# ssh-keygen           #一路回车
+2.查看生成的公钥与私钥
+[root@svr7 ~]# ls /root/.ssh/
+id_rsa(私钥)  id_rsa.pub(公钥)   
+known_hosts(记录远程管理过的所有机器)
+3.复制公钥到远程主机
+# ssh-copy-id root@192.168.4.207
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+
+虚拟机B：
+[root@pc207 ~]# ls /root/.ssh/
+authorized_keys(传递过来的公钥) 
+
+#######################################################
+二、监控目录内容的变化
+
+安装源码包inotify-tools工具
+
+1.确认源码包
+[root@svr7 ~]# ls /tools/
+inotify-tools-3.13.tar.gz 
+2.安装gcc与make工具
+[root@svr7 ~]# yum -y install gcc make
+3.解包
+# tar -xf /tools/inotify-tools-3.13.tar.gz  -C /
+# ls /
+4.进行编译安装
+# cd /inotify-tools-3.13/
+# ./configure   #进行配置
+# make          #编译
+# make install  #编译安装
+# ls /usr/local/bin/inotifywait    #确认程序文件
+   
+
+• 常用命令选项
+  – -m,持续监控(捕获一个事件后不退出)
+  – -r,递归监控、包括子目录及文件
+  – -q,减少屏幕输出信息
+  – -e,指定监视的modify、move、create、delete、attrib等事件类别
+
+[root@svr7 /]# inotifywait  -rq /opt/
+
+#####################################################
+清空编译重新安装
+# cd /inotify-tools-3.13/
+# make clean all    #清空编译
+# make
+# make install
+
+##################################################
+三、书写同步的脚本
+   
+# inotifywait  -rq /opt/
+
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+
+      while循环体系，适合死循环
+
+         while  [条件判断]
+         do
+                  循环执行的语句
+         done
+
+
+
+[root@svr7 /]# vim /root/rsync.sh
+#!/bin/bash
+while  inotifywait  -rqq /opt/ 
+do
+ rsync --delete -az /opt/  root@192.168.4.207:/opt/ 
+done &
+
+[root@svr7 /]# chmod +x /root/rsync.sh
+
+[root@svr7 /]# /root/rsync.sh 
+
+[root@svr7 /]# pgrep -l rsync.sh  #查询脚本进程信息
+[root@svr7 /]# killall rsync.sh   #杀死进程
+
+
+
+
+
+
+
+
+
+
+
+
+
+

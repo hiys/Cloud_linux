@@ -2350,7 +2350,7 @@ ls: 无法访问/usr/local/hadoop/etc/hadoop/exclude: 没有那个文件或目�
 
 [root@Va1 hadoop]# vim    /usr/local/hadoop/etc/hadoop/exclude
  
-[root@Va1 hadoop]# cat     /usr/local/hadoop/etc/hadoop/exclude #即将删除的主机名
+[root@Va1 hadoop]# cat     /usr/local/hadoop/etc/hadoop/exclude #即将删除的节点主机名
 Va5
 
 [root@Va1 hadoop]# ./bin/hdfs   dfsadmin  -report  |grep  -A1  "Hostname"
@@ -2690,9 +2690,9 @@ sbin/hadoop-daemons.sh start namenode 单独启动NameNode守护进程
 
 sbin/hadoop-daemons.sh stop namenode 单独停止NameNode守护进程
 
-sbin/hadoop-daemons.sh start datanode 单独启动DataNode守护进程
+sbin/hadoop-daemon.sh start datanode 单独启动DataNode守护进程
 
-sbin/hadoop-daemons.sh stop datanode 单独停止DataNode守护进程
+sbin/hadoop-daemon.sh stop datanode 单独停止DataNode守护进程
 
 sbin/hadoop-daemons.sh start secondarynamenode 单独启动SecondaryNameNode守护进程
 

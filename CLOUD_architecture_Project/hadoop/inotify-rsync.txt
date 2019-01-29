@@ -1,0 +1,793 @@
+
+
+
+rsync同步操作
+
+
+• 命令用法
+– rsync [选项...]   源目录    目标目录
+
+• 同步与复制的差异
+– 复制:完全拷贝源到目标
+– 同步:增量拷贝,只传输变化过的数据
+• rsync操作选项
+ – -n:测试同步过程,不做实际修改
+ – --delete:删除目标文件夹内多余的文档
+ – -a:归档模式,相当于-rlptgoD
+ – -v:显示详细操作信息
+ – -z:传输过程中启用压缩/解压
+
+
+
+[root@svr7 ~]# mkdir /stu01   /test01
+[root@svr7 ~]# cp /etc/passwd /etc/fstab /stu01/
+[root@svr7 ~]# ls /stu01/
+
+[root@svr7 ~]# rsync -avz /stu01/  /test01/
+[root@svr7 ~]# ls /test01/
+
+[root@svr7 ~]# touch /stu01/1.txt
+
+[root@svr7 ~]# rsync -avz /stu01/  /test01/
+[root@svr7 ~]# ls /test01/
+
+[root@svr7 ~]# echo haha  >> /stu01/fstab
+[root@svr7 ~]# rsync -avz /stu01/  /test01/
+[root@svr7 ~]# ls /test01/
+
+##################################################
+
+[root@svr7 ~]# ls /test01/
+[root@svr7 ~]# ls /stu01/
+[root@svr7 ~]# rsync --delete -avz  /stu01/  /test01
+
+
+[root@svr7 ~]# touch /test01/10.txt   /test01/a.txt   
+
+[root@svr7 ~]# ls /test01/
+[root@svr7 ~]# ls /stu01/
+[root@svr7 ~]# rsync --delete -avz  /stu01/  /test0
+[root@svr7 ~]# ls /test01/
+[root@svr7 ~]# ls /stu01/
+
+##################################################
+rsync+SSH同步(远程同步)
+
+• 与远程的 SSH目录保持同步
+– 下行:rsync [...]  user@host:远程目录      本地目录
+– 上行:rsync [...]  本地目录      user@host:远程目录
+
+虚拟机A
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+虚拟机B
+# ls /opt
+
+
+虚拟机A
+# touch /opt/{1..10}.txt
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+虚拟机B
+# ls /opt
+
+####################################################
+实时同步
+一、采用公钥与私钥，实现ssh无密码验证
+虚拟机A：
+1.生成的公钥与私钥
+[root@svr7 ~]# ssh-keygen           #一路回车
+2.查看生成的公钥与私钥
+[root@svr7 ~]# ls /root/.ssh/
+id_rsa(私钥)  id_rsa.pub(公钥)   
+known_hosts(记录远程管理过的所有机器)
+3.复制公钥到远程主机
+# ssh-copy-id root@192.168.4.207
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+
+虚拟机B：
+[root@pc207 ~]# ls /root/.ssh/
+authorized_keys(传递过来的公钥) 
+
+#######################################################
+二、监控目录内容的变化
+
+安装源码包inotify-tools工具
+
+1.确认源码包
+[root@svr7 ~]# ls /tools/
+inotify-tools-3.13.tar.gz 
+2.安装gcc与make工具
+[root@svr7 ~]# yum -y install gcc make
+3.解包
+# tar -xf /tools/inotify-tools-3.13.tar.gz  -C /
+# ls /
+4.进行编译安装
+# cd /inotify-tools-3.13/
+# ./configure   #进行配置
+# make          #编译
+# make install  #编译安装
+# ls /usr/local/bin/inotifywait    #确认程序文件
+   
+
+• 常用命令选项
+  – -m,持续监控(捕获一个事件后不退出)
+  – -r,递归监控、包括子目录及文件
+  – -q,减少屏幕输出信息
+  – -e,指定监视的modify、move、create、delete、attrib等事件类别
+
+[root@svr7 /]# inotifywait  -rq /opt/
+
+#####################################################
+清空编译重新安装
+# cd /inotify-tools-3.13/
+# make clean all    #清空编译
+# make
+# make install
+
+##################################################
+三、书写同步的脚本
+   
+# inotifywait  -rq /opt/
+
+# rsync --delete -avz /opt/  root@192.168.4.207:/opt/
+
+      while循环体系，适合死循环
+
+         while  [条件判断]
+         do
+                  循环执行的语句
+         done
+
+
+
+[root@svr7 /]# vim /root/rsync.sh
+#!/bin/bash
+while  inotifywait  -rqq /opt/ 
+do
+ rsync --delete -az /opt/  root@192.168.4.207:/opt/ 
+done &
+
+[root@svr7 /]# chmod +x /root/rsync.sh
+
+[root@svr7 /]# /root/rsync.sh 
+
+[root@svr7 /]# pgrep -l rsync.sh  #查询脚本进程信息
+[root@svr7 /]# killall rsync.sh   #杀死进程
+
+
+
+
+
+
+
+
+=================================
+[root@room9pc01 ~]# sed  -n  '17p;38p'   /etc/ssh/sshd_config
+#Port 22
+PermitRootLogin yes
+[root@room9pc01 ~]# systemctl   start   sshd  &&  systemctl   enable   sshd
+
+[root@Va1 ~]# systemctl  is-active   sshd
+active
+
+[root@Va1 ~]# scp  root@192.168.0.254:/var/git/hadoop/inotify-tools-3.13.tar.gz  /root/
+Warning: Permanently added '192.168.0.254' (ECDSA) to the list of known hosts.
+root@192.168.0.254's password: 输入密码
+.....................
+[root@Va1 ~]# scp  root@192.168.0.254:/var/git/hadoop/tools.tar.gz  /root/root@192.168.0.254's password: 
+tools.tar.gz                                  100%  766KB  19.3MB/s   00:00 
+
+[root@Va1 ~]#  ssh-copy-id  -i  ~/.ssh/id_rsa.pub  Va1  #给自己本身复制一份公钥(非常重要)
+
+------------------------------------------      # 批量传递公钥 -----------
+
+[root@Va1 ~]# for  i in  Va{1..6}; do 
+> ssh-copy-id  -i  ~/.ssh/id_rsa.pub  root@$i
+> done
+...............
+root@va2's password:  输入密码
+.........
+  --------------------------------------- 部署公钥匙 ----------------------
+
+[root@Va1 .ssh]# for  i  in  Va{5,6};do
+> ssh-copy-id   -i  id_rsa.pub  $i
+> done
+......................
+
+[root@Va1 ~]# ssh  Va6  hostname
+Va6
+[root@Va1 ~]# ls  /root/.ssh/
+authorized_keys  id_rsa  id_rsa.pub  known_hosts
+
+[root@Va1 ~]# cat  /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1y.................yUmAw5WuZ root@Va1
+
+[root@Va1 ~]# cat  /root/.ssh/id_rsa.pub 
+ssh-rsa AAAAB3NzaC1y............UmAw5WuZ root@Va1
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.16
+..............
+
+[root@Va6 ~]# ssh  Va1   hostname
+root@va1's password: 1
+Va1
+[root@Va6 ~]# ls  /root/.ssh/
+authorized_keys  known_hosts
+[root@Va6 ~]# cat  /root/.ssh/authorized_keys     #传递过来的公钥
+ssh-rsa AAAAB3NzaC1yc.............UmAw5WuZ root@Va1
+
+
+[root@Va1 ~]# tar  -xzf   tools.tar.gz  
+
+[root@Va1 ~]# ls  /root/tools/
+inotify-tools-3.13.tar.gz  other
+
+[root@Va1 ~]# ls  /root/tools/other/
+boxes-1.1.1-4.el7.x86_64.rpm        oneko-1.2-19.fc24.x86_64.rpm
+cmatrix-1.2a-1.i386.rpm             sl-5.02-1.el7.x86_64.rpm
+ntfs-3g-2014.2.15-6.el6.x86_64.rpm
+
+[root@Va1 ~]# yum   -y  install   gcc  make
+..........
+已安装:
+  gcc.x86_64 0:4.8.5-16.el7                                                     
+
+作为依赖被安装:
+  cpp.x86_64 0:4.8.5-16.el7             glibc-devel.x86_64 0:2.17-196.el7       
+  glibc-headers.x86_64 0:2.17-196.el7   kernel-headers.x86_64 0:3.10.0-693.el7  
+  libmpc.x86_64 0:1.0.1-3.el7          
+
+完毕！
+[root@Va1 ~]# rpm  -q  gcc  make
+gcc-4.8.5-16.el7.x86_64
+make-3.82-23.el7.x86_64
+
+[root@Va1 ~]# tar   -xzf  /root/tools/inotify-tools-3.13.tar.gz  -C  /
+
+[root@Va1 ~]# cd  /inotify-tools-3.13/
+
+[root@Va1 inotify-tools-3.13]# ls
+aclocal.m4    config.h.in   COPYING     libinotifytools  man      src
+AUTHORS       config.sub    depcomp     ltmain.sh        missing
+ChangeLog     configure     INSTALL     Makefile.am      NEWS
+config.guess  configure.ac  install-sh  Makefile.in      README
+
+-----------------   ./configure  #  进行 配置  ---------------------
+
+[root@Va1 inotify-tools-3.13]# ./configure  # 运行 进行 配置
+
+checking for a BSD-compatible install... /usr/bin/install -c
+....................
+config.status: creating libinotifytools/src/inotifytools/inotify.h
+config.status: executing depfiles commands
+
+--------------------------  make  #编译  --------------------------
+
+[root@Va1 inotify-tools-3.13]# make  #编译
+
+make  all-recursive
+make[1]: 进入目录“/inotify-tools-3.13”
+Making all in libinotifytools
+make[2]: 进入目录“/inotify-tools-3.13/libinotifytools”
+.....................
+make[1]: 离开目录“/inotify-tools-3.13”
+
+----------------------------   make   install    # 编译 安装 ------------------------
+
+[root@Va1 inotify-tools-3.13]# make   install    # 编译 安装
+
+Making install in libinotifytools
+make[1]: 进入目录“/inotify-tools-3.13/libinotifytools”
+make[2]: 进入目录“/inotify-tools-3.13”
+make[2]: 离开目录“/inotify-tools-3.13”
+Making install in src
+........................
+/usr/bin/install -c .libs/inotifywatch /usr/local/bin/inotifywatch
+make[2]: 对“install-data-am”无需做任何事。
+..................
+make[2]: 对“install-exec-am”无需做任何事。
+test -z "/usr/local/share/man/man1" || mkdir -p -- "/usr/local/share/man/man1"
+ /usr/bin/install -c -m 644 './inotifywait.1' '/usr/local/share/man/man1/inotifywait.1'
+..............................
+make[1]: 离开目录“/inotify-tools-3.13”
+
+[root@Va1 inotify-tools-3.13]# ls  /usr/local/bin/inotifywait  # 确认程序文件
+/usr/local/bin/inotifywait
+
+[root@Va1 inotify-tools-3.13]# file   /usr/local/bin/inotifywait  #二进制文件
+
+/usr/local/bin/inotifywait: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=2c4e3b3f04a4f7d67e52eaf1df7ad57454d1bc92, not stripped
+
+
+[root@Va1 inotify-tools-3.13]# pwd
+/inotify-tools-3.13
+/************************** 重新编译的命令 **************
+[root@Va1 inotify-tools-3.13]# pwd
+/inotify-tools-3.13
+
+[root@Va1 inotify-tools-3.13]# make  clean  all  #清空所有的编译数据
+
+[root@Va1 inotify-tools-3.13]# make   # 再次编译
+[root@Va1 inotify-tools-3.13]# make   install-sh    # 再次编译 安装
+************/
+
+[root@Va1 inotify-tools-3.13]# cd  /
+[root@Va1 /]# ls
+bin   dev  home                lib    media  opt   root  sbin  sys   tmp  var
+boot  etc  inotify-tools-3.13  lib64  mnt    proc  run   srv   test  usr
+
+[root@Va1 /]# cd
+
+[root@Va1 ~]# which  inotifywait 
+/usr/local/bin/inotifywait
+
+[root@Va1 ~]# type   inotifywait
+inotifywait 是 /usr/local/bin/inotifywait
+
+inotifywait  常用命令选项：
+-m，持续监控（捕获一个事件后不退出）
+-r，递归监控、包括子目录及文件
+-q，减少屏幕输出信息
+-e，指定监视的 modify、move、create、delete、attrib 等事件类别
+
+[root@Va1 ~]# inotifywait   -mrq
+No files specified to watch!
+没有指定要监视的文件！
+
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  new.txt
+
+=============  部署inotify-tools工具软件,监控目录内容变化  ==============
+
+--------------------- 指定要监视的文件  /root/kong/ ------------------
+
+[root@Va1 ~]# inotifywait   -mrq   /root/kong/
+-m，持续监控（捕获一个事件后不退出）
+这里会出现变化结果通知
+...............
+/root/kong/ OPEN,ISDIR newdir
+/root/kong/newdir/ OPEN,ISDIR 
+/root/kong/newdir/ DELETE new.txt
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR newdir
+/root/kong/newdir/ CLOSE_NOWRITE,CLOSE,ISDIR 
+/root/kong/newdir/ DELETE_SELF 
+/root/kong/newdir/ IGNORED 
+/root/kong/ DELETE,ISDIR newdir
+^C
+[root@Va1 ~]# 
+
+------------------------------- 再开一个终端  Va1  ------------------
+[root@room9pc01 ~]# ssh  -X    Va1
+.....................
+Are you sure you want to continue connecting (yes/no)? yes
+............
+root@va1's password: 密码
+...........
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  new.txt
+   这时候在原先的终端 Va1 看到出现变化
+[root@Va1 ~]# inotifywait   -mrq   /root/kong/
+/root/kong/ OPEN,ISDIR 
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR 
+
+[root@Va1 ~]# echo  "Va1 write" >>  /root/kong/new.txt 
+  这时候在原先的终端 Va1  再次看到新变化
+...................
+/root/kong/ OPEN new.txt
+/root/kong/ MODIFY new.txt
+/root/kong/ CLOSE_WRITE,CLOSE new.txt
+
+[root@Va1 ~]# cat   /root/kong/new.txt 
+Va1 write
+
+  这时候在原先的终端 Va1  再次看到新变化
+/root/kong/ OPEN,ISDIR 
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR 
+/root/kong/ OPEN new.txt
+/root/kong/ ACCESS new.txt
+/root/kong/ CLOSE_NOWRITE,CLOSE new.txt
+
+[root@Va1 ~]# echo  "Va1 write again" >>  /root/kong/new2.txt 
+ 这时候在原先的终端 Va1  再次看到新变化
+/root/kong/ CREATE new2.txt
+/root/kong/ OPEN new2.txt
+/root/kong/ MODIFY new2.txt
+/root/kong/ CLOSE_WRITE,CLOSE new2.txt
+
+[root@Va1 ~]# mkdir   /root/kong/newdir
+   这时候在原先的终端 Va1  再次看到新变化
+/root/kong/ CREATE,ISDIR newdir
+/root/kong/ OPEN,ISDIR newdir
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR newdir
+
+[root@Va1 ~]# mv   /root/kong/new.txt   /root/kong/newdir/
+     这时候在原先的终端 Va1  再次看到新变化
+   /root/kong/ OPEN,ISDIR 
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR 
+/root/kong/ MOVED_FROM new.txt
+/root/kong/newdir/ MOVED_TO new.txt
+
+[root@Va1 ~]# ls   /root/kong/
+diff2.txt  diff.txt  new2.txt  newdir
+--------------------
+/root/kong/ OPEN,ISDIR 
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR 
+
+[root@Va1 ~]# mv   /root/kong/new2.txt   /root/kong/newfile.txt
+.-------------
+/root/kong/ OPEN,ISDIR 
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR 
+/root/kong/ MOVED_FROM new2.txt
+/root/kong/ MOVED_TO newfile.txt
+[root@Va1 ~]# ls   /root/kong/newdir/
+new.txt
+-----------------------
+/root/kong/newdir/ OPEN,ISDIR 
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR newdir
+/root/kong/newdir/ CLOSE_NOWRITE,CLOSE,ISDIR 
+
+[root@Va1 ~]# rm  -rf  /root/kong/newdir/
+.............................
+/root/kong/ OPEN,ISDIR newdir
+/root/kong/newdir/ OPEN,ISDIR 
+/root/kong/newdir/ DELETE new.txt
+/root/kong/ CLOSE_NOWRITE,CLOSE,ISDIR newdir
+/root/kong/newdir/ CLOSE_NOWRITE,CLOSE,ISDIR 
+/root/kong/newdir/ DELETE_SELF 
+/root/kong/newdir/ IGNORED 
+/root/kong/ DELETE,ISDIR newdir
+---------------------------------------------------------------------------------
+部署inotify-tools工具软件,监控目录内容变化
+
+  -m，持续监控（捕获一个事件后不退出）
+
+ ===== inotifywait  -rq   /root/kong/  #捕获一个事件后 立即自动退出( 没有 -m参数的效果)
+---------------------  开启 一次性 监控 --------------------
+[root@Va1 ~]# inotifywait   -rq   /root/kong/
+/root/kong/ OPEN,ISDIR 
+
+----------------------------- 再开一个终端  Va1  ------------------
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  newfile.txt
+  这时候在原先的终端 Va1  再次看到新变化
+/root/kong/ OPEN,ISDIR 
+
+---------------------  开启 一次性 监控 --------------------
+[root@Va1 ~]# inotifywait   -rq   /root/kong/
+
+------------------- 再开一个终端  Va1  -----------
+[root@Va1 ~]# touch  /root/kong/new2file.txt
+
+------------------------- 回到 原先的终端 出现通知结果 -------------
+[root@Va1 ~]# inotifywait   -rq   /root/kong/
+/root/kong/ CREATE new2file.txt
+
+
+---------------------  开启 一次性 监控 --------------------
+[root@Va1 ~]# ll   /root/kong/new2file.txt
+-rw-r--r-- 1 root root 0 1月  29 15:37 /root/kong/new2file.txt
+
+[root@Va1 ~]# inotifywait   -rq   /root/kong/
+
+------------------- 再开一个终端  Va1  -----------
+[root@Va1 ~]# chmod  777  /root/kong/new2file.txt
+
+------------------------- 回到 原先的终端 出现通知结果 -------------
+[root@Va1 ~]# inotifywait   -rq   /root/kong/
+/root/kong/ ATTRIB new2file.txt
+
+[root@Va1 ~]# ll  /root/kong/new2file.txt 
+-rwxrwxrwx 1 root root 0 1月  29 15:37 /root/kong/new2file.txt
+============================
+while()是c语言中的循环语句
+例如
+while(a){
+i++;
+}
+其中a如果是int值，即a=0时，while()里的语句不执行，a=1时，则执行
+a还可以是字符型，int型，bool型
+while(0)就是一次都不执行循环，等同于while(0!=0)
+while(1)就是永远执行循环，可以在循环中通过break跳出循环，等同于while(0==0)
+
+
+[root@Va6 ~]# while [ 1 ]; do   echo  haha ; read  -t 2 ;done
+haha
+haha
+haha
+^C
+
+[root@Va6 ~]# while [ 0 ]; do   echo  haha ;sleep  3; done
+haha
+haha
+haha
+^C
+[root@Va6 ~]# while [ 1 ]; do   echo  haha; sleep 2;done
+haha
+haha
+^C
+[root@Va6 ~]# i=0; while [ 0 ];  do echo  haha;  let  i++;  if [ $i  -eq  2 ];  then echo  hihi; break;  fi; done
+haha
+haha
+hihi
+
+[root@Va6 ~]# i=0;
+[root@Va6 ~]# while [ 0 ]; 
+> do echo  haha; 
+> let  i++; 
+> if [ $i  -eq  2 ];
+>  then echo  hihi;
+> break; 
+> fi; done
+haha
+haha
+hihi
+
+  while  命令;
+    do
+             重复的事情
+    done
+书写监控的脚本
+
+     死循环功能:持续不断做一件重复的事情
+
+[root@Va6 ~]# ls   /root/kong/
+
+[root@Va1 ~]# vim  /root/rsync-inotifywait.sh
+[root@Va1 ~]# cat   /root/rsync-inotifywait.sh
+#!/bin/bash
+while  inotifywait  -rq  /root/kong  >> /root/newfile.ini;
+do  rsync --delete  -avz  /root/kong  root@Va6:/root/ &> /root/Va1file.ini;
+done
+[root@Va1 ~]# touch   /root/newfile.ini   /root/Va1file.ini
+[root@Va1 ~]# cat      /root/newfile.ini   /root/Va1file.ini
+
+inotifywait  常用命令选项：
+-m，持续监控（捕获一个事件后不退出）
+-r，递归监控、包括子目录及文件
+-q，减少屏幕输出信息
+-e，指定监视的 modify、move、create、delete、attrib 等事件类别
+
+===================================
+--------------------  开启   监控 --------------------
+
+[root@Va1 ~]# . /root/rsync-inotifywait.sh 
+---------------- 再开一个终端  Va1  -----------
+[root@Va1 ~]# touch  /root/kong/newtest.txt
+
+[root@Va1 ~]# echo  "add haha" > /root/kong/newtest.txt
+
+[root@Va1 ~]# . /root/rsync-inotifywait.sh 
+^C
+
+[root@Va1 ~]# cat      /root/newfile.ini   /root/Va1file.ini
+/root/kong/ CREATE newtest.txt
+/root/kong/ MODIFY newtest.txt
+sending incremental file list
+kong/newtest.txt
+
+sent 190 bytes  received 32 bytes  444.00 bytes/sec
+total size is 116  speedup is 0.52
+
+[root@Va1 ~]# 
+[root@Va6 ~]# ls   /root/kong/
+diff2.txt  diff.txt  new2file.txt  newfile.txt  newtest.txt
+
+
+[root@Va1 ~]# >  /root/newfile.ini ; >  /root/Va1file.ini
+[root@Va1 ~]# cat      /root/newfile.ini   /root/Va1file.ini
+
+
+[root@Va1 ~]# vim  /root/rsync-inotifywait.sh
+
+[root@Va1 ~]# cat  /root/rsync-inotifywait.sh
+#!/bin/bash
+while  inotifywait  -rqq  /root/kong  >> /root/newfile.ini;
+do  rsync --delete  -avz  /root/kong  root@Va6:/root/ &> /root/Va1file.ini;
+done  &
+
+[root@Va1 ~]# . /root/rsync-inotifywait.sh
+
+[root@Va1 ~]# echo xiix >>  /root/kong/newfile.txt 
+
+[root@Va1 ~]# jobs
+[1]+  运行中               while inotifywait -rqq /root/kong >> /root/newfile.ini; do
+    rsync --delete -avz /root/kong root@Va6:/root/ &>/root/Va1file.ini;
+done &
+
+[root@Va1 ~]# fg  1
+while inotifywait -rqq /root/kong >> /root/newfile.ini; do
+    rsync --delete -avz /root/kong root@Va6:/root/ &>/root/Va1file.ini;
+done
+^C
+[root@Va1 ~]#  cat      /root/newfile.ini  
+[root@Va1 ~]#  cat     /root/Va1file.ini
+
+sending incremental file list
+kong/newfile.txt
+
+sent 202 bytes  received 38 bytes  480.00 bytes/sec
+total size is 121  speedup is 0.50
+
+[root@Va6 ~]# cat  /root/kong/newfile.txt 
+Va1 write again
+xiix
+
+[root@Va6 ~]# ls  /root/kong/
+diff2.txt  diff.txt  new2file.txt  newfile.txt  newtest.txt
+
+[root@Va1 ~]# vim  /root/rsync-inotifywait.sh
+[root@Va1 ~]# cat   /root/rsync-inotifywait.sh
+#!/bin/bash
+while  inotifywait  -rqq  /root/kong ;
+do  rsync --delete  -az  /root/kong  root@Va6:/root/ ;
+done  &
+[root@Va1 ~]# chmod  a+x  /root/rsync-inotifywait.sh
+
+[root@Va1 ~]# /root/rsync-inotifywait.sh
+
+[root@Va1 ~]# jobs
+
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  new2file.txt  newfile.txt  newtest.txt
+
+[root@Va1 ~]# rm  -f   /root/kong/new2file.txt 
+
+[root@Va6 ~]# ls  /root/kong/
+diff2.txt  diff.txt  newfile.txt  newtest.txt
+
+[root@Va1 ~]# rm  -f  /root/kong/newtest.txt 
+[root@Va1 ~]# ls   /root/kong/
+diff2.txt  diff.txt  newfile.txt
+
+[root@Va6 ~]# ls  /root/kong/
+diff2.txt  diff.txt  newfile.txt
+
+=======================
+
+[root@Va1 ~]# ll  /root/rsync-inotifywait.sh 
+-rwxr-xr-x 1 root root 113 1月  29 17:38 /root/rsync-inotifywait.sh
+[root@Va1 ~]# cat   /root/rsync-inotifywait.sh
+#!/bin/bash
+while  inotifywait  -rqq  /root/kong ;
+do  rsync --delete  -az  /root/kong  root@Va6:/root/ ;
+done  
+[root@Va1 ~]# /root/rsync-inotifywait.sh
+^C
+[root@Va1 ~]# /root/rsync-inotifywait.sh  &
+[1] 13307
+[root@Va1 ~]# jobs
+[1]+  运行中               /root/rsync-inotifywait.sh &
+[root@Va1 ~]# pgrep  -l   wait.sh
+[root@Va1 ~]# pgrep  -l  /root/rsync-inotifywait.sh
+[root@Va1 ~]# echo $!
+13307
+[root@Va1 ~]# kill  -9   13307
+[root@Va1 ~]# echo  $?
+0
+[1]+  已杀死               /root/rsync-inotifywait.sh
+[root@Va1 ~]# echo $!
+13307
+[root@Va1 ~]# kill  -9   13307
+-bash: kill: (13307) - 没有那个进程
+
+
+[root@Va1 ~]# pstree   |grep  inotify
+        |-rsync-inotifywa---inotifywait
+
+[root@Va1 ~]# pstree   |grep  inotify
+        |-rsync-inotifywa---inotifywait
+
+[root@Va1 ~]# killall  -9  inotifywait
+[root@Va1 ~]# /root/rsync-inotifywait.sh: 行 4: 13357 已杀死               inotifywait -rqq /root/kong
+^C
+[root@Va1 ~]# pstree   |grep  inotify
+[root@Va1 ~]# echo  $!
+13307
+[root@Va1 ~]# jobs
+
+[root@Va1 ~]# cat   rsync-inotifywait.sh 
+#!/bin/bash
+while  inotifywait  -rqq  /root/kong ;
+do  rsync --delete  -az  /root/kong  root@Va6:/root/ ;
+done  &
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  newfile.txt
+[root@Va1 ~]# rm  -f  /root/kong/diff2.txt 
+
+[root@Va1 ~]# ls  /root/kong/
+diff.txt  newfile.txt
+
+[root@Va6 ~]# ls  /root/kong/
+diff2.txt  diff.txt  newfile.txt
+
+===================
+
+[root@Va1 ~]# cat  /root/rsync-inotifywait.sh 
+#!/bin/bash
+while  inotifywait  -rqq  /root/kong ;
+do  rsync --delete  -az  /root/kong  root@Va6:/root/ ;
+done  &
+
+[root@Va1 ~]# /root/rsync-inotifywait.sh
+
+[root@Va1 ~]# pstree   |grep  inotify
+        |-rsync-inotifywa---inotifywait
+
+[root@Va1 ~]# pgrep    -l  inotifywait
+13513 inotifywait
+
+[root@Va1 ~]# pgrep   -l   rsync-inotifywa
+13512 rsync-inotifywa
+
+[root@Va1 ~]# ls  /root/kong/
+diff.txt  newfile.txt
+
+[root@Va1 ~]# cp  /root/kong/diff.txt   /root/kong/diff2.txt
+
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  newfile.txt
+
+[root@Va1 ~]# rm  -f  /root/kong/newfile.txt 
+
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt
+
+[root@Va1 ~]# jobs
+[root@Va1 ~]# kill  -9  13513
+-bash: kill: (13513) - 没有那个进程
+
+[root@Va1 ~]# kill  -9  13512
+
+[root@Va1 ~]# pstree   |grep  inotify
+        |-inotifywait
+
+[root@Va1 ~]# pgrep   -l   inotifywait
+13569 inotifywait
+
+[root@Va1 ~]# kill  -9  13569
+
+[root@Va1 ~]# pstree   |grep  inotify
+
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt
+
+[root@Va1 ~]# cp  /root/kong/diff.txt   /root/kong/new.txt
+
+[root@Va1 ~]# ls  /root/kong/
+diff2.txt  diff.txt  new.txt
+[root@Va1 ~]# 
+
+[root@Va6 ~]# ls  /root/kong/
+diff2.txt  diff.txt
+
+
+[root@Va6 ~]# pstree  -p   |grep  http
+           |-httpd(1110)-+-httpd(1293)
+           |             |-httpd(1294)
+           |             |-httpd(1295)
+           |             |-httpd(1296)
+           |             `-httpd(1297)
+
+/etc/group 的内容包括用户组（Group）、用户组口令、GID及该用户组所包含的用户（User），每个用户组一条记录；格式如下：
+　　group_name:passwd:GID:user_list
+　　在/etc/group 中的每条记录分四个字段：
+　　第一字段：用户组名称；
+　　第二字段：用户组密码；
+　　第三字段：GID
+　　第四字段：用户列表，每个用户之间用,号分割；本字段可以为空；如果字段为空表示用户组为GID的用户名；
+　　我们举个例子：
+　　root:x:0:root,linuxsir 注：用户组root，x是密码段，表示没有设置密码，GID是0,root用户组下包括root、linuxsir以及GID为0的其它用户（可以通过/etc/passwd查看）；；
+
+[root@Va1 ~]# groupadd   -g  200  nfsuser
+
+[root@Va1 ~]# tail  -1  /etc/group
+nfsuser:x:200:
+ 用户组名称 ：用户组密码 ：GID :用户列表
+
+[root@Va1 ~]# head  -1  /etc/group
+root:x:0:
+
+
+
+
+
