@@ -340,9 +340,7 @@ Va5
 
 [root@Va1 ~]# netstat  -npult  |egrep    "50070|50090|9000|8088"
 
----------------------------  # 启动Hadoop HDFS守护进程NameNode、SecondaryNameNode、DataNode -----
-
-[root@Va1 ~]# /usr/local/hadoop/sbin/start-dfs.sh  
+[root@Va1 ~]# /usr/local/hadoop/sbin/start-dfs.sh 
 
 Starting namenodes on [Va1]
 Va1: starting namenode, logging to /usr/local/hadoop/logs/hadoop-root-namenode-Va1.out
@@ -791,10 +789,15 @@ Va4
 [root@Va1 ~]# rsync   -aSH  --delete  /usr/local/hadoop  Va3:/usr/local/
 [root@Va1 ~]# rsync   -aSH  --delete  /usr/local/hadoop  Va4:/usr/local/
 
+
+-----------  启动Hadoop HDFS守护进程NameNode、SecondaryNameNode、DataNode ---------------
+
+
 [root@Va1 ~]# /usr/local/hadoop/sbin/start-dfs.sh    # 启动 hdfs 集群
 Starting namenodes on [Va1]
 .........................
 
+--------------------------- 查看 datanode 信息 在 namenode 节点主机 Va1 上 执行 -----------------
 
 [root@Va1 ~]#  /usr/local/hadoop/bin/hdfs   dfsadmin   -report  |egrep  -nA2   "Live|Hostname:"
 12:Live datanodes (3):

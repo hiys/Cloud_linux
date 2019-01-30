@@ -2196,6 +2196,85 @@ Removed symlink /etc/systemd/system/multi-user.target.wants/elasticsearch.servic
 
 
 
+[root@room9pc01 ~]# ls  /var/git/
+ansible              CentOS7-1708.iso  elk.tar  hadoop.tar
+ansible_soft.tar.xz  elk               hadoop   Hadoop.zip
+
+
+[root@room9pc01 ~]# tail   -3  /etc/rc.local 
+/usr/bin/crack_pycharm &
+mount  -o  loop  -t  iso9660  /var/git/CentOS7-1708.iso  /var/ftp/CentOS7-1708
+echo  "nameserver  176.121.0.100" >  /etc/resolv.conf
+
+[root@room9pc01 ~]# tail  -2  /etc/bashrc 
+/usr/sbin/ifconfig rhce:0 172.25.0.250
+echo Taren1 | passwd --stdin root &> /dev/null
+
+[root@room9pc01 ~]# tail  -1  /etc/profile
+/bin/uftpd -D /public
+
+
+[root@room9pc01 ~]# ls    /var/lib/libvirt/images/
+bin      lost+found     rh7_node5.img  tedu-wallpaper-01.png       Va4.qcow2
+conf.d   qemu           rh7_node6.img  tedu-wallpaper-weekend.png  vsftpd.conf
+content  rh7_node1.img  rh7_node7.img  Va1-1.qcow2                 Weekend.sh
+db       rh7_node2.img  rh7_node8.img  Va1.qcow2
+exam     rh7_node3.img  rh7_node9.img  Va2.qcow2
+iso      rh7_node4.img  Student.sh     Va3.qcow2
+[root@room9pc01 ~]# ls    /etc/libvirt/qemu/
+networks  Va2.xml  Va4.xml  Va6.xml  Va8.xml
+Va1.xml   Va3.xml  Va5.xml  Va7.xml  Va9.xml
+[root@room9pc01 ~]# ls    /etc/libvirt/qemu/networks/
+autostart    private1.xml  public1.xml  rhce.xml  vbr.xml
+default.xml  private2.xml  public2.xml  vbr1.xml
+[root@room9pc01 ~]# cat  /etc/libvirt/qemu/networks/vbr1.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr1
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr1</name>
+  <uuid>179deea8-01b8-46d6-815d-d7ec06efc4af</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <mac address='52:54:00:c5:4b:d0'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+[root@room9pc01 ~]# cat  /etc/libvirt/qemu/networks/vbr.xml 
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit vbr
+or other application using the libvirt API.
+-->
+
+<network>
+  <name>vbr</name>
+  <uuid>d687129e-815f-4d85-9f5d-43bdd5c0a8ab</uuid>
+  <forward mode='nat'/>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <mac address='52:54:00:62:4a:0a'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+[root@room9pc01 ~]# 
+
+
+
+
+
 
 
 
