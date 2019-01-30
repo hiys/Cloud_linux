@@ -137,6 +137,23 @@ Last login: Mon Jan 28 09:13:56 2019 from 192.168.0.254
 -rw-r--r-- 1 20415  101   10 4月  18 2018 slaves  # 节点配置文件(主机名)
 -rw-r--r-- 1 20415  101  690 4月  18 2018 yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
 
+[root@Va1 ~]# ll  /usr/local/hadoop/etc/hadoop/{core-site.xml,hadoop-env.sh,hdfs-site.xml,mapred-site.xml,slaves,yarn-site.xml,exclude}
+
+-rw-r--r-- 1 20415  101 1125 1月  29 20:30 /usr/local/hadoop/etc/hadoop/core-site.xml #  核心全局配置文件
+
+-rw-r--r-- 1 root  root    4 1月  28 19:07 /usr/local/hadoop/etc/hadoop/exclude      #即将删除的节点主机名
+
+-rw-r--r-- 1 20415  101 4275 1月  24 19:06 /usr/local/hadoop/etc/hadoop/hadoop-env.sh   # 环境配置文件
+
+-rw-r--r-- 1 20415  101 1259 1月  28 19:01 /usr/local/hadoop/etc/hadoop/hdfs-site.xml  # HDFS：Hadoop分布式文件系统（核心组件）hdfs配置文件
+
+-rw-r--r-- 1 root  root  844 1月  27 12:38 /usr/local/hadoop/etc/hadoop/mapred-site.xml # MapReduce：分布式计算框架（核心组件）
+
+-rw-r--r-- 1 20415  101   12 1月  29 20:18 /usr/local/hadoop/etc/hadoop/slaves   # datanode,nodeManager节点配置文件(主机名)
+
+-rw-r--r-- 1 20415  101  885 1月  27 13:09 /usr/local/hadoop/etc/hadoop/yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
+[root@Va1 ~]# 
+
 
 http://hadoop.apache.org/docs/r2.7.6/
  靠近网页左下角 的链接文档
@@ -1627,17 +1644,117 @@ nfs.wtmax (1048576) 以此写占用1M内存
 nfs.port.monitoring.disabled (false) #允许从没有权限的客户端挂载 nfs
 
 
-
-
-
-
-
-
-
-
-
 https://www.cnblogs.com/cxchanpin/p/7137368.html
 
 
 http://blog.51cto.com/45545613/2083475
+
+======================
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.16
+root@192.168.0.16's password: 
+Last login: Tue Jan 29 12:42:31 2019 from 192.168.0.254
+[root@Va6 ~]# yum  -y  install  nfs-utils   rpcbind
+...............
+软件包 1:nfs-utils-1.3.0-0.48.el7.x86_64 已安装并且是最新版本
+软件包 rpcbind-0.2.0-42.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@Va6 ~]# rpm  -q   nfs-utils   rpcbind
+nfs-utils-1.3.0-0.48.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+
+
+     mount  nfs 服务
+hadoop  只支持 nfs版本3 ,只支持tcp协议,
+不支持 NLM
+
+ 文件锁是保持文件同步的一种手段，
+当多个用户同时操作同一个文件时，文件锁可以保证数据不发生冲突。
+NFSv2和NFSv3依靠NLM协议实现文件锁，
+
+NFSv4本身实现了文件锁，不需要NLM协同工作了。
+
+NFS中的文件锁既可以加在客户端，
+也可以加在服务器端。
+
+如果客户端挂载NFS文件系统时使用了选项nolock，
+表示在客户端加锁。
+
+这种情况下可以保证同一个客户端的多个进程访问同一个文件的过程不发生冲突，
+但是不同客户端访问同一个文件时还可能发生冲突，
+因为文件锁加在了客户端，
+其他客户端不知道这个文件锁的存在。
+
+如果客户端挂载NFS文件系统时使用了选项lock，
+表示在服务器端加锁，
+
+这样所有的客户端都可以检查服务器端是否存在文件锁，
+因此所有客户端访问同一个文件时都不会发生冲突。
+
+客户端加锁时和其他文件系统的加锁过程没有什么区别
+
+文件锁相关的请求
+
+NFSv4中有四个与文件锁相关的请求，分别是:
+LOCK：给文件加锁，nfs4_proc_setlk()会发起这个请求
+
+LOCKT：查询文件锁的信息，nfs4_proc_getlk()会发起这个请求。
+LOCKU：解锁，nfs4_proc_unlck()会发起这个请求。
+RELEASE_LOCKOWNER：释放文件锁所有者，nfs4_proc_unlck()会发起这个请求。
+
+
+tcp            -- 指定NFS使用TCP协议mount，替换UDP
+rsize=8192和wsize=8192   -- 通过设定大的同时传输的数据块大小(bytes)，以提高NFS读写的速度
+
+在开发板上挂载PC机上的一个目录，如/source/rootfs （该目录已经在/etc/exports文件中配置）
+
+mount  -t nfs  -o nolock -o tcp 192.168.8.129:/source/rootfs /mnt/nfs
+
+#  -o  nolock  不支持 NLM 表示在客户端加锁
+nfs mount 默认选项包括文件锁，依赖于portmap提供的动态端口分配功能。
+解决方法：kill 文件锁（lockd）或者mount -o nolock
+
+nfsvers=2或者nfsvers=3 -- 指定使用那个版本的NFS协议。
+nolock -- 禁用文件锁。这个设置在连接到一个旧版本的NFS服务器时偶尔会用到
+
+mount -o rw,noexec,nosuid,noatime,nodiratime /dev/sdb1 /bank/bank3
+
+rw:读写
+noexec:禁止在此文件系统上执行程序
+nosuid:禁止在此文件系统上做suid
+
+noatime:不修改文件的atime
+nodiratime:不修改目录的atime
+
+# mount   -t, --types <列表>      限制文件系统类型集合
+     --source <源>       指明源(路径、标签、uuid)
+     --target <目标>     指明挂载点
+
+[root@Va6 ~]# showmount   -e   Va5
+Export list for Va5:
+/ *
+
+-----------------  noatime:不修改文件的atime  
+------------  sync请求或写入数据时，数据同步写入到nfs server 的硬盘后才返回
+
+[root@Va6 ~]# mount  -t   nfs  -o  vers=3,proto=tcp,nolock,noatime,sync  Va5:/   /mnt/
+
+[root@Va6 ~]# ls  /mnt/
+Aa  outputdir  rhel7.4.iso  root  system  tmp  user
+
+[root@Va6 ~]# df   -hT   /mnt/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+Va5:/          nfs    51G   18G   34G   36% /mnt
+
+[root@Va6 ~]# df   -lhT   /mnt/
+df: 未处理文件系统
+
+
+
+
+
+
+
+
 

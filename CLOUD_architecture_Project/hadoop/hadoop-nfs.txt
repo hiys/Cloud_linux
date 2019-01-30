@@ -1,0 +1,1522 @@
+zookeeper 安装
+
+1 禁用防火墙和 selinux
+2 设置 /etc/hosts ip 主机名对应关系
+3 安装 openjdk
+
+zookeeper 角色，选举
+leader 集群主节点
+follower 参与选举的附属节点
+observer 不参与选举的节点，同步 leader 的命名空间
+
+1 拷贝配置文件
+/usr/local/zookeeper/conf/zoo_sample.cfg 到
+/usr/local/zookeeper/conf/zoo.cfg
+
+2 修改配置文件
+server.1=zk1:2888:3888
+server.2=zk2:2888:3888
+server.3=zk3:2888:3888
+server.4=zk4:2888:3888:observer
+
+3 创建目录 zookeeper 配置文件里面的 dataDir 指定的目录
+4 在目录下创建 myid 文件，写入自己的 id 值
+5 启动集群，查看角色
+/usr/local/zookeeper/bin/zkServer.sh start
+/usr/local/zookeeper/bin/zkServer.sh status
+
+kafka 集群安装
+1 禁用防火墙和 selinux
+2 设置 /etc/hosts ip 主机名对应关系
+3 安装 openjdk
+4 安装 kafka 到 /usr/local/kafka
+5 修改配置文件 config/server.properties
+broker.id= id值不能相同
+zookeeper.connect=zk1:2181,zk4:2181
+
+启动 kafka
+/usr/local/kafka/bin/kafka-server-start.sh -daemon /usr/local/kafka/config/server.properties
+
+验证：
+jps 能看到 kafka
+netstat 能看到 9092 被监听
+
+创建主题
+bin/kafka-topics.sh --create --zookeeper zk4:2181 --replication-factor 1 --partitions 1 --topic nsd1703
+
+查看显示已存在的主题
+bin/kafka-topics.sh --list --zookeeper zk4:2181
+
+查看主题的详细信息
+bin/kafka-topics.sh --describe --zookeeper zk1:2181,zk2:2181 --topic nsd1703
+
+生存者发布信息
+bin/kafka-console-producer.sh --broker-list zk1:9092,zk3:9092 --topic nsd1703
+
+消费者消费信息
+bin/kafka-console-consumer.sh --zookeeper zk1:2181,zk2:2181 --topic nsd1703 --from-beginning
+bin/kafka-console-consumer.sh --bootstrap-server zk1:9092,zk4:9092 --topic nsd1703
+
+from-beginning 是从头开始消费消息
+
+hadoop 高可用
+core-site.xml
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://mycluster</value>  
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+    </property>
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value>node1:2181,node2:2181,node3:2181</value>
+    </property>
+</configuration>
+
+hdfs-site.xml
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+    </property>
+
+    <property>
+        <name>dfs.nameservices</name>
+        <value>mycluster</value>
+    </property>
+    <property>
+        <name>dfs.ha.namenodes.mycluster</name>
+        <value>nn1,nn2</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn1</name>
+        <value>master1:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn2</name>
+        <value>master2:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn1</name>
+        <value>master1:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn2</name>
+        <value>master2:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://node1:8485;node2:8485;node3:8485/mycluster</value>
+    </property>
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/var/hadoop/journal</value>
+    </property>
+    <property>
+        <name>dfs.client.failover.proxy.provider.mycluster</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>sshfence</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/root/.ssh/id_rsa</value>
+    </property>
+    <property>
+        <name>dfs.ha.automatic-failover.enabled</name>
+        <value>true</value>
+    </property>
+</configuration>
+
+同步配置到所有集群机器
+
+在其中一台初始化 zookeeper 集群
+ bin/hdfs zkfc -formatZK
+在定义的节点启动 journalnode
+sbin/hadoop-daemon.sh start journalnode
+在其中一台 namenode 上执行格式化命令
+bin/hdfs namenode –format
+格式化以后把数据目录拷贝到另一台 namenode
+初始化 JournalNode
+./bin/hdfs namenode -initializeSharedEdits
+停止 JournalNode
+sbin/hadoop-daemon.sh stop journalnode
+启动 dfs
+./sbin/start-dfs.sh
+验证配置
+ bin/hadoop dfsadmin -report
+
+
+查看集群状态  bin/hdfs haadmin -getServiceState nn1  bin/hdfs haadmin -getServiceState nn2
+bin/hadoop fs -ls hdfs://mycluster/
+
+bin/hadoop fs -mkdir hdfs://mycluster/input
+验证高可用，关闭 active namenode
+sbin/hadoop-daemon.sh stop namenode
+
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.ha.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.ha.rm-ids</name>
+        <value>rm1,rm2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname.rm1</name>
+        <value>master1</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname.rm2</name>
+        <value>master2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.recovery.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.store.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.zk-address</name>
+        <value>node1:2181,node2:2181,node3:2181</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.cluster-id</name>
+        <value>yarn-ha</value>
+    </property>
+</configuration>
+
+启动服务，检查状态
+sbin/start-yarn.sh
+bin/yarn rmadmin -getServiceState rm1
+bin/yarn rmadmin -getServiceState rm2
+
+
+
+[root@room9pc01 ~]# cat  /etc/resolv.conf 
+...............
+nameserver 176.121.0.100
+[root@room9pc01 ~]# tail  -1 /etc/rc.local 
+echo  "nameserver  176.121.0.100" >  /etc/resolv.conf
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.11
+..........
+[root@Va1 ~]# jps
+1540 Jps
+
+[root@Va1 ~]# cat /etc/hosts   # hadoop 对主机名强依赖,必须添加域名解析配置
+
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.0.11  Va1
+192.168.1.11  Va1
+192.168.0.12  Va2
+192.168.1.12  Va2
+192.168.0.13  Va3
+192.168.1.13  Va3
+192.168.0.14  Va4
+192.168.1.14  Va4
+192.168.0.15  Va5
+192.168.1.15  Va5
+192.168.0.16  Va6
+192.168.1.16  Va6
+192.168.0.17  Va7
+192.168.1.17  Va7
+192.168.0.18  Va8
+192.168.1.18  Va8
+192.168.0.19  Va9
+192.168.1.19  Va9
+
+http://hadoop.apache.org/docs/r2.7.6/
+ 靠近网页左下角 的链接文档
+Configuration
+ core-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/core-site.xml
+
+ hdfs-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+ mapred-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/mapred-site.xml
+ yarn-default.xml  对应配置文件   /usr/local/hadoop/etc/hadoop/yarn-site.xml 
+
+
+[root@Va1 ~]# ll  /usr/local/hadoop/etc/hadoop/{core-site.xml,hadoop-env.sh,hdfs-site.xml,mapred-site.xml,slaves,yarn-site.xml,exclude}
+
+-rw-r--r-- 1 20415  101 1125 1月  29 20:30 /usr/local/hadoop/etc/hadoop/core-site.xml #  核心全局配置文件
+
+-rw-r--r-- 1 root  root    4 1月  28 19:07 /usr/local/hadoop/etc/hadoop/exclude      #即将删除的节点主机名
+
+-rw-r--r-- 1 20415  101 4275 1月  24 19:06 /usr/local/hadoop/etc/hadoop/hadoop-env.sh   # 环境配置文件
+
+-rw-r--r-- 1 20415  101 1259 1月  28 19:01 /usr/local/hadoop/etc/hadoop/hdfs-site.xml  # HDFS：Hadoop分布式文件系统（核心组件）hdfs配置文件
+
+-rw-r--r-- 1 root  root  844 1月  27 12:38 /usr/local/hadoop/etc/hadoop/mapred-site.xml # MapReduce：分布式计算框架（核心组件）
+
+-rw-r--r-- 1 20415  101   12 1月  29 20:18 /usr/local/hadoop/etc/hadoop/slaves   # datanode,nodeManager节点配置文件(主机名)
+
+-rw-r--r-- 1 20415  101  885 1月  27 13:09 /usr/local/hadoop/etc/hadoop/yarn-site.xml  # Yarn：集群资源管理系统（核心组件）
+[root@Va1 ~]# 
+
+
+
+------------------  /usr/local/hadoop/etc/hadoop/hadoop-env.sh --------------
+
+------------------------    修改配置文件的运行环境：hadoop-env.sh ------------------
+-----------   /usr/local/hadoop/etc/hadoop/hadoop-env.sh ------------
+
+                                          # 设置 Java_Home 家目录路径
+[root@Va1 hadoop]# sed  -i   "/JAVA_HOME=/s#\(=\).*#\1\"/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre\"#"   hadoop-env.sh
+
+                                                      # 设置 hadoop配置文件路径
+[root@Va1 hadoop]# sed  -i  "/HADOOP_CONF_DIR=\${/s#\${HADOOP_CONF_DIR:-.*#\"/usr/local/hadoop/etc/hadoop/\"#"  hadoop-env.sh
+
+       ----------------- #查看 Java_Home 家目录路径 #hadoop配置文件路径 ------------
+
+[root@Va1 hadoop]# egrep  -n  "JAVA_HOME=|HADOOP_CONF_DIR="  hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre" 
+         #Java_Home 家目录路径
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"   #hadoop配置文件路径
+
+
+[root@Va1 ~]# vim   /usr/local/hadoop/etc/hadoop/hadoop-env.sh 
+
+[root@Va1 ~]# egrep   -nv  "\s*#|^$"  /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+
+25:export JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64/jre"
+33:export HADOOP_CONF_DIR="/usr/local/hadoop/etc/hadoop/"
+
+36:for f in $HADOOP_HOME/contrib/capacity-scheduler/*.jar; do
+37:  if [ "$HADOOP_CLASSPATH" ]; then
+38:    export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$f
+39:  else
+40:    export HADOOP_CLASSPATH=$f
+41:  fi
+42:done
+49:export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true"
+52:export HADOOP_NAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,RFAS} -Dhdfs.audit.logger=${HDFS_AUDIT_LOGGER:-INFO,NullAppender} $HADOOP_NAMENODE_OPTS"
+53:export HADOOP_DATANODE_OPTS="-Dhadoop.security.logger=ERROR,RFAS $HADOOP_DATANODE_OPTS"
+55:export HADOOP_SECONDARYNAMENODE_OPTS="-Dhadoop.security.logger=${HADOOP_SECURITY_LOGGER:-INFO,RFAS} -Dhdfs.audit.logger=${HDFS_AUDIT_LOGGER:-INFO,NullAppender} $HADOOP_SECONDARYNAMENODE_OPTS"
+57:export HADOOP_NFS3_OPTS="$HADOOP_NFS3_OPTS"
+58:export HADOOP_PORTMAP_OPTS="-Xmx512m $HADOOP_PORTMAP_OPTS"
+61:export HADOOP_CLIENT_OPTS="-Xmx512m $HADOOP_CLIENT_OPTS"
+69:export HADOOP_SECURE_DN_USER=${HADOOP_SECURE_DN_USER}
+75:export HADOOP_SECURE_DN_LOG_DIR=${HADOOP_LOG_DIR}/${HADOOP_HDFS_USER}
+94:export HADOOP_PID_DIR=${HADOOP_PID_DIR}
+95:export HADOOP_SECURE_DN_PID_DIR=${HADOOP_PID_DIR}
+98:export HADOOP_IDENT_STRING=$USER
+
+
+---------------  /usr/local/hadoop/etc/hadoop/yarn-site.xml ------------------
+
+[root@Va1 ~]# vim   /usr/local/hadoop/etc/hadoop/yarn-site.xml 
+
+[root@Va1 ~]# tail  -12   /usr/local/hadoop/etc/hadoop/yarn-site.xml
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+ <property>
+  <name>yarn.resourcemanager.hostname</name> # 指定ResourceManager在哪个机器上
+  <value>Va1</value>   # 指定ResourceManager在哪个机器上
+ </property>
+ <property>
+  <name>yarn.nodemanager.aux-services</name>
+  <value>mapreduce_shuffle</value>   #指定shuffle服务(计算框架的名称)
+ </property>
+</configuration>
+
+
+
+
+------------  /usr/local/hadoop/etc/hadoop/mapred-site.xml ---------------
+
+[root@Va1 ~]# vim   /usr/local/hadoop/etc/hadoop/mapred-site.xml
+
+[root@Va1 ~]# tail   -6   /usr/local/hadoop/etc/hadoop/mapred-site.xml
+<configuration>
+ <property>
+  <name>mapreduce.framework.name</name> #使用集群资源管理框架(默认本地管理 local)
+  <value>yarn</value>          #指定让yarn管理mapreduce任务
+ </property>
+</configuration>
+
+
+http://hadoop.apache.org/docs/r2.7.6/
+ 靠近网页左下角 的链接文档
+Configuration
+ core-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/core-site.xml
+
+ hdfs-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+
+------------------- /usr/local/hadoop/etc/hadoop/hdfs-site.xml ---------------
+
+[root@Va1 ~]# vim   /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+[root@Va1 ~]# tail  -22  /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+<configuration>
+ <property>
+  <name>dfs.namenode.http-address</name> #寻找 NameNode 节点
+  <value>Va1:50070</value> #向所有的主机节点声明 namenode的ip 地址和基本端口
+ </property>
+ <property>
+  <name>dfs.namenode.secondary.http-address</name>
+  <value>Va1:50090</value>   # SecondaryNameNode HTTP服务器地址和端口
+ </property>
+ <property>
+  <name>dfs.replication</name>  #文件冗余份数
+  <value>2</value>  #NameNode 告诉客户端 数据默认存多少备份
+ </property>
+ <property>
+  <name>dfs.datanode.balance.bandwidthPerSec</name>  # 永久 设置 带宽
+  <value>5242880</value>            # 指定DataNode用于balancer的带宽为 5MB
+ </property>
+ <property>
+
+<!--  dfs.hosts.exclude 是 namenode 主节点 独一无二 的设置 ,只能由 namenode 独有 -->
+
+  <name>dfs.hosts.exclude</name>      # 设置节点排除文件的位置（必须是绝对路径）
+  <value>/usr/local/hadoop/etc/hadoop/exclude</value>
+ </property>
+</configuration>
+
+/************         #hdfs节点管理 临时设置同步带宽 -----
+
+[root@Va1 ~]# /usr/local/hadoop/bin/hdfs  dfsadmin  -setBalancerBandwidth  5242880
+...........
+[root@Va1 ~]# /usr/local/hadoop/sbin/start-balancer.sh   #运行balancer同步数据 [ 数据平衡 ]
+.................
+Hadoop Balancer的步骤：
+1、从namenode获取datanode磁盘的使用情况
+2、计算需要把哪些数据移动到哪些节点
+3、分别移动，完成后删除旧的block信息
+4、循环执行，直到达到平衡标准
+
+***************************/
+
+--------------------    在exclude 文件中 添加 要排除的 节点主机名 ，一行一个 ----------------
+
+[root@Va1 ~]# vim   /usr/local/hadoop/etc/hadoop/exclude 
+
+[root@Va1 ~]# cat   /usr/local/hadoop/etc/hadoop/exclude  #即将删除的节点主机名
+Va5
+
+==================================================
+
+[root@Va1 ~]# tail  -7   /etc/ansible/hosts 
+[node]
+Va[2:4]
+[other]
+Va5
+[app:children]
+node
+other
+[root@Va1 ~]# ansible  app  -m  ping
+Va4 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va5 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va2 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+Va3 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[root@Va1 ~]# 
+
+
+[root@Va1 ~]# vim   /usr/local/hadoop/etc/hadoop/slaves
+
+-------------  /usr/local/hadoop/etc/hadoop/slaves  --------------------
+---------------------- DataNode 节点的主机名 ---------------------------------
+--------------------------  注意 slaves 既代表 DataNode 又代表 NodeManager -------
+
+[root@Va1 ~]# cat   /usr/local/hadoop/etc/hadoop/slaves
+Va2
+Va3
+Va4
+
+----------------------------------------------------  清空日志 -------------------------------
+
+
+[root@Va1 ~]# rm  -f  /usr/local/hadoop/logs/*
+[root@Va1 ~]# ls   /usr/local/hadoop/logs/ 
+
+[root@Va1 ~]# ls   /usr/local/hadoop/logs/ 
+
+[root@Va1 ~]# ansible  app  -m  shell  -a  "rm  -f  /usr/local/hadoop/logs/*"
+
+ [WARNING]: Consider using file module with state=absent rather than running rm
+
+Va3 | SUCCESS | rc=0 >>
+
+
+Va4 | SUCCESS | rc=0 >>
+
+
+Va5 | SUCCESS | rc=0 >>
+
+
+Va2 | SUCCESS | rc=0 >>
+
+
+[root@Va1 ~]# 
+
+
+ 1 修改 /etc/hosts 同步 所有主机
+ 2  在 nameNode -----  Va1    都有共同的用户 和 共同的组 
+  nfsgatewayNode ---- Va5    都有共同的用户 和 共同的组 
+ 代理用户的 uid,gid 用户名 必须完全相同
+
+3  配置集群  nfs  主机授权
+
+
+http://hadoop.apache.org/docs/r2.7.6/
+ 靠近网页左下角 的链接文档
+Configuration
+ core-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/core-site.xml
+
+ hdfs-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/hdfs-site.xml 
+
+ mapred-default.xml 对应配置文件 /usr/local/hadoop/etc/hadoop/mapred-site.xml
+ yarn-default.xml  对应配置文件   /usr/local/hadoop/etc/hadoop/yarn-site.xml 
+
+点击 core-default.xml 打开网页
+http://hadoop.apache.org/docs/r2.7.6/hadoop-project-dist/hadoop-common/core-default.xml
+
+
+------------------------  配置Core-site.xml文件   配置集群  nfs  主机授权  并同步到所有主机 ------------
+
+[root@Va1 ~]# vim    /usr/local/hadoop/etc/hadoop/core-site.xml 
+
+[root@Va1 ~]# tail    -18   /usr/local/hadoop/etc/hadoop/core-site.xml
+
+<configuration>
+ <property>
+  <name>fs.defaultFS</name>
+  <value>hdfs://Va1:9000</value>
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value>
+ </property>
+ <property>
+                        #挂载点用户所使用的组  
+  <name>hadoop.proxyuser.nfsuser.groups</name>
+  <value>*</value>  #允许所有主机能够访问 hdfs分布式文件系统
+ </property>
+ <property>
+                     #挂载点主机地址
+  <name>hadoop.proxyuser.nfsuser.hosts</name>
+  <value>*</value>  # * 表示 允许所有主机能够访问 hdfs分布式文件系统
+ </property>
+</configuration>
+-----------------------------------------------
+这里的 nfsuser 是你机器上真实运行 nfsgateway 的用户
+在非安全模式,运行nfs网关的 用户 nfsuser 为 代理用户
+----------------------------------------------
+
+------------  配置Core-site.xml文件   并同步到所有 datanode 主机 -------------------
+
+[root@Va1 ~]# rsync   -aSH  --delete  /usr/local/hadoop  Va2:/usr/local/
+[root@Va1 ~]# rsync   -aSH  --delete  /usr/local/hadoop  Va3:/usr/local/
+[root@Va1 ~]# rsync   -aSH  --delete  /usr/local/hadoop  Va4:/usr/local/
+
+
+ 1 修改 /etc/hosts 同步 所有主机
+ 2  在 nameNode -----  Va1    都有共同的用户 和 共同的组 
+  nfsgatewayNode ---- Va5    都有共同的用户 和 共同的组 
+ 代理用户的 uid,gid 用户名 必须完全相同
+
+
+[root@Va1 ~]# groupadd   -g  200  nfsuser
+
+[root@Va1 ~]# tail  -1  /etc/group
+nfsuser:x:200:
+ 用户组名称 ：用户组密码 ：GID :用户列表
+
+　useradd   -r 建立系统账号   name
+            -r 创建系统账户   name
+
+[root@Va1 ~]# useradd   -u  200  -g  200  -r  nfsuser
+
+[root@Va1 ~]# tail  -1  /etc/passwd
+nfsuser:x:200:200::/home/nfsuser:/bin/bash
+
+[root@Va1 ~]# id    200
+uid=200(nfsuser) gid=200(nfsuser) 组=200(nfsuser)
+[root@Va1 ~]# id   nfsuser
+uid=200(nfsuser) gid=200(nfsuser) 组=200(nfsuser)
+
+
+awk字符匹配
+==  完全精确匹配
+~ 部分匹配   
+!~   不部分匹配
+[root@Va1 ~]# awk   -F: '$3~/[0-9][0-9][0-9][0-9]/{print  $3,$4}'   /etc/passwd 
+65534 65534
+1000 1000
+
+
+[root@Va1 ~]# awk   -F: '$3==200{print  $0}'   /etc/passwd 
+nfsuser:x:200:200::/home/nfsuser:/bin/bash
+
+    在 nameNode -----  Va1    都有共同的用户 和 共同的组 
+  nfsgatewayNode ---- Va5    都有共同的用户 和 共同的组 
+
+[root@Va1 ~]# ssh  -lroot  -p22  Va5   "groupadd -g 200 nfsuser ; useradd -u 200 -g  200  -r  nfsuser " 
+
+[root@Va1 ~]# ssh  -lroot  -p22  Va5   "id  nfsuser;hostname"
+uid=200(nfsuser) gid=200(nfsuser) 组=200(nfsuser)
+Va5
+
+
+-----------  启动Hadoop HDFS守护进程NameNode、SecondaryNameNode、DataNode ---------------
+
+
+[root@Va1 ~]# /usr/local/hadoop/sbin/start-dfs.sh    # 启动 hdfs 集群
+Starting namenodes on [Va1]
+.........................
+
+--------------------------- 查看 datanode 信息 在 namenode 节点主机 Va1 上 执行 -----------------
+
+[root@Va1 ~]#  /usr/local/hadoop/bin/hdfs   dfsadmin   -report  |egrep  -nA2   "Live|Hostname:"
+
+12:Live datanodes (3):
+13-
+14-Name: 192.168.0.12:50010 (Va2)
+15:Hostname: Va2
+16-Decommission Status : Normal
+17-Configured Capacity: 18238930944 (16.99 GB)
+--
+33:Hostname: Va4
+34-Decommission Status : Normal
+35-Configured Capacity: 18238930944 (16.99 GB)
+--
+51:Hostname: Va3
+52-Decommission Status : Normal
+53-Configured Capacity: 18238930944 (16.99 GB)
+
+
+[root@Va1 ~]# jps
+2865 NameNode
+3057 SecondaryNameNode
+3174 Jps
+[root@Va1 ~]# ls   /usr/local/hadoop/logs/ 
+hadoop-root-namenode-Va1.log           hadoop-root-secondarynamenode-Va1.out
+hadoop-root-namenode-Va1.out           SecurityAuth-root.audit
+hadoop-root-secondarynamenode-Va1.log
+
+
+完全分布式
+Hadoop最大的优势就是分布式集群计算,所以在生产环境下都是搭建的最后一种模式:完全分布模式
+
+HDFS端口
+8020 namenode RPC交互端口 core-site.xml
+50070 NameNode web管理端口 hdfs- site.xml
+50010 datanode　控制端口 hdfs -site.xml
+50020 datanode的RPC服务器地址和端口 hdfs-site.xml
+50075 datanode的HTTP服务器和端口 hdfs-site.xml
+50090 secondary NameNode web管理端口 hdfs-site.xml
+
+------------------ ResourceManager  服务端口 8088 ---------------------
+
+---------------  50090 secondaryNameNode   web管理端口 hdfs-site.xml  ---------------
+
+----------------  50070 NameNode     web管理端口 hdfs- site.xml ----------------------
+
+--------------------------  8020 namenode RPC交互端口 core-site.xml  ----------------
+
+
+[root@Va1 ~]# netstat   -npult |egrep   "8020|50070|50090|9000|8088"
+tcp        0      0 192.168.0.11:50070      0.0.0.0:*               LISTEN      2865/java           
+tcp        0      0 192.168.0.11:9000       0.0.0.0:*               LISTEN      2865/java           
+tcp        0      0 192.168.0.11:50090      0.0.0.0:*               LISTEN      3057/java
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MR端口
+8021 job-tracker交互端口 mapred-site.xml
+50030 tracker的web管理端口 mapred-site.xml
+50060 task-tracker的HTTP端口 mapred-site.xml
+
+[root@Va2 ~]# ls   /usr/local/hadoop/logs/ 
+[root@Va2 ~]# cat   /usr/local/hadoop/etc/hadoop/slaves 
+Va2
+Va3
+Va4
+[root@Va2 ~]# jps
+2371 Jps
+[root@Va2 ~]# jps
+2417 DataNode
+2493 Jps
+[root@Va2 ~]# ls   /usr/local/hadoop/logs/ 
+hadoop-root-datanode-Va2.log  hadoop-root-datanode-Va2.out  SecurityAuth-root.audit
+
+[root@Va2 ~]# netstat   -npult  |egrep   "8042|50075"  # DataNode 50075 # NodeManager 8042
+
+tcp        0      0 0.0.0.0:50075           0.0.0.0:*               LISTEN      2417/java   
+        
+HDFS端口
+
+50010 datanode　控制端口 hdfs -site.xml
+50020 datanode的RPC服务器地址和端口 hdfs-site.xml
+50075 datanode的HTTP服务器和端口 hdfs-site.xml
+
+        # DataNode 50075      # NodeManager 8042
+
+[root@Va2 ~]# netstat   -npult  |egrep   "8042|50075|50010|50020"
+tcp        0      0 0.0.0.0:50010           0.0.0.0:*               LISTEN      2417/java           
+tcp        0      0 0.0.0.0:50075           0.0.0.0:*               LISTEN      2417/java           
+tcp        0      0 0.0.0.0:50020           0.0.0.0:*               LISTEN      2417/java 
+
+
+
+
+
+
+
+
+
+[root@Va3 ~]# cat   /usr/local/hadoop/etc/hadoop/slaves 
+Va2
+Va3
+Va4
+[root@Va3 ~]# jps
+2360 Jps
+
+[root@Va3 ~]# jps
+2481 Jps
+2405 DataNode
+
+[root@Va3 ~]# ls   /usr/local/hadoop/logs/ 
+hadoop-root-datanode-Va3.log  hadoop-root-datanode-Va3.out  SecurityAuth-root.audit
+
+[root@Va3 ~]# netstat   -npult  |egrep   "8042|50075|50010|50020"
+tcp        0      0 0.0.0.0:50010           0.0.0.0:*               LISTEN      2405/java           
+tcp        0      0 0.0.0.0:50075           0.0.0.0:*               LISTEN      2405/java           
+tcp        0      0 0.0.0.0:50020           0.0.0.0:*               LISTEN      2405/java 
+
+[root@Va3 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va4 ~]# cat   /usr/local/hadoop/etc/hadoop/slaves 
+Va2
+Va3
+Va4
+[root@Va4 ~]# jps
+2372 Jps
+
+[root@Va4 ~]# jps
+2417 DataNode
+2493 Jps
+
+[root@Va4 ~]# netstat   -npult  |egrep   "8042|50075|50010|50020"
+tcp        0      0 0.0.0.0:50010           0.0.0.0:*               LISTEN      2417/java           
+tcp        0      0 0.0.0.0:50075           0.0.0.0:*               LISTEN      2417/java           
+tcp        0      0 0.0.0.0:50020           0.0.0.0:*               LISTEN      2417/java 
+
+[root@Va4 ~]# 
+/***************************************
+Linux下 nfs + rpcbind实现服务器之间的文件共享
+
+分布式部署 需要文件共享，
+例如A服务器上传的图片，希望在B服务器上也可以访问。
+因此就需要跨机器共享文件，在这里就简单的采用nfs+rpcbind实现跨机器的文件共享。
+
+NFS（Network File System）即网络文件系统的缩写
+
+NFS：即为网络文件系统。
+主要功能：通过网络（局域网）让不同的主机系统之间可以共享文件或目录。
+主要用途：NFS网络文件系统一般被用来存储共享视频，图片，附件等静态资源文件。
+
+NFS服务占用2049端口，
+但其对于不同的功能使用小于1024的随机端口来传输数据，
+
+ 问： 随机端口客户端 如何知晓要访问哪个端口呢？
+
+ 答： 通过RPC（远程过程调用）协议/服务来实现
+
+NFS在传输数据的时候使用的端口会随机选择。
+
+RPC（Remote Procedure Call)即远程过程调用，
+其作用是向客户端告知NFS的端口信息；
+NFS服务启动时会主动向RPC注册所使用的端口，
+而 RPC 使用  111 端口 来响应客户端的请求，
+所以客户端可以借助于RPC来完成NFS的访问。
+
+rpc工作原理：1.启动RPC服务
+　　　　　　 2.nfs启动时随机取用若干端口，并主动向rpc服务注册取用相关信息
+　　　　　　 3.客户端请求nfs服务向rpc
+　　　　　　 4.rpc返回端口给客户端
+            5.拿着地址与端口向nfs服务器请求传输数据
+
+所以综上所述：nfs服务必须在rpc服务启动之后启动，客户端无需启动nfs服务，但需要启动rpc服务。
+
+nfs部署：   需要安装的软件包：
+
+nfs-utils：nfs服务主程序
+
+rpcbind：rpc主程序
+
+# yum install -y  nfs-utils rpcbind 
+
+[root@Va4 ~]# rpm  -q   nfs-utils   rpcbind 
+nfs-utils-1.3.0-0.48.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+
+
+启动rpcbind
+systemctl status  rpcbind
+systemctl start   rpcbind
+systemctl enable  rpcbind
+
+rpcinfo -p localhost   
+//查看nfs服务向rpc服务注册的端口信息。此时nfs服务还没有启动因此没有太多注册的端口映射信息。
+
+lsof -i : 111
+
+netstat -lntup | grep rpcbind
+
+配置nfs的配置文件和hosts文件
+      创建需要共享的目录：默认用/mnt
+
+配置nfs的配置文件：
+exports配置文件格式：
+
+nfs共享目录  nfs客户端地址1（参1，参2.....） 客户端地址2（参1，参2...）
+
+说明：
+nfs共享目录：为nfs服务器要共享的实际目录，绝对目录。注意权限问题。
+
+nfs客户端地址：为nfs服务器授权可以访问的客户端的地址，可以是单独的ip地址或主机名，域名。也可以是整个网段。
+
+授权整个网段： 10.0.0.0/24
+
+# vim /etc/exports 
+
+文件配置实例说明：
+
+1. /data 10.10.10.0/24(rw,sync)   //允许客户端读写，并且数据同步写到服务器端磁盘  注意：24与（之间不能有空格
+
+2./data 10.10.10.0/24（rw，sync，all_squash,anonuid=2000,anongid=2000）//允许读写，并且数据同步到客户端磁盘，并且指定客户端的用户uid和pid
+
+3./data 10.10.10.0/24(ro) //只读共享
+
+rw读写权限
+sync请求或写入数据时，数据同步写入到nfs server 的硬盘后才返回。
+ro 只读权限
+all_squash 不管是什么身份访问共享目录，权限都将被压缩成匿名用户。
+   1）确保所有客户端服务器对nfs共享目录具备相同的用户访问权限。
+　2）就是anonuid，anongid指定的uid和gid的用户
+
+root_squash：将root用户压缩成为匿名用户（默认选项）；
+no_root_squash：访问共享目录时保持root用户身份；
+all_squash：将所有访问NFS的用户身份全部压缩成为匿名用户；
+sync：将数据同步写入到内存和硬盘中；
+
+[root@Va4 ~]# ll   /etc/exports
+-rw-r--r--. 1 root root 0 6月   7 2013 /etc/exports
+切记在ip和（rw）之间不能有空格
+在这个文件中添加需要输出的目录，如：
+
+/usr/local/static 192.168.0.2(rw)
+
+/usr/local/static：表示的是nfs服务器需要共享给其他客户端服务器的文件夹
+
+192.168.0.2：表示可以挂载服务器目录的客户端ip
+(rw)：表示该客户端对共享的文件具有读写权限
+
+配置hosts文件：vim /etc/hosts
+
+192.168.0.1 hostname
+192.168.0.1：表示服务器本机的ip地址
+        hostname：表示服务器的机器名
+启动nfs和rpcbind服务、检测服务状态、已经设置服务开机启动
+启动服务：
+#service rpcbind start
+#service nfs start  
+
+检查启动状态：
+#service rpcbind status  
+#service nfs status 
+[root@Va4 ~]# service   rpcbind   status
+.............
+[root@Va4 ~]# service   nfs  status
+..............
+[root@Va4 ~]# systemctl   is-active   nfs-server.service 
+inactive
+[root@Va4 ~]# systemctl   is-active   rpcbind.
+rpcbind.service  rpcbind.socket   rpcbind.target  
+ 
+[root@Va4 ~]# systemctl   is-active   rpcbind.service 
+inactive
+
+NFS服务本身启动在2049端口，rpcbind启动在111端口。
+
+可以使用rpcinfo命令来查看rpc的相关信息，其格式如下：
+rpc [option] [IP|hostname]
+option:
+-p：显示所有的port与program信息。
+
+[root@Va4 ~]# rpcinfo   -p   localhost
+   program vers proto   port  service
+    100000    4   tcp    111  portmapper
+    100000    3   tcp    111  portmapper
+    100000    2   tcp    111  portmapper
+    100000    4   udp    111  portmapper
+    100000    3   udp    111  portmapper
+    100000    2   udp    111  portmapper
+
+[root@Va4 ~]# type  rpcinfo 
+rpcinfo 已被哈希 (/usr/sbin/rpcinfo)
+
+[root@Va4 ~]# netstat   -npult  |grep  -E  "2049|111" |column   -t
+tcp   0  0  0.0.0.0:111  0.0.0.0:*  LISTEN        1/systemd
+tcp6  0  0  :::111       :::*       LISTEN        1/systemd
+udp   0  0  0.0.0.0:111  0.0.0.0:*  3482/rpcbind
+udp6  0  0  :::111       :::*       3482/rpcbind
+
+检测服务器的nfs状态
+# showmount -e  //查看自己共享的服务  
+Export list forhostname: 
+ /usr/local/static 192.168.0.2 
+--------------------------
+
+客户端挂载NFS中共享的目录
+客户端服务器也需要安装nfs 和 rpcbind 服务。
+首先是启动nfs和rpcbind服务。
+查询服务端共享的文件目录：
+在客户机上运行 showmount -e 服务器IP
+# showmount -e 192.168.0.1
+
+Export list for192.168.0.1:
+/usr/local/static 192.168.0.2 
+
+创建挂载目录：
+#cd /mnt
+#mkdir static
+# mount   服务端ip:/服务端共享目录   /客户端挂载目录
+
+挂载服务端的共享目录：
+# mount -t nfs -o nolock,nfsvers=3,vers=3 192.168.0.1:/usr/local/static /mnt/static
+
+实现开机自动挂载
+# vim  /etc/fstab
+服务端ip:/服务端共享目录   /客户端挂载目录   nfs   defaults,_netdev  0  0
+
+#    _netdev：此选项表示在NFS服务器宕机时，也不会影响本地系统的启动
+
+# mount -a
+
+查看挂载的状态：
+# mount | grep nfs 
+
+安装步骤总结
+NFS服务端配置步骤：
+
+安装软件
+yum install nfs-utils rpcbind -y
+启动服务（注意先后顺序）
+/etc/init.d/rpcbind start
+rpcinfo -p localhost
+/etc/init.d/nfs start
+rpcinfo -p localhost
+设置开机自启动
+chkconfig nfs on
+chkconfig rpcbind on
+
+/企业中一般建议将启动写入/etc/rc.local中/
+/#!/bin/sh
+
+touch /var/lock/subsys/local
+/etc/init.d/rpcbind start
+/etc/init.d/nfs start
+
+/然后将chkconfig关闭/
+chkconfig nfs off
+chkconfig rpcbind off
+
+4     . 配置nfs服务
+echo "/data 192.168.230.*(rw,sync,all_squash)" >> /etc/exports //该文件默认为空
+mkdir -p /data
+chown -R nfsnobody.nfsnobody /data
+//查看nfs默认使用的用户以及共享的参数  cat /var/lib/nfs/etab
+5      . 重新加载服务（平滑重启）
+/etc/init.d/nfs reload  等价于 /usr/sbin/exportfs -r
+6      . 检查或测试挂载
+showmount -e localhost
+mount -t nfs 127.0.0.1:/data /mnt
+NFS客户端配置：
+
+安装软件
+yum install nfs-utils rpcbind -y
+启动rpcbind
+/etc/init.d/rpcbind start
+配置开机自启动
+chkconfig rpcbind on
+或   写入/etc/rc.local  /etc/init.d/rpcbind start
+测试服务端共享情况
+showmount -e server_ip (yum install nfs-utils -y 才有此命令)
+挂载
+mkdir -p /data
+mount -t nfs server_ip:/data  /data
+测试读写
+开机自动挂载
+vim /etc/rc.local
+/etc/init.d/rpcbind start
+/bin/mount -t nfs server_ip:/data  /data
+
+NFS 排错
+
+前提：NFS原理以及部署的步骤很熟练
+先在客户端排查
+ping server_ip
+telnet server_ip 111
+showmount -e server_ip
+NFS遇到的问题
+1.服务端没有关闭防火墙导致客户端无法连接
+/etc/init.d/iptables stop
+chkconfig iptables off
+注意服务启动的顺序，先启动rpcbind,再启动nfs
+查看具体配置文件帮助  man exports
+
+作者：FiveStrong
+链接：https://www.jianshu.com/p/c23d4491a05f
+
+
+
+
+企业生产场景NFS共享存储优化小结
+
+硬件：sas/ssd 磁盘，买多块，raid0/raid10。网卡吞吐量要大，至少千兆多弄几块进行bond绑定。
+NFS服务器端配置：
+/data 192.168.230.*(rw,sync,all_squash,anonuid=65534,anongid=65534)
+NFS客户端挂载：
+mount -t nfs -o nosuid,noexec,nodev,noatime,nodiratime,rsize=131072,wsize=131072 192.168.230.132:/data /data
+
+4     . 有关NFS服务器的所有服务器内核优化：
+cat >> /etc/sysctl.conf <<EOF
+net.core.wmen_default = 8388608
+net.core.rmen_default = 8388608
+net.core.rmen_max = 16777216
+net.core.wmen_max = 16777216
+EOF
+执行sysctl -p 生效
+5      . 如果卸载的时候提示：umount:/mnt:device is busy
+需要退出挂载目录在进行卸载或者是NFS Server宕机了需要强制卸载 mount -lf /mnt
+6    .大型网站NFS网络文件系统代替软件：分布式文件系统Moosefs(mfs),glusterfs,FastDFS
+
+
+作者：FiveStrong
+链接：https://www.jianshu.com/p/c23d4491a05f
+
+*****************************/
+
+
+
+
+
+
+
+
+
+
+[root@Va5 ~]# ls   /usr/local/hadoop/logs/ 
+[root@Va5 ~]# jps
+2618 Jps
+
+[root@Va5 ~]# rm  -rf  /usr/local/hadoop/*
+
+[root@Va5 ~]# rsync    -aSH  --delete   Va1:/usr/local/hadoop   /usr/local/
+root@va1's password: 密码
+
+
+[root@Va5 ~]# ls   /usr/local/hadoop/
+bin  include  libexec      logs    newdir2  NOTICE.txt  README.txt  share
+etc  lib      LICENSE.txt  newdir  newdir3  olddir      sbin
+
+[root@Va5 ~]# ls   /usr/local/hadoop/logs
+hadoop-root-namenode-Va1.log  hadoop-root-secondarynamenode-Va1.log  SecurityAuth-root.audit
+hadoop-root-namenode-Va1.out  hadoop-root-secondarynamenode-Va1.out
+
+[root@Va5 ~]# rm  -f   /usr/local/hadoop/logs/*
+
+[root@Va5 ~]# ls   /usr/local/hadoop/logs/
+
+[root@Va5 ~]# rpm  -qa  |egrep  "rpcbind|nfs-utils"
+rpcbind-0.2.0-42.el7.x86_64
+nfs-utils-1.3.0-0.48.el7.x86_64
+
+[root@Va5 ~]# yum  -y  remove    rpcbind   nfs-utils
+...........
+[root@Va5 ~]#  netstat   -npult  |grep  -E  "2049|111" |column   -t
+
+[root@Va5 ~]# rpm  -qa | grep  java
+tzdata-java-2017b-1.el7.noarch
+javapackages-tools-3.4.1-11.el7.noarch
+java-1.8.0-openjdk-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-devel-1.8.0.131-11.b12.el7.x86_64
+java-1.8.0-openjdk-headless-1.8.0.131-11.b12.el7.x86_64
+python-javapackages-3.4.1-11.el7.noarch
+
+hdfs 进阶应用 NFS 网关
+
+NFS 网关用途
+1.用户可以通过操作系统兼容的本地NFSv3客户端来阅览HDFS文件系统
+2.用户可以从HDFS文件系统下载文档到本地文件系统
+3.用户可以通过挂载点直接流化数据。支持文件附加,但是不支持随机写
+NFS 网关支持NFSv3和允许HDFS 作为客户端文件系统的一部分被挂载
+
+------------------------  集群  nfs  主机授权  并同步到所有主机 ------------
+
+[root@Va5 ~]# tail    -18   /usr/local/hadoop/etc/hadoop/core-site.xml
+
+<configuration>
+ <property>
+  <name>fs.defaultFS</name>
+  <value>hdfs://Va1:9000</value>
+ </property>
+ <property>
+  <name>hadoop.tmp.dir</name>
+  <value>/var/hadoop</value>
+ </property>
+ <property>
+                        #挂载点用户所使用的组  
+  <name>hadoop.proxyuser.nfsuser.groups</name>
+  <value>*</value>  #允许所有主机能够访问 hdfs分布式文件系统
+ </property>
+ <property>
+                     #挂载点主机地址
+  <name>hadoop.proxyuser.nfsuser.hosts</name>
+  <value>*</value>  # * 表示 允许所有主机能够访问 hdfs分布式文件系统
+ </property>
+</configuration>
+
+
+[root@Va5 ~]# vim    /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+ <property>
+  <name>dfs.replication</name>
+  <value>2</value>
+ </property>
+ <property>
+  <name>dfs.datanode.balance.bandwidthPerSec</name>
+  <value>5242880</value>
+ </property>
+ <property>
+  <name>nfs.exports.allowed.hosts</name>  #允许挂载的客户端
+  <value>*  rw</value>  # 允许所有主机  读写权限 #Java正则或者IP，多个用;来分割
+ </property>
+ <property>
+  <name>nfs.dump.dir</name>    #转储目录(缓存目录文件)
+  <value>/var/nfstmp</value>  # 自定义临时缓存目录 (转储目录建议 1~3GB的磁盘空间)
+ </property>
+</configuration>
+
+[root@Va5 ~]# tail  -26   /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+<configuration>
+ <property>
+  <name>dfs.namenode.http-address</name>
+  <value>Va1:50070</value>
+ </property>
+ <property>
+  <name>dfs.namenode.secondary.http-address</name>
+  <value>Va1:50090</value>
+ </property>
+ <property>
+  <name>dfs.replication</name>
+  <value>2</value>
+ </property>
+ <property>
+  <name>dfs.datanode.balance.bandwidthPerSec</name>
+  <value>5242880</value>
+ </property>
+ <property>
+  <name>nfs.exports.allowed.hosts</name>
+  <value>*  rw</value>   # 允许所有主机  读写权限 #Java正则或者IP，多个用;来分割
+ </property>
+ <property>
+  <name>nfs.dump.dir</name>
+  <value>/var/nfstmp</value>  # 自定义临时缓存目录 (转储目录建议 1~3GB的磁盘空间)
+ </property>
+</configuration>
+[root@Va5 ~]# mkdir  /var/nfstmp  # 创建 转储目录(缓存目录文件)
+[root@Va5 ~]# ls  /var/nfstmp/
+
+[root@Va5 ~]# ls  -ld   /var/nfstmp/
+drwxr-xr-x 2 root root 6 1月  30 14:28 /var/nfstmp/
+
+[root@Va5 ~]# id  nfsuser
+uid=200(nfsuser) gid=200(nfsuser) 组=200(nfsuser)
+
+-----------------  # 更改 转储目录/var/nfstmp/ 文件 权限 属 主 组为 代理用户 nfsuser  -----------------
+
+[root@Va5 ~]# chown  200.200   /var/nfstmp/   # 更改 转储目录文件 权限 属 主 组为代理用户 nfsuser
+
+
+[root@Va5 ~]# ls  -ld   /var/nfstmp/
+drwxr-xr-x 2 nfsuser nfsuser 6 1月  30 14:28 /var/nfstmp/
+
+[root@Va5 ~]# tail  -1  /etc/group
+nfsuser:x:200:
+[root@Va5 ~]# tail  -1  /etc/passwd
+nfsuser:x:200:200::/home/nfsuser:/bin/bash
+
+
+[root@Va5 ~]# ls   /usr/local/hadoop/logs/
+[root@Va5 ~]# ls  -ld   /usr/local/hadoop/logs/
+drwxr-xr-x 2 root root 6 1月  30 12:46 /usr/local/hadoop/logs/
+
+setfacl命令可以用来细分linux下的文件权限。
+chmod命令可以把文件权限分为u,g,o三个组，
+而setfacl可以对每一个文件或目录设置更精确的文件权限。
+换句话说，setfacl可以更精确的控制权限的分配。
+比如：让某一个用户对某一个文件具有某种权限。
+
+这种独立于传统的u,g,o的rwx权限之外的具体权限设置叫ACL（Access Control List）
+
+ACL可以针对单一用户、单一文件或目录来进行r,w,x的权限控制，
+对于需要特殊权限的使用状况有一定帮助。
+如，某一个文件，不让单一的某个用户访问。
+
+ setfacl 参数
+  -m：设置后续acl参数 
+|-m  更改文件或目录的ACL规则|
+  -x：删除后续acl参数  
+  -x  删除文件或目录指定的ACL规则|
+  -b：删除全部的acl参数
+ |-b： 删除所有扩展的acl规则，基本的acl规则(所有者，群组，其他）将被保留。
+  -k：删除默认的acl参数
+  -R：递归设置acl，包括子目录
+  -d：设置默认acl
+ |-R： 递归的对所有文件及目录进行操作。
+
+- 选项-m 和-x 后边跟以acl规则。多条acl规则以逗号(,)隔开
+让用户john拥有对test.txt文件的读写权限：
+[root@localhost ~]# setfacl -m user:john:rw-  ./test.txt
+
+
+ ACL权限设置命令setfacl和getfacl命令
+setfacl命令是用来在命令行里设置ACL（访问控制列表）
+
+[root@Va5 ~]# type  setfacl 
+setfacl 是 /usr/bin/setfacl
+
+---------- # 更改 日志文件 权限 /usr/local/hadoop/logs/ 给 代理用户 nfsuser 单独授权 读写(设置附加权限 Set GID ) ---
+
+[root@Va5 ~]# setfacl  -m  user:nfsuser:rwx   /usr/local/hadoop/logs/
+
+[root@Va5 ~]# ls  -ld   /usr/local/hadoop/logs/
+drwxrwxr-x+ 2 root root 6 1月  30 12:46 /usr/local/hadoop/logs/
+
+[root@Va5 ~]# getfacl    /usr/local/hadoop/logs/
+
+getfacl: Removing leading '/' from absolute path names
+# file: usr/local/hadoop/logs/
+# owner: root
+# group: root
+user::rwx
+user:nfsuser:rwx
+group::r-x
+mask::rwx
+other::r-x
+
+[root@Va5 ~]# 
+    su -l
+-l或--login：改变身份时，也同时变更工作目录，以及HOME,SHELL,USER,logname。此外，也会变更PATH变量；
+   su  -l ， –login：加了这个参数之后，就好像是重新登陆一样，
+大部分环境变量(例如HOME、SHELL和USER等)都是以该使用者(USER)为主，
+并且工作目录也会改变。
+如果没有指定USER，缺省情况是root。
+
+[root@Va5 ~]# su   -l   nfsuser
+su: 警告：无法更改到 /home/nfsuser 目录: 没有那个文件或目录
+-bash-4.2$ pwd
+/root
+-bash-4.2$ echo  $HOME
+/home/nfsuser
+-bash-4.2$ echo  $SHELL
+/bin/bash
+-bash-4.2$ echo   $USER
+nfsuser
+-bash-4.2$ ls  /var/nfstmp/
+-bash-4.2$ ls  -ld   /var/nfstmp/
+drwxr-xr-x 2 nfsuser nfsuser 6 1月  30 14:28 /var/nfstmp/
+-bash-4.2$ getfacl   /var/nfstmp/
+getfacl: Removing leading '/' from absolute path names
+# file: var/nfstmp/
+# owner: nfsuser
+# group: nfsuser
+user::rwx
+group::r-x
+other::r-x
+
+-bash-4.2$ touch  /var/nfstmp/test.txt
+-bash-4.2$ ls  /var/nfstmp/
+test.txt
+-bash-4.2$ rm   -f  /var/nfstmp/test.txt 
+-bash-4.2$ getfacl   /usr/local/hadoop/logs/
+getfacl: Removing leading '/' from absolute path names
+# file: usr/local/hadoop/logs/
+# owner: root
+# group: root
+user::rwx
+user:nfsuser:rwx
+group::r-x
+mask::rwx
+other::r-x
+
+-bash-4.2$ echo  "nfsuser add " > /usr/local/hadoop/logs/nfsuser.txt
+-bash-4.2$ cat   /usr/local/hadoop/logs/nfsuser.txt
+nfsuser add 
+-bash-4.2$ rm  -f  /usr/local/hadoop/logs/nfsuser.txt
+-bash-4.2$ logout 
+
+[root@Va5 ~]#  cd   /usr/local/hadoop/
+
+
+--------------------  开启Hadoop的Portmap服务（须要root权限）注意必须先启动 Portmap  后启动 Nfs3 -------------
+
+
+[root@Va5 hadoop]# /usr/local/hadoop/sbin/hadoop-daemon.sh  --script   /usr/local/hadoop/bin/hdfs    start   portmap     # 启动服务
+
+starting portmap, logging to /usr/local/hadoop/logs/hadoop-root-portmap-Va5.out
+
+[root@Va5 hadoop]# jps    #  查看有portmap角色
+4663 Jps
+4619 Portmap
+
+[root@Va5 hadoop]# sudo   -u  nfsuser   "id"
+uid=200(nfsuser) gid=200(nfsuser) 组=200(nfsuser)
+[root@Va5 hadoop]# echo  $USER
+root
+[root@Va5 hadoop]# id
+uid=0(root) gid=0(root) 组=0(root)
+
+[root@Va5 hadoop]# su   -l  nfsuser
+上一次登录：三 1月 30 15:01:57 CST 2019pts/0 上
+su: 警告：无法更改到 /home/nfsuser 目录: 没有那个文件或目录
+-bash-4.2$ pwd
+/usr/local/hadoop
+-bash-4.2$ echo  $USER
+nfsuser
+
+---------- 启动 nfs3 服务 #启动 nfs3 需要使用 core-site 里面设置的用户nfsuser  注意必须先启动 Portmap  后启动 Nfs3 --
+------------- 如果 Portmap重起了, portmap重起之后, nfs3 也必须重新启动  ------------
+
+-bash-4.2$ /usr/local/hadoop/sbin/hadoop-daemon.sh  --script   /usr/local/hadoop/bin/hdfs    start   nfs3
+
+starting nfs3, logging to /usr/local/hadoop/logs/hadoop-nfsuser-nfs3-Va5.out
+
+-bash-4.2$ jps
+4914 Jps
+4855 Nfs3
+-bash-4.2$ logout 
+
+[root@Va5 hadoop]# jps
+4932 Jps
+4855 Nfs3
+4619 Portmap
+
+[root@Va5 hadoop]# pwd
+/usr/local/hadoop
+[root@Va5 hadoop]# netstat  -npult  |egrep   "2049|111"  # 111端口( Portmap)
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN      4619/java           
+tcp        0      0 0.0.0.0:2049            0.0.0.0:*               LISTEN      4855/java           
+udp        0      0 0.0.0.0:111             0.0.0.0:*                           4619/java           
+
+
+[root@Va5 hadoop]# netstat  -npult  |egrep   "java"
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN      4619/java           
+tcp        0      0 0.0.0.0:4242            0.0.0.0:*               LISTEN      4855/java           
+tcp        0      0 0.0.0.0:50079           0.0.0.0:*               LISTEN      4855/java           
+tcp        0      0 0.0.0.0:2049            0.0.0.0:*               LISTEN      4855/java           
+udp        0      0 0.0.0.0:111             0.0.0.0:*                           4619/java           
+udp        0      0 0.0.0.0:4242            0.0.0.0:*                           4855/java  
+
+[root@Va5 hadoop]# file  -s   /dev/vda1
+/dev/vda1: SGI XFS filesystem data (blksz 4096, inosz 512, v2 dirs)
+
+
+mount  nfs 服务
+hadoop  只支持 nfs版本3 ,只支持tcp协议,
+不支持 NLM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@room9pc01 ~]# ssh  -X  192.168.0.16
+root@192.168.0.16's password: 
+Last login: Tue Jan 29 12:42:31 2019 from 192.168.0.254
+[root@Va6 ~]# yum  -y  install  nfs-utils   rpcbind
+...............
+软件包 1:nfs-utils-1.3.0-0.48.el7.x86_64 已安装并且是最新版本
+软件包 rpcbind-0.2.0-42.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@Va6 ~]# rpm  -q   nfs-utils   rpcbind
+nfs-utils-1.3.0-0.48.el7.x86_64
+rpcbind-0.2.0-42.el7.x86_64
+
+
+     mount  nfs 服务
+hadoop  只支持 nfs版本3 ,只支持tcp协议,
+不支持 NLM
+
+ 文件锁是保持文件同步的一种手段，
+当多个用户同时操作同一个文件时，文件锁可以保证数据不发生冲突。
+NFSv2和NFSv3依靠NLM协议实现文件锁，
+
+NFSv4本身实现了文件锁，不需要NLM协同工作了。
+
+NFS中的文件锁既可以加在客户端，
+也可以加在服务器端。
+
+如果客户端挂载NFS文件系统时使用了选项nolock，
+表示在客户端加锁。
+
+这种情况下可以保证同一个客户端的多个进程访问同一个文件的过程不发生冲突，
+但是不同客户端访问同一个文件时还可能发生冲突，
+因为文件锁加在了客户端，
+其他客户端不知道这个文件锁的存在。
+
+如果客户端挂载NFS文件系统时使用了选项lock，
+表示在服务器端加锁，
+
+这样所有的客户端都可以检查服务器端是否存在文件锁，
+因此所有客户端访问同一个文件时都不会发生冲突。
+
+客户端加锁时和其他文件系统的加锁过程没有什么区别
+
+文件锁相关的请求
+
+NFSv4中有四个与文件锁相关的请求，分别是:
+LOCK：给文件加锁，nfs4_proc_setlk()会发起这个请求
+
+LOCKT：查询文件锁的信息，nfs4_proc_getlk()会发起这个请求。
+LOCKU：解锁，nfs4_proc_unlck()会发起这个请求。
+RELEASE_LOCKOWNER：释放文件锁所有者，nfs4_proc_unlck()会发起这个请求。
+
+
+tcp            -- 指定NFS使用TCP协议mount，替换UDP
+rsize=8192和wsize=8192   -- 通过设定大的同时传输的数据块大小(bytes)，以提高NFS读写的速度
+
+在开发板上挂载PC机上的一个目录，如/source/rootfs （该目录已经在/etc/exports文件中配置）
+
+mount  -t nfs  -o nolock -o tcp 192.168.8.129:/source/rootfs /mnt/nfs
+
+#  -o  nolock  不支持 NLM 表示在客户端加锁
+nfs mount 默认选项包括文件锁，依赖于portmap提供的动态端口分配功能。
+解决方法：kill 文件锁（lockd）或者mount -o nolock
+
+nfsvers=2或者nfsvers=3 -- 指定使用那个版本的NFS协议。
+nolock -- 禁用文件锁。这个设置在连接到一个旧版本的NFS服务器时偶尔会用到
+
+mount -o rw,noexec,nosuid,noatime,nodiratime /dev/sdb1 /bank/bank3
+
+rw:读写
+noexec:禁止在此文件系统上执行程序
+nosuid:禁止在此文件系统上做suid
+
+noatime:不修改文件的atime
+nodiratime:不修改目录的atime
+
+# mount   -t, --types <列表>      限制文件系统类型集合
+     --source <源>       指明源(路径、标签、uuid)
+     --target <目标>     指明挂载点
+
+[root@Va6 ~]# showmount   -e   Va5
+Export list for Va5:
+/ *
+
+-----------------  noatime:不修改文件的atime  
+------------  sync请求或写入数据时，数据同步写入到nfs server 的硬盘后才返回
+------------------- noatime:不修改文件的atime 禁止使用 access time 的时间更新 
+------------- proto=tcp 仅仅使用 TCP 作为传输协议 
+------  #    nolock  不支持 NLM 表示在客户端加锁 
+
+[root@Va6 ~]# mount  -t   nfs  -o  vers=3,proto=tcp,nolock,noatime,sync  Va5:/   /mnt/
+
+[root@Va6 ~]# ls  /mnt/
+Aa  outputdir  rhel7.4.iso  root  system  tmp  user
+
+[root@Va6 ~]# df   -hT   /mnt/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+Va5:/          nfs    51G   18G   34G   36% /mnt
+
+[root@Va6 ~]# df   -lhT   /mnt/
+df: 未处理文件系统
+
+
+
+
+
+
+
+
+
