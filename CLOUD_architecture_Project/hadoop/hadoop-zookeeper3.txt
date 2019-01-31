@@ -1,0 +1,1257 @@
+
+nsd1808n_pm@tedu.cn 
+
+
+zookeeper 安装
+
+1 禁用防火墙和 selinux
+2 设置 /etc/hosts ip 主机名对应关系
+3 安装 openjdk
+
+zookeeper 角色，选举
+leader 集群主节点
+follower 参与选举的附属节点
+observer 不参与选举的节点，同步 leader 的命名空间
+
+1 拷贝配置文件
+/usr/local/zookeeper/conf/zoo_sample.cfg 到
+/usr/local/zookeeper/conf/zoo.cfg
+
+2 修改配置文件
+server.1=zk1:2888:3888
+server.2=zk2:2888:3888
+server.3=zk3:2888:3888
+server.4=zk4:2888:3888:observer
+
+3 创建目录 zookeeper 配置文件里面的 dataDir 指定的目录
+4 在目录下创建 myid 文件，写入自己的 id 值
+5 启动集群，查看角色
+/usr/local/zookeeper/bin/zkServer.sh start
+/usr/local/zookeeper/bin/zkServer.sh status
+
+kafka 集群安装
+1 禁用防火墙和 selinux
+2 设置 /etc/hosts ip 主机名对应关系
+3 安装 openjdk
+4 安装 kafka 到 /usr/local/kafka
+5 修改配置文件 config/server.properties
+broker.id= id值不能相同
+zookeeper.connect=zk1:2181,zk4:2181
+
+启动 kafka
+/usr/local/kafka/bin/kafka-server-start.sh -daemon /usr/local/kafka/config/server.properties
+
+验证：
+jps 能看到 kafka
+netstat 能看到 9092 被监听
+
+创建主题
+bin/kafka-topics.sh --create --zookeeper zk4:2181 --replication-factor 1 --partitions 1 --topic nsd1703
+
+查看显示已存在的主题
+bin/kafka-topics.sh --list --zookeeper zk4:2181
+
+查看主题的详细信息
+bin/kafka-topics.sh --describe --zookeeper zk1:2181,zk2:2181 --topic nsd1703
+
+生存者发布信息
+bin/kafka-console-producer.sh --broker-list zk1:9092,zk3:9092 --topic nsd1703
+
+消费者消费信息
+bin/kafka-console-consumer.sh --zookeeper zk1:2181,zk2:2181 --topic nsd1703 --from-beginning
+bin/kafka-console-consumer.sh --bootstrap-server zk1:9092,zk4:9092 --topic nsd1703
+
+from-beginning 是从头开始消费消息
+
+hadoop 高可用
+core-site.xml
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://mycluster</value>  
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+    </property>
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value>node1:2181,node2:2181,node3:2181</value>
+    </property>
+</configuration>
+
+hdfs-site.xml
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+    </property>
+
+    <property>
+        <name>dfs.nameservices</name>
+        <value>mycluster</value>
+    </property>
+    <property>
+        <name>dfs.ha.namenodes.mycluster</name>
+        <value>nn1,nn2</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn1</name>
+        <value>master1:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn2</name>
+        <value>master2:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn1</name>
+        <value>master1:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn2</name>
+        <value>master2:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://node1:8485;node2:8485;node3:8485/mycluster</value>
+    </property>
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/var/hadoop/journal</value>
+    </property>
+    <property>
+        <name>dfs.client.failover.proxy.provider.mycluster</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>sshfence</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/root/.ssh/id_rsa</value>
+    </property>
+    <property>
+        <name>dfs.ha.automatic-failover.enabled</name>
+        <value>true</value>
+    </property>
+</configuration>
+
+同步配置到所有集群机器
+
+在其中一台初始化 zookeeper 集群
+ bin/hdfs zkfc -formatZK
+在定义的节点启动 journalnode
+sbin/hadoop-daemon.sh start journalnode
+在其中一台 namenode 上执行格式化命令
+bin/hdfs namenode –format
+格式化以后把数据目录拷贝到另一台 namenode
+初始化 JournalNode
+./bin/hdfs namenode -initializeSharedEdits
+停止 JournalNode
+sbin/hadoop-daemon.sh stop journalnode
+启动 dfs
+./sbin/start-dfs.sh
+验证配置
+ bin/hadoop dfsadmin -report
+
+
+查看集群状态  bin/hdfs haadmin -getServiceState nn1  bin/hdfs haadmin -getServiceState nn2
+bin/hadoop fs -ls hdfs://mycluster/
+
+bin/hadoop fs -mkdir hdfs://mycluster/input
+验证高可用，关闭 active namenode
+sbin/hadoop-daemon.sh stop namenode
+
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.ha.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.ha.rm-ids</name>
+        <value>rm1,rm2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname.rm1</name>
+        <value>master1</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname.rm2</name>
+        <value>master2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.recovery.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.store.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.zk-address</name>
+        <value>node1:2181,node2:2181,node3:2181</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.cluster-id</name>
+        <value>yarn-ha</value>
+    </property>
+</configuration>
+
+启动服务，检查状态
+sbin/start-yarn.sh
+bin/yarn rmadmin -getServiceState rm1
+bin/yarn rmadmin -getServiceState rm2
+
+
+安装 hadoop 集群
+（1）获取安装包
+　　从官网或是镜像站下载
+
+　　http://hadoop.apache.org/
+
+　　http://mirrors.hust.edu.cn/apache/
+
+
+keepalived + rsync + inotify 
+--------------------------------
+DRBD  +  heartbeat
+-------------------------------------
+HDFS  +  ( NFSGW   keepalived)
+
+      NameNode        ---NN
+HDFS  SecondaryNameNode --- SNN
+      DataNode         ---- DN
+
+HDFS  (NN, SNN,DN)
+
+/usr/local/hadoop/etc/hadoop/hdfs-site.xml---DN
+ <property>
+  <name>dfs.replication</name>
+  <value>2</value>  # 备份数量
+
+
+Kafka是由Apache软件基金会开发的一个开源流处理平台，由Scala和Java编写。
+Kafka是一种高吞吐量的分布式发布订阅消息系统，
+它可以处理消费者规模的网站中的所有动作流数据。 
+这种动作（网页浏览，搜索和其他用户的行动）是在现代网络上的许多社会功能的一个关键因素。 
+这些数据通常是由于吞吐量的要求而通过处理日志和日志聚合来解决。
+ 对于像Hadoop一样的日志数据和离线分析系统
+，但又要求实时处理的限制，这是一个可行的解决方案。
+
+Kafka的目的是通过Hadoop的并行加载机制来统一线上和离线的消息处理，
+也是为了通过集群来提供实时的消息。
+
+
+ZooKeeper是一个分布式的，开放源码的分布式应用程序协调服务，
+是Google的Chubby一个开源的实现，
+是Hadoop和Hbase的重要组件。
+
+它是一个为分布式应用提供一致性服务的软件，
+提供的功能包括：配置维护、域名服务、分布式同步、组服务等。
+
+ZooKeeper的目标就是封装好复杂易出错的关键服务，
+将简单易用的接口和性能高效、功能稳定的系统提供给用户。
+
+ZooKeeper包含一个简单的原语集， 
+提供Java和C的接口。
+ZooKeeper代码版本中，提供了分布式独享锁、选举、队列的接口，
+代码在zookeeper-3.4.3\src\recipes。
+其中分布锁和队列有Java和C两个版本，选举只有Java版本
+
+ZooKeeper的基本运转流程：
+1、选举Leader。
+2、同步数据。
+3、选举Leader过程中算法有很多，但要达到的选举标准是一致的。
+4、Leader要具有最高的执行ID，类似root权限。
+5、集群中大多数的机器得到响应并接受选出的Leader。 
+
+
+Zookeeper 是 开源的分布式应用程序负责协调服务的应用
+ 角色    特性
+Leader  写, 发起 提案 和 投票
+ Leader：接受所有Follower的提案请求并统一协调发起提案的投票，负责与所有的Follower进行内部数据交换
+
+Follower  读, 投票
+Follower：直接为客户端服务并参与提案的投票，同时与Leader进行数据交换
+
+Observer 负责读 ,但不投票  协调
+Observer：直接为客户端服务但并不参与提案的投票，同时也与Leader进行数据交换
+    提升读性能的可伸缩性, 广域网能力
+           
+
+------------------------ 注意 这里的 n 不包含 Observer 角色 , n = Leader + Follower ---------------
+
+如果 Leader死亡, 重新选举 Leader
+Observer 不计算在 投票总设备数量里面
+
+如果无法得到 足够的投票数量,就重新发起投票
+如果参与投票的机器不足 n/2+1, 则集群挂机
+
+------------------------ 注意 这里的 n 不包含 Observer 角色 , n = Leader + Follower ---------------
+n=9
+ n/2 =4台,故障主机  ---- 5台,正常运行的主机
+ n%2 =1
+正常运行的主机出现数量大于等于  n/2+1= 5 台, 则集群正常运行
+
+n=8
+  n/2 =4台,故障主机  ---- 4台,正常运行的主机
+  n%2 =0
+故障主机出现数量达到 一半 n/2= 4 台, 则集群挂机
+
+n=9
+ n/2 =4台,正常运行的主机  ---- 5台,故障主机 
+ n%2 =1
+正常运行的主机Follower 出现数量不足 n/2+1= 5 台,  则集群挂机
+
+proposal     英 [prəˈpəʊzl]   美 [prəˈpoʊzl]  
+n. 建议;提议;求婚;〈美〉投标
+
+https://www.cnblogs.com/felixzh/p/5869212.html
+
+Zookeeper做了什么？
+1.命名服务   2.配置管理   3.集群管理   4.分布式锁  5.队列管理
+
+/*****************************
+[root@Va1 conf]# /usr/local/hadoop/sbin/stop-all.sh 
+.............
+**********/
+
+192.168.0.11   NameNode   nn01   Va1  
+192.168.0.12   DataNode  node1   Va2  server.1  zk1
+192.168.0.13   DataNode  node2   Va3  server.2  zk2
+192.168.0.14   DataNode  node3   Va4  server.3  zk3
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer
+
+[root@Va5 hadoop]# jps
+4932 Jps
+4855 Nfs3
+4619 Portmap
+****************/
+
+
+ 29 server.1=Va2:2888:3888      # 没有写observer的表示都参加投票和选举
+ 30 server.2=Va3:2888:3888      # 没有写observer的表示都参加投票和选举
+ 31 server.3=Va4:2888:3888      # 没有写observer的表示都参加投票和选举
+ 32 server.4=Va5:2888:3888:observer  # observer表示 不参加投票和选举
+
+
+-----------  启动Hadoop HDFS守护进程NameNode、SecondaryNameNode、DataNode ---------------
+
+
+[root@Va1 ~]# /usr/local/hadoop/sbin/start-dfs.sh    # 启动 hdfs 集群
+Starting namenodes on [Va1]
+.........................
+
+
+[root@Va1 ~]# jps
+2609 NameNode
+2930 Jps
+2805 SecondaryNameNode
+
+
+--------------------------- 查看 datanode 信息 在 namenode 节点主机 Va1 上 执行 -----------------
+
+[root@Va1 ~]#   /usr/local/hadoop/bin/hdfs   dfsadmin   -report  |egrep  -nA2   "Live|Hostname:"
+12:Live datanodes (3):
+13-
+14-Name: 192.168.0.12:50010 (Va2)
+15:Hostname: Va2
+16-Decommission Status : Normal
+17-Configured Capacity: 18238930944 (16.99 GB)
+--
+33:Hostname: Va4
+34-Decommission Status : Normal
+35-Configured Capacity: 18238930944 (16.99 GB)
+--
+51:Hostname: Va3
+52-Decommission Status : Normal
+53-Configured Capacity: 18238930944 (16.99 GB)
+
+[root@Va1 ~]# 
+
+
+[root@room9pc01 ~]# unzip   /var/git/Hadoop.zip   -d   /var/ftp/
+....................
+[root@room9pc01 ~]# ls  /var/ftp/hadoop/
+hadoop-2.7.6.tar.gz  kafka_2.10-0.10.2.1.tgz  zookeeper-3.4.10.tar.gz
+
+Zookeeper安装
+
+　　zookeeper的安装分为三种模式：单机模式、集群模式和伪集群模式。
+最好使用奇数台服务器。
+zookeeper拥有5台服务器，
+最多2台服务器出现故障后，整个服务还可以正常使用
+
+/*************
+192.168.0.11   NameNode   nn01   Va1  
+192.168.0.12   DataNode  node1   Va2  server.1  zk1
+192.168.0.13   DataNode  node2   Va3  server.2  zk2
+192.168.0.14   DataNode  node3   Va4  server.3  zk3
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer
+*************/
+
+
+[root@Va1 ~]# scp  Va2:/root/zkstats.sh   ./
+zkstats.sh                                                            100%  532   390.2KB/s   00:00    
+[root@Va1 ~]# ll  zkstats.sh 
+-rwxr-xr-x 1 root root 532 1月  31 15:22 zkstats.sh
+[root@Va1 ~]# cat   zkstats.sh
+#!/bin/bash
+function  getzookeeper_status(){
+ exec  2> /dev/null
+ exec  8<>/dev/tcp/$1/2181
+ echo  "stat"  >&8
+ ZK_STAT=$(cat   <&8 |grep   -E "^Mode:")
+ echo  -ne  "${i}\t"
+ echo   "${ZK_STAT:-isnull}"
+ exec   8<&-
+}
+if  (( $# == 0 ));then
+  echo  "Usage: $0  Va2  Va3  Va4  Va5"
+elif [ $# == 1  -a  $1 == ${HOSTNAME} ];then
+   echo  -e  "$HOSTNAME is only;Error\n 不能输入本机的地址"
+elif [ $#  -eq  1 ];then
+  echo  "不能只输入一个主机名 $1"
+else
+  for  i  in  $@ ; do
+    getzookeeper_status  ${i};
+  done
+fi
+
+[root@Va1 ~]# vim    zkstats.sh
+[root@Va1 ~]# cat    zkstats.sh
+#!/bin/bash
+function  getzookeeper_status(){
+ exec  2> /dev/null   
+ exec  8<>/dev/tcp/$1/2181
+ echo  "stat"  >&8
+ ZK_STAT=$(cat   <&8 |grep   -E "^Mode:")
+ echo  -ne  "${i}\t"
+ echo   "${ZK_STAT:-isnull}"
+ exec   8<&-         #关闭输入文件描述符8
+}
+if  (( $# == 0 ));then
+  echo  "Usage: $0  Va2  Va3  Va4  Va5"
+elif [ $# == 1  -a  $1 == ${HOSTNAME} ];then
+   echo  -e  "$HOSTNAME is only;Error\n 不能输入本机的地址"
+elif [ $#  -eq  1 ];then
+  echo  "不能只输入一个主机名 $1"
+else
+  for  i  in  $@ ; do
+    getzookeeper_status  ${i};
+  done
+fi
+[root@Va1 ~]# ll  zkstats.sh
+-rwxr-xr-x 1 root root 528 1月  31 15:25 zkstats.sh
+
+[root@Va1 ~]# 
+[root@Va1 ~]# ./zkstats.sh   Va1  Va2  Va3  Va4  Va5
+Va1	isnull
+Va2	Mode: follower
+Va3	Mode: leader
+Va4	Mode: follower
+Va5	Mode: observer
+
+[root@Va1 ~]# cat  zkstats.sh
+#!/bin/bash
+function  getzookeeper_status(){
+ exec  2> /dev/null   
+ exec  8<>/dev/tcp/$1/2181
+ echo  "stat"  >&8
+ ZK_STAT=$(cat   <&8 |grep   -E "^Mode:")
+ echo  -ne  "${i}\t"
+ echo   "${ZK_STAT:-isnull}"
+ exec   8<&-      #关闭输入文件描述符
+}
+if  (( $# == 0 ));then
+  echo  "Usage: $0  Va2  Va3  Va4  Va5"
+elif [ $# == 1  -a  $1 == ${HOSTNAME} ];then
+   echo  -e  "$HOSTNAME is only;Error\n 不能输入本机的地址"
+elif [ $#  -eq  1 ];then
+  echo  "不能只输入一个主机名 $1"
+else
+  for  i  in  $@ ; do
+    getzookeeper_status  ${i};
+  done
+fi
+[root@Va1 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************
+192.168.0.11   NameNode   nn01   Va1                 192.168.1.10
+192.168.0.12   DataNode  node1   Va2  server.1  zk1    192.168.1.11  --- 192.168.1.21
+192.168.0.13   DataNode  node2   Va3  server.2  zk2    192.168.1.12  --- 192.168.1.22
+192.168.0.14   DataNode  node3   Va4  server.3  zk3    192.168.1.13  --- 192.168.1.23
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer   192.168.1.15
+192.168.0.16    nfs 客户挂载主机  192.168.0.20
+*************/
+
+[root@Va2 ~]# free  -m 
+              total        used        free      shared  buff/cache   available
+Mem:           1952         301        1311           8         340        1474
+Swap:          2047           0        2047
+
+[root@Va2 ~]# jps
+2531 DataNode
+2634 Jps
+
+[root@Va2 ~]# lftp 192.168.0.254
+lftp 192.168.0.254:~> pwd               
+ftp://192.168.0.254
+lftp 192.168.0.254:~> ls  hadoop/
+-rw-r--r--    1 0        0        216745683 May 29  2018 hadoop-2.7.6.tar.gz
+-rw-r--r--    1 0        0        38424081 Apr 26  2017 kafka_2.10-0.10.2.1.tgz
+-rw-r--r--    1 0        0        35042811 Apr 01  2017 zookeeper-3.4.10.tar.gz
+lftp 192.168.0.254:/> mget   hadoop/*
+290212575 bytes transferred in 2 seconds (159.25M/s)                
+Total 3 files transferred
+lftp 192.168.0.254:/> bye
+[root@Va2 ~]# ls
+   kafka_2.10-0.10.2.1.tgz  
+hadoop-2.7.6.tar.gz     zookeeper-3.4.10.tar.gz  下载
+
+[root@Va2 ~]# ls     zookeeper-3.4.10.tar.gz 
+zookeeper-3.4.10.tar.gz
+
+[root@Va2 ~]# tar  -xzf     zookeeper-3.4.10.tar.gz 
+[root@Va2 ~]# mv   zookeeper-3.4.10
+zookeeper-3.4.10/        zookeeper-3.4.10.tar.gz  
+
+[root@Va2 ~]# mv   zookeeper-3.4.10/   /usr/local/zookeeper/
+
+[root@Va2 ~]# ls  /usr/local/zookeeper/
+bin         docs             NOTICE.txt            zookeeper-3.4.10
+build.xml   ivysettings.xml  README_packaging.txt  zookeeper-3.4.10.jar
+conf        ivy.xml          README.txt            zookeeper-3.4.10.jar.asc
+contrib     lib              recipes               zookeeper-3.4.10.jar.md5
+dist-maven  LICENSE.txt      src                   zookeeper-3.4.10.jar.sha1
+
+[root@Va2 ~]# cd   /usr/local/zookeeper/conf/
+
+[root@Va2 conf]# ls
+configuration.xsl  log4j.properties  zoo.cfg
+
+
+/*************
+192.168.0.11   NameNode   nn01   Va1                 192.168.1.10
+192.168.0.12   DataNode  node1   Va2  server.1  zk1    192.168.1.11  --- 192.168.1.21
+192.168.0.13   DataNode  node2   Va3  server.2  zk2    192.168.1.12  --- 192.168.1.22
+192.168.0.14   DataNode  node3   Va4  server.3  zk3    192.168.1.13  --- 192.168.1.23
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer   192.168.1.15
+192.168.0.16    nfs 客户挂载主机  192.168.0.20
+*************/
+
+[root@Va2 conf]# vim   zoo.cfg 
+server.1=Va2:2888:3888
+server.2=Va3:2888:3888
+server.3=Va4:2888:3888
+server.4=Va5:2888:3888:observer
+
+[root@Va2 conf]#  grep  -Pnv  "^(#|$)"  /usr/local/zookeeper/conf/zoo.cfg
+2:tickTime=2000
+5:initLimit=10
+8:syncLimit=5
+12:dataDir=/tmp/zookeeper
+14:clientPort=2181
+29:server.1=Va2:2888:3888
+30:server.2=Va3:2888:3888
+31:server.3=Va4:2888:3888
+32:server.4=Va5:2888:3888:observer
+
+[root@Va2 conf]# rsync   -aSH  --delete  /usr/local/zookeeper   Va3:/usr/local/
+root@va3's password: 
+
+[root@Va2 conf]# rsync   -aSH  --delete  /usr/local/zookeeper   Va4:/usr/local/
+root@va4's password: 
+
+[root@Va2 conf]# rsync   -aSH  --delete  /usr/local/zookeeper   Va5:/usr/local/
+.............
+Are you sure you want to continue connecting (yes/no)? yes
+Wa.......
+root@va5's password: 
+
+[root@Va2 conf]# rm  -rf  /tmp/zookeeper/
+
+[root@Va2 conf]# mkdir   /tmp/zookeeper
+
+[root@Va2 conf]# echo  1  >  /tmp/zookeeper/myid
+
+[root@Va2 conf]# i=2;for  j  in  Va{3..5};do  ssh  ${j}  "mkdir  /tmp/zookeeper  && echo  ${i} > /tmp/zookeeper/myid ;cat  /tmp/zookeeper/myid " ;let i++  ; done
+
+root@va3's password: 
+2
+root@va4's password: 
+3
+root@va5's password: 
+4
+
+[root@Va2 conf]# cat   /tmp/zookeeper/myid 
+1
+
+[root@Va2 conf]# cd
+
+[root@Va2 ~]# /usr/local/zookeeper/bin/zkServer.sh   #查看帮助
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Usage: /usr/local/zookeeper/bin/zkServer.sh {start|start-foreground|stop|restart|status|upgrade|print-cmd}
+
+[root@Va2 ~]# jps
+3281 Jps
+2531 DataNode
+---------------------------------  启动每个服务器上面的zookeeper节点 --------------------------------
+
+[root@Va2 ~]# /usr/local/zookeeper/bin/zkServer.sh   start
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+
+[root@Va2 ~]# jps
+3330 Jps
+2531 DataNode
+3310 QuorumPeerMain
+
+---------------------- 启动完成之后查看每个节点的状态 ----------
+
+[root@Va2 ~]# /usr/local/zookeeper/bin/zkServer.sh   status
+
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Error contacting service. It is probably not running.
+报错原因只有一台运行,无法投票通过n/2 + 1的条件,至少启动 2台(不算Observer)
+
+
+[root@Va2 ~]# ssh  Va3   /usr/local/zookeeper/bin/zkServer.sh   start
+root@va3's password: 
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+-------------------- 启动完成之后查看每个节点的状态 ----------
+----------- 这时候有2 台 server 运行 集群 启动 成功 满足至少 3/2 +1=2 台运行的条件
+
+[root@Va2 ~]# /usr/local/zookeeper/bin/zkServer.sh   status
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Mode: follower
+
+-------------------------------  启动每个服务器上面的zookeeper节点 -------------------
+
+[root@Va2 ~]# ssh  Va4   /usr/local/zookeeper/bin/zkServer.sh   start
+root@va4's password: 
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+-------------------------------  启动每个服务器上面的zookeeper节点 -------------------
+
+[root@Va2 ~]# ssh  Va5   /usr/local/zookeeper/bin/zkServer.sh   start
+root@va5's password: 
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+
+[root@Va2 ~]# /usr/local/zookeeper/bin/zkServer.sh   status
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Mode: follower  角色
+
+[root@Va2 ~]#  jps
+2531 DataNode
+3558 Jps
+3310 QuorumPeerMain
+
+[root@Va2 ~]# 
+
+==================================================
+
+http://zookeeper.apache.org/doc/r3.4.10/zookeeperAdmin.html 帮助文档网页
+Overview
+Developer
+BookKeeper
+......
+
+Configuration Parameters
+....................
+
+Cluster Options
+............
+
+4lw.commands.whitelist
+(Java system property: zookeeper.4lw.commands.whitelist)
+
+New in 3.4.10: This property contains a list of comma separated 链接[ Four Letter Words ] commands. 
+..........................................
+
+http://zookeeper.apache.org/doc/r3.4.10/zookeeperAdmin.html#sc_zkCommands
+
+/**************
+ tar  -xzf  /root/hadoop/zookeeper-3.4.10.tar.gz 
+ ~]# ls  zookeeper-3.4.10/  
+***********/
+
+ZooKeeper Commands: The Four Letter Words
+ZooKeeper responds to a small set of commands. Each command is composed of four letters. You issue the commands to ZooKeeper via telnet or nc, at the client port.
+
+其中三个更有趣的命令：“stat”给出了一些关于服务器和连接的客户机的一般信息，
+“srvr” 和“cons”分别给出了有关服务器和连接的扩展细节。
+
+conf
+3.3.0中的新增功能：打印有关服务配置的详细信息。
+
+cons
+3.3.0中的新增功能：列出连接到此服务器的所有客户端的完整连接/会话详细信息。
+包括有关接收/发送的数据包数量、会话ID、操作延迟、上次执行的操作等的信息…
+
+crst
+3.3.0中的新功能：重置所有连接的连接/会话统计信息
+
+dump
+列出未完成的会话和临时节点。这只对领导者有效。
+
+envi
+打印服务环境的详细信息
+
+srvr
+3.3.0中的新增功能：列出服务器的完整详细信息。
+
+stat
+列出服务器和连接的客户端的简要详细信息。
+
+/*************============
+socat是一个多功能的网络工具，名字来由是” Socket CAT”，可以看作是netcat的N
+倍加强版，socat的官方网站：http://www.dest-unreach.org/socat/ 。 
+socat是一个两个独立数据通道之间的双向数据传输的继电器。
+这些数据通道包含文件、管道、设备（终端或调制解调器等）、
+插座（Unix，IP4，IP6 - raw，UDP，TCP）、SSL、SOCKS4客户端或代理CONNECT。 
+---------------------
+原文：https://blog.csdn.net/koozxcv/article/details/50520057 
+
+下载socat源代码包：http://www.dest-unreach.org/socat/download/
+编译安装 
+把下载的软件包解压后按照传统的方式编译安装：
+./configure 
+make 
+make install 
+## ~]# wget  --no-cache http://www.convirture.com...../convirt.repo  -O  /etc/yum.repos.d/convirt.repo
+yum makecache
+yum install socat
+[root@room9pc01 ~]# mv   /root/下载/socat-2.0.0-b8.tar.bz2   /var/ftp/hadoop/
+
+[root@Va2 ~]# lftp  192.168.0.254
+lftp 192.168.0.254:~> ls  hadoop/socat-2.0.0-b8.tar.bz2 
+-rw-r--r--    1 0        0          502766 Jan 31 04:57 socat-2.0.0-b8.tar.bz2
+lftp 192.168.0.254:/> get   hadoop/socat-2.0.0-b8.tar.bz2
+[root@Va2 ~]# tar  -xjf   socat-2.0.0-b8.tar.bz2 
+...............
+**************/
+
+[root@Va2 ~]# yum  list  |grep  socat
+socat.x86_64                             1.7.3.2-2.el7             CentOS7-1708 
+[root@Va2 ~]# yum  -y  install   socat
+...............
+已安装:
+  socat.x86_64 0:1.7.3.2-2.el7                                                             
+
+完毕！
+[root@Va2 ~]# rpm  -q  socat 
+socat-1.7.3.2-2.el7.x86_64
+socat使用:
+工作机理 
+socat的运行有4个阶段: 
+        初始化:解析命令行以及初始化日志系统
+        打开连接:先打开第一个连接，再打开第二个连接，是单步执行的，第一个失败，直接退出
+        数据转发:谁有数据就转发到另外一个连接上，read/write互换
+        关闭:其中一个连接掉开，执行处理另外一个连接关闭
+
+--------------- 启动完成之后 链接 节点 Va4 zookeeper服务器 查看 运行 状态 ----------
+
+-------------- 注意   socat   协议 TCP:IP地址:端口  减 号 " - " 代表 标注输入输出
+
+[root@Va2 ~]# socat  Va4:2181  -
+ruok     输入 命令ruok 表示  询问  对方 是否 运行正常
+imok     出现 回应结果 imok 表示运行正常
+
+[root@Va2 ~]# 
+
+conf
+3.3.0中的新增功能：打印有关服务配置的详细信息。
+
+[root@Va2 ~]# socat   TCP:Va4:2181  -
+conf      # 输入命令 conf 作用是 打印有关服务配置的详细信息
+clientPort=2181
+dataDir=/tmp/zookeeper/version-2
+dataLogDir=/tmp/zookeeper/version-2
+tickTime=2000
+maxClientCnxns=60
+minSessionTimeout=4000
+maxSessionTimeout=40000
+serverId=3
+initLimit=10
+syncLimit=5
+electionAlg=3
+electionPort=3888
+quorumPort=2888
+peerType=0
+
+
+/********************
+stat
+列出服务器和连接的客户端的简要详细信息
+
+[root@Va2 ~]# socat   TCP:Va4:2181  -
+stat       # 输入命令stat 作用是 查看角色 , 列出服务器和连接的客户端的简要详细信息
+
+Zookeeper version: 3.4.10-39d3a4f269333c922ed3db283be479f9deacaa0f, built on 03/23/2017 10:13 GMT
+Clients:
+ /192.168.0.12:55438[0](queued=0,recved=1,sent=0)
+
+Latency min/avg/max: 0/0/0
+Received: 4
+Sent: 3
+Connections: 1
+Outstanding: 0
+Zxid: 0x100000000
+Mode: follower  #  查看 主机Va4 的角色是 follower
+Node count: 4
+[root@Va2 ~]# 
+
+------------- 注意   socat   协议 TCP:IP地址:端口  减 号 " - " 代表 标注输入输出
+
+[root@Va2 ~]# socat   TCP:Va3:2181  -
+stat         # 输入命令stat 作用是 查看角色 , 列出服务器和连接的客户端的简要详细信息
+
+Zookeeper version: 3.4.10-39d3a4f269333c922ed3db283be479f9deacaa0f, built on 03/23/2017 10:13 GMT
+Clients:
+ /192.168.0.12:46312[0](queued=0,recved=1,sent=0)
+
+Latency min/avg/max: 0/0/0
+Received: 2
+Sent: 1
+Connections: 1
+Outstanding: 0
+Zxid: 0x100000000
+Mode: leader    #  查看 主机Va3 的角色是 leader
+Node count: 4
+[root@Va2 ~]# 
+
+[root@Va2 ~]# socat   TCP:Va5:2181  -
+stat
+Zookeeper version: 3.4.10-39d3a4f269333c922ed3db283be479f9deacaa0f, built on 03/23/2017 10:13 GMT
+Clients:
+ /192.168.0.12:56132[0](queued=0,recved=1,sent=0)
+
+Latency min/avg/max: 0/0/0
+Received: 2
+Sent: 1
+Connections: 1
+Outstanding: 0
+Zxid: 0x100000000
+Mode: observer   #  查看 主机Va5 的角色是 observer
+Node count: 4
+
+-------------------  编写脚本 ---------- 启动完成之后查看每个节点的状态 ----------
+
+[root@Va2 ~]# vim  zkstats.sh
+#!/bin/bash
+function  getzookeeper_status(){
+ exec  2> /dev/null         #把错误输出 重定向 空洞(不需要查看错误信息)
+
+#  相当于在命令行输入  socat   TCP: ip地址或主机名 : 2181  -
+ #  在交互式 界面子阿再 输入 命令 stat 
+
+exec  8<>/dev/tcp/$1/2181   # 自定义打开文件描述符 8 , $1变量表示ip地址
+echo  "stat"  >&8
+
+ZK_STAT=$(cat   <&8 |grep   -E "^Mode:")  #匹配像Mode: observer等 的输出结果,保存在变量里
+
+          # 如果输出结果不匹配, 则自定义赋值 变量ZK_STAT="isnull"
+echo   "${ZK_STAT:-isnull}"
+exec   8<&-     #关闭输入描述符 8 
+}
+.............
+[root@Va2 ~]# cat    zkstats.sh
+#!/bin/bash
+function  getzookeeper_status(){
+ exec  2> /dev/null
+
+#  相当于在命令行输入  socat   TCP: ip地址或主机名 : 2181  -
+ #  在交互式 界面 再 输入 命令 stat 
+
+ exec  8<>/dev/tcp/$1/2181
+ echo  "stat"  >&8
+
+ ZK_STAT=$(cat   <&8 |grep   -E "^Mode:")
+ echo   "${ZK_STAT:-isnull}"
+ exec   8<&-
+}
+if  (( $# == 0 ));then
+  echo  "Usage: $0  Va2  Va3  Va4  Va5"
+elif [ $# == 1  -a  $1 == ${HOSTNAME} ];then
+   echo  -e  "$HOSTNAME is only;Error\n 不能输入本机的地址"
+elif [ $#  -eq  1 ];then
+  echo  "不能只输入一个主机名 $1"
+else
+  for  i  in  $@ ; do
+    getzookeeper_status  ${i};
+    echo  ${i};
+  done
+fi
+
+[root@Va2 ~]# chmod   777  zkstats.sh  # 注意一定要有执行权,否则 .  脚本不退出
+[root@Va2 ~]# ./zkstats.sh   Va2
+Va2 is only;Error
+ 不能输入本机的地址
+
+[root@Va2 ~]# ./zkstats.sh   Va3
+不能只输入一个主机名 Va3
+
+[root@Va2 ~]# ./zkstats.sh   Va3  Va4
+Mode: leader
+Va3
+Mode: follower
+Va4
+[root@Va2 ~]# ./zkstats.sh  Va2  Va3  Va4  Va5
+Mode: follower
+Va2
+Mode: leader
+Va3
+Mode: follower
+Va4
+Mode: observer
+Va5
+
+[root@Va2 ~]# vim    zkstats.sh 
+
+[root@Va2 ~]# cat    zkstats.sh
+
+#!/bin/bash
+function  getzookeeper_status(){
+ exec  2> /dev/null
+ exec  8<>/dev/tcp/$1/2181
+ echo  "stat"  >&8
+ ZK_STAT=$(cat   <&8 |grep   -E "^Mode:")
+ echo  -ne  "${i}\t"
+ echo   "${ZK_STAT:-isnull}"
+ exec   8<&-
+}
+if  (( $# == 0 ));then
+  echo  "Usage: $0  Va2  Va3  Va4  Va5"
+elif [ $# == 1  -a  $1 == ${HOSTNAME} ];then
+   echo  -e  "$HOSTNAME is only;Error\n 不能输入本机的地址"
+elif [ $#  -eq  1 ];then
+  echo  "不能只输入一个主机名 $1"
+else
+  for  i  in  $@ ; do
+    getzookeeper_status  ${i};
+  done
+fi
+[root@Va2 ~]# ./zkstats.sh   Va1  Va2 
+Va1	isnull
+Va2	Mode: follower
+
+[root@Va2 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************
+192.168.0.11   NameNode   nn01   Va1                 192.168.1.10
+192.168.0.12   DataNode  node1   Va2  server.1  zk1    192.168.1.11  --- 192.168.1.21
+192.168.0.13   DataNode  node2   Va3  server.2  zk2    192.168.1.12  --- 192.168.1.22
+192.168.0.14   DataNode  node3   Va4  server.3  zk3    192.168.1.13  --- 192.168.1.23
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer   192.168.1.15
+192.168.0.16    nfs 客户挂载主机  192.168.0.20
+*************/
+[root@Va3 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1952         286        1338           8         327        1490
+Swap:          2047           0        2047
+[root@Va3 ~]# jps
+2502 DataNode
+2614 Jps
+[root@Va3 ~]# tail   -4   /usr/local/zookeeper/conf/zoo.cfg 
+server.1=Va2:2888:3888
+server.2=Va3:2888:3888
+server.3=Va4:2888:3888
+server.4=Va5:2888:3888:observer
+[root@Va3 ~]#  ls  /usr/local/zookeeper/
+bin         docs             NOTICE.txt            zookeeper-3.4.10
+build.xml   ivysettings.xml  README_packaging.txt  zookeeper-3.4.10.jar
+conf        ivy.xml          README.txt            zookeeper-3.4.10.jar.asc
+contrib     lib              recipes               zookeeper-3.4.10.jar.md5
+dist-maven  LICENSE.txt      src                   zookeeper-3.4.10.jar.sha1
+
+[root@Va3 ~]# ls  /tmp/zookeeper/
+myid
+[root@Va3 ~]# cat   /tmp/zookeeper/myid 
+2
+
+[root@Va3 ~]#  /usr/local/zookeeper/bin/zkServer.sh   status
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Mode: leader  角色
+
+[root@Va3 ~]# jps
+3315 QuorumPeerMain
+2502 DataNode
+3435 Jps
+
+[root@Va3 ~]# netstat   -npult  |grep  2181
+tcp6       0      0 :::2181                 :::*     LISTEN      3315/java 
+
+[root@Va3 ~]# netstat   -npult  |grep java |column   -t
+tcp   0    0 127.0.0.1:46101      0.0.0.0:*  LISTEN  2502/java
+tcp   0    0 0.0.0.0:50010        0.0.0.0:*  LISTEN  2502/java
+tcp   0    0 0.0.0.0:50075        0.0.0.0:*  LISTEN  2502/java
+tcp   0    0 0.0.0.0:50020        0.0.0.0:*  LISTEN  2502/java
+tcp6  0    0 192.168.0.13:3888    :::*       LISTEN  3315/java
+tcp6  0    0 :::39346             :::*       LISTEN  3315/java
+tcp6  0    0 :::2181              :::*       LISTEN  3315/java
+tcp6  0    0 192.168.0.13:2888    :::*       LISTEN  3315/java
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va4 ~]# free  -m ;jps
+              total        used        free      shared  buff/cache   available
+Mem:           1952         305        1315           8         331        1470
+Swap:          2047           0        2047
+2513 DataNode
+2626 Jps
+
+[root@Va4 ~]# tail   -4   /usr/local/zookeeper/conf/zoo.cfg 
+server.1=Va2:2888:3888
+server.2=Va3:2888:3888
+server.3=Va4:2888:3888
+server.4=Va5:2888:3888:observer
+[root@Va4 ~]#  ls  /usr/local/zookeeper/
+bin         docs             NOTICE.txt            zookeeper-3.4.10
+build.xml   ivysettings.xml  README_packaging.txt  zookeeper-3.4.10.jar
+conf        ivy.xml          README.txt            zookeeper-3.4.10.jar.asc
+contrib     lib              recipes               zookeeper-3.4.10.jar.md5
+dist-maven  LICENSE.txt      src                   zookeeper-3.4.10.jar.sha1
+
+[root@Va4 ~]# cat   /tmp/zookeeper/myid 
+3
+
+[root@Va4 ~]#  /usr/local/zookeeper/bin/zkServer.sh   status
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Mode: follower  角色
+
+[root@Va4 ~]# jps
+3424 Jps
+2513 DataNode
+3341 QuorumPeerMain
+
+[root@Va4 ~]# 
+
+
+
+
+
+
+
+
+
+
+/*************
+192.168.0.11   NameNode   nn01   Va1                 192.168.1.10
+192.168.0.12   DataNode  node1   Va2  server.1  zk1    192.168.1.11  --- 192.168.1.21
+192.168.0.13   DataNode  node2   Va3  server.2  zk2    192.168.1.12  --- 192.168.1.22
+192.168.0.14   DataNode  node3   Va4  server.3  zk3    192.168.1.13  --- 192.168.1.23
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer   192.168.1.15
+192.168.0.16    nfs 客户挂载主机  192.168.0.20
+*************/
+
+[root@Va5 ~]# free  -m 
+              total        used        free      shared  buff/cache   available
+Mem:           1476         132        1175           8         168        1172
+Swap:          2047           0        2047
+[root@Va5 ~]# jps
+2504 Jps
+[root@Va5 ~]#  cd   /usr/local/hadoop/
+
+
+--------------------  开启Hadoop的Portmap服务（须要root权限）注意必须先启动 Portmap  后启动 Nfs3 -------------
+
+
+[root@Va5 hadoop]# /usr/local/hadoop/sbin/hadoop-daemon.sh  --script   /usr/local/hadoop/bin/hdfs    start   portmap     # 启动服务
+
+starting portmap, logging to /usr/local/hadoop/logs/hadoop-root-portmap-Va5.out
+
+[root@Va5 ~]# jps
+2610 Jps
+2566 Portmap
+
+[root@Va5 ~]# id  nfsuser
+uid=200(nfsuser) gid=200(nfsuser) 组=200(nfsuser)
+
+[root@Va5 ~]# su   -l  nfsuser
+上一次登录：三 1月 30 15:01:57 CST 2019pts/0 上
+su: 警告：无法更改到 /home/nfsuser 目录: 没有那个文件或目录
+-bash-4.2$ pwd
+/usr/local/hadoop
+-bash-4.2$ echo  $USER
+nfsuser
+
+---------- 启动 nfs3 服务 #启动 nfs3 需要使用 core-site 里面设置的用户nfsuser  注意必须先启动 Portmap  后启动 Nfs3 --
+------------- 如果 Portmap重起了, portmap重起之后, nfs3 也必须重新启动  ------------
+
+-bash-4.2$ /usr/local/hadoop/sbin/hadoop-daemon.sh  --script   /usr/local/hadoop/bin/hdfs    start   nfs3
+
+starting nfs3, logging to /usr/local/hadoop/logs/hadoop-nfsuser-nfs3-Va5.out
+
+-bash-4.2$ jps
+2700 Nfs3
+2751 Jps
+-bash-4.2$ logout 
+
+[root@Va5 ~]# jps
+2566 Portmap
+2761 Jps
+2700 Nfs3
+
+[root@Va5 ~]#  ls  /usr/local/zookeeper/
+ls: 无法访问/usr/local/zookeeper/: 没有那个文件或目录
+[root@Va5 ~]# tail   -4   /usr/local/zookeeper/conf/zoo.cfg 
+server.1=Va2:2888:3888
+server.2=Va3:2888:3888
+server.3=Va4:2888:3888
+server.4=Va5:2888:3888:observer
+[root@Va5 ~]#  ls  /usr/local/zookeeper/
+bin         docs             NOTICE.txt            zookeeper-3.4.10
+build.xml   ivysettings.xml  README_packaging.txt  zookeeper-3.4.10.jar
+conf        ivy.xml          README.txt            zookeeper-3.4.10.jar.asc
+contrib     lib              recipes               zookeeper-3.4.10.jar.md5
+dist-maven  LICENSE.txt      src                   zookeeper-3.4.10.jar.sha1
+
+[root@Va5 ~]# cat   /tmp/zookeeper/myid 
+4
+
+[root@Va5 ~]#  /usr/local/zookeeper/bin/zkServer.sh   status
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper/bin/../conf/zoo.cfg
+Mode: observer   角色
+
+[root@Va5 ~]# jps
+3457 QuorumPeerMain
+2566 Portmap
+3529 Jps
+2700 Nfs3
+
+[root@Va5 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*************
+192.168.0.11   NameNode   nn01   Va1                 192.168.1.10
+192.168.0.12   DataNode  node1   Va2  server.1  zk1    192.168.1.11  --- 192.168.1.21
+192.168.0.13   DataNode  node2   Va3  server.2  zk2    192.168.1.12  --- 192.168.1.22
+192.168.0.14   DataNode  node3   Va4  server.3  zk3    192.168.1.13  --- 192.168.1.23
+192.168.0.15   Nfs3  Portmap     Va5   nfsgw   observer   192.168.1.15
+192.168.0.16    nfs 客户挂载主机  192.168.0.20
+*************/
+
+[root@Va6 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:           1452         110        1125           8         216        1178
+Swap:          2047           0        2047
+
+[root@Va6 ~]# ls  /mnt/
+[root@Va6 ~]#  mount  -t   nfs  -o  vers=3,proto=tcp,nolock,noatime,sync  Va5:/   /mnt/
+[root@Va6 ~]# showmount   -e  Va5
+Export list for Va5:
+/ *
+[root@Va6 ~]# df  -hT   /mnt/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+Va5:/          nfs    51G   19G   33G   36% /mnt
+
+[root@Va6 ~]# ls  /mnt/
+Aa  outputdir  rhel7.4.iso  root  system  tmp  user
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

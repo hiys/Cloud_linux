@@ -1,3 +1,18 @@
+
+nsd1808n_pm@tedu.cn 
+http://zookeeper.apache.org/doc/r3.4.10/zookeeperAdmin.html
+Overview
+Developer
+BookKeeper
+Admin & Ops
+Administrator's Guide
+Quota Guide
+JMX
+Observers Guide
+Contributor
+Miscellaneous
+
+
 zookeeper 安装
 
 1 禁用防火墙和 selinux
@@ -270,13 +285,15 @@ Observer 负责读 ,但不投票  协调
 Observer：直接为客户端服务但并不参与提案的投票，同时也与Leader进行数据交换
 
 
+------------------------ 注意 这里的 n 不包含 Observer 角色 , n = Leader + Follower ---------------
+
 如果 Leader死亡, 重新选举 Leader
 Observer 不计算在 投票总设备数量里面
 
 如果无法得到 足够的投票数量,就重新发起投票
 如果参与投票的机器不足 n/2+1, 则集群挂机
 
-
+------------------------ 注意 这里的 n 不包含 Observer 角色 , n = Leader + Follower ---------------
 n=9
  n/2 =4台,故障主机  ---- 5台,正常运行的主机
  n%2 =1

@@ -1,0 +1,397 @@
+zookeeper 安装
+
+1 禁用防火墙和 selinux
+2 设置 /etc/hosts ip 主机名对应关系
+3 安装 openjdk
+
+zookeeper 角色，选举
+leader 集群主节点
+follower 参与选举的附属节点
+observer 不参与选举的节点，同步 leader 的命名空间
+
+1 拷贝配置文件
+/usr/local/zookeeper/conf/zoo_sample.cfg 到
+/usr/local/zookeeper/conf/zoo.cfg
+
+2 修改配置文件
+server.1=zk1:2888:3888
+server.2=zk2:2888:3888
+server.3=zk3:2888:3888
+server.4=zk4:2888:3888:observer
+
+3 创建目录 zookeeper 配置文件里面的 dataDir 指定的目录
+4 在目录下创建 myid 文件，写入自己的 id 值
+5 启动集群，查看角色
+/usr/local/zookeeper/bin/zkServer.sh start
+/usr/local/zookeeper/bin/zkServer.sh status
+
+kafka 集群安装
+1 禁用防火墙和 selinux
+2 设置 /etc/hosts ip 主机名对应关系
+3 安装 openjdk
+4 安装 kafka 到 /usr/local/kafka
+5 修改配置文件 config/server.properties
+broker.id= id值不能相同
+zookeeper.connect=zk1:2181,zk4:2181
+
+启动 kafka
+/usr/local/kafka/bin/kafka-server-start.sh -daemon /usr/local/kafka/config/server.properties
+
+验证：
+jps 能看到 kafka
+netstat 能看到 9092 被监听
+
+创建主题
+bin/kafka-topics.sh --create --zookeeper zk4:2181 --replication-factor 1 --partitions 1 --topic nsd1703
+
+查看显示已存在的主题
+bin/kafka-topics.sh --list --zookeeper zk4:2181
+
+查看主题的详细信息
+bin/kafka-topics.sh --describe --zookeeper zk1:2181,zk2:2181 --topic nsd1703
+
+生存者发布信息
+bin/kafka-console-producer.sh --broker-list zk1:9092,zk3:9092 --topic nsd1703
+
+消费者消费信息
+bin/kafka-console-consumer.sh --zookeeper zk1:2181,zk2:2181 --topic nsd1703 --from-beginning
+bin/kafka-console-consumer.sh --bootstrap-server zk1:9092,zk4:9092 --topic nsd1703
+
+from-beginning 是从头开始消费消息
+
+hadoop 高可用
+core-site.xml
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://mycluster</value>  
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/var/hadoop</value>
+    </property>
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value>node1:2181,node2:2181,node3:2181</value>
+    </property>
+</configuration>
+
+hdfs-site.xml
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>2</value>
+    </property>
+
+    <property>
+        <name>dfs.nameservices</name>
+        <value>mycluster</value>
+    </property>
+    <property>
+        <name>dfs.ha.namenodes.mycluster</name>
+        <value>nn1,nn2</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn1</name>
+        <value>master1:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.rpc-address.mycluster.nn2</name>
+        <value>master2:8020</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn1</name>
+        <value>master1:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.http-address.mycluster.nn2</name>
+        <value>master2:50070</value>
+    </property>
+    <property>
+        <name>dfs.namenode.shared.edits.dir</name>
+        <value>qjournal://node1:8485;node2:8485;node3:8485/mycluster</value>
+    </property>
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/var/hadoop/journal</value>
+    </property>
+    <property>
+        <name>dfs.client.failover.proxy.provider.mycluster</name>
+        <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.methods</name>
+        <value>sshfence</value>
+    </property>
+    <property>
+        <name>dfs.ha.fencing.ssh.private-key-files</name>
+        <value>/root/.ssh/id_rsa</value>
+    </property>
+    <property>
+        <name>dfs.ha.automatic-failover.enabled</name>
+        <value>true</value>
+    </property>
+</configuration>
+
+同步配置到所有集群机器
+
+在其中一台初始化 zookeeper 集群
+ bin/hdfs zkfc -formatZK
+在定义的节点启动 journalnode
+sbin/hadoop-daemon.sh start journalnode
+在其中一台 namenode 上执行格式化命令
+bin/hdfs namenode –format
+格式化以后把数据目录拷贝到另一台 namenode
+初始化 JournalNode
+./bin/hdfs namenode -initializeSharedEdits
+停止 JournalNode
+sbin/hadoop-daemon.sh stop journalnode
+启动 dfs
+./sbin/start-dfs.sh
+验证配置
+ bin/hadoop dfsadmin -report
+
+
+查看集群状态  bin/hdfs haadmin -getServiceState nn1  bin/hdfs haadmin -getServiceState nn2
+bin/hadoop fs -ls hdfs://mycluster/
+
+bin/hadoop fs -mkdir hdfs://mycluster/input
+验证高可用，关闭 active namenode
+sbin/hadoop-daemon.sh stop namenode
+
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.ha.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.ha.rm-ids</name>
+        <value>rm1,rm2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname.rm1</name>
+        <value>master1</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname.rm2</name>
+        <value>master2</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.recovery.enabled</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.store.class</name>
+        <value>org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKRMStateStore</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.zk-address</name>
+        <value>node1:2181,node2:2181,node3:2181</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.cluster-id</name>
+        <value>yarn-ha</value>
+    </property>
+</configuration>
+
+启动服务，检查状态
+sbin/start-yarn.sh
+bin/yarn rmadmin -getServiceState rm1
+bin/yarn rmadmin -getServiceState rm2
+
+
+HDFS  with  NFS
+NN     表示 2 台 namenode
+ZK     表示 zookeeper
+ZKFailoverController (ZKFC) # 失败检测软件,由 hadoop 提供
+NFS
+nfs 数据共享变更方案 把数据存储在 共享存储里,
+还需要考虑 nfs的高可用
+
+HDFS  with  NFS  和 HDFS  with  QJM 都
+使用 Zookeeper 和 ZKFC 来实现自动失效恢复
+
+
+
+HDFS  with  QJM
+NN     表示 2 台 namenode
+ZK     表示 zookeeper
+ZKFailoverController (ZKFC) #同步锁 失败检测软件,由 hadoop 提供
+JournalNode  (JNS主机)
+JQM不需要共享存储,
+但需要 让每一个DataNode都知道两个NameNode的位置,
+并把块信息和心跳包发送给Active活跃 和 Standby备份
+这 两台 namenode 服务节点主机s
+
+=--------------------------------------------------------------------
+
+https://blog.csdn.net/zkq_1986/article/details/54952738
+
+ZKFC(Zookeeper Failover Controller)原理【详细版】
+ZKFC设计文档（ZK Failover Controller Design）
+设计
+组件化设计，
+ZK-based的automatic Failover主要由三个组件组成：
+
+HealthMonitor：
+用于监控NN是否unavailable或者处于unhealth状态
+
+ActiveStandbyElector：
+用于监控NN在zk中的状态
+
+ZKFailoverController：
+从HealthMonitor和ActiveStandbyElector中订阅事件并管理NN的状态，
+另外ZKFC还需要负责fencing。
+现阶段，上述三个组件都在跑在一个JVM中，这个JVM与NN的JVM在同一个机器上。
+但这是两个独立的进程。
+一个典型的HA集群，有两个NN组成，
+每个NN都有自己的ZKFC进程。
+
+HealthMonitor设计
+HealthMonitor由HADOOP-7788完成提交，
+它由一个loop循环的
+调用一个monitorHealth rpc来检视本地的NN的健康性。
+如果NN返回的状态信息发生变化，
+那么它将经由callback的方式向ZKFC发送message。
+
+HealthMonitor具有一下状态：
+INITIALIZING：
+HealthMonitor已经初始化好，但是仍未与NN进行联通
+
+SERVICE NOT RESPONDING：
+rpc调用要么timeout，要么返回值未定义。
+
+SERVICE HEALTHY：
+RPC调用返回成功
+
+SERVICE UNHEALTHY：
+RPC放好事先已经定义好的失败类型
+
+HEALTH MONITOR FAILED：
+HealthMonitor由于未捕获的异常导致失败。
+
+/*************
+192.168.0.11  nn01   Va1                  192.168.1.10  NameNode ,resourceManager
+192.168.0.12  node1  Va2  server.1  zk1   192.168.1.11 -- 192.168.1.21   DataNode  nodeManager  JournalNode,zookeeper 
+192.168.0.13  node2  Va3  server.2  zk2   192.168.1.12 -- 192.168.1.22   DataNode  nodeManager  JournalNode,zookeeper 
+192.168.0.14  node3  Va4  server.3  zk3   192.168.1.13 -- 192.168.1.23   DataNode  nodeManager  JournalNode,zookeeper 
+192.168.0.15  nfsgw  Va5  observer        192.168.1.15    Nfs3  Portmap 
+192.168.0.16  nn02   Va6   nfs 客户挂载主机  192.168.0.20     namenode,resourceManager (新)
+*************/
+1 停止所有配置,停止所有服务
+ 清空 rm  -rf  /var/hadoop/*
+ 启动 zookeep而集群
+ 配置 /etc/hosts
+ 安装java环境,配置 ssh 密钥匙denglu
+ nn01,nn02 能登陆所有机器,包括本机器
+
+[root@Va1 ~]# cd  /usr/local/hadoop/
+[root@Va1 hadoop]# ./sbin/stop-all.sh 
+This script is Deprecated. Instead use stop-dfs.sh and stop-yarn.sh
+Stopping namenodes on [Va1]
+Va1: stopping namenode
+.............
+no proxyserver to stop
+
+[root@Va1 hadoop]# jps
+10442 Jps
+[root@Va1 hadoop]# 
+
+
+
+
+
+[root@Va2 ~]# jps
+1933 Kafka
+2029 QuorumPeerMain
+3599 Jps
+
+[root@Va2 ~]# reboot
+
+
+
+
+
+
+
+
+[root@Va3 ~]# jps
+3315 QuorumPeerMain
+9212 Jps
+6461 Kafka
+
+[root@Va3 ~]# reboot
+
+
+
+
+
+
+
+
+
+[root@Va4 ~]# jps
+6405 Kafka
+3341 QuorumPeerMain
+9149 Jps
+[root@Va4 ~]# reboot
+
+
+
+
+
+
+
+
+
+[root@Va5 ~]# jps
+3457 QuorumPeerMain
+2566 Portmap
+2700 Nfs3
+8606 Jps
+[root@Va5 ~]# reboot
+
+[root@Va5 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+[root@Va6 ~]# ls  /mnt/
+Aa  outputdir  rhel7.4.iso  root  system  tmp  user
+[root@Va6 ~]# jps
+bash: jps: 未找到命令...
+[root@Va6 ~]# ls  /mnt/
+ls: 无法访问/mnt/: 失效文件句柄
+[root@Va6 ~]# reboot
+
+[root@Va6 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
