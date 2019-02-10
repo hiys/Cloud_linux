@@ -1,0 +1,371 @@
+
+[root@room9pc01 ~]# rpm -q vsftpd
+vsftpd-3.0.2-22.el7.x86_64
+
+[root@room9pc01 ~]# scp  /root/桌面/rhcs2.0-rhosp9-20161113-x86_64.iso  root@192.168.4.50:/root/
+root@192.168.4.50's password: 
+rhcs2.0-rhosp9-20161113-x86_64.iso            100%  935MB  66.1MB/s   00:14    
+[root@room9pc01 ~]# systemctl is-active vsftpd
+active
+[root@room9pc01 ~]# cat /etc/yum.repos.d/rhel7.repo 
+[rhel7]
+name=rhel7.4
+gpgcheck=0
+baseurl=file:///var/ftp/rhel7/
+enabled=1
+
+[root@room9pc01 ~]# ll rhcs2.0-rhosp9-20161113-x86_64.iso 
+-rw-r--r-- 1 root root 980799488 10月 10 19:05 rhcs2.0-rhosp9-20161113-x86_64.iso
+
+[root@room9pc01 ~]# ls /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo
+
+[root@room9pc01 ~]# ls /var/ftp/
+pub  rhel7  share
+
+[root@room9pc01 ~]# mkdir /var/ftp/ceph
+
+[root@room9pc01 ~]# vim /etc/fstab 
+[root@room9pc01 ~]# tail -2 /etc/fstab
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso  /var/ftp/ceph  iso9660  defaults 0  0
+
+[root@room9pc01 ~]# mount -a
+mount: /dev/loop1 写保护，将以只读方式挂载
+
+[root@room9pc01 ~]# df -hT /var/ftp/ceph/ /var/ftp/rhel7/
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/loop1     iso9660  936M  936M     0  100% /var/ftp/ceph
+/dev/loop0     iso9660  3.8G  3.8G     0  100% /var/ftp/rhel7
+
+[root@room9pc01 ~]# vim /etc/yum.repos.d/ceph.repo
+[root@room9pc01 ~]# cat /etc/yum.repos.d/ceph.repo
+[mon]
+name=mon
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[root@room9pc01 ~]# yum clean all >/dev/null && yum repolist |tail -7
+Determining fastest mirrors
+源标识                               源名称                                状态
+mon                                  mon                                      41
+osd                                  osd                                      28
+rhel7                                rhel7.4                               4,986
+tools                                tools                                    33
+repolist: 5,088
+[root@room9pc01 ~]# ls /var/ftp/ceph/
+rhceph-2.0-rhel-7-x86_64        rhscon-2.0-rhel-7-x86_64
+rhel-7-server-openstack-9-rpms
+[root@room9pc01 ~]# ls /var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/MON/ |wc -l
+43
+[root@room9pc01 ~]# ls /var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/OSD/ |wc -l
+30
+[root@room9pc01 ~]# ls /var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/Tools/ |wc -l
+35
+[root@room9pc01 ~]# 
+[root@H57 ~]# vim /etc/yum.repos.d/ceph.repo
+[root@H57 ~]# cat /etc/yum.repos.d/ceph.repo
+[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[root@H57 ~]# yum clean all >/dev/null && yum repolist 
+ 
+源标识                                    源名称                                    状态
+mon                                       mon                                          41
+mon-2                                     mon-2                                        41
+osd                                       osd                                          28
+osd-2                                     osd-2                                        28
+rhel7                                     rhel7.4                                   4,986
+rhel7-2                                   rhel7.4                                   4,986
+tools                                     tools                                        33
+tools-2                                   tools-2                                      33
+repolist: 10,176
+[root@H57 ~]# 
+
+[root@room9pc01 ~]# vim cluster
+[root@room9pc01 ~]# cat cluster
+#!/bin/bash
+password=123456;
+for i in `seq 8`
+do 
+  hostn=rh7_node$i;
+  systn=H1$[i-1];
+  let eth0=9+$i;
+  eth1=$eth0;
+  function  newhostn(){
+    hostn=H1$[i-1];
+  }
+  ipexp(){
+    expect  /root/clone.sh
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      virsh start $hostn;
+    else
+      echo "clone failed";
+      exit;
+    fi
+    expect /root/console.sh $hostn $password  $systn $eth0 $eth1
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo "ipyum well done";
+    else
+      echo  "ipyum failed";
+    fi
+  }
+  case $1 in
+  clone)
+    ipexp  &
+    wait  %  $i;;
+  start)
+    virsh start  $hostn;
+    if [ $? -ne 0 ];then
+     newhostn
+     virsh start $hostn;
+    fi;;
+  stop)
+    virsh shutdown $hostn;
+    if [ $? -ne 0 ];then
+     newhostn
+     virsh shutdown $hostn;
+    fi;;
+  scp)
+     expect /root/autoscp.sh  $eth0
+     if [ $? -eq 0 -o $? -eq 1 ];then
+       echo "scp is over";
+     else
+       echo  "scp failed";
+    fi;;
+  setlnmp)
+    expect  /root/setlnmp.sh  $eth0
+     if [ $? -eq 0 -o $? -eq 1 ];then
+       echo "setting up lnmp  well done";
+     else
+       echo  "setting up failed";
+    fi;;    
+  *)
+    echo "input-Error";;
+  esac
+done
+echo  "Amazing !"
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# vim clone.sh 
+
+[root@room9pc01 ~]# cat clone.sh
+#!/usr/bin/expect  -f
+set timeout  -1
+spawn clone-auto7
+expect "vms:"   {send "1\r"}
+expect "#"  {send "echo Clone successfully\r"}
+expect "#"  {send "\r"}
+[root@room9pc01 ~]# vim console.sh 
+
+[root@room9pc01 ~]# cat console.sh
+#!/usr/bin/expect  -f
+set  timeout  -1
+set hostn     [lindex  $argv  0]
+set password  [lindex  $argv  1]
+set systn     [lindex  $argv  2]
+set eth0      [lindex  $argv  3]
+set eth1      [lindex  $argv  4]
+spawn  virsh  console  $hostn
+expect "换码符为 ^]"  {send "\n"}
+expect "login:"   {send "root\r"}
+expect "密码："     {send "$password\r"}
+expect "#"  {send "echo 123 |passwd  --stdin root\r"}
+expect "#"  {send "echo $systn >/etc/hostname\r"}
+expect "#"  {send "nmcli connection modify eth0 ipv4.method manual ipv4.addresses 192.168.4.$eth0/24  ipv4.gateway 192.168.4.254 connection.autoconnect yes \r"}
+expect "#"  {send "nmcli connection up eth0 \r"}
+expect "#"  {send "nmcli connection add con-name eth1 ifname eth1 type ethernet autoconnect yes\r"}
+expect "#"  {send "nmcli connection modify eth1 ipv4.method manual ipv4.addresses 192.168.2.$eth1/24  ipv4.gateway 192.168.2.254 connection.autoconnect yes \r"} 
+expect "#"  {send "nmcli connection up eth1 \r"}
+expect "#"  {send "ifconfig | grep 'inet '\r"}
+expect "#"  {send "echo '\[rhel7\]
+\nname=rhel7.4
+\nenabled=1
+\ngpgcheck=0
+\nbaseurl=ftp://192.168.4.254/rhel7
+\n\[rhel7-2\]
+\nname=rhel7.4-2
+\nbaseurl=ftp://192.168.2.254/rhel7
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/rhel7.repo\r"}
+expect "#"  {send "echo  '\[mon\]
+\nname=mon
+\nbaseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+\ngpgcheck=0
+\nenabled=1
+\n\[osd\]
+\nname=osd
+\nbaseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+\ngpgcheck=0
+\nenabled=1
+\n[tools\]
+\nname=tools
+\nbaseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+\ngpgcheck=0
+\nenabled=1
+\n\[mon-2\]
+\nname=mon-2
+\nbaseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+\ngpgcheck=0
+\nenabled=1
+\n\[osd-2\]
+\nname=osd-2
+\nbaseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+\ngpgcheck=0
+\nenabled=1
+\n\[tools-2\]
+\nname=tools-2
+\nbaseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+\ngpgcheck=0
+\nenabled=1 '>/etc/yum.repos.d/ceph.repo\r"}
+expect "#"  {send "yum clean all >/dev/null && yum repolist |tail -4\r"}
+expect "#"  {send "systemctl isolate graphical\r"}
+expect "#"  {send "sleep 5 && date\r"}
+expect "#"  {send "\r"}
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# cat autoscp.sh 
+#!/usr/bin/expect  -f
+set timeout  -1
+set eth0    [lindex $argv 0]
+spawn  scp  -o  StrictHostKeyChecking=no  /root/lnmp.sh  /root/桌面/Discuz_X3.3_SC_UTF8.zip  /root/桌面/s3cmd-2.0.1-1.el7.noarch.rpm   /root/桌面/lnmp_soft.tar.gz  root@192.168.4.$eth0:/root/
+expect "password:"  {send  "123\r"}
+expect "#"  {send  "send date\r"}
+expect "#"  {send  "\r"}
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# vim  cluster2
+
+[root@room9pc01 ~]# cat cluster2
+#!/bin/bash
+password=123456;
+for i in `seq 8`
+do 
+  hostn=rh7_node$[i+8];
+  systn=H1$[i-1];
+  let eth0=9+$i;
+  eth1=$eth0;
+  function  newhostn(){
+    hostn=H1$[i-1];
+  }
+  ipexp(){
+    expect  /root/clone.sh
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      virsh start $hostn;
+    else
+      echo "clone failed";
+      exit;
+    fi
+    expect /root/console.sh $hostn $password  $systn $eth0 $eth1
+    if [ $? -eq 0 -o $? -eq 1 ];then
+      echo "ipyum well done";
+    else
+      echo  "ipyum failed";
+    fi
+  }
+  case $1 in
+  clone)
+    ipexp  &
+    wait  %  $i;;
+  start)
+    virsh start  $hostn;
+    if [ $? -ne 0 ];then
+     newhostn
+     virsh start $hostn;
+    fi;;
+  stop)
+    virsh shutdown $hostn;
+    if [ $? -ne 0 ];then
+     newhostn
+     virsh shutdown $hostn;
+    fi;;
+  scp)
+     expect /root/autoscp.sh  $eth0
+     if [ $? -eq 0 -o $? -eq 1 ];then
+       echo "scp is over";
+     else
+       echo  "scp failed";
+    fi;;
+  setlnmp)
+    expect  /root/setlnmp.sh  $eth0
+     if [ $? -eq 0 -o $? -eq 1 ];then
+       echo "setting up lnmp  well done";
+     else
+       echo  "setting up failed";
+    fi;;    
+  *)
+    echo "input-Error";;
+  esac
+done
+echo  "Amazing !"
+[root@room9pc01 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

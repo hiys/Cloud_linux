@@ -1,0 +1,259 @@
+﻿
+
+			             OSI参考模型(七层框架)
+
+          [5] 应用层        |<----------协议--------->|	        应用层     (计算机) APDU [是应用层协议数据单元]
+                HTTP  FTP  TFTP  SMTP  SNMP  DNS
+                    上层数据
+6  接口      
+             表示层         |-----------协议-----------|         表示层              PPDU [是表示层协议数据单元]
+5  接口
+ 	     会话层         |-----------协议-----------|         会话层              SPDU [是会话层协议数据单元]
+4  接口      
+      	  [4] 传输层        <----------协议--------->         传输层     (防火墙) TPDU [是传输层协议数据单元,即 segment "数据段"]
+                TCP      UDP
+                TCP头部     上层数据
+3  接口
+       	  [3] 网络层        <----------协议--------->         网络层     (路由器)  package 数据包
+                ICMP  IGMP    IP   ARP   RARP
+                IP头部   TCP头部     上层数据
+2  接口
+          [2] 数据链路层    <----------协议--------->         数据链路层 (交换机)  frame  数据帧
+                MAC头部  IP头部   TCP头部   上层数据
+1  接口   
+          [1] 物理层	    <----------协议--------->	        物理层     (网卡)    bit   比特流
+
+          层            主机A                              主机B          数据单元
+-----------------------------------------------------------------------------------------------------------------------------------------------
+常用的名词
+VS：Virtual Server，虚拟服务器，也称为Director
+RS：Real Server(lvs)，真正的服务器，集群中各节点
+
+OS ：【操作系统 Operating System 】
+
+CIP：客户端IP,用户的IP
+
+VIP：Director 虚拟服务器 向 外部 提供服务的IP
+VIP: LVS虚拟的IP，用于用户访问
+
+RIP：集群节点 真正的服务器 的 IP
+RIP: Real Server 的IP
+
+DIP：Director 虚拟服务器 与 RS真正的服务器 通信的IP
+DIP: LVS Director调度器自已的IP
+
+LIP: LVS Director调度器指定的local address 【内网ip地址】，FULLNAT模式下专用的
+
+LB  ：负载调度器（Load Balancer）
+
+LVS集群之NAT模式实现
+一、集群的种类
+集群系统主要分为
+1、HA：高可用集群，又叫双机热备。
+  （a）原理
+     2台机器A，B，正常是A提供服务，B待命闲置，当A宕机或服务宕掉，会切换至B继续提供服务
+  （b）常用的高可用开源软件：heartbeat和keepalived（可以做负载均衡）
+ 
+2、LB：负载均衡集群
+3、HPC：高性能计算集群
+ 
+二、LB集群
+1、实现手段
+     硬件：F5负载均衡器
+     软件：LVS（4层，网络层），  Nginx（7层，应用层）
+ 
+2、负载均衡架构图
+
+说明：
+LVS集群使用三层架构
+第一层：负载均衡层（Load Balancer）
+位于整个集群系统的最前端，由一台或多台负载调度器（Director Server，以下简称dir）组成。
+dir的作用类似一个路由器，它含有为完成LVS功能所设定的路由表，
+通过这些路由表把用户的请求分发给服务器群组层的应用服务器（Real Server）
+ps：客户认为服务是来自一个虚拟IP地址上
+ 
+第二层：服务器群组层（Server Arrary）
+由一组实际运行应用服务的机器组成。
+Real Server（以下简称rs）可以是Web服务器、Mail服务器、FTP服务器、DNS服务器等
+ 
+第三层：共享存储层（Shared Storage）
+是为所有rs提供共享存储空间和内容一致性的存储区域，一般由磁盘阵列设备组成。
+一般可以通过NFS网络文件系统共享数据（在繁忙的业务系统中，性能并不太好），
+此时可以用集群文件系统，如 Red Hat 的 GFS 文件系统，
+Oracle 提供的 OCFS2 文件系统等
+ 
+3、LVS分3种模式
+     （a）NAT（网络地址映射）：通过网络地址转换的方法来实现调度 
+     优点：支持所有操作系统及私有网络，且只需一个公网 IP 地址
+     缺点：用户请求和响应报文都必须经过dr地址重写，
+当用户请求越来越多时，调度器的处理能力将成为瓶颈。
+ 
+     （b）DR（直接路由模式）：通过改写请求报文的MAC地址，
+将请求发送到 rs，而 rs 将响应直接返回给客户 ——》 性能最好
+ 
+     （c）TUN（IP隧道模式）：dr采用IP隧道技术将用户请求转发到某个rs，
+而这个rs将直接响应用户请求，不再经过dr ——》dr只处理用户的报文请求，
+从而使集群系统吞吐量大大提高
+      ps：还有第 4 种模式 FULLNAT（淘宝ospf+lvs）
+ 
+ 
+################   搭建LVS-NAT模式   ###################
+ 
+三、搭建LVS-NAT模式集群实现负载均衡
+1、分发器 director 配置
+ 　—— 网络配置前期工作
+　（a）配置网络环境，增加网卡eth2
+（需要添加HWADDR不同的网卡，我的eth1跟eth0是一样的，所以只能用eth2）
+ 
+　（b）生成eth2配置文件，配置虚拟 IP 地址为 10.0.69.132
+ cp /etc/sysconfig/network-scripts/ifcfg-eth0  /etc/sysconfig/network-scripts/ifcfg-eth2
+
+　（i）DEVICE=eth2
+ （ii）IPADDR=10.0.69.132（跟物理机同一网段）
+（iii）GATEWAY=10.0.69.1
+ 
+　（c）重启网络服务：service network restart
+　　内网ip：192.168.131.132
+　　外网ip：10.0.69.132
+
+ 物理机可以ping通虚拟 IP 
+============================
+  - - -- LVS-NAT  - -- cip vip(dip) (rip) - -- -
+src-ip  -->   dst-ip
+cip     -1->   vip(dip内)
+dip(内) -2->   rip(内)
+(rip内) -3->  (dip内)vip
+vip     -4->  cip
+--------------------------------------------------------
+—— 开启路由转发功能，安装配置LVS-NAT
+1、安装lvs核心软件包 yum install -y ipvsadm
+2、写脚本管理（开启路由转发、添加虚拟服务、添加虚拟服务后端的real server）
+
+# vim /usr/local/sbin/lvs_nat.sh
+
+#!/bin/bash
+# director 服务器上开启路由转发功能
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+#关闭icmp 的重定向
+echo  0 > /proc/sys/net/ipv4/conf/all/send_redirects
+echo  0 > /proc/sys/net/ipv4/conf/default/send_redirects
+echo  0 > /proc/sys/net/ipv4/conf/eth0/send_redirects
+echo  0 > /proc/sys/net/ipv4/conf/eth2/send_redirects
+
+# director  设置nat 防火墙
+iptables  -t nat  -F
+iptables  -t nat  -X
+iptables  -t nat  -A  POSTROUTING  -s 192.168.131.0/24  -j  MASQUERADE
+
+# director  设置 ipvsadm
+IPVSADM='/sbin/ipvsadm'
+$IPVSADM  -C
+$IPVSADM  -A  -t  10.0.69.132:80  -s  rr
+$IPVSADM  -a  -t  10.0.69.132:80  -r  192.168.131.110:80   -m
+$IPVSADM  -a  -t  10.0.69.132:80  -r  192.168.131.131:80   -m
+
+参数说明：
+
+-A：增加一个虚拟服务   
+-a：增加real server
+-r：指定real server 的 IP地址
+-t：表示TCP服务       
+-s：指定调度算法   rr：轮询算法（对调度算法感兴趣的大家可以查查~）
+-m（masquerade）：也就是NAT方式的LVS
+ 
+3、执行脚本 sh  /usr/local/sbin/lvs_nat.sh
+4、查看规则 ipvsadm   -ln
+
+二、真实服务器real server配置
+rs1： 192.168.131.110
+rs2： 192.168.131.131
+ 
+rs1和rs2都要修改网卡配置文件：
+  /etc/sysconfig/network-scripts/ifcfg-eth0
+1、网关GATEWAY都要指向分发器 dir 的 IP（192.168.131.132）
+ 
+2、重启网卡生效：ifdown eth0; ifup eth0
+ 
+ 
+三、测试
+1、修改nginx的默认页面（好区分）
+rs1：echo "192.168.131.110 master" > /usr/share/nginx/html/index.html
+rs2：echo "192.168.131.131 slave"   > /usr/share/nginx/html/index.html
+ 
+2、real server（rs1，rs2）开启 nginx 服务：/etc/init.d/nginx start
+（httpd也可以：yum install httpd)
+其实就是开启80端口的web服务（记得查下 netstat查看是否监听80端口）
+注意：分发器 dir 并没有监听 80 端口
+　　   因为 dir 是一个路由器，只负责转发 80 端口上的数据给后端，自己并不处理请求
+ 
+dir 访问外网 IP（10.0.69.132）
+（1）不设权重测试（上面脚本内容就是）
+
+ 
+（2）设置权重测试（rs1: 3   rs2： 1）
+
+# vim /usr/local/sbin/lvs_nat.sh
+....................
+# director  设置 ipvsadm
+IPVSADM='/sbin/ipvsadm'
+$IPVSADM  -C
+$IPVSADM  -A  -t  10.0.69.132:80  -s  rr
+$IPVSADM  -a  -t  10.0.69.132:80  -r  192.168.131.110:80   -m  -w  3 
+$IPVSADM  -a  -t  10.0.69.132:80  -r  192.168.131.131:80   -m  -w  1
+
+参数说明：
+
+-A：增加一个虚拟服务   
+-a：增加real server
+-r：指定real server 的 IP地址
+-t：表示TCP服务       
+-s：指定调度算法   rr：轮询算法（对调度算法感兴趣的大家可以查查~）
+-m（masquerade）：也就是NAT方式的LVS
+ 
+3、执行脚本 sh  /usr/local/sbin/lvs_nat.sh
+4、查看规则 ipvsadm   -ln
+
+二、真实服务器real server配置
+rs1： 192.168.131.110
+rs2： 192.168.131.131
+ 
+结果：
+..........
+拓展：
+
+ipvsadm -ln --stats  ==>  查看分发情况
+
+ipvsadm -ln --rate  ==>   查看速率
+
+ipvsadm -C  ==> 清空规则 
+
+
+ps：如果curl无法成功，检查下防火墙是否关了（iptables -F；setenforce 0）
+
+https://www.cnblogs.com/windysai/p/6121396.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

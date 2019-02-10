@@ -1,0 +1,1234 @@
+﻿https://www.cnblogs.com/luohaixian/p/8087591.html
+1  Ceph基础介绍
+
+Ceph是一个可靠地、自动重均衡、自动恢复的分布式存储系统，
+根据场景划分可以将Ceph分为三大块，
+分别是对象存储、块设备存储和文件系统服务。
+在虚拟化领域里，比较常用到的是Ceph的块设备存储，
+比如在OpenStack项目里，
+Ceph的块设备存储可以对接OpenStack的cinder后端存储、Glance的镜像存储和虚拟机的数据存储，
+比较直观的是Ceph集群可以提供一个raw格式的块存储来作为虚拟机实例的硬盘。
+
+Ceph相比其它存储的优势点在于它不单单是存储，
+同时还充分利用了存储节点上的计算能力，
+在存储每一个数据时，都会通过计算得出该数据存储的位置，尽量将数据分布均衡，
+同时由于Ceph的良好设计，采用了CRUSH算法、HASH环等方法，
+使得它不存在传统的单点故障的问题，
+且随着规模的扩大性能并不会受到影响。
+
+2  Ceph的核心组件
+
+Ceph的核心组件包括Ceph OSD、Ceph Monitor和Ceph MDS。
+
+Ceph OSD：
+OSD的英文全称是Object Storage Device，
+它的主要功能是存储数据、复制数据、平衡数据、恢复数据等，
+与其它OSD间进行心跳检查等，
+并将一些变化情况上报给Ceph Monitor。
+一般情况下一块硬盘对应一个OSD，
+由OSD来对硬盘存储进行管理，
+当然一个分区也可以成为一个OSD。
+
+Ceph OSD的架构实现由物理磁盘驱动器、Linux文件系统和Ceph OSD服务组成，
+对于Ceph OSD Deamon而言，
+Linux文件系统显性的支持了其拓展性，
+一般Linux文件系统有好几种，
+比如有BTRFS、XFS、Ext4等，
+BTRFS虽然有很多优点特性，
+但现在还没达到生产环境所需的稳定性，一般比较推荐使用XFS。
+
+伴随OSD的还有一个概念叫做Journal盘，
+一般写数据到Ceph集群时，
+都是先将数据写入到Journal盘中，
+然后每隔一段时间比如5秒再将Journal盘中的数据刷新到文件系统中。
+一般为了使读写时延更小，Journal盘都是采用SSD，
+一般分配10G以上，当然分配多点那是更好，
+Ceph中引入Journal盘的概念是因为Journal允许Ceph OSD功能很快做小的写操作；
+一个随机写入首先写入在上一个连续类型的journal，
+然后刷新到文件系统，
+这给了文件系统足够的时间来合并写入磁盘，
+一般情况下使用SSD作为OSD的journal可以有效缓冲突发负载。
+
+Ceph Monitor：
+由该英文名字我们可以知道它是一个监视器，
+负责监视Ceph集群，维护Ceph集群的健康状态，
+同时维护着Ceph集群中的各种Map图，
+比如OSD Map、Monitor Map、PG Map和CRUSH Map，
+这些Map统称为Cluster Map，
+Cluster Map是RADOS的关键数据结构，
+管理集群中的所有成员、关系、属性等信息以及数据的分发，
+比如当用户需要存储数据到Ceph集群时，
+OSD需要先通过Monitor获取最新的Map图，
+然后根据Map图和object id等计算出数据最终存储的位置。
+
+Ceph MDS：
+全称是Ceph MetaData Server，
+主要保存文件系统服务的元数据，
+但对象存储和块存储设备是不需要使用该服务的。
+
+查看各种Map的信息可以通过如下命令：ceph osd(mon、pg) dump
+
+3  Ceph基础架构组件
+
+最底层的是RADOS，
+RADOS自身是一个完整的分布式对象存储系统，
+它具有可靠、智能、分布式等特性，
+Ceph的高可靠、高可拓展、高性能、高自动化都是由这一层来提供的，
+用户数据的存储最终也都是通过这一层来进行存储的，
+RADOS可以说就是Ceph的核心。
+
+RADOS系统主要由两部分组成，分别是OSD和Monitor。
+
+基于RADOS层的上一层是LIBRADOS，
+LIBRADOS是一个库，
+它允许应用程序通过访问该库来与RADOS系统进行交互，
+支持多种编程语言，比如C、C++、Python等。
+
+基于LIBRADOS层开发的又可以看到有三层，
+分别是RADOSGW、RBD和CEPH FS。
+
+RADOSGW：RADOSGW是一套基于当前流行的RESTFUL协议的网关，并且兼容S3和Swift。
+
+RBD：RBD通过Linux内核客户端和QEMU/KVM驱动来提供一个分布式的块设备。
+
+CEPH FS：CEPH FS通过Linux内核客户端和FUSE来提供一个兼容POSIX的文件系统。
+
+4  Ceph数据分布算法
+
+在分布式存储系统中比较关注的一点是如何使得数据能够分布得更加均衡，
+常见的数据分布算法有一致性Hash和Ceph的Crush算法。
+Crush是一种伪随机的控制数据分布、复制的算法，
+Ceph是为大规模分布式存储而设计的，
+数据分布算法必须能够满足
+在大规模的集群下,
+依然能够快速的准确的计算 数据存放位置，
+同时能够在硬件故障或扩展硬件设备时 做到尽可能小的数据迁移，
+Ceph的CRUSH算法就是精心为这些特性设计的，
+可以说CRUSH算法也是Ceph的核心之一。
+
+在说明CRUSH算法的基本原理之前，先介绍几个概念和它们之间的关系。
+
+存储数据与object的关系：
+当用户要将数据存储到Ceph集群时，
+存储数据都会被分割成多个object，
+每个object都有一个object id，
+每个object的大小是可以设置的，默认是4MB，
+object可以看成是Ceph存储的最小存储单元。
+
+object与pg的关系：
+由于object的数量很多，
+所以Ceph引入了pg的概念用于管理object，
+每个object最后都会通过CRUSH计算映射到某个pg中，
+一个pg可以包含多个object。
+
+pg与osd的关系：
+pg也需要通过CRUSH计算映射到osd中去存储，
+如果是二副本的，则每个pg都会映射到二个osd，
+比如[ osd.1,osd.2 ]，
+那么osd.1是存放该pg的主副本，
+osd.2是存放该pg的从副本，
+保证了数据的冗余。
+
+pg和pgp的关系：
+pg是用来存放object的，
+pgp相当于是pg存放osd的一种排列组合，
+举个例子，
+比如有3个osd，osd.1、osd.2和osd.3，
+副本数是2，
+如果pgp的数目为1，
+那么pg存放的osd组合就只有一种，
+可能是[osd.1,osd.2]，
+那么所有的pg主从副本分别存放到osd.1和osd.2，
+如果pgp设为2，那么其osd组合可以两种，
+可能是[osd.1,osd.2]和[osd.1,osd.3]，
+是不是很像我们高中数学学过的排列组合，
+pgp就是代表这个意思。
+一般来说应该将pg和pgp的数量设置为相等。
+这样说可能不够明显，我们通过一组实验来体会下：
+
+先创建一个名为testpool包含6个PG和6个PGP的存储池
+ceph osd pool create testpool 6 6
+通过写数据后我们查看下pg的分布情况，使用以下命令：
+
+ceph pg dump pgs | grep ^1 | awk '{print $1,$2,$15}'
+dumped pgs in format plain
+1.1 75 [3,6,0]
+1.0 83 [7,0,6]
+1.3 144 [4,1,2]
+1.2 146 [7,4,1]
+1.5 86 [4,6,3]
+1.4 80 [3,0,4]
+第1列为pg的id，第2列为该pg所存储的对象数目，第3列为该pg所在的osd
+
+
+
+
+
+
+[root@room9pc01 ~]# mount |grep ceph
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso on /var/ftp/ceph type iso9660 (ro,relatime)
+[root@room9pc01 ~]# df -hT /var/ftp/ceph
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/loop0     iso9660  936M  936M     0  100% /var/ftp/ceph
+[root@room9pc01 ~]# tail -1 /etc/fstab 
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso  /var/ftp/ceph  iso9660  defaults 0  0
+[root@room9pc01 ~]# ls  /var/ftp/ceph/
+rhceph-2.0-rhel-7-x86_64        rhscon-2.0-rhel-7-x86_64
+rhel-7-server-openstack-9-rpms
+[root@room9pc01 ~]############################ 
+
+[root@H10 ~]# ls /etc/yum.repos.d/
+ceph.repo  redhat.repo  rhel7.repo
+[root@H10 ~]# cat /etc/yum.repos.d/ceph.repo 
+[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1 
+[root@H10 ~]# 
+====================以上是环境准备=================
+[root@H10 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.10
+192.168.2.10
+127.0.0.1
+192.168.122.1
+[root@H10 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H10 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+[root@H10 ~]# yum clean all >/dev/null && yum repolist |tail -9
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H10 ~]# 
+[root@H10 ~]# hostname
+H10
+[root@H10 ~]# vim /etc/hosts
+[root@H10 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.10  H10
+192.168.4.11  H11
+192.168.4.12  H12
+192.168.4.13  H13
+192.168.4.14  H14
+192.168.4.15  H15
+192.168.4.16  H16
+192.168.4.17  H17  
+  ===================#修改/etc/hosts并同步到所有主机----------
+[root@H10 ~]# for  i  in  {10..13};
+ do scp  -o  StrictHostKeyChecking=no  /etc/hosts  root@192.168.4.$i:/etc/; done;
+root@192.168.4.10's password: 
+hosts                                                                        100%  302   559.9KB/s   00:00    
+root@192.168.4.11's password: 
+hosts                                                                        100%  302   698.5KB/s   00:00    
+root@192.168.4.12's password: 
+hosts                                                                        100%  302   753.7KB/s   00:00    
+root@192.168.4.13's password: 
+hosts                                                                        100%  302     1.1MB/s   00:00    
+[root@H10 ~]#
+[root@H10 ~]# rpm -q chrony
+chrony-3.1-2.el7.x86_64
+----------------------------------------#配置NTP时间同步1）创建NTP服务器。
+[root@H10 ~]# vim  /etc/chrony.conf
+server 0.rhel.pool.ntp.org iburst
+server 1.rhel.pool.ntp.org iburst
+server 2.rhel.pool.ntp.org iburst
+server 3.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst 表示使用pool.ntp.org项目中的公共服务器
+#server  该参数可以多次用于添加时钟服务器，必须以"server "格式使用。
+一般而言，你想添加多少服务器，就可以添加多少服务器
+# server 192.168.0.1 iburst ---添加该行，表示到此服务器同步时间。
+
+allow  192.168.4.0/24
+#allow / deny - 这里你可以指定一台主机、子网，或者网络
+以允许或拒绝NTP连接到扮演时钟服务器的机器。
+
+local  stratum  10
+# local stratum 10  --不去同步任何人的时间
+#公网NTP服务器192.168.0.1 不可用时，采用本地时间作为同步标准
+
+[root@H10 ~]# systemctl restart  chronyd
+
+/************
+
+③重启chronyd并设置开机启动
+systemctl restart chronyd.service 
+systemctl enable chronyd.service
+
+④查看时间同步状态
+# timedatectl
+
+NTP synchronized: yes --为yes表示已同步
+
+重启chronyd服务后，需要过几分钟才会自动完成同步。
+
+
+★如果需要手动同步，可使用下面的命令：
+#ntpdate 192.168.0.1 
+如果同步失败，则可能是服务端的时间未同步。即服务端NTP synchronized 为no。
+
+★手动修改时间时，必须把NTP enabled设置为no，表示关闭自动同步时间。
+执行：timedatectl  set-ntp no
+然后再执行：
+timedatectl set-time "YYYY-MM-DD HH:MM:SS"
+#命令示例(查看当前系统时间)
+#timedatectl
+#timedatectl status
+
+#设置当前时间
+timedatectl set-time "YYYY-MM-DD HH:MM:SS"
+timedatectl set-time "YYYY-MM-DD"
+timedatectl set-time "HH:MM:SS"
+
+#查看所有可用的时区
+timedatectl list-timezones
+# 亚洲
+timedatectl list-timezones |  grep  -E "Asia/S.*"
+
+常见问题：
+
+　　1、#date看到上的时间和#timedatectl看到的本地时间不同，需要我们注意一样。
+
+　　2、(Real-Time Clock)或CMOS时间和本地时间不同，需要执行timedatectl set-local-rtc 0
+
+[root@localhost ~]# date
+Thu Apr  5 17:22:34 CST 2018
+[root@localhost ~]# timedatectl
+      Local time: Thu 2018-04-05 17:22:38 CST
+  Universal time: Thu 2018-04-05 09:22:38 UTC
+        RTC time: Thu 2018-04-05 17:22:35
+       Time zone: Asia/Shanghai (CST, +0800)
+     NTP enabled: yes
+NTP synchronized: yes
+ RTC in local TZ: yes
+      DST active: n/a
+..............
+
+GMT(Greenwich Mean Time)代表格林尼治标准时间。  
+而CST却同时可以代表如下 4 个不同的时区： 
+ 1.Central Standard Time (USA) UTC-6:00 
+ 2.Central Standard Time (Australia) UTC+9:30
+ 3.China  Standard  Time UTC+8:00
+ 4.Cuba   Standard  Time UTC-4:00             可见，
+CST可以同时表示美国，澳大利亚，中国，古巴四个国家的标准时间
+
+CST （China Standard Time，东八区时间）
+CST China Standard Time UTC+8:00 (北京时间)
+UTC （Universal Time Coordinated，标准时间）
+世界协调时间(Universal Time Coordinated,UTC) 
+
+GPS 系统中有两种时间区分，一为UTC，
+另一为LT（地方时）两者的区别为时区不同，
+UTC就是0时区的时间，地方时为本地时间，
+如北京为早上八点（东八区），UTC时间就为零点，时间比北京时晚八小时
+
+这2个时间实际上 相差8个小时
+如果你需要将CentOS的默认系统时区指定在CST，那么可以按照如下步骤进行：
+step1: rm -rf /etc/localtime
+step2: ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+如果 将默认系统时区定在UTC，
+那么可以将/usr/share/zoneinfo/UTC作为/etc/localtime文件的软连接。
+
+#/************
+Chrony 服务器
+Chrony：是网络时间协议的 (NTP) 的另一种实现，由两个程序组成，
+分别是chronyd和chronyc。
+
+Chrony是NTP（Network Time Protocol，
+           网络时间协议，服务器时间同步的一种协议）
+的另一种实现，与ntpd不同，
+它可以更快且更准确地同步系统时钟，
+最大程度的减少时间和频率误差。
+
+chronyd：是一个后台运行的守护进程，
+用于调整内核中运行的系统时钟和时钟服务器同步。
+它确定计算机增减时间的比率，并对此进行补偿。
+
+chronyc：提供了一个用户界面，用于监控性能并进行多样化的配置。
+它可以在chronyd实例控制的计算机上工作，也可以在一台不同的远程计算机上工作。
+
+优势：
+
+更快的同步只需要数分钟而非数小时时间，从而最大程度减少了时间和频率误差，
+这对于并非全天 24 小时运行的台式计算机或系统而言非常有用。
+能够更好地响应时钟频率的快速变化，
+这对于具备不稳定时钟的虚拟机
+或导致时钟频率发生变化的节能技术而言非常有用。
+在初始同步后，它不会停止时钟，
+以防对需要系统时间保持单调的应用程序造成影响。
+在应对临时非对称延迟时（例如，在大规模下载造成链接饱和时）提供了更好的稳定性。
+无需对服务器进行定期轮询，
+因此具备间歇性网络连接的系统仍然可以快速同步时钟。
+
+查看当前时间服务器状态
+[root@localhost ~]# chronyc  #进入chronyc控制界面
+chrony version 3.1
+Copyright (C) 1997-2003, 2007, 2009-2017 Richard P. Curnow and others
+chrony comes with ABSOLUTELY NO WARRANTY.  This is free software, and
+you are welcome to redistribute it under certain conditions.  See the
+GNU General Public License version 2 for details.
+ 
+chronyc> activity #查看当前服务器状态，如下服务器有两个NTP源在线
+200 OK
+2 sources online
+0 sources offline
+0 sources doing burst (return to online)
+0 sources doing burst (return to offline)
+0 sources with unknown address
+　　查看时间同步的信息来源
+[root@localhost ~]# chronyc  sources
+.......
+chronyc 常用命令
+
+accheck 检查NTP访问是否对特定主机可用
+
+activity 该命令会显示有多少NTP源在线/离线
+
+add server 手动添加一台新的NTP服务器
+
+clients 在客户端报告已访问到服务器
+
+delete 手动移除NTP服务器或对等服务器
+
+settime 手动设置守护进程时间
+
+tracking 显示系统时间信息
+**********/
+
+[root@H10 ~]# yum  -y install  ceph-common  |tail  -6
+  userspace-rcu.x86_64 0:0.7.9-2.el7rhgs                                        
+
+作为依赖被升级:
+  librados2.x86_64 1:10.2.2-38.el7cp      librbd1.x86_64 1:10.2.2-38.el7cp     
+
+完毕！
+[root@H10 ~]# rpm -q ceph-common
+ceph-common-10.2.2-38.el7cp.x86_64
+[root@H10 ~]# 
+[root@H10 ~]# ls /etc/ceph/
+rbdmap
+[root@H10 ~]# scp -o StrictHostKeyChecking=no  192.168.4.11:/etc/ceph/ceph.conf \
+>  /etc/ceph/
+root@192.168.4.11's password: 
+ceph.conf                        100%  229   293.1KB/s   00:00    
+[root@H10 ~]# ls /etc/ceph/
+ceph.conf  rbdmap
+
+[root@H10 ~]# cat /etc/ceph/ceph.conf 
+[global]
+fsid = 5a3ec364-53de-4f1f-be22-f01e23a0b1f2
+mon_initial_members = H11, H12, H13
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+
+[root@H10 ~]# scp -o StrictHostKeyChecking=no  192.168.4.11:/etc/ceph/ceph.client.admin.keyring  /etc/ceph/
+root@192.168.4.11's password: 
+ceph.client.admin.keyring                                    100%   63    71.9KB/s   00:00    
+[root@H10 ~]# cat /etc/ceph/ceph.client.admin.keyring 
+[client.admin]
+	key = AQBFVL9bJhBrMRAALABV86Vb1dn29Gpz9pFCng==
+[root@H10 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap
+[root@H10 ~]# rb
+rb               rbdmap           rbd-replay-many  
+rbd              rbd-replay       rbd-replay-prep  
+[root@H10 ~]# rbd  list
+[root@H10 ~]# 
+[root@H10 ~]#  ls /root/.ssh/
+authorized_keys  known_hosts
+[root@H10 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDeGzBJq2uKMqbr7AKAs5gTN0TrOXpsd02svDDeDVPztq14+La0hOtD1k17oWgxmy1mhwAeGYjuh3P6TqFUDclClUDB7hwnHVx9HnAQhJDmuRGuNK/HY0Fwr8wKSxJfUmrQC7uRz+HzVnMUWqNVuaB3iTJ6Hh3kk8oHgJVskBoEg/IC2QpRJweq04dHmwvqv49LGgqwbu7ZOhiesf1DI+N+2LJJWPDT6bkIUB+4c+RxkoGF8T0ijV7Nrx7qASQXtw2tZ0xEcOYaPtcclDEDFGwZMob6g6+yOFPVd7NRDNzUfkuQVgntZ0jG8g6UCPwtiZVLjDG+QNpqdk7sNWxUZgSj root@H11
+[root@H10 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H11 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@H11 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H11 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0   10G  0 disk 
+vdd           252:48   0   10G  0 disk 
+[root@H11 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H11 ~]# 
+[root@H11 ~]# hostname
+H11
+[root@H11 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.10  H10
+192.168.4.11  H11
+192.168.4.12  H12
+192.168.4.13  H13
+192.168.4.14  H14
+192.168.4.15  H15
+192.168.4.16  H16
+192.168.4.17  H17
+[root@H11 ~]# cd /var/lib/libvirt/images/
+/********************虚拟机操作无效, 必须真机 操作
+准备存储磁盘
+1）物理机上为每个虚拟机准备3块磁盘。（可以使用命令，也可以使用图形直接添加）
+[root@root9pc01 ~]#  cd /var/lib/libvirt/images
+[root@root9pc01 ~]# qemu-img create -f qcow2 node1-vdb.vol 10G
+使用virt-manager为虚拟机添加磁盘。
+[root@root9pc01 ~]# virt-manager
+
+[root@H11 images]# ls
+[root@H11 images]# qemu-img  create  -f  qcow2  H11-vde.vol  4G
+Formatting 'H11-vde.vol', fmt=qcow2 size=4294967296 encryption=off cluster_size=65536 lazy_refcounts=off 
+[root@H11 images]# ls
+H11-vde.vol
+
+[root@H11 images]# qemu-img create  -f  qcow2  Host11-vdf.vol  5G
+Formatting 'Host11-vdf.vol', fmt=qcow2 size=5368709120 encryption=off cluster_size=65536 lazy_refcounts=off 
+[root@H11 images]# ls
+H11-vde.vol  Host11-vdf.vol
+*********************************/
+[root@H11 images]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0   10G  0 disk 
+vdd           252:48   0   10G  0 disk 
+[root@H11 images]# 
+[root@H11 ~]# vim /etc/chrony.conf
+#server 0.rhel.pool.ntp.org iburst
+#server 1.rhel.pool.ntp.org iburst
+#server 2.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst
+server 192.168.4.10  iburst
+
+[root@H11 ~]# systemctl  restart  chronyd
+
+[root@H11 ~]# ssh-keygen  -f  /root/.ssh/id_rsa  -N  ''
+
+SHA256:NJGrYYpHno8u6UHHhpyvddz62jvIddw0OEIGjOySwds root@H11
+The key's randomart image is:
++---[RSA 2048]----+
+| . . o....       |
+|  o o . +.       |
+|   *   oo. .     |
+| .++E o.o.o o    |
+|  ==++ oSo + .   |
+| ..+=.... o .    |
+|  .oo+oo..       |
+|  o+..+o.        |
+| .oo. oo+o       |
++----[SHA256]-----+
+[root@H11 ~]# for i in {10..13};do  ssh-copy-id  192.168.4.$i; done;
+
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.10's password: 
+Number of key(s) added: 1
+Now try logging into the machine, with:   "ssh '192.168.4.10'"
+and check to make sure that only the key(s) you wanted were added.
+
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/root/.ssh/id_rsa.pub"
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.11's password: 
+Number of key(s) added: 1
+Now try logging into the machine, with:   "ssh '192.168.4.11'"
+and check to make sure that only the key(s) you wanted were added.
+
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.12's password: 
+Number of key(s) added: 1
+Now try logging into the machine, with:   "ssh '192.168.4.12'"
+and check to make sure that only the key(s) you wanted were added.
+
+Are you sure you want to continue connecting (yes/no)? yes
+root@192.168.4.13's password: 
+Number of key(s) added: 1
+Now try logging into the machine, with:   "ssh '192.168.4.13'"
+and check to make sure that only the key(s) you wanted were added.
+
+[root@H11 ~]# ls /root/.ssh/
+authorized_keys  id_rsa  id_rsa.pub  known_hosts
+
+[root@H11 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDeGzBJq2uKMqbr7AKAs5gTN0TrOXpsd02svDDeDVPztq14+La0hOtD1k17oWgxmy1mhwAeGYjuh3P6TqFUDclClUDB7hwnHVx9HnAQhJDmuRGuNK/HY0Fwr8wKSxJfUmrQC7uRz+HzVnMUWqNVuaB3iTJ6Hh3kk8oHgJVskBoEg/IC2QpRJweq04dHmwvqv49LGgqwbu7ZOhiesf1DI+N+2LJJWPDT6bkIUB+4c+RxkoGF8T0ijV7Nrx7qASQXtw2tZ0xEcOYaPtcclDEDFGwZMob6g6+yOFPVd7NRDNzUfkuQVgntZ0jG8g6UCPwtiZVLjDG+QNpqdk7sNWxUZgSj root@H11
+
+[root@H11 ~]# cat /root/.ssh/known_hosts 
+
+192.168.4.10 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+192.168.4.11 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+192.168.4.12 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+192.168.4.13 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+[root@H11 ~]# 
+[root@H11 ~]# yum -y install ceph-deploy |tail -3
+  ceph-deploy.noarch 0:1.5.33-1.el7cp                                           
+
+完毕！
+[root@H11 ~]# rpm  -q  ceph-deploy
+ceph-deploy-1.5.33-1.el7cp.noarch
+[root@H11 ~]# man ceph-deploy
+没有 ceph-deploy 的手册页条目
+[root@H11 ~]# ceph-deploy  -h
+
+    new                 Start deploying a new cluster, and write a
+                        CLUSTER.conf and keyring for it.
+    install             Install Ceph packages on remote hosts.
+    rgw                 Ceph RGW daemon management
+    mds                 Ceph MDS daemon management
+    mon                 Ceph MON Daemon management
+
+[root@H11 ~]# mkdir /root/ceph-cluster
+[root@H11 ~]# cd /root/ceph-cluster/
+[root@H11 ceph-cluster]# ls
+[root@H11 ceph-cluster]# ceph-deploy  new  H11  H12  H13  # 创建Ceph集群配置。
+
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'h12' (ECDSA) to the list of known hosts.
+
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'h13' (ECDSA) to the list of known hosts.
+
+[ceph_deploy.new][DEBUG ] Creating a random mon key...
+[ceph_deploy.new][DEBUG ] Writing monitor keyring to ceph.mon.keyring...
+[ceph_deploy.new][DEBUG ] Writing initial config to ceph.conf...
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ls
+ceph.conf  ceph-deploy-ceph.log  ceph.mon.keyring
+
+[root@H11 ceph-cluster]# ceph-deploy  install  H11  H12  H13  # 给所有节点安装软件包。
+
+[H13][DEBUG ] 作为依赖被升级:
+[H13][DEBUG ]   librados2.x86_64 1:10.2.2-38.el7cp      librbd1.x86_64 1:10.2.2-38.el7cp     
+[H13][DEBUG ] 
+[H13][DEBUG ] 完毕！
+[H13][INFO  ] Running command: ceph --version
+[H13][DEBUG ] ceph version 10.2.2-38.el7cp (119a68752a5671253f9daae3f894a90313a6b8e4)
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ceph-deploy mon create-initial  # 初始化所有节点的mon服务（主机名解析必须对）
+............................
+[H11][DEBUG ] connected to host: H11 
+[H11][DEBUG ] detect platform information from remote host
+[H11][DEBUG ] detect machine type
+[H11][DEBUG ] fetch remote file
+[ceph_deploy.gatherkeys][DEBUG ] Got ceph.bootstrap-rgw.keyring key from H11.
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ls /root/ceph-cluster/
+ceph.bootstrap-mds.keyring  ceph.bootstrap-rgw.keyring  ceph.conf             ceph.mon.keyring
+ceph.bootstrap-osd.keyring  ceph.client.admin.keyring   ceph-deploy-ceph.log
+
+[root@H11 ceph-cluster]# cat /root/ceph-cluster/ceph.conf 
+[global]
+fsid = 5a3ec364-53de-4f1f-be22-f01e23a0b1f2   #集群标识ID 
+mon_initial_members = H11, H12, H13      #初始monitor (由创建monitor命令而定)
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13  #monitor IP 地址
+auth_cluster_required = cephx       #集群认证
+auth_service_required = cephx       #服务认证
+auth_client_required = cephx      #客户端认证
+
+[root@H11 ceph-cluster]# 
+
+[root@H11 ceph-cluster]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0   10G  0 disk 
+vdd           252:48   0   10G  0 disk 
+[root@H11 ceph-cluster]# parted /dev/vdb  mklabel  gpt
+信息: You may need to update /etc/fstab.
+
+[root@H11 ceph-cluster]#  blkid /dev/vdb                                  
+/dev/vdb: PTTYPE="gpt" 
+[root@H11 ceph-cluster]# parted /dev/vdb mkpart  primary  1M  50%
+信息: You may need to update /etc/fstab.
+
+[root@H11 ceph-cluster]# parted /dev/vdb mkpart  primary   50%  100%      
+信息: You may need to update /etc/fstab.
+
+[root@H11 ceph-cluster]# lsblk /dev/vdb                                   
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vdb    252:16   0  10G  0 disk 
+├─vdb1 252:17   0   5G  0 part 
+└─vdb2 252:18   0   5G  0 part 
+[root@H11 ceph-cluster]# blkid /dev/vdb1
+/dev/vdb1: PARTLABEL="primary" PARTUUID="8affb8c2-fecc-485b-8c19-c1f618517133" 
+[root@H11 ceph-cluster]# blkid /dev/vdb2
+/dev/vdb2: PARTLABEL="primary" PARTUUID="dc6a2732-ab5d-41f9-bb95-dbf86f07e3d0" 
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# chown ceph.ceph  /dev/vdb{1,2} 
+[root@H11 ceph-cluster]# id ceph
+uid=167(ceph) gid=167(ceph) 组=167(ceph)
+[root@H11 ceph-cluster]# ls /dev/vdb{1,2}
+/dev/vdb1  /dev/vdb2
+[root@H11 ceph-cluster]#  echo "chown ceph.ceph  /dev/vdb{1,2}" >> /etc/rc.local 
+[root@H11 ceph-cluster]# chmod +x /etc/rc.d/rc.local 
+[root@H11 ceph-cluster]# ll /etc/rc.d/rc.local
+-rwxr-xr-x. 1 root root 504 10月 11 21:52 /etc/rc.d/rc.local
+[root@H11 ceph-cluster]# cd /root/ceph-cluster/
+[root@H11 ceph-cluster]# ls
+ceph.bootstrap-mds.keyring  ceph.bootstrap-rgw.keyring  ceph.conf             ceph.mon.keyring
+ceph.bootstrap-osd.keyring  ceph.client.admin.keyring   ceph-deploy-ceph.log
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+vdd           252:48   0   10G  0 disk 
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ls -ld /dev/vdb{1,2}
+brw-rw----. 1 ceph ceph 252, 17 10月 11 21:51 /dev/vdb1
+brw-rw----. 1 ceph ceph 252, 18 10月 11 21:51 /dev/vdb2
+----------------初始化清空磁盘数据（仅H11 操作即可）
+[root@H11 ceph-cluster]# ceph-deploy disk  zap  H11:vdc   H11:vdd
+[root@H11 ceph-cluster]# ceph-deploy disk  zap  H12:vdc   H12:vdd
+
+[root@H11 ceph-cluster]# ceph-deploy disk  zap  H13:vdc   H13:vdd
+..........................
+[ceph_deploy.osd][INFO  ] re-reading known partitions will display errors
+[H13][DEBUG ] find the location of an executable
+[H13][INFO  ] Running command: /usr/sbin/partx -a /dev/vdd
+[root@H11 ceph-cluster]# 
+
+---------------------------------创建OSD存储空间（仅H11 操作即可）
+
+[root@H11 ceph-cluster]# ceph-deploy  osd  create  H11:vdc:/dev/vdb1  H11:vdd:/dev/vdb2
+
+------------------------------------------------------------------------创建OSD存储空间
+
+[root@H11 ceph-cluster]# ceph-deploy  osd  create  H12:vdc:/dev/vdb1  H12:vdd:/dev/vdb2
+
+[ceph_deploy.osd][DEBUG ] Host H12 is now ready for osd use.
+
+--------------------------------------------------创建OSD存储空间
+
+[root@H11 ceph-cluster]# ceph-deploy  osd  create  H13:vdc:/dev/vdb1  H13:vdd:/dev/vdb2
+
+[H13][INFO  ] Running command: /bin/ceph --cluster=ceph osd stat --format=json
+[ceph_deploy.osd][DEBUG ] Host H13 is now ready for osd use.
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ceph  -s
+    cluster 5a3ec364-53de-4f1f-be22-f01e23a0b1f2
+     health HEALTH_OK
+     monmap e1: 3 mons at {H11=192.168.4.11:6789/0,H12=192.168.4.12:6789/0,H13=192.168.4.13:6789/0}
+            election epoch 6, quorum 0,1,2 H11,H12,H13
+     osdmap e40: 6 osds: 6 up, 6 in
+            flags sortbitwise
+      pgmap v93: 64 pgs, 1 pools, 0 bytes data, 0 objects
+            20683 MB used, 40690 MB / 61373 MB avail
+                  64 active+clean
+[root@H11 ceph-cluster]# 
+[root@H11 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-0
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-1
+[root@H11 ~]# ceph  -s
+    cluster 5a3ec364-53de-4f1f-be22-f01e23a0b1f2
+     health HEALTH_OK
+     monmap e1: 3 mons at {H11=192.168.4.11:6789/0,H12=192.168.4.12:6789/0,H13=192.168.4.13:6789/0}
+            election epoch 10, quorum 0,1,2 H11,H12,H13
+     osdmap e44: 6 osds: 6 up, 6 in
+            flags sortbitwise
+      pgmap v105: 64 pgs, 1 pools, 0 bytes data, 0 objects
+            20681 MB used, 40692 MB / 61373 MB avail
+                  64 active+clean
+[root@H11 ~]# 
+[root@H11 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap  tmpJWnwYc
+[root@H11 ~]# cat /etc/ceph/ceph.conf 
+[global]
+fsid = 5a3ec364-53de-4f1f-be22-f01e23a0b1f2
+mon_initial_members = H11, H12, H13
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+
+[root@H11 ~]# cat /etc/ceph/ceph.client.admin.keyring 
+[client.admin]
+	key = AQBFVL9bJhBrMRAALABV86Vb1dn29Gpz9pFCng==
+[root@H11 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H12 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.12
+192.168.2.12
+127.0.0.1
+192.168.122.1
+[root@H12 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H12 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0   10G  0 disk 
+vdd           252:48   0   10G  0 disk 
+vde           252:64   0    5G  0 disk 
+[root@H12 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H12 ~]# 
+[root@H12 ~]# hostname
+H12
+[root@H12 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.10  H10
+192.168.4.11  H11
+192.168.4.12  H12
+192.168.4.13  H13
+192.168.4.14  H14
+192.168.4.15  H15
+192.168.4.16  H16
+192.168.4.17  H17
+[root@H12 ~]# vim /etc/chrony.conf 
+#server 0.rhel.pool.ntp.org iburst
+#server 1.rhel.pool.ntp.org iburst
+#server 2.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst
+server  192.168.4.10   iburst
+[root@H12 ~]# systemctl restart chronyd
+[root@H12 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-2
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-3
+vde           252:64   0    5G  0 disk 
+[root@H12 ~]#  ls /root/.ssh/
+authorized_keys
+[root@H12 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDeGzBJq2uKMqbr7AKAs5gTN0TrOXpsd02svDDeDVPztq14+La0hOtD1k17oWgxmy1mhwAeGYjuh3P6TqFUDclClUDB7hwnHVx9HnAQhJDmuRGuNK/HY0Fwr8wKSxJfUmrQC7uRz+HzVnMUWqNVuaB3iTJ6Hh3kk8oHgJVskBoEg/IC2QpRJweq04dHmwvqv49LGgqwbu7ZOhiesf1DI+N+2LJJWPDT6bkIUB+4c+RxkoGF8T0ijV7Nrx7qASQXtw2tZ0xEcOYaPtcclDEDFGwZMob6g6+yOFPVd7NRDNzUfkuQVgntZ0jG8g6UCPwtiZVLjDG+QNpqdk7sNWxUZgSj root@H11
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDeGzBJq2uKMqbr7AKAs5gTN0TrOXpsd02svDDeDVPztq14+La0hOtD1k17oWgxmy1mhwAeGYjuh3P6TqFUDclClUDB7hwnHVx9HnAQhJDmuRGuNK/HY0Fwr8wKSxJfUmrQC7uRz+HzVnMUWqNVuaB3iTJ6Hh3kk8oHgJVskBoEg/IC2QpRJweq04dHmwvqv49LGgqwbu7ZOhiesf1DI+N+2LJJWPDT6bkIUB+4c+RxkoGF8T0ijV7Nrx7qASQXtw2tZ0xEcOYaPtcclDEDFGwZMob6g6+yOFPVd7NRDNzUfkuQVgntZ0jG8g6UCPwtiZVLjDG+QNpqdk7sNWxUZgSj root@H11
+[root@H12 ~]#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H13 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.13
+192.168.2.13
+127.0.0.1
+192.168.122.1
+[root@H13 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H13 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+vdc           252:32   0   10G  0 disk 
+vdd           252:48   0   10G  0 disk 
+[root@H13 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H13 ~]# 
+[root@H13 ~]# hostname
+H13
+[root@H13 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.4.10  H10
+192.168.4.11  H11
+192.168.4.12  H12
+192.168.4.13  H13
+192.168.4.14  H14
+192.168.4.15  H15
+192.168.4.16  H16
+192.168.4.17  H17
+[root@H13 ~]# vim /etc/chrony.conf 
+
+#server 0.rhel.pool.ntp.org iburst
+#server 1.rhel.pool.ntp.org iburst
+#server 2.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst
+server  192.168.4.10   iburst
+[root@H13 ~]# systemctl restart chronyd.service
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H14 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.14
+192.168.2.14
+127.0.0.1
+192.168.122.1
+[root@H14 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H14 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    8G  0 disk 
+[root@H14 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H14 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H15 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.15
+192.168.2.15
+127.0.0.1
+192.168.122.1
+[root@H15 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H15 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    9G  0 disk 
+[root@H15 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H15 ~]# 
+
+
+
+
+
+
+
+
+
+
+[root@H16 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H16 ~]# ifconfig |awk '/inet /{print $2}
+> '
+192.168.4.16
+192.168.2.16
+127.0.0.1
+192.168.122.1
+[root@H16 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+[root@H16 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H16 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H17 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.17
+192.168.2.17
+127.0.0.1
+192.168.122.1
+[root@H17 ~]# route -n |awk '{print $2}'
+IP
+Gateway
+192.168.4.254
+192.168.2.254
+0.0.0.0
+0.0.0.0
+0.0.0.0
+[root@H17 ~]#  lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+[root@H17 ~]# yum clean all >/dev/null && yum repolist |tail -10
+源标识                              源名称                                 状态
+mon                                 mon                                       41
+mon-2                               mon-2                                     41
+osd                                 osd                                       28
+osd-2                               osd-2                                     28
+rhel7                               rhel7.4                                4,986
+rhel7-2                             rhel7.4-2                              4,986
+tools                               tools                                     33
+tools-2                             tools-2                                   33
+repolist: 10,176
+[root@H17 ~]# 
+
+
+
+
+
+
+
+
+

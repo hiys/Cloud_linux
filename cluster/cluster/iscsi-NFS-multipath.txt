@@ -1,0 +1,340 @@
+﻿
+linux 存储技术 部署iSCSI NFS Multipath多路径
+存储技术应用
+存储是根据不同的应用环境通过采取合理，安全，有效的方式将数据保存到某些介质上
+并能保证有效的访问
+另一方面，它是保证数据完整安全存放的方式或行为
+存储就是把这两方面结合起来，向客户提供一套数据存放解决方案
+
+存储技术分类
+SCSI：小型计算机系统接口
+DAS：直连式存储
+NAS：网络技术存储
+SAN：存储区域网络
+FC：光纤通道
+
+
+常见存储技术
+SCSI：作为输入/输出接口，主要用于硬盘，光盘，磁带机等设备
+
+DAS：将存储设备通过SCSI接口或光纤通道直接连接到计算机上
+不能实现数据与其他主机共享，占用服务器操作系统资源
+数据量越大，性能越差
+
+NAS：一种传勇数据存储服务器，以数据为中心，将存储设备与服务器彻底分离，
+集中管理数据，从而释放带宽，提高性能，降低总拥有成本，保护投资
+用户通过tcp/ip协议访问数据
+
+SAN：通过光纤交换机，光纤路由器，光纤集线器等设备将磁盘列阵
+磁带存储设备与相关服务器连接起来，形成告诉专用网络
+
+FC：一种适合于千兆数据传输的，成熟而安全解决方案，主要组件 光纤，hba卡（主机总线适配器） fc交换机
+
+iSCSI技术：
+将scsi数据块映射为以太网数据包，是一种基于ip storage理论的新型存储技术
+将存储行业广泛应用的scsi接口技术与ip网络相结合，
+可以在ip网络上构建san，
+iscsi initiator：软件实现，成本低。性能低
+iscsi hba：硬件实现，性能好，成本较高
+
+——————————————————————————————————————————————————————————————————————————————
+
+部署iSCSI
+准备环境：三台虚拟机，第一台加一块硬盘，用作存储的一端
+qemu-img create -f qcow2 /var/lib/libvirt/images/iscsi1.img 20G
+存储端：（target）
+选择target名称
+安装target
+准备用户target的存储
+配置target
+启用服务
+客户端（initiator）
+安装initiator
+配置initiator并启动服务
+
+iscsi命名规范：
+建议采用iqn（iscsi限定名称）
+全称必须统一
+iqn格式：iqn.时间.反域名.字符串:子字符串
+命名实例：iqn.2017-09.cn.hydra.hydra007:vdb1
+
+ 
+
+存储端（target）
+[root@iscsi ~]# yum -y install scsi-target-utils
+[root@iscsi ~]# lsblk（查看硬盘）
+NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sr0 11:0 1 3.6G 0 rom /root/myiso
+vda 252:0 0 50G 0 disk 
+├─vda1 252:1 0 500M 0 part /boot
+└─vda2 252:2 0 49.5G 0 part 
+├─VolGroup-lv_root (dm-0) 253:0 0 47.6G 0 lvm /
+└─VolGroup-lv_swap (dm-1) 253:1 0 2G 0 lvm [SWAP]
+vdb 252:16 0 20G 0 disk 
+[root@iscsi ~]# parted /dev/vdb（为新磁盘分区，分区后不能格式化）
+(parted) mktable gpt 
+(parted) mkpart 
+分区名称？ []? primary 
+文件系统类型？ [ext2]? ext4 
+起始点？ 1M 
+结束点？ -1
+[root@iscsi ~]# vim /etc/tgt/targets.conf（更改配置文件），默认没有这几条配置语句，
+要全部写上
+<target iqn.2017-09.cn.hydra.hydra007:vdb1>（命名）
+backing-store /dev/vdb（磁盘路径）
+initiator-address 192.168.4.2（指定用户端可以访问）
+initiator-address 192.168.4.3
+</target>
+[root@iscsi ~]# /etc/init.d/tgtd start ; chkconfig tgtd on
+[root@iscsi ~]# tgt-admin -s（查看到lun1）
+LUN: 1
+Type: disk
+SCSI ID: IET 00010001
+SCSI SN: beaf11
+Size: 21473 MB, Block size: 512
+Online: Yes
+Removable media: No
+Prevent removal: No
+Readonly: No
+Backing store type: rdwr
+Backing store path: /dev/vdb1
+Backing store flags: 
+Account information:
+ACL information:
+192.168.4.2
+192.168.4.3
+
+客户端（initiator）两台客户端做相同的操作，装包，装mysql（第二台主机不用格式化，不用再创建库和表，直接挂载共享磁盘到数据库目录即可）
+[root@k1 ~]# yum -y install iscsi-initiator-utils
+[root@k1 ~]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.4.1 --discover（连接共享磁盘的主机）
+[root@k1 ~]# /etc/init.d/iscsi restart
+[root@k1 ~]# lsblk（会多出一块硬盘）
+sda 8:0 0 20G 0 disk 
+└─sda1 8:1 0 20G 0 part 
+[root@k1 ~]# chkconfig iscsid on（守护进程）
+[root@k1 ~]# chkconfig iscsi on（自动login）
+[root@k1 ~]# parted /dev/sda（验证共享磁盘，为磁盘分区，第二台主机就不用进行分区格式化了）
+GNU Parted 2.1
+使用 /dev/sda
+(parted) mktable gpt 
+(parted) mkpart
+分区名称？ []? primary 
+文件系统类型？ [ext2]? ext4 
+起始点？ 1M 
+结束点？ 1024M
+[root@k1 ~]# mkfs.ext4 /dev/sda1（分区后格式化）
+[root@k1 ~]# yum -y install mysql-server（装上mysql，实现数据文件共享，）
+[root@k1 ~]# mount /dev/sda1 /var/lib/mysql/（把共享磁盘挂载到数据库目录下）
+[root@k1 ~]# /etc/init.d/mysqld start
+mysql> create database hydra default char set utf8;（创建库，字符为utf-8，第二台主机不需要在创建库和表）
+mysql> use hydra;（进入数据库创建数据表）
+mysql> create table hydra_info (id int primary key auto_increment, name varchar(20));
+mysql> insert into hydra_info (name) values ('CIA');（写入数据）
+mysql> insert into hydra_info (name) values ('FBI');
+mysql> insert into hydra_info (name) values ('NSA');
+mysql> select * from hydra_info;
++----+------+
+| id | name |
++----+------+
+| 1 | CIA |
+| 2 | FBI |
+| 3 | NSA |
++----+------+
+[root@k1 ~]# lsof -l /dev/sda1（lsof -l 路径，查看那个服务在使用此路径的文件）
+[root@k1 ~]# /etc/init.d/mysqld stop（停掉k1主机的mysql）
+[root@k1 ~]# umount /dev/sda1（卸载k1主机的sda1）
+[root@k2 ~]# mount /dev/sda1 /var/lib/mysql/（在k2主机上检验数据共享）
+[root@k2 ~]# /etc/init.d/mysqld start
+mysql> show databases;
++---------------------+
+| Database |
++---------------------+
+| information_schema |
+| hydra |
+| #mysql50#lost+found |
+| mysql |
+| test |
++---------------------+
+
+——————————————————————————————————————————————————————————————————————————————————————————
+
+UDEV动态管理设备文件
+
+设备文件管理方法
+devfs：linux早期采用的静态管理方法，/dev目录下有大量静态文件，内核版本2.6.3开始被完全取代
+udev：只有连接到系统上来的设备才在/dev下创建设备文件，与主，次设备编号无关，为设备提供持久，一致的名字
+接入设备事件链：
+内核发现设备并导入设备状态到sysfs
+udev接到事件通知
+udev创建设备节点或是运行指定程序
+udev通知hald守护信息
+HAL探测设备信息
+HAL创建设备对象结构
+HAL通过系统消息总线广播该事件
+用户程序也可以监控该事件
+
+udev的作用：
+从内核收到添加/移除硬件事件时，udev会分析：
+/sys目录下信息
+/etc/udev/rules.d目录中的规则
+基于分析结果，udev会
+处理设备命名
+决定要创建哪些设备文件或链接
+决定如何设置属性
+决定触发哪些事件
+
+————————————————————————————————————————————————————————————————————————————————————————————
+
+配置udev
+主配置文件/etc/udev/udev.conf
+udev_root：创建设备文件位置，默认为/dev
+udev——rules：udev规则文件位置，默认为/etc/udev/rules.d
+udev——log”syslog优先级，缺省为err
+
+文件格式
+75-custom.rules
+规则格式
+<match-key><op><value>[,...]<assignment-kye><op>value[,..]
+-BUS=="usb",SYSFS{serial}
+=="20043512321411d34721",NAME="udisk"
+操作符
+==：匹配
+!=：不匹配
+=：指定赋予的值，不允许被替换
++=：添加新值
+匹配示例：
+ACTION=="add"
+KERNEL=="sd[a-z]1"
+BUS="scsi"
+DRIVER!="ide-cdrom"
+PROGRAM=="myapp.pl",RESULT=="test"
+SYMLINK+="data1"
+
+获得硬件信息的方法
+udevadm info --query=path --name=/dev/sda1（path路径 查看sda1的路径信息）
+udevadm info --query=all --attribute-walk --path=（all-所有，attribute-walk-个级别都搜，填上上面查看到的信息）
+
+示例：将u盘创建一个软连接，叫udisk
+[root@k2 ~]# cd /etc/udev/rules.d/
+[root@k2 rules.d]# vim 99-udisk.rules
+ACTION=="add",KERNEL=="sd[a-z]*",SUBSYSTEMS=="usb".SYMLINK+="udisk%n"
+
+——————————————————————————————————————————————————————————————————————————————
+
+NFS：网络文件系统，类unix系统实现共享文件夹
+
+文件系统的类型
+本地文件系统：ext3/4，swap，ntfs-----本地磁盘
+伪文件系统：/proc，/sys-----内存空间
+网络文件系统：nfs------网络存储空间
+
+NFS共享协议：
+unix/linux最基本的文件共享机制，1980年幼sun公司开发
+依赖于rpc（远程过程调用）映射机制
+存取位于远程磁盘中的文档数据，对应用程序是透明的，就好像访问本地的文件一样
+
+
+配置NFS服务器
+主要软件包：nfs-utils
+系统服务脚本：nfs，rpcbind
+主配置文件：/etc/exports
+
+实例：配置nfs服务器的只读访问
+[root@iscsi ~]# mkdir -pv /nfsroot/rodir（创建一个只读目录）
+[root@iscsi ~]# cp /etc/passwd /nfsroot/rodir/（拷贝个文件进去）
+[root@iscsi ~]# yum -y install nfs-utils
+[root@iscsi ~]# vim /etc/exports 
+/nfsroot/rodir 192.168.4.0/24(ro)（把共享的文件夹写出来，在把ip写进去 ro只读访问）
+[root@iscsi ~]# /etc/init.d/rpcbind start ; chkconfig rpcbind on
+[root@iscsi ~]# /etc/init.d/nfs start ; chkconfig nfs on
+[root@iscsi ~]# showmount -e 192.168.4.1（查看状态）
+Export list for 192.168.4.1:
+/nfsroot/rodir 192.168.4.0/24
+客户端配置
+[root@k1 ~]# mkdir /mnt/nfsro
+[root@k1 ~]# yum -y install nfs-utils
+[root@k1 ~]# /etc/init.d/rpcbind start ; chkconfig rpcbind on
+[root@k1 ~]# /etc/init.d/nfs start ; chkconfig nfs on
+[root@k1 ~]# showmount -e 192.168.4.1
+Export list for 192.168.4.1:
+/nfsroot/rodir 192.168.4.0/24
+[root@k1 ~]# mount 192.168.4.1:/nfsroot/rodir /mnt/nfsro/（把共享的文件夹挂载到本机）
+[root@k1 ~]# df -h
+192.168.4.1:/nfsroot/rodir
+47G 1.4G 43G 4% /mnt/nfsro
+
+实例：配置nfs服务器的读写访问
+[root@iscsi ~]# mkdir /nfsroot/rwidr
+[root@iscsi ~]# vim /etc/exports
+/nfsroot/rwdir 192.168.4.0/24(rw,sync)（读写，服务器端，客户端同步）
+[root@iscsi ~]# chmod o+w /nfsroot/rwidr/
+[root@iscsi ~]# exportfs -rv（重新共享输出内容）
+客户端操作
+[root@k1 ~]# mkdir /mnt/rwnfs
+[root@k1 ~]# mount 192.168.4.1:/nfsroot/rwdir /mnt/rwnfs/
+
+————————————————————————————————————————————————————————————————————————
+
+Multipath多路径
+当服务器到某一存储设备有多条路径时，每条路径都会识别为一个单独的设备
+多路径允许你将服务器节点和储存列阵间的多个I/O路径配置为一个单一设备
+多路径集合了I/O路径，并生成由这些集合路径组成的新设备
+
+多路径主要功能
+主备模式，高可用
+改进的性能，主主模式，负载均衡
+
+多路径设备识别符
+每个多路径设备都有一个WWID（全球识别符），他是全球唯一的，无法更改的号码
+默认情况下会将多路径设备的名称设定为它的WWID
+可以在多路径配置文件按中设置user_friendly_names选项，该选项可将别名设置格式为mpathn的节点唯一名称
+也可以自定义存储设备名称
+
+
+准备环境：
+服务器和客户端配置eth1网卡为192.168.2.0/24网段
+服务器端配置
+[root@iscsi ~]# vim /etc/tgt/targets.conf 
+<target iqn.2017-09.cn.hydra.hydra007:vdb1>
+backing-store /dev/vdb
+initiator-address 192.168.4.2
+initiator-address 192.168.4.3
+initiator-address 192.168.2.2（加上eth1网卡的ip）
+initiator-address 192.168.2.3
+</target>
+[root@iscsi ~]# /etc/init.d/tgtd force-restart（强制重启）
+客户端重新发现
+[root@k1 ~]# iscsiadm --mode discoverydb --type sendtargets --portal 192.168.2.1 --discover
+[root@k1 ~]# /etc/init.d/iscsi restart
+sda 8:0 0 20G 0 disk 
+└─sda1 8:1 0 976M 0 part 
+sdb 8:16 0 20G 0 disk 
+└─sdb1 8:17 0 976M 0 part 
+多路径配置（客户端）
+[root@k1 ~]# yum -y install device-mapper-multipath
+[root@k1 ~]# mpathconf --user_friendly_names n（生成配置文件）
+[root@k1 ~]# scsi_id --whitelisted --device=/dev/sda（查看共享存储的wwid）
+1IET 00010001
+[root@k1 ~]# scsi_id --whitelisted --device=/dev/sdb
+1IET 00010001
+
+
+defaults {
+user_friendly_names no
+getuid_callout "/lib/udev/scsi_id --whitelisted --device=/dev/%n"（写上这条命令）
+}
+multipaths {（在末尾写上多路径配置）
+multipath {
+wwid "1IET 00010001"（查到的wwid）
+alias "mpatha"（设置别名） 
+}
+}
+[root@k1 ~]# /etc/init.d/multipathd start ; chkconfig multipathd on
+[root@k1 ~]# ls /dev/mapper/（会出现mpatha）
+control mpatha mpathap1 VolGroup-lv_root VolGroup-lv_swap
+[root@k1 ~]# multipath -rr（当分区有变化，用该命令重新加载）
+[root@k1 ~]# mount /dev/mapper/mpathap1 /var/lib/mysql/（把它挂载到mysql下）
+[root@k1 ~]# /etc/init.d/mysqld start
+
+
+

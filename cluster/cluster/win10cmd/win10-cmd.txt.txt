@@ -1,0 +1,987 @@
+﻿
+C:\Users\320\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\System Tools
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\此电脑-->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\命令提示符-->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\运行 -->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\文件资源管理器 -->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\文件资源管理器\快速访问
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\控制面板-->快捷方式
+
+C:\Users\320\Desktop
+
+学习Java首先要对于Window熟悉，我们的Java程序是在Window上开发的
+
+系统的快捷键可以快速的提高我们的开发效率
+
+Ctrl + A   :  全选                   Ctrl + X   ： 剪切
+
+Ctrl + C    ：复制                   Ctrl + Z  ： 撤销
+
+Ctrl + V   ： 粘贴                  Ctrl + S   : 保存
+ 控制台中,点击鼠标右键,效果等同 粘贴
+ 
+C:\Windows\System32\cmd.exe    ------应用程序 (.exe) ， Windows 命令处理程序
+windows + R   输入cmd    打开控制台
+C:\Users\320
+
+控制台的基本操作
+
+d：     磁盘的切换                  dir ：   #显示磁盘内当前目录下的全部文件
+ windows查看当前路径 chdir
+md :   创建目录                rd ： 删除空目录
+
+cd + 目录   进入目录                      cd..    :  退回上一级
+
+cd /  : 退回根目录                          exit ： 关闭控制台
+
+del  ： 删除文件                            cls ： 清屏
+
+notepad   : 编辑文件
+
+JVM  ： 虚拟机         JRE ： 运行环境
+
+JDK ： 开发坏境
+
+ 控制台中,点击鼠标右键,效果等同 粘贴
+ 
+ 
+
+我们可以使用JDK开发Java程序，交给JRE去运行，在有JVM去跨平台
+
+JDK下载路径    http://www.oracle.com
+
+
+msinfo32
+windows + R   输入msinfo32    打开系统信息窗口，
+可查看 电脑系统信息（硬件资源，组件，软件环境）
+
+
+
+1、xcopy命令
+复制文件和目录树。
+
+
+XCOPY source [destination] [/A | /M] [/D[:date]] [/P] [/S [/E]] [/V] [/W]
+ 
+      [/C] [/I] [/Q] [/F] [/L] [/G] [/H] [/R] [/T] [/U]
+  
+      [/K] [/N] [/O] [/X] [/Y] [/-Y] [/Z] [/B]
+
+      [/EXCLUDE:file1[+file2][+file3]...]
+
+ 
+   source    指定要复制的文件。
+
+  destination  指定新文件的位置和/或名称。
+
+  /A       仅复制有存档属性集的文件，但不更改属性。
+
+  /M      仅复制有存档属性集的文件，并关闭存档属性。
+
+  /D:m-d-y   复制在指定日期或指定日期以后更改的文件。
+ 
+  如果没有提供日期，只复制那些源时间比目标时间新的文件。
+
+
+  /EXCLUDE:file1[+file2][+file3]...
+     指定含有字符串的文件列表。
+ 每个字符串在文件中应位于单独的一行。
+
+ 如果任何字符串与复制文件的绝对路径的任何部分相符，则排除 复制
+该文件。
+例如，指定如 \obj\ 或 .obj 的字符串
+会分别排除目录obj 下面的所有文件或带有 .obj 扩展名的所有文件。
+
+
+  /P   创建每个目标文件之前提示您。
+
+  /S   复制目录和子目录，不包括空目录。
+
+  /E   复制目录和子目录，包括空目录。与 /S /E 相同。可以用来修改/T。
+
+  /V   验证每个新文件的大小。
+
+  /W   提示您在复制前按键。
+
+  /C   即使有错误，也继续复制。
+
+  /I   如果目标不存在，且要复制多个文件，则假定目标必须是目录。
+
+  /Q    复制时不显示文件名。
+
+  /F   复制时显示完整的源文件名和目标文件名。
+
+  /L     显示要复制的文件。
+
+  /G           允许将加密文件复制到不支持加密的目标。
+
+  /H           也复制隐藏文件和系统文件。
+
+  /R           覆盖只读文件。
+
+  /T           创建目录结构，但不复制文件。不包括空目录或子目录。/T /E 包括
+               空目录和子目录。
+  /U           只复制已经存在于目标中的文件。
+  /K           复制属性。一般的 Xcopy 会重设只读属性。
+  /N           用生成的短名称复制。
+  /O           复制文件所有权和 ACL 信息。
+  /X           复制文件审核设置(隐含 /O)。
+  /Y           取消提示以确认要覆盖现有目标文件。
+  /-Y          要提示以确认要覆盖现有目标文件。
+  /Z           在可重新启动模式下复制网络文件。
+  /B           复制符号链接本身与链接目标相对。
+
+  /J    复制时不使用缓冲的 I/O。推荐复制大文件时使用。
+
+
+开关 /Y 可以预先在 COPYCMD 环境变量中设置。
+
+这可能被命令行上的 /-Y 覆盖。
+
+ 
+
+
+4．使用说明：
+
+
+ （1）XCOPY是COPY的扩展，可以把指定的目录连文件和目录结构一并拷贝，
+但不能拷贝隐藏文件和系统文件；
+
+
+（2）使用时源盘符、源目标路径名、源文件名至少指定一个；
+
+
+（3）选用/S时对源目录下及其子目录下的所有文件进行COPY。
+除非指定/E参数，否则/S不会拷贝空目录，
+若不指定/S参数，则XCOPY只拷贝源目录本身的文件，而不涉及其下的子目录；
+
+
+（4）选用/V参数时，对的拷贝的扇区都进行较验，但速度会降低。
+
+
+示例：xcopy  E:\music\*.ape  E:\txt
+
+
+2.copy命令
+将一份或多份文件复制到另一个位置。
+
+
+COPY [/D] [/V] [/N] [/Y | /-Y] [/Z] [/L] [/A | /B ] 
+  source [/A | /B]
+   [+ source [/A | /B] [+ ...]] [destination [/A | /B]]
+
+
+  source       指定要复制的文件。
+
+  /A           表示一个 ASCII 文本文件。
+
+  /B           表示一个二进位文件。
+
+  /D           允许解密要创建的目标文件
+
+  destination  为新文件指定目录和/或文件名。
+
+  /V           验证新文件写入是否正确。
+
+  /N    复制带有非 8dot3 名称的文件时，
+ 尽可能使用短文件名。
+
+  /Y    不使用确认是否要覆盖现有目标文件
+的提示。
+
+  /-Y    使用确认是否要覆盖现有目标文件
+的提示。
+
+  /Z           用可重新启动模式复制已联网的文件。
+  
+/L  如果源是符号链接，请将链接复制
+到目标而不是源链接指向的实际文件。
+
+
+命令行开关 /Y 可以在 COPYCMD 环境变量中预先设定。
+
+这可能会被命令行上的 /-Y 替代。
+除非 COPY
+命令是在一个批处理脚本中执行的，默认值应为
+在覆盖时进行提示。
+
+
+要附加文件，请为目标指定一个文件，
+为源指定
+数个文件(用通配符或 file1+file2+file3 格式)。
+
+
+
+4．使用说明：
+
+（1）COPY是文件对文件的方式复制数据，复制前目标盘必须已经格式化；
+
+
+（2）复制过程中，目标盘上相同文件名称的旧文件会被源文件取代；
+
+
+（3）复制文件时，必须先确定目标能有足够的空间，
+否则会出现 insufficient的错误信息，提示磁盘空间不够；
+
+
+ （4）文件名中允许使用通配举“*”“？”，可同时复制多个文件；
+
+
+ （5）COPY命令中源文件名必须指出，不可以省略。
+
+
+（6）复制时，目标文件名可以与源文件名相同，
+称作“同名拷贝”此时目标文件名可以省略；
+
+
+（7）复制时，目标文件名也可以与源文件名不相同，称作“异名拷贝”，
+此时，目标文件名不能省略；
+
+
+（8）复制时，还可以将几个文件合并为一个文件，称为“合并拷贝”，
+格式如下：
+COPY；[源盘][路径]〈源文件名1〉〈源文件名2〉…[目标盘][路径]〈目标文件名〉；
+
+
+（9）利用COPY命令，还可以从键盘上输入数据建立文件，
+格式如下：
+COPY CON [盘符：][路径]〈文件名〉；
+
+
+（10）注意：COPY命令的使用格式，源文件名与目标文件名之间必须有空格！
+
+
+控制台的基本操作
+
+d ：     磁盘的切换            dir  #显示磁盘内当前目录下的全部文件
+ windows查看当前路径 chdir
+md :   创建目录             rd ： 删除空目录
+
+cd + 目录   进入目录                      cd..    :  退回上一级
+
+cd /  : 退回根目录                          exit ： 关闭控制台
+
+del  ： 删除文件                            cls ： 清屏
+
+notepad   : 编辑文件
+ 控制台中,点击鼠标右键,效果等同 粘贴
+ 
+
+Windows 如何在cmd命令行中查看、修改、删除与添加环境变量
+首先明确一点：
+
+所有的在cmd命令行下对环境变量的修改只对当前窗口有效，不是永久性的修改。
+也就是说当关闭此cmd命令行窗口后，将不再起作用。
+永久性修改环境变量的方法有两种：
+一种是直接修改注册表（此种方法目前没试验过），
+另一种是通过我的电脑-〉属性-〉高级，来设置系统的环境变量（查看详细）。
+
+其次，明确一下环境变量的作用。
+
+它是操作系统用来指定运行环境的一些参数。
+比如临时文件夹位置和系统文件夹位置等。
+当你运行某些程序时，除了在当前文件夹中寻找外，
+还会到这些环境变量中去查找，
+比如“Path”就是一个变量，
+里面存储了一些常用的命令所存放的目录路径。
+
+第三：什么情况下进行设置？
+
+当启动cmd命令行窗口调用某一命令的时候，
+经常会出现“xxx不是内部或外部命令，也不是可运行的程序或批处理文件”，
+如果你的拼写没有错误，同时计算机中确实存在这个程序，
+那么出现这个提示就是你的path变量没有设置正确，
+因为你的path路径，也就是默认路径里没有你的程序，
+同时你有没有给出你程序的绝对路径（因为你只是输入了命令或程序的名称而已），
+这是操作系统不知道去哪儿找你的程序，就会提示这个问题。
+
+第四：如何修改？
+
+1、查看当前所有可用的环境变量：输入 set 即可查看。
+
+2、查看某个环境变量：输入 “set 变量名”即可，
+比如想查看path变量的值，即输入 set path
+
+3、修改环境变量 ：输入 “set 变量名=变量内容”即可，
+比如将path设置为“d:\nmake.exe”，只要输入set path="d:\nmake.exe"。
+注意，此修改环境变量是指用现在的内容去覆盖以前的内容，并不是追加。
+比如当我设置了上面的path路径之后，如果我再重新输入set path="c"，
+再次查看path路径的时候，其值为“c:”，而不是“d:\nmake.exe”；“c”。
+
+4、设置为空：如果想将某一变量设置为空，输入“set 变量名=”即可。
+如“set path=” 那么查看path的时候就为空。
+注意，上面已经说了，只在当前命令行窗口起作用。
+因此查看path的时候不要去右击“我的电脑”——“属性”........
+
+5、给变量追加内容（不同于3，那个是覆盖）：
+输入“set 变量名=%变量名%;变量内容”。
+如，为path添加一个新的路径，输入“ set path=%path%;d:\nmake.exe”
+即可将d:\nmake.exe添加到path中，
+再次执行"set path=%path%;c:"，
+那么，使用set path语句来查看的时候，将会有：d:\nmake.exe;c:，
+而不是像第3步中的只有c:。
+
+
+附录：下面贴上一些常用的环境变量及作用
+
+%ALLUSERSPROFILE% 局部 返回所有“用户配置文件”的位置。 
+
+　　%APPDATA% 局部 返回默认情况下应用程序存储数据的位置。 
+
+　　%CD% 局部 返回当前目录字符串。 
+
+　　%CMDCMDLINE% 局部 返回用来启动当前的 Cmd.exe 的准确命令行。
+
+　　%CMDEXTVERSION% 系统 返回当前的“命令处理程序扩展”的版本号。 
+
+　　%COMPUTERNAME% 系统 返回计算机的名称。 
+
+　　%COMSPEC% 系统 返回命令行解释器可执行程序的准确路径。 
+
+　　%DATE% 系统 返回当前日期。
+使用与 date /t 命令相同的格式。
+由 Cmd.exe 生成。有关 date 命令的详细信息，请参阅 Date。 
+
+　　%ERRORLEVEL% 系统 返回最近使用过的命令的错误代码。
+通常用非零值表示错误。 
+
+　　%HOMEDRIVE% 系统 返回连接到用户主目录的本地工作站驱动器号。
+基于主目录值的设置。用户主目录是在“本地用户和组”中指定的。 
+
+　　%HOMEPATH% 系统 返回用户主目录的完整路径。基于主目录值的设置。
+用户主目录是在“本地用户和组”中指定的。 
+
+　　%HOMESHARE% 系统 返回用户的共享主目录的网络路径。
+基于主目录值的设置。用户主目录是在“本地用户和组”中指定的。 
+
+　　%LOGONSEVER% 局部 返回验证当前登录会话的域控制器的名称。 
+
+　　%NUMBER_OF_PROCESSORS% 系统 指定安装在计算机上的处理器的数目。 
+
+　　%OS% 系统 返回操作系统的名称。
+Windows 2000 将操作系统显示为 Windows_NT。 
+
+　　%PATH% 系统 指定可执行文件的搜索路径。 
+
+　　%PATHEXT% 系统 返回操作系统认为可执行的文件扩展名的列表。
+
+ 　　%PROCESSOR_ARCHITECTURE% 系统 返回处理器的芯片体系结构。
+值: x86，IA64。 
+　　%PROCESSOR_IDENTFIER% 系统 返回处理器说明。 
+
+　　%PROCESSOR_LEVEL% 系统 返回计算机上安装的处理器的型号。 
+
+　　%PROCESSOR_REVISION% 系统 返回处理器修订号的系统变量。 
+
+　　%PROMPT% 局部 返回当前解释程序的命令提示符设置。由 Cmd.exe 生成。 
+
+　　%RANDOM% 系统 返回 0 到 32767 之间的任意十进制数字。由 Cmd.exe 生成。 
+
+　　%SYSTEMDRIVE% 系统 返回包含 Windows XP 根目录（即系统根目录）的驱动器。 
+
+　　%SYSTEMROOT% 系统 返回 Windows XP 根目录的位置。 
+
+　　%TEMP% and %TMP% 系统和用户 
+返回对当前登录用户可用的应用程序所使用的默认临时目录。
+有些应用程序需要 TEMP，而其它应用程序则需要 TMP。 
+
+　　%TIME% 系统 返回当前时间。
+使用与 time /t 命令相同的格式。
+由 Cmd.exe 生成。有关 time 命令的详细信息，请参阅 Time。 
+
+　　%USERDOMAIN% 局部 返回包含用户帐户的域的名称。 
+
+　　%USERNAME% 局部 返回当前登录的用户的名称。 
+
+　　%UserProfile% 局部 返回当前用户的配置文件的位置。 
+
+　　%WINDIR% 系统 返回操作系统目录的位置。
+
+控制台的基本操作
+
+d：     磁盘的切换        dir   #显示磁盘内当前目录下的全部文件
+ windows查看当前路径 chdir
+md   创建目录          rd   删除空目录
+F:\>rd  /s/q   F:\win10cmd\   # 删除文件及所有子文件
+
+cd + 目录   进入目录                      cd..    退回上一级
+
+cd /   退回根目录                          exit  关闭控制台
+
+del   删除文件                            cls   清屏
+
+notepad   编辑文件
+
+ 控制台中,点击鼠标右键,效果等同 粘贴
+ 
+F:\git>copy  win10-cmd.txt.txt   ..\win10cmd\
+已复制         1 个文件。
+
+
+ #复制文件夹下的所有txt文件 到新建的文件夹win10cmd下
+F:\>xcopy  F:\git\*.txt   win10cmd  
+
+F:\win10cmd>type  nul  >testfile.txt  #创建空的文件
+
+F:\win10cmd>echo  "hello boy" >testfile2.txt  #创建有内容文件
+
+F:\win10cmd>echo  'I am  ok' >> testfile2.txt # >>追加文件内容
+
+F:\win10cmd>echo  'I am  ok' >testfile.txt  # >覆盖原有文件内容
+
+F:\win10cmd>echo  i am testfile > testfile.txt  # >覆盖原有文件内容
+
+F:\win10cmd>
+
+F:\win10cmd>type  testfile.txt  #查看文件内容
+ i am testfile
+
+
+C:\Windows\System32\cmd.exe  ------应用程序 (.exe) ， Windows 命令处理程序
+windows + R   输入cmd    打开控制台
+C:\Users\320
+C:\Users\320>
+C:\Users\320>cls   #清屏     
+
+C:\Users\320>cd  /   # cd /  : 退回根目录 (注意空格)
+
+C:\>   # d：  磁盘的切换
+输入 E: 后按下enter键。就进入E盘中
+C:\>E:
+
+如果你想要查看E盘中的文件目录，
+只用继续输入dir 并且按enter键即显示e盘的文件夹和文件目录！
+E:\>
+E:\>dir    #显示磁盘内当前目录下的全部文件
+ 驱动器 E 中的卷是 办公
+ 卷的序列号是 F06F-BC0B
+.............
+
+E:\>
+
+E:\>F:
+
+F:\>dir
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\ 的目录
+........
+F:\>cd  newdir\
+
+要打开a1.jpg这张图片
+我们只用继续输入文件名a1.jpg 输入后 按回车键
+就可以打开这个文件
+F:\newdir>a1.jpg
+
+
+F:\newdir>cd  E:\Youku Files  
+
+F:\newdir>E:    # 磁盘的切换 
+
+E:\Youku Files> 
+命令 chdir 的显示结果与linux下的pwd是一样的
+
+E:\Youku Files>chdir   # windows查看当前路径 chdir
+E:\Youku Files
+
+E:\Youku Files>cd   E:\Youku Files\nplayerdisk
+
+E:\Youku Files\nplayerdisk>chdir  # windows查看当前路径 chdir
+E:\Youku Files\nplayerdisk
+
+E:\Youku Files\nplayerdisk> F:   # 磁盘的切换 
+
+F:\newdir>cd   ## windows查看当前路径
+F:\newdir
+
+F:\newdir>cd  F:\
+
+F:\>chdir
+F:\
+
+F:\>cd  git\  #进入目录 git
+
+F:\git>
+F:\git>cd      ## windows查看当前路径
+F:\git
+
+F:\git>chdir  ## windows查看当前路径
+F:\git
+md :   创建空目录           rd ： 删除空目录
+
+cd + 目录   进入目录     
+
+
+F:\git>md  F:\git\testdir   # md :   创建空目录 
+
+F:\git>dir    #显示磁盘内当前目录下的全部文件
+..................
+
+F:\git>dir  testdir\     #显示磁盘内 指定目录下的全部文件
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\git\testdir 的目录
+
+2019/02/06  21:02    <DIR>          .
+2019/02/06  21:02    <DIR>          ..
+               0 个文件              0 字节
+               2 个目录 162,674,941,952 可用字节
+
+
+F:\git>dir   F:\git\testdir\    #显示磁盘内 指定目录下的全部文件
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\git\testdir 的目录
+
+2019/02/06  21:02    <DIR>          .
+2019/02/06  21:02    <DIR>          ..
+               0 个文件              0 字节
+               2 个目录 162,674,941,952 可用字节
+
+
+F:\git>dir  E:\KuGou   #显示磁盘内 指定目录下的全部文件
+..........
+
+F:\git>
+F:\git>md  F:\git\testdir   # md   创建目录
+md :   创建目录           rd ： 删除空目录
+
+
+F:\git>rd  testdir\    #rd  目录名  #删除空目录
+
+F:\git>dir  testdir   #查看目录 testdir不存在,已经被删除
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\git 的目录
+
+找不到文件
+
+F:\git>
+
+F:\git>md    F:\win10cmd   # md   创建目录
+
+F:\git>copy  win10-cmd.txt.txt   win10cmd\
+系统找不到指定的路径。
+已复制         0 个文件。
+
+F:\git>copy  win10-cmd.txt.txt   ..\win10cmd\
+已复制         1 个文件。
+
+F:\git>copy  win10-git.txt.txt  ..\win10cmd
+已复制         1 个文件。
+
+F:\git>cd   ..\win10cmd
+
+F:\win10cmd>dir
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\win10cmd 的目录
+
+2019/02/06  21:39    <DIR>          .
+2019/02/06  21:39    <DIR>          ..
+2019/02/06  21:23            13,448 win10-cmd.txt.txt
+2019/02/06  20:59               789 win10-git.txt.txt
+               2 个文件         14,237 字节
+               2 个目录 162,674,917,376 可用字节
+
+F:\win10cmd>
+
+F:\win10cmd>dir  C:\Windows\System32\drivers\etc
+ 驱动器 C 中的卷是 OS
+ 卷的序列号是 0ACD-8E19
+
+ C:\Windows\System32\drivers\etc 的目录
+
+2019/02/02  18:51    <DIR>          .
+2019/02/02  18:51    <DIR>          ..
+2019/02/02  18:51               824 hosts
+2017/09/29  21:44             3,683 lmhosts.sam
+2017/03/19  05:01               407 networks
+2017/03/19  05:01             1,358 protocol
+2017/03/19  05:01            17,635 services
+               5 个文件         23,907 字节
+               2 个目录 71,534,514,176 可用字节
+
+F:\win10cmd>
+
+创建空的文件：type nul>文件名
+
+创建有内容文件：echo "内容">文件名
+
+查看文件内容：type +文件名
+
+查看目录及子文件：dir
+
+删除空文件夹：rd 文件夹名
+
+删除文件及所有子文件：rd /s/q 文件夹名
+
+删除文件：del 文件名
+
+
+F:\win10cmd>type  nul  >testfile.txt  #创建空的文件
+
+F:\win10cmd>echo  "hello boy" >testfile2.txt  #创建有内容文件
+
+F:\win10cmd>echo  'I am  ok' >> testfile2.txt # >>追加文件内容
+
+F:\win10cmd>echo  'I am  ok' >testfile.txt  # >覆盖原有文件内容
+
+F:\win10cmd>echo  i am testfile > testfile.txt  # >覆盖原有文件内容
+
+F:\win10cmd>
+
+F:\win10cmd>type  testfile.txt  #查看文件内容
+ i am testfile
+
+F:\win10cmd>type  testfile2.txt  #查看文件内容
+ "hello boy"
+ 'I am  ok'
+
+F:\win10cmd>notepad  testfile.txt  # 编辑文件内容
+
+F:\win10cmd>type   testfile.txt  #查看文件内容
+ i am testfile  diErci
+add file content
+
+F:\win10cmd>del  testfile2.txt  #删除文件
+
+F:\win10cmd>
+F:\git>md  F:\git\testdir   # md   创建目录
+
+F:\git>rd  testdir\    #rd  目录名  #删除空目录
+
+F:\git>dir  testdir   #查看目录 testdir不存在,已经被删除
+
+
+F:\win10cmd>cd  F:\
+
+F:\>dir
+........
+
+F:\>dir  win10cmd
+............
+
+F:\>cls    #清空屏幕
+
+
+删除文件及所有子文件：rd /s/q 文件夹名
+
+
+F:\>rd   win10cmd     # rd  目录目录名 # 只能删除 空文件夹
+目录不是空的。
+
+F:\>rd  /s/q   F:\win10cmd\   # 删除文件及所有子文件
+
+F:\>dir  win10cmd
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\ 的目录
+
+找不到文件
+
+F:\>
+
+
+ #复制文件夹下的所有txt文件 到新建的文件夹win10cmd下
+F:\>xcopy  F:\git\*.txt   win10cmd  
+目标 win10cmd 是文件名
+还是目录名
+(F = 文件，D = 目录)? D
+F:\git\win10-cmd.txt.txt
+F:\git\win10-git.txt.txt
+复制了 2 个文件
+
+F:\>dir  win10cmd   # 查看目录下的所有文件及文件夹
+ 驱动器 F 中的卷是 xunihua
+ 卷的序列号是 C275-EFE5
+
+ F:\win10cmd 的目录
+
+2019/02/06  23:48    <DIR>          .
+2019/02/06  23:48    <DIR>          ..
+2019/02/06  23:38            23,521 win10-cmd.txt.txt
+2019/02/06  20:59               789 win10-git.txt.txt
+               2 个文件         24,310 字节
+               2 个目录 162,674,900,992 可用字节
+
+F:\>exit  #退出控制台
+
+------------------- D:\Git\git-bash.exe  -------------
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ pwd
+/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ ls
+bin/  dev/  git-bash.exe*  LICENSE.txt  proc/              tmp/          unins000.exe*  usr/
+cmd/  etc/  git-cmd.exe*   mingw64/     ReleaseNotes.html  unins000.dat  unins000.msg
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ echo  $HOME
+/c/Users/320
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ echo  $USER
+
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ logout  或 exit  退出控制台
+
+----------  C:\Windows\System32\cmd.exe  ------应用程序 (.exe) ，
+ Windows 命令处理程序 --------------------
+
+windows + R   输入cmd    打开控制台
+C:\Users\320
+C:\Users\320>
+C:\Users\320>cls   #清屏  
+C:\Users\320>D:
+
+D:\>cd   D:\Git\
+
+D:\Git>dir
+ 驱动器 D 中的卷是 软件
+ 卷的序列号是 2869-97EA
+
+ D:\Git 的目录
+
+2019/02/07  01:03    <DIR>          .
+2019/02/07  01:03    <DIR>          ..
+2019/02/07  01:01    <DIR>          bin
+2019/02/07  01:02    <DIR>          cmd
+2019/02/07  01:03    <DIR>          dev
+2019/02/07  01:27    <DIR>          etc
+2019/02/07  01:02           140,927 git-bash.exe
+2018/12/15  09:52           148,760 git-cmd.exe
+2018/03/12  17:58            18,765 LICENSE.txt
+2019/02/07  01:02    <DIR>          mingw64
+2018/12/15  10:14           141,866 ReleaseNotes.html
+2019/02/07  01:02    <DIR>          tmp
+2019/02/07  01:02           960,004 unins000.dat
+2019/02/07  00:43         1,297,048 unins000.exe
+2019/02/07  01:02            22,795 unins000.msg
+2019/02/07  01:02    <DIR>          usr
+               7 个文件      2,730,165 字节
+               9 个目录 158,779,830,272 可用字节
+
+D:\Git>exit
+
+------------------- D:\Git\git-bash.exe  -------------
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ pwd
+/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ mkdir  /linux
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ cd   /linux/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux
+$ git  clone  https://github.com/hiys/linux  ./
+
+Cloning into '.'...
+remote: Enumerating objects: 12, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 1021 (delta 3), reused 0 (delta 0), pack-reused 1009
+Receiving objects: 100% (1021/1021), 233.01 MiB | 843.00 KiB/s, done.
+Resolving deltas: 100% (203/203), done.
+Checking out files: 100% (1061/1061), done.
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ ls
+ 01.admin/                                               index.htm
+...................
+ home.php                                                质量标准规范/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ ls  |wc  -l
+96
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$
+
+$ pwd
+/linux
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ ls  /etc/
+bash.bash_logout  docx2txt.config  inputrc              mtab@     nsswitch.conf         pki/        protocols  tigrc
+bash.bashrc       fstab            install-options.txt  nanorc    package-versions.txt  profile     services   vimrc
+DIR_COLORS        hosts            msystem              networks  pkcs11/               profile.d/  ssh/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ cd  /
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ pwd
+/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ mkdir  cloud
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ cd   /cloud/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /cloud
+$ git  clone  https://github.com/hiys/Cloud_linux    ./
+............
+Receiving objects: 100% (1160/1160), 121.44 MiB | 406.00 KiB/s, done.
+Resolving deltas: 100% (481/481), done.
+Checking out files: 100% (916/916), done.
+warning: the following paths have collided (e.g. case-sensitive paths
+on a case-insensitive filesystem) and only one from the same
+colliding group is in the working tree:
+
+  'CLOUD_architecture_Project/hadoop/HDFS.jpg'
+  'CLOUD_architecture_Project/hadoop/hdfs.jpg'
+
+320@LAPTOP-AEFV1BN0 MINGW64 /cloud (master)
+$ ls  |wc  -l
+68
+
+320@LAPTOP-AEFV1BN0 MINGW64 /cloud (master)
+$ logout
+
+
+D:\Git\cloud\CLOUD_architecture_Project\hadoop
+
+--------------- ----------------
+
+修改window本地hosts文件，修改域名指向
+C:\Windows\System32\drivers\etc\hosts 
+
+在文件最后新增 一行 如下内容：
+127.0.0.1 www.163.com
+
+表示域名“www.163.com”指向的ip为127.0.0.1，即本地。
+修改后文件内容如下：
+# localhost name resolution is handled within DNS itself.
+#	127.0.0.1       localhost
+#	::1             localhost
+127.0.0.1	www.163.com
+
+------  Windows10修改本地电脑网络连接DNS ---------
+
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows管理工具
+C:\Users\320\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Administrative Tools
+
+C:\Users\320\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\System Tools
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\此电脑-->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\命令提示符-->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\运行 -->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\文件资源管理器-->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\文件资源管理器\快速访问\
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\控制面板-->快捷方式
+C:\Users\320\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\System Tools
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\控制面板\
+
+
+-----  Windows10修改本地电脑网络连接DNS --------
+
+方法/步骤
+1右键【宽带连接】标识，选择【打开网络和Internet设置】
+
+使用键盘上的
+快捷键   【win】徽标键   +  【X】，
+
+并在弹出的菜单中选择【设置】选项，打开【设置】对话框。
+接着在弹出的【Windows设置】对话框中选中【网络和Internet】选项
+
+2找到【以太网】，选择【更改适配器】
+
+3双击【以太网】
+
+4点击【Internet 协议版本4(TCP/IPv4)】
+5点击【属性】
+------ 弹出对话框 ---------
+Internet 协议版本4(TCP/IPv4)属性
+[常规](备用配置)
+ - 自动获得IP地址(O)
+ * 使用下面的IP地址(S):
+  IP地址(I):   [  .  .  .  ]
+  子网掩码(U): [  .  .  .  ]
+  默认网关(D): [  .  .  .  ]
+
+ - 自动获得DNS 服务器地址(B)
+ * 使用下面的DNS服务器地址(E):
+   首选DNS 服务器(P): [  .  .  .  ]
+   备用DNS服务器(A):  [  .  .  .  ]
+[]退出时验证设置(L)      [  高级(V)... ]
+
+                          [确定]  [取消]
+----------------------------
+
+6在【DNS服务器】选择手动输入，将8.8.8.8 和114.114.114.114作为DNS1,2填入。
+ * 使用下面的DNS服务器地址(E):
+   首选DNS 服务器(P): [  8 . 8 . 8 . 8  ]
+   备用DNS服务器(A):  [ 114.114.114.114 ]
+=====================================
+
+
+--- Windows 10 查看 IP地址,网关地址 与 DNS ip地址   ---
+
+使用键盘上的
+快捷键   【win】徽标键   +  【X】，
+
+并在弹出的菜单中选择【设置】选项，打开【设置】对话框。
+接着在弹出的【Windows设置】对话框中选中【网络和Internet】选项
+
+方法/步骤
+1在Windows10系统桌面，依次点击“开始/Windows系统/控制面板”菜单项
+
+2在打开的控制面板窗口，选择“网络和Internet项”图标
+
+C:\Users\320\AppData\Roaming\Microsoft\Windows\[开始]菜单\程序\Windows 系统\控制面板\网络和 Internet
+
+3在打开的窗口中点击[ "网络和共享中心" 下的“查看网络状态和任务”]快捷链接
+
+控制面板\网络和 Internet\网络和共享中心
+-------------------
+4点击 [“查看活动网络”下的 
+      访问类型:  Internet 
+      连接: " WLAN  2 (vivo Y51A) "] 快捷链接
+
+5接着在弹出的【WLAN 2 状态】对话框中选中【详细信息(E)...】选项
+
+
+6 弹出【网络连接详细信息】对话框
+属性                值
+......
+物理地址          74-E5-F9-77-70-BD
+已启用DHCP        是
+IPv4地址          192.168.43.28
+IPv4子网掩码      255.255.255.0
+获得租约的时间    2019年2月9日  14:58:23
+租约过期的时间    2019年2月9日  18:49:38
+IPv4 默认网关     192.168.43.1
+IPv4 DHCP服务器   192.168.43.1
+IPv4 DNS 服务器   192.168.43.1
+......
+IPv6 默认网关  fe80::9dd7:69d3:7ad8:6cc1%5
+IPv6 DNS 服务器   240e:1f:1::1
+                  240e:1f:1::33
+
+
+
+C:\Users\320>calc  #调出计算机工具
+
+C:\Users\320>exit  #退出
+
+
+
+
+
+
+
+

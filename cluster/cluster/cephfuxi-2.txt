@@ -1,0 +1,1263 @@
+﻿ 
+/etc/yum.conf 配置文件
+[main] 
+cachedir=/var/cache/yum  #yum缓存的目录，yum在此存储下载的rpm包和数据库
+--------------------
+yum使用
+注:当第一次使用yum或yum资源库有更新时,
+yum会自动下载所有所需的headers放置于/var/cache/yum目录下,所需时间可能较长.
+
+系统更新(更新所有可以升级的rpm包,包括kernel)
+#yum -y update
+
+每天定期执行系统更新
+#chkconfig yum on
+#service yum start
+
+*rpm包的更新，检查可更新的rpm包
+#yum check-update
+
+更新所有的rpm包
+#yum update
+
+更新指定的rpm包,如更新kernel和kernel source
+#yum update kernel kernel-source
+
+大规模的版本升级,与yum update不同的是,连旧的淘汰的包也升级
+#yum upgrade
+
+清除暂存中旧的rpm头文件和包文件
+#yum clean 或#yum clean all
+注:相当于yum clean packages + yum clean oldheaders
+
+列出资源库中特定的可以安装或更新以及已经安装的rpm包的信息
+#yum info mozilla
+#yum info mozilla*
+注:可以在rpm包名中使用匹配符,如列出所有以mozilla开头的rpm包的信息
+
+列出资源库中所有可以更新的rpm包的信息
+#yum info updates
+
+列出已经安装的所有的rpm包的信息
+#yum info installed
+
+列出已经安装的但是不包含在资源库中的rpm包的信息
+#yum info extras
+注:通过其它网站下载安装的rpm包的信息
+
+*搜索rpm包
+搜索匹配特定字符的rpm包
+#yum search mozilla
+注:在rpm包名,包描述等中搜索
+
+搜索有包含特定文件名的rpm包
+#yum provides  /xxx/xxx/realplay
+------------------------
+------------------------------
+------------------------
+yum的配置文件/etc/yum.conf
+yum的一切配置信息都储存在一个叫/etc/yum.conf的配置文件中，
+通常位于/etc目 录下，这是整个yum系统的重中之重，
+进行说明。
+[main] 
+cachedir=/var/cache/yum  #yum缓存的目录，yum在此存储下载的rpm包和数据库
+
+debuglevel=2  #除错级别，0-10,默认是2
+logfile=/var/log/yum.log  #yum的日志文件
+
+pkgpolicy=newest 
+# 包的策略。一共有两个选项，newest和last，
+这个作用是如果你设置了多个repository，
+而同一软件在不同的repository中同时存在，yum应该安装哪一个，
+如果是newest，则yum会安装最新的那个版本。
+如果是last，则yum会将服务器id [serverid]
+( 例如[base]  #用于区别各个不同的yum源仓库名字id)
+以字母表排序，并选择最后的那个服务器上(yum源仓库id)的软件安装。
+一般都是选newest
+
+distroverpkg=redhat-release 
+#指定一个软件包，yum会根据这个包判断你的发行版本，默认是redhat-release，
+也可以是安装的任何针对自己发行版的rpm包。
+#$releasever，发行版的版本，从[main]部分的distroverpkg获取，
+如果没有，则根据redhat-release包进行判断
+
+----------------
+---------------------------------
+/etc/yum.repos.d/CentOS-Base.repo
+
+[base]  #用于区别各个不同的repository(yum源仓库)，必须有一个独一无二的名称
+
+name=CentOS-$releasever - Base - mirrors.aliyun.com
+
+# name，是对repository的描述，支持像$releasever $basearch这样的变量
+
+#$releasever，发行版的版本，从[main]部分的distroverpkg获取，
+如果没有，则根据redhat-release包进行判断
+
+failovermethod=priority
+
+
+# failovermethode 有两个选项roundrobin和priority，
+意思分别是有多个url可供选择时，yum选择的次序.
+# roundrobin是随机选择，如果连接失 败则使用下一个，依次循环，
+# priority则根据url的次序从第一个开始。
+如果不指明，默认是roundrobin。
+# failover
+  
+n.
+[电脑][数据库]失效备援 
+（为系统备援能力的一种，当系统中其中一项设备失效而无法运作时，
+另一项设备即可自动接手原失效系统所执行的工作）
+
+baseurl=http://mirrors.aliyun.com/centos/$releasever/os/$basearch/
+ 
+        http://mirrors.aliyuncs.com/centos/$releasever/os/$basearch/
+    
+      http://mirrors.cloud.aliyuncs.com/centos/$releasever/os/$basearch/
+#url支持的协议有 http:// ftp:// file://三种。
+baseurl后可以跟多个url，
+你可以自己改为速度比较快的镜像站，但baseurl只能有一个
+
+
+# url指向的目录必须是这个repository header目录的上一级，
+它也支持$releasever $basearch这样的变量
+
+# $basearch，cpu的基本体系组，
+如i686和athlon同属i386，alpha和alphaev6同属alpha
+
+gpgcheck=1
+
+# 有1和0两个选择，分别代表是否是否进行gpg校验，
+如果没有这一项，默认yum.conf全局性配置文件也是检查的
+但只对此服务器起作用
+
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+ 
+
+
+exclude=gaim
+#exclude=，排除某些软件在升级名单之外，可以用通配符，
+列表中各个项目要用 空格 隔开，
+这个对于安装了诸如美化包，中文补丁的软件包特别有用
+但只对此服务器起作用
+
+------------
+---------------------------
+由于 redhat的yum在线更新是收费的，
+如果没有注册的话不能使用，
+如果要使用，需将redhat的yum卸载后，
+重启安装，再配置其他源，以下为详细过程： 
+
+1.删除redhat原有的yum 
+rpm -aq|grep yum|xargs rpm -e --nodeps 
+
+
+#直接自己手工添加软件仓库配置文件
+复制代码
+vi /etc/yum.repos.d/epel.repo
+
+[epel]
+name=epel
+mirrorlist=http://mirrors.fedoraproject.org/
+mirrorlist?repo=epel-releasever&arch=releasever&arch=basearch
+
+#$releasever，发行版的版本，从[main]部分的distroverpkg获取，
+如果没有，则根据redhat-release包进行判断
+# $arch，cpu体系，如i686,athlon等
+# $basearch，cpu的基本体系组，
+如i686和athlon同属i386，alpha和alphaev6同属alpha。
+
+enabled=1
+gpgcheck=0
+
+#首先卸载以前装的epel以免影响
+rpm -e epel-release
+
+#下载新repo 到/etc/yum.repos.d/
+epel(RHEL 7)
+wget -O /etc/yum.repos.d/epel.repo 
+ http://mirrors.aliyun.com/repo/epel-7.repo
+
+CentOS6.5添加阿里云的EPEL源
+yum  -y localinstall --nogpgcheck 
+ http://mirrors.aliyun.com/epel/6/x86_64/epel-release-6-8.noarch.rpm
+ 安装阿里云EPEL源
+
+http://mirrors.aliyun.com/epel/7/x86_64/Packages
+/e/epel-release-7-11.noarch.rpm
+
+http://mirrors.aliyun.com/epel/
+
+RPM-GPG-KEY-EPEL-7 (文件---PGP公钥块)
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+mQINB......
+qJWtGcA6wRS/wDzXJEN........qxS+ZVA/HGkyfiu4cpgV8VUnbql5eAZ+1Ll6Dw==
+=hdPa
+-----END PGP PUBLIC KEY BLOCK-----
+
+
+导入GPG KEY
+导入每个reposity的GPG key，
+yum可以使用gpg对包进行校验，确保下载包的完整性，
+先要到各个repository站点找到gpg key，一般都会放在首页的醒目位置，
+一些名字诸如 RPM-GPG-KEY.txt之类的纯文本文件，把它们下载，
+然后用rpm --import  /xxx/RPM-GPG-KEY 命令将它们导入，
+最好把发行版自带GPG-KEY也导入。
+rpm --import /usr/share/doc/redhat-release-*/RPM-GPG-KEY 
+官方软件升级用得上
+/*****
+[root@hiys ~]# ls /var/ftp/iso/RPM-GPG-KEY-CentOS-7 
+/var/ftp/iso/RPM-GPG-KEY-CentOS-7
+
+[root@H127 ~]# rpm  --import ftp://192.168.1.254/iso/RPM-GPG-KEY-CentOS-7  
+## 导入公钥 方式一
+[root@H127 ~]# echo $?
+0
+[root@H127 ~]# lftp 192.168.1.254      ## 导入公钥 方式 2
+lftp 192.168.1.254:/> cd iso/
+lftp 192.168.1.254:/iso> ls
+lftp 192.168.1.254:/iso> get  RPM-GPG-KEY-CentOS-7
+1690 bytes transferred
+lftp 192.168.1.254:/iso> exit
+[root@H127 ~]# rpm  --import  RPM-GPG-KEY-CentOS-7    ## 导入公钥 方式2
+
+****/
+yum常用问题解决
+1、如果网速慢的话可以通过增加yum的超时时间，这样就不会总是因为超时而退出。
+#vi /etc/yum.conf
+#加上这么一句
+timeout=120
+----------------------------
+------------------------------
+--------------------
+
+
+ ceph基础环境设置
+该部分除特殊说明的操作之外需在每个节点都操作。
+
+
+2.1 基础环境
+
+（1）关闭防火墙
+
+
+[root@ ~]# systemctl stop firewalld.service
+
+[root@ ~]# systemctl disable firewalld.service
+
+[root@ ~]# firewall-cmd --state
+
+
+（2）关闭selinux
+
+
+[root@ ~]# sed -i '/^SELINUX=.*/c SELINUX=disabled' /etc/selinux/config
+
+[root@ ~]# sed -i 's/^SELINUXTYPE=.*/SELINUXTYPE=disabled/g' /etc/selinux/config
+
+[root@ ~]# grep --color=auto '^SELINUX' /etc/selinux/config
+
+[root@ ~]# setenforce 0
+
+（3）设置主机名
+
+
+主机1：ceph-node1
+
+[root@ ~]# hostnamectl set-hostname ceph-node1
+
+
+主机2：ceph-node2
+
+[root@ ~]# hostnamectl set-hostname ceph-node2
+
+
+主机3：ceph-node3
+
+[root@ ~]# hostnamectl set-hostname ceph-node3
+
+（4）修改hosts文件
+
+
+[root@ceph-node1 ~]# echo '
+192.168.98.52   ceph-node1
+
+192.168.98.53   ceph-node2
+
+192.168.98.54   ceph-node3
+'>>/etc/hosts
+ 
+
+ ===================#修改/etc/hosts并同步到所有主机----------
+服务器角色
+
+服务器名称	角色
+ceph-node1	admin mon1 osd1  192.168.98.52
+ceph-node2	mon2 osd2        192.168.98.53
+ceph-node3	mon3 osd3        192.168.98.54
+
+~]# for  i  in  53  54;
+ do scp  -o  StrictHostKeyChecking=no  /etc/hosts  root@192.168.98.$i:/etc/;
+ done;
+
+
+5）设置ssh免密验证
+
+在ceph-node1节点操作，其它节点不操作。
+
+
+[root@ceph-node1 ~]# ssh-keygen
+
+[root@ceph-node1 ~]# ssh-copy-id root@ceph-node2  
+
+[root@ceph-node1 ~]# ssh-copy-id root@ceph-node3  
+
+（6）网络IP地址规划
+
+
+public network :192.168.98.0/24（52.53.54）
+
+如果还要设置 cluster network，切不可设置同网段的IP。
+
+
+
+（7）ceph-node1、ceph-node2、ceph-node3硬盘说明
+
+
+/dev/sda 作为系统盘
+
+/dev/sdb 作为数据盘
+
+/dev/sdc 作为数据盘
+
+/dev/sdd 作为数据盘
+
+
+[root@ceph-node1 ~]#  lsblk
+
+NAME     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+
+sda        8:0    0  100G  0 disk 
+
+├─sda1   8:1    0  500M  0 part /boot
+
+├─sda2   8:2    0    4G  0 part [SWAP]
+
+└─sda3   8:3    0 95.5G  0 part 
+/
+sdb       8:16   0    1T  0 disk 
+
+sdc        8:32   0    1T  0 disk 
+
+sdd        8:48   0    1T  0 disk 
+
+sr0       11:0    1  792M  0 rom  
+
+（8）磁盘格式化指令
+~]# mkfs.ext4  /dev/sd{b,c,d}   #格式化ext4文件系统类型
+
+[root@ceph-node1 ~]# mke2fs -t ext4 /dev/sdb
+
+[root@ceph-node1 ~]# mke2fs -t ext4 /dev/sdc
+
+[root@ceph-node1 ~]# mke2fs -t ext4 /dev/sdd
+
+
+服务器角色
+
+服务器名称	角色
+ceph-node1	admin mon1 osd1
+ceph-node2	mon2 osd2
+ceph-node3	mon3 osd3
+
+2.2 设置客户端源
+（1）安装wget vim工具
+[root@ceph-node1 ~]# yum install wget vim  net-tools -y
+
+（2）设置阿里源
+1.删除redhat原有的yum 源
+[root@ceph-node1 ~]# rm -f /etc/yum.repos.d/*
+
+
+2.下载yum安装文件 
+[root@ceph-node1 ~]# wget -O /etc/yum.repos.d/CentOS-Base.repo
+ http://mirrors.aliyun.com/repo/Centos-7.repo
+
+
+
+2.下载yum安装文件 
+[root@ceph-node1 ~]# wget -O /etc/yum.repos.d/epel.repo 
+http://mirrors.aliyun.com/repo/epel-7.repo
+
+
+
+[root@ceph-node1 ~]# sed -i '/aliyuncs.com/d' /etc/yum.repos.d/*.repo
+#  http://mirrors.aliyuncs.com/centos/$releasever/contrib/$basearch/
+
+
+
+（3）创建ceph源
+
+
+[root@ceph-node1 ~]# echo '
+[ceph]
+
+name=ceph
+
+baseurl=http://mirrors.aliyun.com/ceph/rpm-luminous/el7/x86_64/
+
+gpgcheck=0
+
+[ceph-noarch]
+
+name=cephnoarch
+
+baseurl=http://mirrors.aliyun.com/ceph/rpm-luminous/el7/noarch/
+
+gpgcheck=0
+
+[ceph-source]
+
+name=ceph-source
+
+baseurl=http://mirrors.aliyun.com/ceph/rpm-luminous/el7/SRPMS/
+
+gpgcheck=0
+'>/etc/yum.repos.d/ceph.repo
+
+/*****************
+配置ceph国内源
+
+修改 /etc/yum.repos.d/ceph.repo文件
+
+[ceph]
+
+name=ceph
+
+baseurl=http://mirrors.163.com/ceph/rpm-luminous/el7/x86_64/
+
+gpgcheck=0
+
+[ceph-noarch]
+
+name=cephnoarch
+baseurl=http://mirrors.163.com/ceph/rpm-luminous/el7/noarch/
+
+gpgcheck=0
+
+
+添加完更新下缓存
+
+yum makecache
+
+
+
+/**********
+[root@room9pc01 ~]# mount |grep ceph
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso on /var/ftp/ceph type iso9660 (ro,relatime)
+[root@room9pc01 ~]# df -hT /var/ftp/ceph
+文件系统       类型     容量  已用  可用 已用% 挂载点
+/dev/loop0     iso9660  936M  936M     0  100% /var/ftp/ceph
+[root@room9pc01 ~]# tail -1 /etc/fstab 
+/root/rhcs2.0-rhosp9-20161113-x86_64.iso  /var/ftp/ceph  iso9660  defaults 0  0
+[root@room9pc01 ~]# ls  /var/ftp/ceph/
+rhceph-2.0-rhel-7-x86_64        rhscon-2.0-rhel-7-x86_64
+rhel-7-server-openstack-9-rpms
+
+[root@H10 ~]# ls /etc/yum.repos.d/
+ceph.repo  redhat.repo  rhel7.repo
+[root@H10 ~]# cat /etc/yum.repos.d/ceph.repo 
+[mon]
+name=mon
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=ftp://192.168.4.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[mon-2]
+name=mon-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd-2]
+name=osd-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools-2]
+name=tools-2
+baseurl=ftp://192.168.2.254/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1 
+[root@H10 ~]# 
+**********/
+
+（4）更新缓存
+
+
+[root@ceph-node1 ~]# yum clean all && yum makecache
+
+2.3 安装时间服务器
+此处建议搭建自己的时间服务器或者使用阿里云时间服务器。
+
+
+
+（1）安装chrony服务
+
+
+[root@ceph-node1 ~]# yum -y install chrony
+
+
+（2）设置开机自启动
+
+[root@ceph-node1 ~]# systemctl enable chronyd
+[root@ceph-node1 ~]# systemctl start chronyd
+[root@ceph-node1 ~]# systemctl status chronyd
+
+（3）配置chrony文件
+
+#备份默认配置
+
+[root@ceph-node1 ~]# cp /etc/chrony.conf{,.bak} 
+
+#修改配置
+
+[root@ceph-node1 ~]# echo "
+
+server 125.39.187.70 iburst 
+
+stratumweight 0   
+
+#  stratumweight指令设置当chronyd从可用源中选择同步源时，
+每个层应该添加多少距离到同步距离。
+默认情况下，CentOS中设置为0，让chronyd在选择源时忽略源的层级
+
+driftfile /var/lib/chrony/drift 
+# 记录系统时钟获得/丢失时间的速率至drift文件中 
+#driftfile - chronyd程序的主要行为之一，
+就是根据实际时间计算出计算机增减时间的比率，将它记录到一个文件中是最合理的，
+它会在重启后为系统时钟作出补偿，
+甚至可能的话，会从时钟服务器获得较好的估值。
+  
+
+rtcsync 
+# 启用RTC（实时时钟）的内核同步
+#rtcsync - rtcsync指令将启用一个内核模式，
+在该模式中，系统时间每11分钟会拷贝到实时时钟（RTC）
+# 硬件时间
+　　RTC(Real-Time Clock)或CMOS时间，一般在主板上靠电池供电，
+服务器断电后也会继续运行。
+仅保存日期时间数值，无法保存时区和夏令时设置。
+
+# 系统时间
+　　一般在服务器启动时复制RTC时间，之后独立运行，
+保存了时间、时区和夏令时设置。
+ 
+
+makestep 10 3 
+# 如果系统时钟的偏移量大于10秒，则允许在前三次更新中步进调整系统时钟
+这里设置的阈值是10s 
+
+# makestep - 通常，chronyd将根据需求通过减慢或加速时钟，使得系统逐步纠正所有时间偏差。
+在某些特定情况下，系统时钟可能会漂移过快，
+导致该调整过程消耗很长的时间来纠正系统时钟。
+该指令强制chronyd在调整期大于某个阀值时步进调整系统时钟，
+但只有在因为chronyd启动时间超过指定限制（可使用负值来禁用限制），没有更多时钟更新时才生效。
+
+     
+
+bindcmdaddress 127.0.0.1    
+
+bindcmdaddress ::1  
+#bindcmdaddress - 该指令允许你限制chronyd监听哪个网络接口的命令包（由chronyc执行）。
+该指令通过cmddeny机制提供了一个除上述限制以外可用的额外的访问控制等级
+
+  
+
+keyfile /etc/chrony.keys    
+
+commandkey 1  
+# #指定commandkey
+ 
+
+generatecommandkey 
+##如果没有，在开始时生成新的commandkey
+
+
+noclientlog 
+# 禁用客户端访问的日志记录
+   
+
+logchange 0.5 
+# 如果时钟调整大于0.5秒，则向系统日志发送消息
+   
+
+logdir /var/log/chrony
+
+#日志文件
+
+">/etc/chrony.conf
+
+
+（4）重启chrony服务
+[root@ceph-node1 ~]# systemctl restart chronyd
+
+[root@ceph-node1 ~]# systemctl status chronyd
+
+
+（5）查看chrony同步源
+
+
+[root@ceph-node1 ~]# chronyc sources -v        
+#查看时间同步源
+
+
+[root@ceph-node1 ~]# chronyc sourcestats -v      
+ #查看时间同步源状态
+
+[root@ceph-node1 ~]# yum -y install ntpdate  #安装ntpdate
+/*****
+rpm  -q  cronie  crontabs
+编写定时任务，
+实现每3分钟向192.168.1.146同步一次时间，并将系统时间设置为硬件时间
+
+# crontab -e --> */3 * * * * /usr/sbin/ntpdate 192.168.1.146 &> /dev/null;
+/usr/sbin/hwclock -w
+/*************
+*/3 * * * * /usr/sbin/ntpdate 192.168.1.146 &> /dev/null &&
+/usr/sbin/hwclock -w
+ # crontab -e 下编辑 执行两条或者两条以上的命令
+写一个脚本，然后让脚本去执行那两条命令。
+最后把脚本放到crontab中。
+**************/
+# crontab -l  -u root  #查看定时任务
+# systemctl enable crond.service
+
+/var/log/corn  #定时任务执行日志文件
+linux crontab 文件位置在 /var/spool/cron/crontabs/ 中
+
+***********/
+[root@ceph-node1 ~]# ntpdate ntp.aliyun.com
+ #手动同步时间
+[root@ceph-node1 ~]# hwclock -w
+    #将系统时间设置为硬件时间
+[root@ceph-node1 ~]# date
+
+[root@ceph-node1 ~]# reboot
+
+注意：ceph-deploy只需要在admin/deploy node上安装即可。
+
+2、前置设置
+和安装k8s一样，在ceph-deploy真正执行安装之前，
+需要确保所有Ceph node都要开启NTP，
+同时建议在每个node节点上为安装过程创建一个安装账号，
+即ceph-deploy在ssh登录到每个Node时所用的账号。
+这个账号有两个约束：
+具有sudo权限；执行sudo 命令无需输入密码
+
+
+
+3 部署ceph集群
+
+（1）ceph-node1上安装ceph-deploy配置工具
+
+
+
+[root@ceph-node1 ~]# yum install ceph-deploy  -y
+
+
+（2）ceph-node1上创建ceph工作目录
+
+
+[root@ceph-node1 ~]# mkdir /etc/ceph
+
+[root@ceph-node1 ~]# cd /etc/ceph/
+
+
+（3）ceph-node1上初始化Mon配置
+
+
+[root@ceph-node1 ~]# ceph-deploy new ceph-node1 ceph-node2 ceph-node3
+
+
+
+如果报错 执行 yum install python-setuptools -y。
+/******************
+#ceph优化记录 ceph.conf优化详解 
+swappiness, 主要控制系统对swap的使用
+echo “vm.swappiness = 0″>> /etc/sysctl.conf ;  sysctl –p
+
+read_ahead, 通过数据预读并且记载到随机访问内存方式提高磁盘读操作
+echo “8192” > /sys/block/sda/queue/read_ahead_kb
+
+[global]#全局设置
+fsid = xxxxxxxxxxxxxxx #集群标识ID 
+mon host = 10.0.1.1,10.0.1.2,10.0.1.3 #monitor IP 地址
+auth cluster required = cephx #集群认证
+auth service required = cephx #服务认证
+auth client required = cephx #客户端认证
+osd pool default size = 3 #最小副本数 默认是3
+osd pool default min size = 1 #PG 处于 degraded 状态不影响其 IO 能力,min_size是一个PG能接受IO的最小副本数
+public network = 10.0.1.0/24   #公共网络(monitorIP段) 
+cluster network = 10.0.2.0/24  #集群网络
+max open files = 131072 #默认0#如果设置了该选项，Ceph会设置系统的max open fds
+mon initial members = node1, node2, node3 #初始monitor (由创建monitor命令而定)
+
+##############################################################
+
+
+
+****************/
+http://docs.ceph.com/docs/hammer/rados/operations/monitoring-osd-pg/
+
+（4）ceph-node1上修改ceph.conf配置文件
+
+
+
+[root@ceph-node1 ~]# echo  '
+
+
+public network = 192.168.98.0/24
+    #公共网络(monitorIP段)
+mon_clock_drift_allowed = 2         #默认值0.05#monitor间的clock drift  
+   /*********** ## driftfile /var/lib/chrony/drift 
+   # 记录系统时钟获得/丢失时间的速率至drift文件中 *****/
+ 
+
+osd_journal_size = 4096
+         #默认5120 #osd journal大小
+osd_pool_default_pg_num = 128   # pg数(注：如果这个数目没达到，ceph不会通知客户端写操作已经完成) 
+osd_pool_default_pgp_num = 128  
+   #pgp数(注：如果这个数目没达到，ceph不会通知客户端写操作已经完成)
+
+osd pool default size = 3      #最小副本数 默认是3
+osd pool default min size = 1
+          # PG 处于 degraded 状态不影响其 IO 能力,
+           # min_size是一个PG能接受IO的最小副本数
+
+rbd_default_features = 1
+  #仅是layering 对应的bit码所对应的整数值
+/***** 首先查看下系统内核是否支持rbd，
+如果有错误提示，说明内核不支持，需要升级内核
+# modprobe rbd
+
+ #Ceph RBD（Rados Block Device)
+ # 设置完成后,可以查看配置变化
+  # ceph  --show-config |grep rbd |grep  features
+## rbd_default_features = 1
+
+/************ 更新k8s用户权限
+# ceph auth caps client.k8s mon  'allow rwx'  
+  osd  'allow rwx pool=k8s, allow rw pool=cephfs_data'
+  mds  'allow rwp'
+
+如果还没有创建k8s用户，则使用下面的命令创建：
+# ceph auth get-or-create client.k8s mon 'allow rwx'
+  osd  'allow rwx pool=k8s, allow rw pool=cephfs_data'
+  mds 'allow rwp' -o   ceph.client.k8s.keyring
+*************/
+
+client_quota = true
+
+#是用于管理数据库的，这里是开启用户对应的数据库
+
+mon clock drift  allowed = 2
+ # ceph监视器时钟设置monitor间的允许时钟偏移最大值
+ # #默认值0.05#monitor间的clock drift
+
+mon clock drift warn backoff = 30 
+
+#修改ceph配置中的时间偏差阈值
+ #时钟漂移 最大值30 警告后退
+
+/***** ceph 官网文档 ******************
+http://docs.ceph.com/docs/hammer/rados/configuration/mon-config-ref/#clock
+/******ceph 监视器时钟偏差问题*********
+向需要同步的mon节点推送配置文件：
+ceph-deploy --overwrite-conf config push node{1..3}
+ceph-deploy --overwrite-conf admin ceph1 ceph2 ceph3
+
+重启mon服务（centos7环境下）
+systemctl restart ceph-mon.target
+重启monitor
+systemctl restart ceph-mon@ceph1.service
+4.验证：
+ceph -s
+显示health_ok说明问题解决
+************/
+/*****************
+Monitor调优参数定义在Ceph集群配置文件的[mon]部分下。
+ 
+▶ mon osd down out interval：
+指定Ceph在OSD守护进程的多少秒时间内没有响应后标记其为“down”或“out”状态。
+当你的OSD节点崩溃、自行重启或者有短时间的网络故障时，这个选项就派上用场了。
+你不想让集群在问题出现时就立刻启动数据平衡（rebalancing），
+而是等待几分钟观察问题能否解决。
+ 
+mon_osd_down_out_interval = 600
+
+ 
+▶ mon allow pool delete：
+要避免Ceph 存储池的意外删除，请设置这个参数为false。
+当你有很多管理员管理这个Ceph集群，
+而你又不想为客户数据承担任何风险时，这个参数将派上用场。
+ 
+mon_allow_pool_delete = false 
+
+
+▶ mon osd min down reporters：
+如果Ceph OSD守护进程监控的OSD down了，
+它就会向MON报告；缺省值为1，表示仅报告一次。
+使用这个选项，可以改变
+Ceph OSD进程需要向Monitor报告一个down掉的OSD的最小次数。
+在一个大集群中，建议使用一个比缺省值大的值，3是一个不错的值。
+ 
+mon_osd_min_down_reporters = 3
+
+***********/
+
+[mon]
+
+mon allow pool delete = true 
+#要避免Ceph 存储池的意外删除，请设置这个参数为false
+
+/*************ceph 新功能 ceph mgr dashboard
+
+服务器名称	角色
+ceph-node1	admin mon1 osd1  192.168.98.52
+ceph-node2	mon2 osd2        192.168.98.53
+ceph-node3	mon3 osd3        192.168.98.54
+
+开启监控模块
+在/etc/ceph/ceph.conf中添加
+
+[mgr]
+
+mgr modules = dashboard
+
+
+设置dashboard的ip和端口
+
+ceph config-key put mgr/dashboard/server_addr 192.168.
+98.52
+ceph config-key put mgr/dashboard/server_port 7000
+
+
+这个从代码上看应该是可以支持配置文件方式的设置，
+目前还没看到具体的文档，先按这个设置即可，
+默认的端口是7000
+
+重启mgr服务
+
+[root@zhuji ceph]# systemctl restart ceph-mgr@zhuji
+
+************/
+
+[mgr]
+
+mgr modules = dashboard 
+   # 开启监控模块
+'>> /etc/ceph/ceph.conf
+
+
+（5）ceph-node1上安装ceph软件包
+[root@ceph-node1 ~]# ceph-deploy install ceph-node1 ceph-node2 ceph-node3
+
+
+（6）ceph-node1上初始化monitor和key
+
+
+ # 初始化所有节点的mon服务（主机名解析必须对）
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf mon create-initial
+
+
+（7）查看初始化结果
+
+
+ [root@ceph-node1 ceph]#ceph  -s
+
+/****************
+创建 keyring
+
+
+# ceph-authtool --create-keyring 
+  /tmp/ceph.mon.keyring --gen-key -n mon. 
+  --cap mon 'allow *'
+
+
+
+
+ 生成管理员 keyring
+
+
+# ceph-authtool --create-keyring 
+ /etc/ceph/ceph.client.admin.keyring 
+ --gen-key -n client.admin --set-uid=0 
+ --cap mon 'allow *' --cap osd 'allow *' --cap mds 'allow'
+
+
+
+将 client.admin key 导入 ceph.mon.keyring
+
+# ceph-authtool /tmp/ceph.mon.keyring --import-keyring
+   /etc/ceph/ceph.client.admin.keyring
+
+
+*************/
+
+（8）ceph-node1拷贝配置及密钥
+
+
+[root@ceph-node1 ~]# ceph-deploy admin ceph-node1 ceph-node2 ceph-node3
+
+[root@ceph-node1 ~]# chmod 644 /etc/ceph/ceph.client.admin.keyring
+
+/*******************
+[root@H11 ~]# ssh-keygen  -f  /root/.ssh/id_rsa  -N  ''
+..........................
+[root@H11 ~]# for i in {10..13};do  ssh-copy-id  192.168.4.$i; done;
+
+***********************/
+（9）查看硬盘分区情况
+
+
+分别在ceph-node1、ceph-node2、ceph-node3主机上查看硬盘分区情况。
+
+
+
+[root@ceph-node1 ceph]# lsblk
+
+NAME     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+
+sda        8:0    0  100G  0 disk 
+
+├─sda1   8:1    0  500M  0 part /boot
+
+├─sda2   8:2    0    4G  0 part [SWAP]
+
+└─sda3   8:3    0 95.5G  0 part /
+
+sdb        8:16   0    1T  0 disk
+
+sdc        8:32   0    1T  0 disk 
+
+sdd        8:48   0    1T  0 disk 
+
+sr0       11:0    1  792M  0 rom  
+
+/*************
+----------------初始化清空磁盘数据（仅H11 操作即可）
+[root@H11 ceph-cluster]# ceph-deploy disk  zap  H11:vdc   H11:vdd
+[root@H11 ceph-cluster]# ceph-deploy disk  zap  H12:vdc   H12:vdd
+
+[root@H11 ceph-cluster]# ceph-deploy disk  zap  H13:vdc   H13:vdd
+*************************/
+
+（10）清除磁盘数据
+
+
+分别在ceph-node1、
+ceph-node2、
+ceph-node3
+主机上
+清除sdb、sdc、sdd的数据。
+
+
+[root@ceph-node1 ~]# ceph-volume lvm zap /dev/sdb
+
+[root@ceph-node1 ~]# ceph-volume lvm zap /dev/sdc
+
+[root@ceph-node1 ~]# ceph-volume lvm zap /dev/sdd
+
+
+（11）ceph-node1执行添加OSD
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdb ceph-node1
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdc ceph-node1
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdd ceph-node1
+
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdb ceph-node2
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdc ceph-node2
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdd ceph-node2
+
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdb ceph-node3
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdc ceph-node3
+
+[root@ceph-node1 ~]# ceph-deploy osd create --data /dev/sdd ceph-node3
+
+/*************
+---------------------------------创建OSD存储空间（仅H11 操作即可）
+[root@H11 ceph-cluster]# ceph-deploy  osd  create  H11:vdc:/dev/vdb1  H11:vdd:/dev/vdb2
+
+----------------------------------创建OSD存储空间
+[root@H11 ceph-cluster]# ceph-deploy  osd  create  H12:vdc:/dev/vdb1  H12:vdd:/dev/vdb2
+
+-----------------------------------创建OSD存储空间
+[root@H11 ceph-cluster]# ceph-deploy  osd  create  H13:vdc:/dev/vdb1  H13:vdd:/dev/vdb2
+
+*************/
+
+（12）ceph-node1上使得每个节点的ceph配置一致及赋予权限
+
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf admin ceph-node1 ceph-node2 ceph-node3
+
+[root@ceph-node1 ~]# chmod 644 /etc/ceph/ceph.client.admin.keyring
+
+（13）ceph-node1上创建mon
+
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf mon create ceph-node1
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf admin ceph-node1
+
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf mon create ceph-node2
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf admin ceph-node2
+
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf mon create ceph-node3
+
+[root@ceph-node1 ~]# ceph-deploy --overwrite-conf admin ceph-node3
+
+
+14）ceph-node1上添加mgr
+
+[root@ceph-node1 ~]# ceph-deploy mgr create ceph-node1
+
+[root@ceph-node1 ~]# ceph-deploy mgr create ceph-node2
+
+[root@ceph-node1 ~]# ceph-deploy mgr create ceph-node3
+
+
+ceph 12版本开始，monitor必须添加mgr。
+
+（15）ceph-node1上开启 dashboard
+
+
+[root@ceph-node1 ceph]# ceph mgr module enable dashboard
+
+
+[root@ceph-node1 ceph]# netstat -antpl | grep ceph-mgr | grep LISTEN
+
+tcp   0  0 192.168.98.52:6806  0.0.0.0:*   LISTEN   3758/ceph-mgr  
+
+tcp6  0  0 :::7000                 :::*    LISTEN   3758/ceph-mgr 
+
+（16）访问dashboard
+使用浏览器访问：http://IP:Port，如：http://192.168.98.52:7000/
+
+Cluster health
+http://192.168.98.52:7000/health
+
+OSD daemons
+http://192.168.98.52:7000/osd/
+
+Block Mirroring
+http://192.168.98.52:7000/rbd_mirroring
+
+（17）ceph-node1上创建 vms volumes images
+
+
+[root@ceph-node1 ceph]# ceph osd pool create vms 128
+
+[root@ceph-node1 ceph]# ceph osd pool application enable vms rbd
+
+
+
+[root@ceph-node1 ceph]# ceph osd pool create volumes 128
+
+[root@ceph-node1 ceph]# ceph osd pool application enable volumes rbd
+
+
+
+[root@ceph-node1 ceph]# ceph osd pool create images 128
+
+[root@ceph-node1 ceph]# ceph osd pool application enable images rbd
+
+[root@ceph-node1 ceph]# ceph mgr  module  enable  dashboard
+
+
+（18）ceph-node1上查看pool
+
+[root@ceph-node1 ceph]# ceph osd lspools
+
+  1Byte=8bit　　  1KB=1024B
+ 　 1MB=1024KB　　1GB=1024MB
+MB：计量单位中的M(兆)是10的6次方
+                1024*1024=104 8,576            = 1MB
+           1024*1024*1024=10 7374 1824         = 1GB   ~十亿
+      1024*1024*1024*1024=1 0995 1162 7776     = 1TB   ~万亿
+----------在现阶段的TB时代，1TB的硬盘的标准重量是670g 
+
+      1024*1024*1024*1024*1024=1125,8999, 0684 2624 = 1PB   ~千万亿
+ 1024*1024*1024*1024*1024*1024=1.152 921 504 606 847e+18=1EB~百亿亿
+ 1000*1000*1000*1000*1000*1000=10^18=1.e+18=100亿亿
+ 1000*1000*1000*1000*1000*10  =      1.e+16=1亿亿
+ 1000*1000*1000*1000*1000*10=1,0000 0000,0000 0000=1.e+16=1亿亿
+　　1TB=1024GB　　1PB=1024TB
+在现阶段的TB时代，1TB的硬盘的标准重量是670g 
+　　1EB=1024PB
+　　1ZB=1024EB　　1YB=1024ZB
+
+Ceph工作原理详解
+https://blog.csdn.net/krias7/article/details/79112262
+一 、Ceph概述
+
+1.  一个Linux PB级 [1PB ~千万亿] 分布式文件系统，
+Linux持续不断进军可扩展计算空间，特别是可扩展存储空间。
+Ceph 加入到 Linux 中令人印象深刻的文件系统备选行列，
+它是一个分布式文件系统，
+能够在维护 POSIX 兼容性的同时加入了复制和容错功能。
+
+2.Ceph 可以同时提供
+对象存储(RADOSGW)、块存储（RBD）、文件系统存储（Ceph FS）三种功能，
+以此满足不同场景的应用需求。
+
+3.优点：  可轻松扩展到数 PB 容量， 
+ 对多种工作负载的高性能（每秒输入/输出操作[IOPS]和带宽），  高可靠性。
+不幸的是，这些目标之间会互相竞争
+（例如，可扩展性会降低或者抑制性能或者影响可靠性）。
+Ceph 开发了一些非常有趣的概念（例如，动态元数据分区，数据分布和复制）。
+Ceph 的设计还包括保护单一点故障的容错功能，
+它假设大规模（PB 级存储） [1PB ~千万亿] 存储故障是常见现象而不是例外情况。
+最后，它的设计并没有假设某种特殊工作负载，
+但是包括适应变化的工作负载，提供最佳性能的能力。
+它利用 POSIX 的兼容性完成所有这些任务，
+允许它对当前依赖 POSIX 语义（通过以 Ceph 为目标的改进）的应用进行透明的部署。
+
+二、 Ceph架构
+https://blog.csdn.net/krias7/article/details/79112262
+
+1. Ceph 生态系统可以大致划分为四部分（见图 1）：
+客户端（数据用户），
+元数据服务器（缓存和同步分布式元数据），
+一个对象存储集群（将数据和元数据作为对象存储，执行其他关键职能），
+以及最后的集群监视器（执行监视功能）。
+
+
+2. 如图 1 所示，客户使用元数据服务器，执行元数据操作（来确定数据位置）。
+元数据服务器管理数据位置，以及在何处存储新数据。
+值得注意的是，元数据存储在一个存储集群（标为 “元数据 I/O”）。
+实际的文件 I/O 发生在客户和对象存储集群之间。
+这样一来，更高层次的 POSIX 功能（例如，打开、关闭、重命名）就由元数据服务器管理，
+不过 POSIX 功能（例如读和写）则直接由对象存储集群管理。
+
+3.另一个架构视图由图 2 提供。
+一系列服务器通过一个客户界面访问 Ceph 生态系统，
+这就明白了元数据服务器和对象级存储器之间的关系。
+分布式存储系统可以在一些层中查看，
+包括一个存储设备的格式
+（Extent and B-tree-based Object File System [EBOFS] 或者一个备选）
+，还有一个设计用于管理数据复制，故障检测，恢复，
+以及随后的数据迁移的覆盖管理层，
+叫做 Reliable Autonomic Distributed Object Storage（RADOS）。
+最后，监视器用于识别组件故障，
+包括随后的通知。
+
+
+
+三、 Ceph组件
+
+1.   了解了 Ceph 的概念架构之后，您可以挖掘到另一个层次，
+了解在 Ceph 中实现的主要组件。
+Ceph 和传统的文件系统之间的重要差异之一就是，
+它将智能都用在了生态环境而不是文件系统本身。
+
+ 2.  图 3 显示了一个简单的 Ceph 生态系统。
+Ceph Client 是 Ceph 文件系统的用户。
+Ceph Metadata Daemon 提供了元数据服务器，
+而 Ceph Object Storage Daemon 提供了实际存储（对数据和元数据两者）。
+最后，Ceph Monitor 提供了集群管理。
+要注意的是，Ceph 客户，对象存储端点，
+元数据服务器（根据文件系统的容量）可以有许多，
+而且至少有一对冗余的监视器。
+那么，这个文件系统是如何分布的呢？
+
+
+3. Ceph客户端--  
+因为 Linux 显示文件系统的一个公共界面（通过虚拟文件系统交换机 [VFS]），
+Ceph 的用户透视图就是透明的。
+管理员的透视图肯定是不同的，
+考虑到很多服务器会包含存储系统这一潜在因素
+（要查看更多创建 Ceph 集群的信息，见 参考资料 部分）。
+从用户的角度看，
+他们访问大容量的存储系统，
+却不知道下面聚合成一个大容量的存储池的元数据服务器，监视器，还有独立的对象存储设备。
+用户只是简单地看到一个安装点，
+在这点上可以执行标准文件 I/O。
+
+4.Ceph文件系统-- 
+ 或者至少是客户端接口
+ — 在 Linux 内核中实现。
+值得注意的是，在大多数文件系统中，
+所有的控制和智能在内核的文件系统源本身中执行。
+但是，在 Ceph 中，文件系统的智能分布在节点上，这简化了客户端接口，
+并为 Ceph 提供了大规模（甚至动态）扩展能力。
+
+5. Ceph-- 使用一个有趣的备选，
+而不是依赖分配列表（将磁盘上的块映射到指定文件的元数据）。
+Linux 透视图中的一个文件会分配到一个来自元数据服务器的 inode number（INO），
+对于文件这是一个唯一的标识符。
+然后文件被推入一些对象中（根据文件的大小）。
+使用 INO 和 object number（ONO），每个对象都分配到一个对象 ID（OID）。
+在 OID 上使用一个简单的哈希，
+每个对象都被分配到一个放置组。
+放置组（标识为 PGID）是一个对象的概念容器。
+最后，放置组到对象存储设备的映射是一个伪随机映射，
+使用一个叫做 Controlled Replication Under Scalable Hashing（CRUSH）的算法。
+这样一来，放置组（以及副本）到存储设备的映射就不用依赖任何元数据，
+而是依赖一个伪随机的映射函数。
+这种操作是理想的，
+因为它把存储的开销最小化，简化了分配和数据查询。
+
+分配的最后组件是集群映射。
+集群映射 是设备的有效表示，显示了存储集群。
+有了 PGID 和集群映射，您就可以定位任何对象。
+
+6.Ceph元数据服务器--  
+元数据服务器（cmds）的工作就是管理文件系统的名称空间。
+虽然元数据和数据两者都存储在对象存储集群，但两者分别管理，支持可扩展性。
+事实上，元数据在一个元数据服务器集群上被进一步拆分，
+元数据服务器能够自适应地复制和分配名称空间，避免出现热点。
+如图 4 所示，元数据服务器管理名称空间部分，可以（为冗余和性能）进行重叠。
+元数据服务器到名称空间的映射在 Ceph 中使用动态子树逻辑分区执行，
+它允许 Ceph 对变化的工作负载进行调整（在元数据服务器之间迁移名称空间）
+同时保留性能的位置
+ 
+
+7.Ceph监视器--  
+Ceph 包含实施集群映射管理的监视器，
+但是故障管理的一些要素是在对象存储本身中执行的。
+当对象存储设备发生故障或者新设备添加时，
+监视器就检测和维护一个有效的集群映射。
+这个功能按一种分布的方式执行，
+这种方式中映射升级可以和当前的流量通信。
+Ceph 使用 Paxos，它是一系列分布式共识算法。
+
+
+
+
+
+
+
+
+
+

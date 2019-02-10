@@ -1,0 +1,1038 @@
+
+
+[root@H10 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    5G  0 disk 
+vdd           252:48   0    5G  0 disk 
+[root@H10 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.10
+192.168.2.10
+127.0.0.1
+192.168.122.1
+[root@H10 ~]#
+[root@H10 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+[root@H10 ~]#
+[root@H10 ~]# mkdir /cephfs
+
+[root@H10 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap
+[root@H10 ~]# cat /etc/ceph/ceph.client.admin.keyring 
+[client.admin]
+	key = AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+
+[root@H10 ~]# mount -t ceph  192.168.4.11:6789:/  /cephfs/  -o  name=admin,secret=AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+[root@H10 ~]# mount |grep cephfs
+192.168.4.11:6789:/ on /cephfs type ceph (rw,relatime,name=admin,secret=<hidden>,acl)
+[root@H10 ~]# 
+[root@H10 ~]# df -hT |grep cephfs
+192.168.4.11:6789:/   ceph       60G   12G   49G   20% /cephfs
+[root@H10 ~]# 
+[root@H10 ~]# elinks -dump http://192.168.4.15
+   anonymous
+[root@H10 ~]# echo $?
+0
+[root@H10 ~]# curl http://192.168.4.15
+<?xml version="1.0" encoding="UTF-8"?><ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>anonymous</ID><DisplayName></DisplayName></Owner><Buckets></Buckets></ListAllMyBucketsResult>[root@H10 ~]# 
+[root@H10 ~]# 
+[root@H10 ~]# firefox  http://192.168.4.15
+http://192.168.4.15/
+<ListAllMyBucketsResult><Owner><ID>anonymous</ID><DisplayName/></Owner><Buckets/></ListAllMyBucketsResult>
+
+[root@H10 ~]# ll s3cmd-2.0.1-1.el7.noarch.rpm 
+-rw-r--r--. 1 root root 190956 10月 10 21:05 s3cmd-2.0.1-1.el7.noarch.rpm
+
+[root@H10 ~]# yum -y install /root/s3cmd-2.0.1-1.el7.noarch.rpm 
+已安装:
+  s3cmd.noarch 0:2.0.1-1.el7                                                                     
+
+完毕！
+[root@H10 ~]# rpm -q  s3cmd
+s3cmd-2.0.1-1.el7.noarch
+[root@H10 ~]# 
+[root@H10 ~]# s3cmd  --configure
+
+Enter new values or accept defaults in brackets with Enter.
+Refer to user manual for detailed description of all options.
+
+Access key and Secret key are your identifiers for Amazon S3. Leave them empty for using the env variables.
+/**********Access Key 和  Secret Key 的来源
+[root@H15 ceph]# radosgw-admin  user info   --uid=testuser
+    "keys": [
+        {
+            "user": "testuser",
+            "access_key": "ZBH0TWA10EQP9RXWWCZK",
+            "secret_key": "nrFyntmThCkhh0i1Lb0A0voquhDj0WMYDX73evMG"
+        }
+***********/
+Access Key: ZBH0TWA10EQP9RXWWCZK
+Secret Key: nrFyntmThCkhh0i1Lb0A0voquhDj0WMYDX73evMG
+Default Region [US]:  回车
+
+Use "s3.amazonaws.com" for S3 Endpoint and not modify it to the target Amazon S3.
+S3 Endpoint [s3.amazonaws.com]: 192.168.4.15:80
+
+Use "%(bucket)s.s3.amazonaws.com" to the target Amazon S3. "%(bucket)s" and "%(location)s" vars can be used
+if the target S3 system supports dns based buckets.
+/*********[root@H15 ceph]# cat /etc/ceph/ceph.conf
+          [client.rgw.H15]
+          host = H15
+          rgw_frontends = "civetweb  port=80"
+          [global]  ###  %(bucket)s.192.168.4.15:80 的来源
+**********************************************/
+DNS-style bucket+hostname:port template for accessing a bucket [%(bucket)s.s3.amazonaws.com]: %(bucket)s.192.168.4.15:80
+
+Encryption password is used to protect your files from reading
+by unauthorized persons while in transfer to S3
+Encryption password: 回车
+Path to GPG program [/usr/bin/gpg]: 回车
+
+When using secure HTTPS protocol all communication with Amazon S3
+servers is protected from 3rd party eavesdropping. This method is
+slower than plain HTTP, and can only be proxied with Python 2.7 or newer
+Use HTTPS protocol [Yes]: No
+
+On some networks all internet access must go through a HTTP proxy.
+Try setting it here if you can't connect to S3 directly
+HTTP Proxy server name: 回车
+
+New settings:
+  Access Key: ZBH0TWA10EQP9RXWWCZK
+  Secret Key: nrFyntmThCkhh0i1Lb0A0voquhDj0WMYDX73evMG
+  Default Region: US
+  S3 Endpoint: 192.168.4.15:80
+  DNS-style bucket+hostname:port template for accessing a bucket: %(bucket)s.192.168.4.15:80
+  Encryption password: 
+  Path to GPG program: /usr/bin/gpg
+  Use HTTPS protocol: False
+  HTTP Proxy server name: 
+  HTTP Proxy server port: 0
+
+Test access with supplied credentials? [Y/n] Y
+Please wait, attempting to list all buckets...
+Success. Your access key and secret key worked fine :-)
+
+Now verifying that encryption works...
+Not configured. Never mind.
+
+Save settings? [y/N] y
+Configuration saved to '/root/.s3cfg'
+[root@H10 ~]# s3cmd ls
+[root@H10 ~]# ls /root/.s3cfg 
+/root/.s3cfg
+[root@H10 ~]# ll /root/.s3cfg
+-rw-------. 1 root root 2013 10月 12 17:46 /root/.s3cfg
+[root@H10 ~]# vim /root/.s3cfg
+[root@H10 ~]# head -3 /root/.s3cfg
+[default]
+access_key = ZBH0TWA10EQP9RXWWCZK
+access_token = 
+[root@H10 ~]# s3cmd mb s3://my_bucket
+Bucket 's3://my_bucket/' created
+[root@H10 ~]# s3cmd ls
+2018-10-12 09:49  s3://my_bucket
+[root@H10 ~]# ls
+
+[root@H10 ~]# echo "test s3cmd"> test.txt
+[root@H10 ~]# s3cmd  put test.txt s3://my_bucket/log/
+upload: 'test.txt' -> 's3://my_bucket/log/test.txt'  [1 of 1]
+ 11 of 11   100% in    2s     3.71 B/s  done
+[root@H10 ~]# s3cmd ls s3://my_bucket/
+                       DIR   s3://my_bucket/log/
+[root@H10 ~]# mkdir /test
+[root@H10 ~]# s3cmd  get  s3://my_bucket/log/test.txt  /test
+download: 's3://my_bucket/log/test.txt' -> '/test/test.txt'  [1 of 1]
+ 11 of 11   100% in    0s  1458.89 B/s  done
+[root@H10 ~]# ls /test/
+test.txt
+[root@H10 ~]# s3cmd ls s3://my_bucket/log/
+2018-10-12 09:52        11   s3://my_bucket/log/test.txt
+
+[root@H10 ~]# s3cmd del s3://my_bucket/log/test.txt
+delete: 's3://my_bucket/log/test.txt'
+[root@H10 ~]# s3cmd ls s3://my_bucket/log/
+[root@H10 ~]# echo $?
+0
+[root@H10 ~]# 
+
+
+
+
+
+
+
+
+
+
+=====================真机 ------- 物理机===========
+[root@room9pc01 ~]# lsblk 
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 931.5G  0 disk 
+├─sda1   8:1    0   200G  0 part /var/lib/libvirt/images
+└─sda2   8:2    0   120G  0 part /
+loop0    7:0    0 935.4M  0 loop /var/ftp/ceph
+loop1    7:1    0   3.8G  0 loop /var/ftp/rhel7
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# ifconfig |awk '/inet /{print $2}'
+176.121.213.81
+127.0.0.1
+192.168.4.254
+192.168.2.254
+201.1.1.254
+201.1.2.254
+172.25.254.250
+172.25.0.250
+192.168.122.1
+[root@room9pc01 ~]# yum repolist |tail -6
+源标识                               源名称                                状态
+mon                                  mon                                      41
+osd                                  osd                                      28
+rhel7                                rhel7.4                               4,986
+tools                                tools                                    33
+repolist: 5,088
+[root@room9pc01 ~]# ls /etc/yum.repos.d/
+ceph.repo  NSD-2018-1-12.tar.gz  packagekit-media.repo  repo  rhel7.repo
+[root@room9pc01 ~]# cat /etc/yum.repos.d/ceph.repo 
+[mon]
+name=mon
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/MON/
+gpgcheck=0
+enabled=1
+[osd]
+name=osd
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/OSD/
+gpgcheck=0
+enabled=1
+[tools]
+name=tools
+baseurl=file:///var/ftp/ceph/rhceph-2.0-rhel-7-x86_64/Tools/
+gpgcheck=0
+enabled=1
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]# yum -y install ceph-common |tail -4
+作为依赖被升级:
+  librados2.x86_64 1:10.2.2-38.el7cp      librbd1.x86_64 1:10.2.2-38.el7cp     
+
+完毕！
+[root@room9pc01 ~]# rpm -q ceph-common
+ceph-common-10.2.2-38.el7cp.x86_64
+
+[root@room9pc01 ~]# ls /etc/ce
+centos-release           centos-release-upstream  ceph/
+[root@room9pc01 ~]# ls /etc/ceph/
+rbdmap
+[root@room9pc01 ~]# scp 192.168.4.11:/etc/ceph/ceph.conf  /etc/ceph/
+root@192.168.4.11's password: 
+ceph.conf                                     100%  229     1.3MB/s   00:00    
+[root@room9pc01 ~]# scp 192.168.4.11:/etc/ceph/ceph.client.admin.keyring   /etc/ceph/
+root@192.168.4.11's password: 
+ceph.client.admin.keyring                     100%   63   273.5KB/s   00:00    
+[root@room9pc01 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap
+
+[root@room9pc01 ~]# cat /etc/ceph/ceph.conf 
+[global]
+fsid = 67af21ee-ae35-4203-a84c-69521a07edc9
+mon_initial_members = H11, H12, H13
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+
+[root@room9pc01 ~]# cat /etc/ceph/ceph.client.admin.keyring 
+[client.admin]
+	key = AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+[root@room9pc01 ~]#
+/*************************** 
+[root@room9pc01 ~]# virt-manager
+[root@room9pc01 ~]# echo $?
+0 
+[root@room9pc01 ~]# ls /etc/libvirt/qemu
+qemu/            qemu.conf        qemu-lockd.conf  
+[root@room9pc01 ~]# ls /etc/libvirt/qemu/
+H10.xml  H13.xml  H16.xml     Host11.xml  Host14.xml  Host17.xml
+H11.xml  H14.xml  H17.xml     Host12.xml  Host15.xml  networks
+H12.xml  H15.xml  Host10.xml  Host13.xml  Host16.xml  xxx.xml
+[root@room9pc01 ~]# ll /var/lib/libvirt/images/xxx.qcow2 
+-rw------- 1 root root 9665380352 10月 12 09:55 /var/lib/libvirt/images/xxx.qcow2
+[root@room9pc01 ~]#
+[root@room9pc01 ~]# ls /etc/libvirt/
+libvirt-admin.conf  lxc.conf  qemu.conf        virtlockd.conf
+libvirt.conf        nwfilter  qemu-lockd.conf  virtlogd.conf
+libvirtd.conf       qemu      storage
+[root@room9pc01 ~]# ls /var/lib/libvirt/
+boot  dnsmasq  filesystems  images  lxc  network  qemu
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/
+bin          H12.qcow2       Host11.qcow2    rh7_node14.img
+conf.d       H13-1.qcow2     Host12-1.qcow2  rh7_node15.img
+content      H13-2.qcow2     Host12-2.qcow2  rh7_node16.img
+db           H13-3.qcow2     Host12-3.qcow2  rh7_node1.img
+exam         H13-4.qcow2     Host12.qcow2    rh7_node2.img
+H10-1.qcow2  H13-5.qcow2     Host13-1.qcow2  rh7_node3.img
+[root@room9pc01 ~]# ls /var/lib/libvirt/images/qemu/
+networks  win2008.xml
+[root@room9pc01 ~]# ll /var/lib/libvirt/images/xxx.qcow2 
+-rw------- 1 root root 9665380352 10月 12 09:55 /var/lib/libvirt/images/xxx.qcow2
+[root@room9pc01 ~]#
+**************************/
+[root@room9pc01 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap
+[root@room9pc01 ~]# cat /etc/ceph/ceph.client.admin.keyring 
+[client.admin]
+	key = AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+[root@room9pc01 ~]# 
+
+[root@room9pc01 ~]# vim /root/secret.xml   #新建临时文件
+[root@room9pc01 ~]# cat /root/secret.xml
+<secret ephemeral='no' private='no'>
+ <usage type='ceph'>
+  <name>client.admin secret</name>
+ </usage>
+</secret>
+## /etc/ceph/ceph.client.admin.keyring必须名字统一 [client.admin]必须名字统一
+============#使用XML配置文件创建secret
+[root@room9pc01 ~]# virsh secret-define  --file secret.xml #生成UUID
+生成 secret 092a73ed-f73a-4b9f-b538-d40e71359edf
+
+[root@room9pc01 ~]#
+[root@room9pc01 ~]# virsh secret-undefine 092a73ed-f73a-4b9f-b538-d40e71359edf
+已删除 secret 092a73ed-f73a-4b9f-b538-d40e71359edf
+
+[root@room9pc01 ~]# virsh secret-define  --file  secret.xml #生成UUID
+生成 secret 9c0053c1-0975-4044-86e2-5d37f1d18551
+
+[root@room9pc01 ~]# 
+[root@room9pc01 ~]#  ceph auth get-key client.admin  #用命令获取key 账户密码
+AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==[root@room9pc01 ~]# 
+[root@room9pc01 ~]# cat /etc/ceph/ceph.client.admin.keyring # 在配置文件中查看key
+[client.admin]
+	key = AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+[root@room9pc01 ~]# ###########
+[root@room9pc01 ~]# virsh secret-undefine 9c0053c1-0975-4044-86e2-5d37f1d18551
+已删除 secret 9c0053c1-0975-4044-86e2-5d37f1d18551
+
+[root@room9pc01 ~]# virsh secret-define  --file  secret.xml #生成UUID
+生成 secret b1316c82-9e10-457e-81f5-cfd5db8b09c7
+==============#######注意 [ -- ] 和 [ == ]
+[root@room9pc01 ~]# virsh secret-set-value  --secret   b1316c82-9e10-457e-81f5-cfd5db8b09c7  --base64  AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+secret 值设定
+[root@room9pc01 ~]# virsh secret-list
+ UUID                                  用量
+--------------------------------------------------------------------------------
+ b1316c82-9e10-457e-81f5-cfd5db8b09c7  ceph client.admin secret
+
+[root@room9pc01 ~]# cd /etc/ceph/
+[root@room9pc01 ceph]# ls
+ceph.client.admin.keyring  ceph.conf  rbdmap
+[root@room9pc01 ceph]# virsh dumpxml xxx  > /tmp/avpc1.xml
+[root@room9pc01 ceph]# echo $?
+0
+[root@room9pc01 ceph]# ls /tmp/
+avpc1.xml
+myvm.xml
+orbit-root
+ssh-aJszCMILM00m
+systemd-private-e55b9d2c623848649c78993e982fff8a-chronyd.service-F6ggiA
+..............................
+ /****<uuid>fe878b02-ec6d-4d16-8dc0-cf7d5e55a31f</uuid>****/
+
+[root@room9pc01 ceph]# vim /tmp/avpc1.xml  # avpc1 为虚拟机名称
+  1 <domain type='kvm'>
+  2   <name>avpc1</name>
+  3   <memory unit='KiB'>1048576</memory>
+  4   <currentMemory unit='KiB'>1048576</currentMemory>
+ 29   <devices>
+ 30     <emulator>/usr/libexec/qemu-kvm</emulator>
+ 31     <disk type='network' device='disk'>
+ 32       <driver name='qemu' type='raw'/>
+ 33       <auth username='admin'>
+        ##注意是 virsh secret-define --file  secret.xml ##生成的UUID
+ 34       <secret type='ceph' uuid='b1316c82-9e10-457e-81f5-cfd5db8b09c7' />
+ 35       </auth>
+    ## [root@H11 ceph]# rbd list
+    ##   demo-image
+    ##   image-clone
+    ##   vm1-image          #注意 name=' rbd list 的来源'
+ 36       <source protocol='rbd' name='rbd/vm1-image'>
+ 37         <host name='192.168.4.11' port='6789'/>
+ 38       </source>
+ 39       <target dev='vda' bus='virtio'/>
+ 40       <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+ 41     </disk>
+ 42     <disk type='file' device='cdrom'>
+/*****************
+ 34     #  <source file='/var/lib/libvirt/images/xxx.qcow2'/> 删除
+[root@room9pc01 ~]# virsh -h
+    cpu-stats                      显示域 cpu 统计数据
+    create                         从一个 XML 文件创建一个域
+    define                         从一个 XML 文件定义（但不开始）一个域
+    desc                           显示或者设定域描述或者标题
+    destroy                        销毁（停止）域
+    dump                           把一个域的内核 dump 到一个文件中以方便分析
+    dumpxml                        XML 中的域信息
+    reboot                         重新启动一个域
+    reset                          重新设定域
+    restore                        从一个存在一个文件中的状态恢复一个域
+    resume                         重新恢复一个域
+    save                           把一个域的状态保存到一个文件
+    save-image-define              为域的保存状态文件重新定义 XML
+    save-image-dumpxml             在 XML 中保存状态域信息
+    shutdown                       关闭一个域
+    start                          开始一个（以前定义的）非活跃的域
+    list                           列出域
+    snapshot-create                使用 XML 生成快照
+    snapshot-create-as             使用一组参数生成快照
+    snapshot-current               获取或者设定当前快照
+    snapshot-delete                删除域快照
+    snapshot-dumpxml               为域快照转储 XML
+ Virsh itself (help keyword 'virsh')
+    exit                           退出这个非交互式终端
+    quit                           退出这个非交互式终端
+**************/
+[root@room9pc01 ceph]# pwd
+/etc/ceph
+[root@room9pc01 ceph]# ll /tmp/avpc1.xml
+-rw-r--r-- 1 root root 4276 10月 12 12:52 /tmp/avpc1.xml
+[root@room9pc01 ceph]# virsh define /tmp/avpc1.xml
+错误：从 /tmp/avpc1.xml 定义域失败
+错误：XML 错误：磁盘源 'hda' 和 'rbd/vm1-image' 有重复的目标 '<null>'
+/***原因 /tmp/avpc1.xml 配置文件中 39       <target dev='hda' bus='virtio'/>
+解决办法 把  dev='hda' 改写成  dev='vda'
+[root@room9pc01 ~]# head -39 /tmp/avpc1.xml |tail -1
+      <target dev='vda' bus='virtio'/>
+[root@room9pc01 ~]# 
+*********/
+[root@room9pc01 ceph]# vim /tmp/avpc1.xml
+[root@room9pc01 ceph]# virsh define /tmp/avpc1.xml
+定义域 avpc1（从 /tmp/avpc1.xml）
+
+[root@room9pc01 ceph]# echo $?
+0
+[root@room9pc01 ceph]# virsh list --all
+ Id    名称                         状态
+----------------------------------------------------
+ 9     H10                            running
+ 10    H11                            running
+ 11    H12                            running
+ 12    H13                            running
+ 13    H14                            running
+ -     avpc1                          关闭
+ -     Host17                         关闭
+ -     xxx                            关闭
+/** 多出来一个虚拟主机 avpc1 
+  虚拟磁盘  源路经 : rbd://192.168.4.11:6789/rbd/vm1-image
+
+
+
+
+
+/****************
+[root@room9pc01 ~]# ls /etc/libvirt/
+libvirt-admin.conf  lxc.conf  qemu.conf        virtlockd.conf
+libvirt.conf        nwfilter  qemu-lockd.conf  virtlogd.conf
+libvirtd.conf       qemu      storage
+[root@room9pc01 ~]# ls /etc/libvirt/qemu
+H10.xml  H13.xml  H16.xml     Host11.xml  Host14.xml  Host17.xml
+H11.xml  H14.xml  H17.xml     Host12.xml  Host15.xml  networks
+H12.xml  H15.xml  Host10.xml  Host13.xml  Host16.xml
+[root@room9pc01 ~]# vim /etc/libvirt/qemu
+qemu/            qemu.conf        qemu-lockd.conf 
+[root@room9pc01 ~]# cat /etc/libvirt/qemu/Host17.xml
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh edit Host17
+or other application using the libvirt API.
+-->
+<domain type='kvm'>
+  <name>Host17</name>
+
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/rh7_node8.img'/>
+[root@room9pc01 ~]# tail -n 7 /var/lib/libvirt/images/vsftpd.conf |head -2
+pam_service_name=vsftpd
+userlist_enable=YES
+[root@room9pc01 ~]# 
+****************/
+
+
+[root@H11 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-0
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-1
+[root@H11 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@H11 ~]# ceph -s
+    cluster 67af21ee-ae35-4203-a84c-69521a07edc9
+     health HEALTH_OK
+     monmap e1: 3 mons at {H11=192.168.4.11:6789/0,H12=192.168.4.12:6789/0,H13=192.168.4.13:6789/0}
+            election epoch 12, quorum 0,1,2 H11,H12,H13
+     osdmap e50: 6 osds: 6 up, 6 in
+            flags sortbitwise
+      pgmap v1163: 64 pgs, 1 pools, 195 MB data, 1842 objects
+            775 MB used, 60598 MB / 61373 MB avail
+                  64 active+clean
+[root@H11 ~]# rbd  list
+demo-image
+image-clone
+[root@H11 ~]# 
+[root@H11 ~]# rbd create vm1-image  --image-feature  layering  --size  10G
+[root@H11 ~]# rbd  list
+demo-image
+image-clone
+vm1-image
+[root@H11 ~]# ceph  -s
+    cluster 67af21ee-ae35-4203-a84c-69521a07edc9
+     health HEALTH_OK
+     monmap e1: 3 mons at {H11=192.168.4.11:6789/0,H12=192.168.4.12:6789/0,H13=192.168.4.13:6789/0}
+            election epoch 12, quorum 0,1,2 H11,H12,H13
+     osdmap e50: 6 osds: 6 up, 6 in
+            flags sortbitwise
+      pgmap v1168: 64 pgs, 1 pools, 195 MB data, 1844 objects
+            775 MB used, 60598 MB / 61373 MB avail
+                  64 active+clean
+
+[root@H11 ~]# rbd info vm1-image
+rbd image 'vm1-image':
+	size 10240 MB in 2560 objects
+	order 22 (4096 kB objects)
+	block_name_prefix: rbd_data.fa82238e1f29
+	format: 2
+	features: layering
+	flags: 
+[root@H11 ~]# cd /etc/ceph/;ls
+ceph.client.admin.keyring  ceph.conf  rbdmap  tmpqR4ynY
+
+[root@H11 ceph]# qemu-img  info  rbd:rbd/vm1-image
+image: rbd:rbd/vm1-image
+file format: raw
+virtual size: 10G (10737418240 bytes)
+disk size: unavailable
+[root@H11 ceph]# 
+[root@H11 ceph]# cat ceph.conf 
+[global]
+fsid = 67af21ee-ae35-4203-a84c-69521a07edc9
+mon_initial_members = H11, H12, H13
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+
+[root@H11 ceph]# cat ceph.client.admin.keyring 
+[client.admin]
+	key = AQAzvL5bRGBBLRAANMG2d78+K9T5H0OihOwuIA==
+[root@H11 ceph]# 
+[root@H11 ceph]# netstat -anputl |grep :6789
+tcp        0      0 192.168.4.11:6789       0.0.0.0:*               LISTEN      1080/ceph-mon       
+tcp        0      0 192.168.4.11:41604      192.168.4.12:6789       ESTABLISHED 2058/ceph-osd       
+tcp        0      0 192.168.4.11:6789       192.168.4.12:40610      ESTABLISHED 1080/ceph-mon       
+tcp        0      0 192.168.4.11:39718      192.168.4.13:6789       ESTABLISHED 1928/ceph-osd       
+tcp        0      0 192.168.4.11:41598      192.168.4.12:6789       ESTABLISHED 1080/ceph-mon       
+tcp        0      0 192.168.4.11:39708      192.168.4.13:6789       ESTABLISHED 1080/ceph-mon       
+tcp        0      0 192.168.4.11:6789       192.168.4.12:40608      ESTABLISHED 1080/ceph-mon       
+[root@H11 ceph]# systemctl status ceph
+ceph-create-keys@H11.service  ceph-mon.target               ceph-osd.target
+ceph-mds.target               ceph-osd@0.service            ceph-radosgw.target
+ceph-mon@H11.service          ceph-osd@1.service            ceph.target
+[root@H11 ceph]# 
+[root@H11 ceph]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+[root@H11 ceph]# 
+
+[root@H11 ceph]# ping H14
+PING H14 (192.168.4.14) 56(84) bytes of data.
+64 bytes from H14 (192.168.4.14): icmp_seq=1 ttl=64 time=0.939 ms
+64 bytes from H14 (192.168.4.14): icmp_seq=2 ttl=64 time=0.634 ms
+64 bytes from H14 (192.168.4.14): icmp_seq=3 ttl=64 time=0.527 ms
+^C
+--- H14 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 0.527/0.700/0.939/0.174 ms
+[root@H11 ceph]# ls /etc/yum.repos.d/
+ceph.repo  redhat.repo  rhel7.repo
+[root@H11 ceph]#  cat /root/.ssh/known_hosts 
+
+[root@H11 ceph]# pwd
+/etc/ceph
+[root@H11 ceph]# ceph-deploy mds create H14  //给H14拷贝配置文件，启动mds服务
+
+[ceph_deploy.cli][INFO  ]  mds                           : [('H14', 'H14')]
+[ceph_deploy.cli][INFO  ]  default_release               : False
+[ceph_deploy.mds][DEBUG ] Deploying mds, cluster ceph hosts H14:H14
+
+[ceph_deploy][ERROR ] RuntimeError: bootstrap-mds keyring not found; run 'gatherkeys'
+
+[root@H11 ceph]# cd /root/ceph-cluster/;ls
+ceph.bootstrap-mds.keyring  ceph.bootstrap-rgw.keyring  ceph.conf             ceph.mon.keyring
+ceph.bootstrap-osd.keyring  ceph.client.admin.keyring   ceph-deploy-ceph.log
+
+[root@H11 ceph-cluster]# ceph-deploy mds create H14
+
+Are you sure you want to continue connecting (yes/no)? yes
+
+[H14][INFO  ] Running command: systemctl start ceph-mds@H14
+[H14][INFO  ] Running command: systemctl enable ceph.target
+[root@H11 ceph-cluster]# ls
+ceph.bootstrap-mds.keyring  ceph.bootstrap-rgw.keyring  ceph.conf             ceph.mon.keyring
+ceph.bootstrap-osd.keyring  ceph.client.admin.keyring   ceph-deploy-ceph.log
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# pwd
+/root/ceph-cluster
+[root@H11 ceph-cluster]# ceph-deploy admin  H14
+
+[H14][DEBUG ] connected to host: H14 
+[H14][DEBUG ] detect platform information from remote host
+[H14][DEBUG ] detect machine type
+[H14][DEBUG ] write cluster configuration to /etc/ceph/{cluster}.conf
+[root@H11 ceph-cluster]# 
+
+[root@H11 ceph-cluster]# pwd
+/root/ceph-cluster
+[root@H11 ceph-cluster]# ping -c2 -i0.2 -w1 H15
+
+--- H15 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 200ms
+rtt min/avg/max/mdev = 0.387/0.531/0.676/0.146 ms
+[root@H11 ceph-cluster]# ssh -X  H15   #无密码登陆验证OK
+Are you sure you want to continue connecting (yes/no)? yes
+[root@H15 ~]# exit
+[root@H11 ceph-cluster]# ssh -X  H15
+Last login: Fri Oct 12 16:46:20 2018 from 192.168.4.11
+[root@H15 ~]# exit
+登出
+Connection to h15 closed.
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ceph-deploy install --rgw  H15
+
+[ceph_deploy.conf][DEBUG ] found configuration file at: /root/.cephdeploy.conf
+[ceph_deploy.cli][INFO  ] Invoked (1.5.33): /usr/bin/ceph-deploy install --rgw H15
+
+[H15][DEBUG ] 作为依赖被升级:
+[H15][DEBUG ]   librados2.x86_64 1:10.2.2-38.el7cp      librbd1.x86_64 1:10.2.2-38.el7cp     
+[H15][DEBUG ] 
+[H15][DEBUG ] 完毕！
+[H15][INFO  ] Running command: ceph --version
+[H15][DEBUG ] ceph version 10.2.2-38.el7cp (119a68752a5671253f9daae3f894a90313a6b8e4)
+[root@H11 ceph-cluster]#  
+[root@H11 ceph-cluster]# pwd
+/root/ceph-cluster
+[root@H11 ceph-cluster]# ceph-deploy  admin  H15
+
+[H15][DEBUG ] detect machine type
+[H15][DEBUG ] write cluster configuration to /etc/ceph/{cluster}.conf
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# 
+[root@H11 ceph-cluster]# ceph-deploy  rgw   create  H15
+
+[H15][INFO  ] Running command: systemctl start ceph-radosgw@rgw.H15
+[H15][INFO  ] Running command: systemctl enable ceph.target
+[ceph_deploy.rgw][INFO  ] The Ceph Object Gateway (RGW) is now running on host H15 and default port 7480
+[root@H11 ceph-cluster]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H12 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-2
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-3
+[root@H12 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.12
+192.168.2.12
+127.0.0.1
+192.168.122.1
+[root@H12 ~]# 
+[root@H12 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+[root@H12 ~]# 
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H13 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+├─vdb1        252:17   0    5G  0 part 
+└─vdb2        252:18   0    5G  0 part 
+vdc           252:32   0   10G  0 disk 
+└─vdc1        252:33   0   10G  0 part /var/lib/ceph/osd/ceph-4
+vdd           252:48   0   10G  0 disk 
+└─vdd1        252:49   0   10G  0 part /var/lib/ceph/osd/ceph-5
+[root@H13 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.13
+192.168.2.13
+127.0.0.1
+192.168.122.1
+[root@H13 ~]# 
+[root@H13 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+[root@H13 ~]# 
+
+
+
+
+
+
+
+
+
+[root@H14 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    5G  0 disk 
+vdd           252:48   0    5G  0 disk 
+[root@H14 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.14
+192.168.2.14
+127.0.0.1
+192.168.122.1
+[root@H14 ~]# ls /etc/yum.repos.d/
+ceph.repo  redhat.repo  rhel7.repo
+[root@H14 ~]# yum repolist |tail -10
+源标识                               源名称                                状态
+!mon                                 mon                                      41
+!mon-2                               mon-2                                    41
+!osd                                 osd                                      28
+!osd-2                               osd-2                                    28
+!rhel7                               rhel7.4                               4,986
+!rhel7-2                             rhel7.4-2                             4,986
+!tools                               tools                                    33
+!tools-2                             tools-2                                  33
+repolist: 10,176
+[root@H14 ~]# vim /etc/chrony.conf 
+
+  3 #server 0.rhel.pool.ntp.org iburst
+  4 #server 1.rhel.pool.ntp.org iburst
+  5 #server 2.rhel.pool.ntp.org iburst
+  6 #server 3.rhel.pool.ntp.org iburst
+  7 server 192.168.4.10   iburst
+  8 server 192.168.2.10   iburst
+[root@H14 ~]# date -s "2018-10-09  12:18:10"
+2018年 10月 09日 星期二 12:18:10 CST
+[root@H14 ~]# systemctl restart chronyd
+[root@H14 ~]# date
+2018年 10月 09日 星期二 12:18:26 CST
+[root@H14 ~]# date
+2018年 10月 12日 星期五 15:29:31 CST
+[root@H14 ~]# 
+[root@H14 ~]# ls /root/.ssh/
+authorized_keys  known_hosts
+[root@H14 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+[root@H14 ~]# cat /root/.ssh/known_hosts 
+192.168.4.17 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+192.168.4.16 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBLbeZn0oixXQQEAEclKnr1zideN3MmtD9EfVZwn7NJu8qcJ/UJB4DnHsAfe+y0hOkv0bF+ek23RuH3YfeT4WWMY=
+[root@H14 ~]# 
+============部署元数据服务器
+[root@H14 ~]# yum -y install ceph-mds  |tail -5
+
+作为依赖被升级:
+  librados2.x86_64 1:10.2.2-38.el7cp      librbd1.x86_64 1:10.2.2-38.el7cp     
+
+完毕！
+[root@H14 ~]# rpm -q ceph-mds
+ceph-mds-10.2.2-38.el7cp.x86_64
+[root@H14 ~]# 
+[root@H14 ~]# cd /etc/ceph/;ls
+rbdmap
+[root@H14 ceph]# ls
+ceph.conf  rbdmap  tmp9oVbPn
+
+[root@H14 ceph]# cat /etc/ceph/ceph.conf 
+[global]
+fsid = 67af21ee-ae35-4203-a84c-69521a07edc9
+mon_initial_members = H11, H12, H13
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+
+[root@H14 ceph]# systemctl status ceph
+ceph-mds@H14.service  ceph-mds.target       ceph.target           
+[root@H14 ceph]# systemctl status ceph-mds.target  |grep Active
+   Active: active since 五 2018-10-12 15:41:45 CST; 5min ago
+
+[root@H14 ceph]# pwd
+/etc/ceph
+[root@H14 ceph]# ls
+ceph.client.admin.keyring  ceph.conf  rbdmap  tmp9oVbPn
+
+[root@H14 ceph]# ceph  osd pool create  cephfs_data 128
+pool 'cephfs_data' created
+
+[root@H14 ceph]# ceph  osd pool create  cephfs_meatedata 128
+pool 'cephfs_meatedata' created
+[root@H14 ceph]# 
+
+[root@H14 ceph]# ceph  fs  new  myfs1  cephfs_meatedata  cephfs_data
+new fs with metadata pool 2 and data pool 1
+
+[root@H14 ceph]# ceph  mds stat
+e5: 1/1/1 up {0=H14=up:active}
+[root@H14 ceph]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H15 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+vdc           252:32   0    5G  0 disk 
+vdd           252:48   0    5G  0 disk 
+[root@H15 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.15
+192.168.2.15
+127.0.0.1
+192.168.122.1
+[root@H15 ~]#
+[root@H15 ~]# cat /root/.ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC6uDUGpLGXZT/yEL/mUP/KlF0s08gNgpUkzj9BioAxj+7BtYQYUSULIZ79j1jhQa25VFteghtIAPON1z7Cs1Bq3QQhlQZbU5pdbpz7bHyEySKO5gcFRVl2O1lTvxeX6LoVHFEkTLJvKcjunv5QcCD6hvjU6QiEetFv/ngli7o3MvvnWMIDV/BxuT6mVuxQhEKhMK1J/Graj3Say/Hf+QREa4UlLJ5J/UYRz1WZH3iW89GvNmLxtxCg9XroUgiYDfp4aSrQI6P11CWvd746amYq3FFEP4lXRcvTbPpUAPJwzbWTns7Y7zCSPGOgCnQhrS/wxXOhRWd6gFNHKDqqdpIJ root@H11
+[root@H15 ~]# 
+
+[root@H15 ~]# vim /etc/chrony.conf
+#server 0.rhel.pool.ntp.org iburst
+#server 1.rhel.pool.ntp.org iburst
+#server 2.rhel.pool.ntp.org iburst
+#server 3.rhel.pool.ntp.org iburst
+server  192.168.4.10  iburst
+[root@H15 ~]# date -s "2011-11-11  12:11:11"
+2011年 11月 11日 星期五 12:11:11 CST
+[root@H15 ~]# systemctl restart chronyd
+[root@H15 ~]# date
+2018年 10月 12日 星期五 16:45:08 CST
+[root@H15 ~]# 
+[root@H15 ~]# ls /etc/ceph/
+ceph.client.admin.keyring  ceph.conf  rbdmap  tmp2xYREr
+
+[root@H15 ~]# systemctl status ceph
+ceph-radosgw.target  ceph.target          
+[root@H15 ~]# systemctl status ceph
+ceph-radosgw@rgw.H15.service  ceph-radosgw.target           ceph.target
+[root@H15 ~]# systemctl status  ceph-radosgw
+ceph-radosgw@rgw.H15.service  ceph-radosgw.target           
+[root@H15 ~]# systemctl status  ceph-radosgw@rgw.H15.service 
+● ceph-radosgw@rgw.H15.service - Ceph rados gateway
+   Loaded: loaded (/usr/lib/systemd/system/ceph-radosgw@.service; enabled; vendor preset: disabled)
+   Active: active (running) since 五 2018-10-12 16:57:02 CST; 1min 26s ago
+ Main PID: 3761 (radosgw)
+   CGroup: /system.slice/system-ceph\x2dradosgw.slice/ceph-radosgw@rgw.H15.service
+           └─3761 /usr/bin/radosgw -f --cluster ceph --name client.rgw.H15 --setuser ceph --se...
+
+10月 12 16:57:02 H15 systemd[1]: Started Ceph rados gateway.
+10月 12 16:57:02 H15 systemd[1]: Starting Ceph rados gateway...
+[root@H15 ~]# 
+[root@H15 ~]# cd /etc/ceph/
+[root@H15 ceph]# ls
+ceph.client.admin.keyring  ceph.conf  rbdmap  tmp2xYREr
+
+[root@H15 ceph]# ss -anptul |grep :80
+[root@H15 ceph]# vim  /etc/ceph/ceph.conf 
+[root@H15 ceph]# cat /etc/ceph/ceph.conf
+
+[client.rgw.H15]
+host = H15
+rgw_frontends = "civetweb  port=80"
+[global]
+fsid = 67af21ee-ae35-4203-a84c-69521a07edc9
+mon_initial_members = H11, H12, H13
+mon_host = 192.168.4.11,192.168.4.12,192.168.4.13
+auth_cluster_required = cephx
+auth_service_required = cephx
+auth_client_required = cephx
+[root@H15 ceph]# 
+[root@H15 ceph]# systemctl restart  ceph-radosgw@rgw.H15.service 
+[root@H15 ceph]# systemctl restart  ceph-radosgw.target 
+
+[root@H15 ceph]# ss -anptul |grep :80
+tcp    LISTEN   0   128       *:80    *:*    users:(("radosgw",pid=4280,fd=30))
+[root@H15 ceph]# 
+[root@H15 ceph]# systemctl status ceph
+ceph-radosgw@rgw.H15.service  ceph-radosgw.target           ceph.target
+[root@H15 ceph]# 
+[root@H15 ceph]# radosgw-admin  user create  \
+>  --uid="testuser"  --display-name="first user"
+{
+    "user_id": "testuser",
+    "display_name": "first user",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "auid": 0,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "testuser",
+            "access_key": "ZBH0TWA10EQP9RXWWCZK",
+            "secret_key": "nrFyntmThCkhh0i1Lb0A0voquhDj0WMYDX73evMG"
+        }
+    ],
+
+    "temp_url_keys": []
+}
+
+[root@H15 ceph]# 
+[root@H15 ceph]# radosgw-admin  user info   --uid=testuser
+{
+    "user_id": "testuser",
+    "display_name": "first user",
+    "email": "",
+    "suspended": 0,
+    "max_buckets": 1000,
+    "auid": 0,
+    "subusers": [],
+    "keys": [
+        {
+            "user": "testuser",
+            "access_key": "ZBH0TWA10EQP9RXWWCZK",
+            "secret_key": "nrFyntmThCkhh0i1Lb0A0voquhDj0WMYDX73evMG"
+        }
+    ],
+
+    "temp_url_keys": []
+}
+
+[root@H15 ceph]# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@H16 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+[root@H16 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.16
+192.168.2.16
+127.0.0.1
+192.168.122.1
+[root@H16 ~]#
+
+
+
+
+[root@H17 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0    5G  0 disk 
+[root@H17 ~]#  ifconfig |awk '/inet /{print $2}'
+192.168.4.17
+192.168.2.17
+127.0.0.1
+192.168.122.1
+[root@H17 ~]#
+编写UDEV规则，使得vdb1和vdb2重启后，属主属组仍然是ceph
+[root@node1 ~]# vim /etc/udev/rules.d/90-cephdisk.rules
+ACTION=="add", KERNEL=="vdb[12]", OWNER="ceph", GROUP="ceph" 
+
+ceph对象存储网关为应用提供 RESTful 类型的对象存储接口，其接口方式支持 S3（兼容 Amazon S3 RESTful API） 和 Swift（兼容 OpenStack Swift API） 两种类型。其中swift场景，比如可以在openstack中直接使用ceph对象存储网关作为swift的存储。也就是说ceph的RGW只能通过命令去操作或者通过第三方软件结合去操作，没有办法跟fs，rbd 一样直接使用它。
+
+
+
+
+

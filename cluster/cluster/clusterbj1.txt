@@ -1,0 +1,1115 @@
+﻿linux 识别 硬件的 命名方式  IDE hd    SCSI  sd  /dev/sda/  /dev/sdb
+devfs 静态
+udev 动态
+[root@VM1 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.11
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@VM1 ~]# lsblk /dev/vdb
+NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vdb  252:16   0  10G  0 disk 
+[root@VM1 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.11
+127.0.0.1
+192.168.122.1
+[root@VM1 ~]# systemctl is-active nginx
+unknown
+[root@VM1 ~]# yum -y install httpd
+软件包 httpd-2.4.6-67.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@VM1 ~]# systemctl start httpd
+[root@VM1 ~]# ss -anputl |grep :80 |column -t
+tcp  LISTEN  0  128  :::80  :::*  users:(("httpd",pid=3066,fd=4),("httpd",pid=3065,fd=4),("httpd",pid=3064,fd=4),("httpd",pid=3063,fd=4),("httpd",pid=3062,fd=4),("httpd",pid=3060,fd=4))
+[root@VM1 ~]# vim /var/www/html/index.html
+[root@VM1 ~]# cat /var/www/html/index.html
+hello client 50
+[root@VM1 ~]# ls /var/www/html/
+index.html
+[root@VM1 ~]# df -h
+文件系统               容量  已用  可用 已用% 挂载点
+/dev/mapper/rhel-root   17G  3.7G   14G   22% /
+devtmpfs               481M     0  481M    0% /dev
+tmpfs                  497M     0  497M    0% /dev/shm
+tmpfs                  497M  7.0M  490M    2% /run
+tmpfs                  497M     0  497M    0% /sys/fs/cgroup
+/dev/vda1             1014M  161M  854M   16% /boot
+tmpfs                  100M     0  100M    0% /run/user/0
+[root@VM1 ~]# elinks -dump http://192.168.4.50
+   hello client 50
+[root@VM1 ~]# ss -anputl |grep :80 |column -t
+tcp  LISTEN  0  128  :::80  :::*  users:(("httpd",pid=3066,fd=4),("httpd",pid=3065,fd=4),("httpd",pid=3064,fd=4),("httpd",pid=3063,fd=4),("httpd",pid=3062,fd=4),("httpd",pid=3060,fd=4))
+[root@VM1 ~]# yum -y install iscsi-initiator-utils.i686 
+
+[root@VM1 ~]# rpm -q iscsi-initiator-utils.i686
+iscsi-initiator-utils-6.2.0.874-4.el7.i686
+[root@VM1 ~]# rpm -q iscsi-initiator-utils
+iscsi-initiator-utils-6.2.0.874-4.el7.x86_64
+iscsi-initiator-utils-6.2.0.874-4.el7.i686
+
+[root@VM1 ~]# vim /etc/iscsi/initiatorname.iscsi   #设置本机的iqn名称
+[root@VM1 ~]# tail -1 /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.2018-10.cn.tedu.client50
+[root@VM1 ~]# systemctl restart iscsi
+
+[root@VM1 ~]# iscsiadm --mode discoverydb  --type  sendtargets  --portal \
+> 192.168.4.51  --discover      #发现磁盘
+192.168.4.51:3260,1 iqn.2018-10.cn.tedu:server51
+[root@VM1 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51 \
+> --portal 192.168.4.51:3260  --login   #连接磁盘
+[root@VM1 ~]# systemctl daemon-reload 
+[root@VM1 ~]# systemctl restart iscsid  #刷新标识 iqn
+
+   客户端挂载iSCSI共享
+[root@VM1 ~]# systemctl restart iscsi.service 
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  
+vdb           252:16   0   10G  0 disk 
+[root@VM1 ~]# systemctl enable iscsid   #设置开机自启动iqn标识
+
+[root@VM1 ~]# ls /var/lib/iscsi/
+ifaces  isns  nodes  send_targets  slp  static
+[root@VM1 ~]# ls /var/lib/iscsi/nodes/iqn.2018-10.cn.tedu\:server51/192.168.4.51\,3260\,1/
+default         ##iSCSI 设备在系统启动的期间自动加载
+[root@VM1 ~]# vim /var/lib/iscsi/nodes/iqn.2018-10.cn.tedu\:server51/192.168.4.51\,3260\,1/default 
+
+  2 node.name = iqn.2018-10.cn.tedu:server51
+  3 node.tpgt = 1
+  4 node.startup = automatic
+
+ 48 node.session.scan = auto
+ 49 node.conn[0].address = 192.168.4.51
+ 50 node.conn[0].port = 3260
+ 51 node.conn[0].startup = automatic
+[root@VM1 ~]# systemctl restart iscsi
+[root@VM1 ~]# systemctl enable iscsi  #设置开机自启动
+[root@VM1 ~]# reboot
+[root@room9pc01 ~]# ssh -X 192.168.4.50
+
+[root@VM1 ~]# lsblk /dev/sda 
+NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sda    8:0    0  10G  0 disk 
+/****(parted) mktable gpt指定分区模式,只能使用一次,每次启用都会格式化整个磁盘为gpt
+[root@VM1 ~]# parted /dev/sda mklabel gpt  #划分GPT分区模式,parted
+信息: You may need to update /etc/fstab.
+
+[root@VM1 ~]# parted /dev/sda mkpart  primary  1  880
+
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+└─sda1          8:1    0  838M  0 part 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+[root@VM1 ~]# mkfs.ext4 /dev/sda1   #格式化ext4文件系统类型
+
+[root@VM1 ~]# blkid /dev/sda1
+/dev/sda1: UUID="1ed3343d-7893-4bf4-8800-865459704ddd" TYPE="ext4"
+  PARTLABEL="primary" PARTUUID="37fcd398-6827-4562-a856-7746a508f695" 
+
+[root@VM1 ~]# blkid /dev/sda
+/dev/sda: PTTYPE="gpt" 
+[root@VM1 ~]# ls /var/www/html/
+index.html
+[root@VM1 ~]# rm -f /var/www/html/index.html 
+[root@VM1 ~]# mount  /dev/sda1  /var/www/html/  #挂载
+[root@VM1 ~]# df -hT /var/www/html/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/sda1      ext4  809M  1.7M  750M    1% /var/www/html
+
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+└─sda1          8:1    0  838M  0 part /var/www/html
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+
+[root@VM1 ~]# echo "hell world" > /var/www/html/test.html
+[root@VM1 ~]# echo "hello world peri" > /var/www/html/test2.html
+[root@VM1 ~]# ls /var/www/html/
+lost+found  test2.html  test.html
+[root@VM1 ~]# elinks -dump http://192.168.4.50/test.html
+ELinks: 拒绝连接
+[root@VM1 ~]# systemctl is-enabled httpd
+disabled
+[root@VM1 ~]# systemctl restart httpd
+[root@VM1 ~]# systemctl enable  httpd
+
+[root@VM1 ~]# elinks -dump http://192.168.4.50/test.html
+   hell world
+[root@VM1 ~]# mount |grep /dev/sda1
+/dev/sda1 on /var/www/html type ext4 (rw,relatime,seclabel,data=ordered)
+
+[root@VM1 ~]# tail -2 /etc/udev/rules.d/70-persistent-ipoib.rules
+#
+# ACTION=="add", SUBSYSTEM=="net", DRIVERS=="?*", ATTR{type}=="32", ATTR{address}=="?*00:02:c9:03:00:31:78:f2", NAME="mlx4_ib3"
+
+[root@VM1 ~]# udevadm --help
+Commands:
+  info          Query sysfs or the udev database
+  trigger       Request events from the kernel
+  settle        Wait for pending udev events
+  control       Control the udev daemon
+  monitor       Listen to kernel and udev events
+................
+[root@VM1 ~]# udevadm monitor --help
+............
+  -p --property                            Print the event properties
+  -k --kernel                              Print kernel uevents
+  -u --udev                                Print udev events
+  -s --subsystem-match=SUBSYSTEM[/DEVTYPE] Filter events by subsystem
+  -t --tag-match=TAG                       Filter events by tag
+=================#真机 查看U盘信息=======================
+[root@room9pc01 ~]# udevadm  monitor  -p  #真机 查看U盘信息
+monitor will print the received events for:
+UDEV - the event which udev sends out after rule processing
+KERNEL - the kernel uevent
+
+
+KERNEL[25321.445816] add      /devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9:1.0/host5 (scsi)
+ACTION=add
+DEVPATH=/devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9:1.0/host5
+DEVTYPE=scsi_host
+SEQNUM=3303
+SUBSYSTEM=scsi
+
+KERNEL[25321.445891] add      /devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9:1.0/host5/scsi_host/host5 (scsi_host)
+ACTION=add
+DEVPATH=/devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9:1.0/host5/scsi_host/host5
+SEQNUM=3304
+SUBSYSTEM=scsi_host
+......^C
+=============================================
+[root@VM1 ~]# ls /etc/udev/
+hwdb.bin  rules.d  udev.conf
+
+[root@VM1 ~]# cat /etc/udev/udev.conf
+# see udev.conf(5) for details
+
+#udev_log="info"
+
+[root@VM1 ~]# man udev.conf
+
+[root@VM1 ~]# lsblk /dev/sda
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   10G  0 disk 
+└─sda1   8:1    0  838M  0 part /var/www/html
+
+[root@VM1 ~]# tail -2 /etc/udev/rules.d/70-persistent-ipoib.rules
+#
+# ACTION=="add", SUBSYSTEM=="net", DRIVERS=="?*", ATTR{type}=="32", ATTR{address}=="?*00:02:c9:03:00:31:78:f2", NAME="mlx4_ib3"
+
+[root@VM1 ~]# udevadm info  -q  path -n /dev/sda #获取路径
+/devices/platform/host2/session1/target2:0:0/2:0:0:0/block/sda
+
+/****[root@client ~]# udevadm info -q path -n /dev/sda
+/devices/platform/host2/session1/target2:0:0/2:0:0:0/block/sda
+****/
+
+[root@VM1 ~]# udevadm info  -q  all  -p  \
+> /devices/platform/host2/session1/target2:0:0/2:0:0:0/block/sda \
+> -a ;    #获取详细信息
+
+  looking at device '/devices/platform/host2/session1/target2:0:0/2:0:0:0/block/sda':
+    KERNEL=="sda"
+    SUBSYSTEM=="block"
+ATTR{size}=="20971520"
+
+    ATTRS{model}=="diskb           "
+    ATTRS{vendor}=="LIO-ORG "
+
+
+/***
+[root@client ~]# udevadm info -q all -p /devices/platform/host2/session1/target2:0:0/2:0:0:0/block/sda  -a
+SUBSYSTEM=="block"
+ATTR{size}=="20967424"
+ATTRS{model}=="diskb           "
+ATTRS{vendor}=="LIO-ORG "
+
+***/
+[root@VM1 ~]# vim /etc/udev/rules.d/50-iscsidisk.rules #编写 udev规则文件
+[root@VM1 ~]# cat /etc/udev/rules.d/50-iscsidisk.rules 
+SUBSYSTEM=="block", ATTR{size}=="20971520", ATTRS{model}=="diskb           ", ATTRS{vendor}=="LIO-ORG ",
+[root@VM1 ~]# ls /etc/udev/rules.d/
+50-iscsidisk.rules  70-persistent-ipoib.rules
+/***
+udev规则文件，常见指令操作符
+== 表示匹配
+!=     不匹配
+=      指定赋予的值
++=   添加新值
+:=    指定值,且不允许被替换
+NAME="udisk"  定义设备名称
+SYMLINK+="data1"  定义设备的别名
+OWNER="student    定义设备的所有者
+MODE="0600"    定义设备的权限
+ACTION=="add"   添加或删除设备的操作
+KERNEL=="sd[a-z]1"  判断设备的内核名称
+RUN+=程序     为设备添加程序
+udev常用替代变量：
+%k：内核所识别出来的设备名，如sdb1
+%n：设备的内核编号，如sda3中的3
+%p：设备路径，如/sys/block/sdb/sdb1
+%%：%符号本身
+[root@proxy ~]# vim  /etc/udev/rules.d/70-usb.rules
+SUBSYSTEM=="block", ENV{DEVTYPE}="disk", KERNEL=="sda",
+ENV{ID_VENDOR}=="TOSHIBA", SYMLINK="udisk", 
+RUN+="/usr/bin/wall udisk plugged in",
+SUBSYSTEM=="block", ACTION=="add", KERNEL=="sdb[0-9]",
+ENV{ID_VENDOR_ID}=="0930",ENV{DEVTYPE}=="partition",
+NAME="udisk%n" 
+
+查看设备属性
+[root@proxy ~]# udevadm monitor --property
+[root@proxy ~]# udevadm info --query=path --name=/dev/sda
+[root@proxy ~]# udevadm info --query=property --path=/block/sda
+[root@proxy ~]# udevadm info --query=all --attribute-walk --path=/block/sda
+/********* vdb 默认路径/dev/vdb
+
+[root@VM1 ~]# vim /etc/udev/rules.d/50-iscsidisk.rules
+
+[root@VM1 ~]# cat /etc/udev/rules.d/50-iscsidisk.rules
+SUBSYSTEM=="block", ATTR{size}=="20971520", ATTRS{model}=="diskb           ", ATTRS{vendor}=="LIO-ORG ", SYMLINK+="iscsi/vdb"
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+└─sda1          8:1    0  838M  0 part /var/www/html
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+
+[root@VM1 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51  --portal 192.168.4.51:3260  -u
+
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+
+[root@VM1 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51  --portal 192.168.4.51:3260  -l
+
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sdb             8:16   0   10G  0 disk 
+└─sdb1          8:17   0  838M  0 part 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+[root@VM1 ~]# df -hT /var/www/html/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/sda1      ext4  809M  1.7M  750M    1% /var/www/html
+
+[root@VM1 ~]# ls /var/www/html/
+ls: 正在读取目录/var/www/html/: 输入/输出错误
+
+[root@VM1 ~]# umount /var/www/html/  #重新挂载
+
+[root@VM1 ~]# mount  /dev/sdb1  /var/www/html/
+
+[root@VM1 ~]# ls /var/www/html/
+lost+found  test2.html  test.html
+[root@VM1 ~]# elinks -dump http://192.168.4.50/test2.html
+   hello world peri
+
+[root@VM1 ~]# ll /dev/iscsi/vdb   ##SYMLINK+="iscsi/vdb"
+lrwxrwxrwx. 1 root root 6 10月  8 16:48 /dev/iscsi/vdb -> ../sdb
+[root@VM1 ~]# df -hT /var/www/html/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/sdb1      ext4  809M  1.7M  750M    1% /var/www/html
+
+[root@VM1 ~]# umount /var/www/html/   # 卸载
+
+# ifconfig eth1 192.168.2.50
+/***
+TYPE=Ethernet
+BOOTPROTO=none
+IPADDR=192.168.2.50
+NAME=eth1
+DEVICE=eth1u
+ONBOOT=no
+***/
+/***
+单个分区大于2T的GPT格式的分区，也可以划分普通的MBR分区，
+
+fdisk命令对于大于2T的分区无法划分
+（大于2.2TB的存储空间用fdisk不支持，需要采用parted来分区），
+所以用fdisk无法看到parted划分的GPT格式的分区。
+
+Parted 命令分为两种模式：命令行模式和交互模式。
+       1、命令行模式： parted [option] device [command] ,
+该模式可以直接在命令行下对磁盘进行分区操作，比较适合编程应用。
+       2、交互模式：parted [option] device 类似于使用fdisk /dev/xxx
+       MBR：MBR分区表(即主引导记录)大家都很熟悉。
+所支持的较大卷：2T，而且对分区有限制：最多4个主分区或3个主分区加一个扩展分区
+ GPT： GPT（即GUID分区表）。
+是源自EFI标准的一种较新的磁盘分区表结构的标准，是未来磁盘分区的主要形式。
+与MBR分区方式相比，具有如下优点。
+突破MBR 4个主分区限制，每个磁盘最多支持128个分区。
+支持大于2T的分区，较大卷可达18EB。
+parted命令常用选项。
+当在命令行输入parted后，进入parted命令的交互模式。输入help会显示帮助信息。下面就简单介绍一下常用的功能
+1、Check     简单检查文件系统。建议用其他命令检查文件系统，比如fsck
+2、Help      显示帮助信息
+3、mklabel   创建分区表， 即是使用msdos（MBR）还是使用gpt，或者是其他方式分区表
+4、mkfs      创建文件系统。该命令不支持ext3 格式，因此建议不使用，较好是用parted分好区，
+然后退出parted交互模式，用其他命令进行分区，比如：mkfs.ext3
+5、mkpart    创建新分区。
+        格式：mkpart PART-TYPE  [FS-TYPE]  START  END
+             PART-TYPE 类型主要有primary（主分区）,
+ extended（扩展分区）, logical（逻辑区）. 扩展分区和逻辑分区只对msdos。
+             fs-type   文件系统类型，主要有fs32，NTFS，ext2，ext3等
+             start end 分区的起始和结束位置。
+6、mkpartfs  建立分区及其文件系统。目前还不支持ext3文件系统，因此不建议使用该功能。
+最后是分好区后，退出parted，然后用其他命令建立文件系统。
+7、print    输出分区信息。该功能有3个选项，
+       free 显示该盘的所有信息，并显示磁盘剩余空间
+     number 显示指定的分区的信息
+        all 显示所有磁盘信息
+8、resize   调整指定的分区的大小。目前对ext3格式支持不是很好，所以不建议使用该功能。
+9、rescue   恢复不小心删除的分区。如果不小心用parted的rm命令删除了一个分区，
+那么可以通过rescue功能进行恢复。恢复时需要给出分区的起始和结束的位置。
+然后parted就会在给定的范围内去寻找，并提示恢复分区。
+10、rm      删除分区。命令格式 rm  number 。如：rm 3 就是将编号为3的分区删除
+11、select  选择设备。当输入parted命令后直接回车进入交互模式是，
+如果有多块硬盘，需要用select 选择要操作的硬盘。如：select /dev/sdb
+12、set     设置标记。更改指定分区编号的标志。
+标志通常有如下几种：boot  hidden   raid   lvm 等。
+boot 为引导分区，hidden 为隐藏分区，raid 软raid，lvm 为逻辑分区。
+如：set 3  boot  on   设置分区号3 为启动分区
+
+**/
+[root@VM1 ~]# fdisk /dev/iscsi/vdb  #SYMLINK+="iscsi/vdb"
+命令(输入 m 获取帮助)：p
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：gpt
+#         Start          End    Size  Type            Name
+ 1         2048      1718271    838M  Microsoft basic primary
+
+命令(输入 m 获取帮助)：m
+命令操作
+   d   delete a partition
+   l   list known partition types
+   m   print this menu
+   n   add a new partition
+   p   print the partition table
+   q   quit without saving changes
+   w   write table to disk and exit
+命令(输入 m 获取帮助)：d
+已选择分区 1
+分区 1 已删除
+命令(输入 m 获取帮助)：n
+分区号 (1-128，默认 1)：1
+第一个扇区 (34-20971486，默认 2048)：
+Last sector, +sectors or +size{K,M,G,T,P} (2048-20971486，默认 20971486)：+5G
+已创建分区 1
+命令(输入 m 获取帮助)：p
+磁盘标签类型：gpt
+#         Start          End    Size  Type            Name
+ 1         2048     10487807      5G  Linux filesyste 
+命令(输入 m 获取帮助)：w
+
+[root@VM1 ~]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sdb             8:16   0   10G  0 disk 
+└─sdb1          8:17   0    5G  0 part 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+
+[root@VM1 ~]# ls  /dev/iscsi/vdb  -l
+lrwxrwxrwx. 1 root root 6 10月  8 17:10 /dev/iscsi/vdb -> ../sdb
+[root@VM1 ~]# blkid /dev/iscsi/vdb
+/dev/iscsi/vdb: PTTYPE="gpt"
+
+[root@VM1 ~]# ll /dev/iscsi/vdb 
+lrwxrwxrwx. 1 root root 6 10月  8 17:15 /dev/iscsi/vdb -> ../sdb
+
+[root@VM1 ~]# mkfs.ext4 /dev/iscsi/vdb  ##/etc/udev/rules.d/50-iscsidisk.rules SYMLINK+="iscsi/vdb"
+mke2fs 1.42.9 (28-Dec-2013)
+/dev/iscsi/vdb is entire device, not just one partition!
+无论如何也要继续? (y,n) y
+
+[root@VM1 ~]# blkid  /dev/iscsi/vdb  
+/dev/iscsi/vdb: UUID="7a8d3298-363d-494d-9c32-24f2faa6abbc" TYPE="ext4" 
+
+[root@VM1 ~]# mount /dev/iscsi/vdb /var/www/html/
+[root@VM1 ~]# df -hT /var/www/html/
+文件系统       类型  容量  已用  可用 已用% 挂载点
+/dev/sdb       ext4  9.8G   37M  9.2G    1% /var/www/html
+[root@VM1 ~]# ls /var/www/html/
+lost+found
+[root@VM1 ~]# echo "new link iscsi"> /var/www/html/test.html
+[root@VM1 ~]# elinks -dump http://192.168.4.50/test.html
+   new link iscsi
+
+[root@VM1 ~]# nmcli connection modify eth1 ipv4.method manual  ipv4.addresses 192.168.2.50/24 ipv4.gateway 192.168.2.254 connection.autoconnect yes
+[root@VM1 ~]# nmcli connection up eth1
+
+[root@VM1 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@VM1 ~]# umount /var/www/html/
+[root@VM1 ~]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51  --portal 192.168.4.51:3260  -u
+
+[root@VM1 ~]# lsblk 
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+[root@VM1 ~]# cd /etc/udev/rules.d/
+
+[root@VM1 rules.d]# ls
+50-iscsidisk.rules  70-persistent-ipoib.rules
+
+[root@VM1 rules.d]# mv 50-iscsidisk.rules  50-iscsidisk.rules.bak
+[root@VM1 rules.d]# 
+[root@VM1 rules.d]# iscsiadm --mode discoverydb  --type  sendtargets  --portal   192.168.2.51  --discover
+192.168.2.51:3260,1 iqn.2018-10.cn.tedu:server51
+
+[root@VM1 rules.d]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51  --portal 192.168.4.51:3260  -l  # 登陆磁盘
+
+[root@VM1 rules.d]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+[root@VM1 rules.d]# iscsiadm  --mode node  --targetname iqn.2018-10.cn.tedu:server51  --portal 192.168.2.51:3260  -l  # 登陆磁盘
+
+[root@VM1 rules.d]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda             8:0    0   10G  0 disk 
+sdb             8:16   0   10G  0 disk 
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+[============配置Multipath多路径====安装多路径软件包===============
+[root@VM1 rules.d]# yum -y install device-mapper-multipath
+ 
+软件包 device-mapper-multipath-0.4.9-111.el7.x86_64 已安装并且是最新版本
+无须任何处理
+[root@VM1 rules.d]# rpm -q device-mapper-multipath
+device-mapper-multipath-0.4.9-111.el7.x86_64
+
+[root@VM1 rules.d]# mpathconf  --user_friendly_names  n  #生成配置文件
+
+[root@VM1 rules.d]# ls /etc/multipath
+multipath/      multipath.conf  
+[root@VM1 rules.d]# ls /etc/multipath.conf 
+/etc/multipath.conf
+[root@VM1 ~]# which scsi_id
+/usr/bin/which: no scsi_id in (/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin)
+
+[root@VM1 ~]# echo $PATH 
+/usr/local/nginx/sbin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[root@VM1 ~]# ll /usr/lib/udev/scsi_id 
+-rwxr-xr-x. 1 root root 50144 6月  27 2017 /usr/lib/udev/scsi_id
+
+[root@VM1 ~]# /usr/lib/udev/scsi_id --whitelisted --device=/dev/sda
+3600140582462ff3c0a6442da3c653f3a
+[root@VM1 ~]# /usr/lib/udev/scsi_id --whitelisted --device=/dev/sdb
+3600140582462ff3c0a6442da3c653f3a
+
+[root@VM1 ~]# vim /etc/multipath.conf
+ 23 defaults {
+ 24         user_friendly_names no
+ 25         find_multipaths yes
+ 26 }
+
+ 94 blacklist {
+ 95 }    #在文件的最后加入多路径声明，如果哪个存储设备的wwid和第（3）步获取的wwid一样,
+        为其取一个别名，叫mpatha。
+ 96 multipaths {
+ 97     multipath {
+ 98         wwid    "3600140582462ff3c0a6442da3c653f3a"
+ 99         alias   mpatha
+100     }
+101 }
+[root@VM1 ~]# systemctl start multipathd.service 
+[root@VM1 ~]# systemctl status multipathd.service 
+   Active: active (running) since 一 2018-10-08 18:11:46 CST; 2s ago
+
+[root@VM1 ~]# systemctl enable multipathd
+
+[root@VM1 ~]# systemctl is-enabled multipathd
+enabled
+
+[root@VM1 ~]# ls /dev/mapper/
+control  mpatha  rhel-root  rhel-swap
+[root@VM1 ~]# ll /dev/mapper/mpatha 
+lrwxrwxrwx. 1 root root 7 10月  8 18:11 /dev/mapper/mpatha -> ../dm-2
+[root@VM1 ~]# ll /dev/dm-
+dm-0  dm-1  dm-2  
+[root@VM1 ~]# ll /dev/dm-2
+brw-rw----. 1 root disk 253, 2 10月  9 08:28 /dev/dm-2
+
+[root@VM1 ~]# multipath  -rr
+reload: mpatha (3600140582462ff3c0a6442da3c653f3a) undef LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=undef
+|-+- policy='service-time 0' prio=1 status=undef
+| `- 4:0:0:0 sda 8:0  active ready running
+`-+- policy='service-time 0' prio=1 status=undef
+  `- 5:0:0:0 sdb 8:16 active ready running
+[root@VM1 ~]# multipath  -ll   #查看多路径状态查看模块是否加载成功
+mpatha (3600140582462ff3c0a6442da3c653f3a) dm-2 LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=rw
+|-+- policy='service-time 0' prio=1 status=enabled
+| `- 4:0:0:0 sda 8:0  active ready running
+`-+- policy='service-time 0' prio=1 status=enabled
+  `- 5:0:0:0 sdb 8:16 active ready running
+[root@VM1 ~]# ifconfig eth1 down
+[root@VM1 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+127.0.0.1
+192.168.122.1
+[root@VM1 ~]# multipath  -rr
+reload: mpatha (3600140582462ff3c0a6442da3c653f3a) undef LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=undef
+`-+- policy='service-time 0' prio=1 status=undef
+  `- 4:0:0:0 sda 8:0  active ready running
+[root@VM1 ~]# multipath  -ll
+mpatha (3600140582462ff3c0a6442da3c653f3a) dm-2 LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=rw
+`-+- policy='service-time 0' prio=1 status=enabled
+  `- 4:0:0:0 sda 8:0  active ready running
+[root@VM1 ~]# 
+[root@VM1 ~]# pstree -anpul |grep multipath
+  |   |       `-grep,6012 --color=auto multipath
+  `-multipathd,4645
+      |-{multipathd},4646
+      |-{multipathd},4647
+      |-{multipathd},4648
+      |-{multipathd},4659
+      |-{multipathd},4660
+      `-{multipathd},4661
+[root@VM1 ~]# 
+[root@VM1 ~]# blkid /dev/mapper/mpatha
+/dev/mapper/mpatha: UUID="7a8d3298-363d-494d-9c32-24f2faa6abbc" TYPE="ext4"
+[root@VM1 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.50
+192.168.2.50
+127.0.0.1
+192.168.122.1
+[root@VM1 ~]# fdisk -l /dev/mapper/mpatha
+
+磁盘 /dev/mapper/mpatha：10.7 GB, 10737418240 字节，20971520 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+
+[root@VM1 ~]# fdisk  -cu /dev/mapper/mpatha
+用法：
+ fdisk [选项] <磁盘>    更改分区表
+ fdisk [选项] -l <磁盘> 列出分区表
+ fdisk -s <分区>        给出分区大小(块数)
+
+选项：
+ -b <大小>             扇区大小(512、1024、2048或4096)
+ -c[=<模式>]           兼容模式：“dos”或“nondos”(默认)
+ -h                    打印此帮助文本
+ -u[=<单位>]           显示单位：“cylinders”(柱面)或“sectors”(扇区，默认)
+ -v                    打印程序版本
+ -C <数字>             指定柱面数
+ -H <数字>             指定磁头数
+ -S <数字>             指定每个磁道的扇区数
+
+   #######对多路径设备文件执行分区、格式化、挂载操作
+[root@VM1 ~]# fdisk  /dev/mapper/mpatha
+
+使用磁盘标识符 0x15cc0185 创建新的 DOS 磁盘标签。
+
+命令(输入 m 获取帮助)：p
+
+磁盘 /dev/mapper/mpatha：10.7 GB, 10737418240 字节，20971520 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+磁盘标识符：0x15cc0185
+             设备 Boot      Start         End      Blocks   Id  System
+命令(输入 m 获取帮助)：n
+Partition type:
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended
+Select (default p): p
+分区号 (1-4，默认 1)：1
+起始 扇区 (2048-20971519，默认为 2048)：
+将使用默认值 2048
+Last 扇区, +扇区 or +size{K,M,G} (2048-20971519，默认为 20971519)：+5G
+分区 1 已设置为 Linux 类型，大小设为 5 GiB
+
+命令(输入 m 获取帮助)：p
+磁盘 /dev/mapper/mpatha：10.7 GB, 10737418240 字节，20971520 个扇区
+Units = 扇区 of 1 * 512 = 512 bytes
+扇区大小(逻辑/物理)：512 字节 / 512 字节
+I/O 大小(最小/最佳)：512 字节 / 512 字节
+磁盘标签类型：dos
+磁盘标识符：0x15cc0185
+             设备 Boot      Start         End      Blocks   Id  System
+/dev/mapper/mpatha1            2048    10487807     5242880   83  Linux
+
+命令(输入 m 获取帮助)：w
+
+正在同步磁盘。
+[root@VM1 ~]# ls /dev/mapper/
+control  mpatha  rhel-root  rhel-swap
+
+[root@VM1 ~]# ls /dev/mapper/mpatha -l
+lrwxrwxrwx. 1 root root 7 10月  9 13:50 /dev/mapper/mpatha -> ../dm-2
+[root@VM1 ~]# ls /dev/mapper/mpatha1
+ls: 无法访问/dev/mapper/mpatha1: 没有那个文件或目录
+[root@VM1 ~]# partprobe
+
+[root@VM1 ~]# multipath -rr   #进行配置的重新载入：
+
+reload: mpatha (3600140582462ff3c0a6442da3c653f3a) undef LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=undef
+|-+- policy='service-time 0' prio=1 status=undef
+| `- 2:0:0:0 sda 8:0  active ready running
+`-+- policy='service-time 0' prio=1 status=undef
+  `- 3:0:0:0 sdb 8:16 active ready running
+
+[root@VM1 ~]# ls /dev/mapper/  #＃再次查看，将会看到新的分区
+control  mpatha  mpatha1  rhel-root  rhel-swap
+
+[root@VM1 ~]# blkid /dev/mapper/mpatha
+/dev/mapper/mpatha: UUID="7a8d3298-363d-494d-9c32-24f2faa6abbc" TYPE="ext4" PTTYPE="dos" 
+
+[root@VM1 ~]# blkid /dev/mapper/mpatha1
+[root@VM1 ~]# mkfs.xfs /dev/mapper/mpatha1
+meta-data=/dev/mapper/mpatha1    isize=512    agcount=4, agsize=327680 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=1310720, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+
+[root@VM1 ~]# blkid /dev/mapper/mpatha1
+/dev/mapper/mpatha1: UUID="4b8314a0-7fe4-488e-8110-46524d611979" TYPE="xfs" 
+
+[root@VM1 ~]# mount /dev/mapper/mpatha1 /var/www/html/  #挂载
+
+[root@VM1 ~]# ls /var/www/html/
+[root@VM1 ~]# echo "haha end game VM1 client 50"> /var/www/html/index.html
+
+[root@VM1 ~]# curl  http://192.168.4.50
+haha end game VM1 client 50
+
+[root@VM1 ~]# df -hT /var/www/html/
+文件系统            类型  容量  已用  可用 已用% 挂载点
+/dev/mapper/mpatha1 xfs   5.0G   33M  5.0G    1% /var/www/html
+[root@VM1 ~]# 
+[root@VM1 ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
+sda             8:0    0   10G  0 disk  
+├─sda1          8:1    0    5G  0 part  
+└─mpatha      253:2    0   10G  0 mpath 
+  └─mpatha1   253:3    0    5G  0 part  /var/www/html
+sdb             8:16   0   10G  0 disk  
+├─sdb1          8:17   0    5G  0 part  
+└─mpatha      253:2    0   10G  0 mpath 
+  └─mpatha1   253:3    0    5G  0 part  /var/www/html
+sr0            11:0    1 1024M  0 rom   
+vda           252:0    0   20G  0 disk  
+├─vda1        252:1    0    1G  0 part  /boot
+└─vda2        252:2    0   19G  0 part  
+  ├─rhel-root 253:0    0   17G  0 lvm   /
+  └─rhel-swap 253:1    0    2G  0 lvm   [SWAP]
+vdb           252:16   0   10G  0 disk  
+[root@VM1 ~]# multipath  -ll  ##查看多路径
+mpatha (3600140582462ff3c0a6442da3c653f3a) dm-2 LIO-ORG ,diskb           
+size=10G features='0' hwhandler='0' wp=rw
+|-+- policy='service-time 0' prio=1 status=active
+| `- 2:0:0:0 sda 8:0  active ready running
+`-+- policy='service-time 0' prio=1 status=enabled
+  `- 3:0:0:0 sdb 8:16 active ready running
+[root@VM1 ~]# 
+
+
+
+
+
+
+
+
+
+
+[root@server51 ~]# targetcli ls
+o- / ....................................................................... [...]
+  o- backstores ............................................................ [...]
+  | o- block ................................................ [Storage Objects: 1]
+  | | o- diskb ......................... [/dev/vdb (10.0GiB) write-thru activated]
+  | |   o- alua ................................................. [ALUA Groups: 1]
+  | |     o- default_tg_pt_gp ..................... [ALUA state: Active/optimized]
+  | o- fileio ............................................... [Storage Objects: 0]
+  | o- pscsi ................................................ [Storage Objects: 0]
+  | o- ramdisk .............................................. [Storage Objects: 0]
+  o- iscsi .......................................................... [Targets: 1]
+  | o- iqn.2018-10.cn.tedu:server51 .................................... [TPGs: 1]
+  |   o- tpg1 ............................................. [no-gen-acls, no-auth]
+  |     o- acls ........................................................ [ACLs: 1]
+  |     | o- iqn.2018-10.cn.tedu.client50 ....................... [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 ............................... [lun0 block/diskb (rw)]
+  |     o- luns ........................................................ [LUNs: 1]
+  |     | o- lun0 .................... [block/diskb (/dev/vdb) (default_tg_pt_gp)]
+  |     o- portals .................................................. [Portals: 1]
+  |       o- 0.0.0.0:3260 ................................................... [OK]
+  o- loopback ....................................................... [Targets: 0]
+[root@server51 ~]# man iscsiadm
+EXAMPLES
+       Discover targets at a given IP address:
+            iscsiadm --mode discoverydb --type sendtargets --portal 192.168.1.10 -
+-discover
+       Login, must use a node record id found by the discovery:
+            iscsiadm --mode node --targetname iqn.2001-05.com.doe:test --portal 192.168.1.1:3260 --login
+       Logout:
+            iscsiadm --mode node --targetname iqn.2001-05.com.doe:test --portal 192.168.1.1:3260 --logout
+
+iscsiadm --mode node --targetname iqn.2001-05.com.doe:test 
+--portal 192.168.1.1:3260  -l 登陆入设备[ 注意只有一个小横杠-u-l ]
+iscsiadm --mode node --targetname iqn.2001-05.com.doe:test 
+--portal 192.168.1.1:3260  -u 登出设备[ 注意只有一个小横杠-u-l ]
+****/
+
+[root@VM2 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.12
+192.168.2.12
+127.0.0.1
+192.168.122.1
+[root@VM2 ~]# lsblk /dev/vdb
+NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+vdb  252:16   0  10G  0 disk 
+[root@VM2 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.51
+192.168.2.12
+127.0.0.1
+192.168.122.1
+[root@VM2 ~]# yum -y install targetcli
+已安装:
+  targetcli.noarch 0:2.1.fb46-1.el7                                             
+作为依赖被安装:
+  pyparsing.noarch 0:1.5.6-9.el7     python-configshell.noarch 1:1.1.fb23-3.el7 
+  python-kmod.x86_64 0:0.9-4.el7     python-rtslib.noarch 0:2.1.fb63-2.el7      
+  python-urwid.x86_64 0:1.1.1-3.el7 
+完毕！
+/****
+[root@proxy ~]# rpm -q targetcli
+targetcli-2.1.fb46-1.el7.noarch
+[root@proxy ~]# yum info targetcli
+已安装的软件包
+名称    ：targetcli
+架构    ：noarch
+版本    ：2.1.fb46
+发布    ：1.el7
+大小    ：224 k
+源    ：installed
+来自源：rhel7
+简介    ： An administration shell for storage targets
+网址    ：https://fedorahosted.org/targetcli-fb/
+协议    ： ASL 2.0
+描述    ： An administration shell
+
+***/
+[root@VM2 ~]# systemctl disable NetworkManager
+
+[root@VM2 ~]# systemctl stop NetworkManager
+[root@VM2 ~]# systemctl status NetworkManager
+   Active: inactive (dead) since 一 2018-10-08 10:50:52 CST; 2s ago
+
+[root@VM2 ~]# targetcli 
+/> exit
+Global pref auto_save_on_exit=true
+Last 10 configs saved in /etc/target/backup.
+Configuration saved to /etc/target/saveconfig.json
+
+[root@VM2 ~]# cat /etc/target/saveconfig.json 
+{
+  "fabric_modules": [], 
+  "storage_objects": [], 
+  "targets": []
+}
+[root@VM2 ~]# blkid /dev/vdb
+[root@VM2 ~]# targetcli
+
+/> backstores/block create  name=diskb dev=/dev/vdb  #创建后端存储
+Created block storage object diskb using /dev/vdb.
+
+/> iscsi/ create  iqn.2018-10.cn.tedu: #创建iqn对象
+/> iscsi/ delete iqn.2018-10.cn.tedu:  #删除错误的 磁盘名
+Deleted Target iqn.2018-10.cn.tedu:.
+
+/> iscsi/ create  iqn.2018-10.cn.tedu:server51 #创建正确的磁盘名 iqn对象
+
+/> iscsi/iqn.2018-10.cn.tedu:server51/tpg1/acls create iqn.2018-10.cn.tedu.client50
+Created Node ACL for iqn.2018-10.cn.tedu.client50    # 设置客户端的iqn 授权客户机访问
+
+/> /iscsi/iqn.2018-10.cn.tedu:server51/tpg1/luns create /backstores/block/diskb 
+Created LUN 0.    #将iqn对象iqn.2018-10.cn.tedu:server51与后端存储/backstores/block/diskb 绑定
+Created LUN 0->0 mapping in node ACL iqn.2018-10.cn.tedu.client50
+
+/> /iscsi/iqn.2018-10.cn.tedu:server51/tpg1/portals/ create 0.0.0.0  3260
+Using default IP port 3260            #开启本地监听的IP地址与端口
+Binding to INADDR_ANY (0.0.0.0)
+This NetworkPortal already exists in configFS
+/> ls
+o- / .................................................................... [...]
+  o- backstores ......................................................... [...]
+  | o- block ............................................. [Storage Objects: 1]
+  | | o- diskb ...................... [/dev/vdb (10.0GiB) write-thru activated]
+  | |   o- alua .............................................. [ALUA Groups: 1]
+  | |     o- default_tg_pt_gp .................. [ALUA state: Active/optimized]
+  | o- fileio ............................................ [Storage Objects: 0]
+  | o- pscsi ............................................. [Storage Objects: 0]
+  | o- ramdisk ........................................... [Storage Objects: 0]
+  o- iscsi ....................................................... [Targets: 1]
+  | o- iqn.2018-10.cn.tedu:server51 ................................. [TPGs: 1]
+  |   o- tpg1 .......................................... [no-gen-acls, no-auth]
+  |     o- acls ..................................................... [ACLs: 1]
+  |     | o- iqn.2018-10.cn.tedu.client50 .................... [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 ............................ [lun0 block/diskb (rw)]
+  |     o- luns ..................................................... [LUNs: 1]
+  |     | o- lun0 ................. [block/diskb (/dev/vdb) (default_tg_pt_gp)]
+  |     o- portals ............................................... [Portals: 1]
+  |       o- 0.0.0.0:3260 ................................................ [OK]
+  o- loopback .................................................... [Targets: 0]
+/> saveconfig 
+Last 10 configs saved in /etc/target/backup.
+Configuration saved to /etc/target/saveconfig.json
+/> exit
+Global pref auto_save_on_exit=true
+Last 10 configs saved in /etc/target/backup.
+Configuration saved to /etc/target/saveconfig.json
+
+[root@VM2 ~]# cat /etc/target/saveconfig.json 
+{
+  "fabric_modules": [], 
+  "storage_objects": [
+
+      "wwn": "iqn.2018-10.cn.tedu:server51"
+    }
+  ]
+}
+[root@VM2 ~]# cat /etc/hostname 
+VM2
+[root@VM2 ~]# echo server51.tedu.cn > /etc/hostname
+[root@VM2 ~]# cat /etc/hostname 
+server51.tedu.cn
+[root@VM2 ~]# systemctl start target.service 
+[root@VM2 ~]# systemctl enable target.service
+[root@VM2 ~]# ss -anputl |grep 3260
+tcp    LISTEN     0      256       *:3260                  *:*    
+/**
+[root@proxy ~]# pstree -anpul |grep target
+  |           `-grep,8775 --color=auto target
+ **/
+[root@VM2 ~]# reboot
+[root@server51 ~]# targetcli ls
+o- / ....................................................................... [...]
+  o- backstores ............................................................ [...]
+  | o- block ................................................ [Storage Objects: 1]
+  | | o- diskb ......................... [/dev/vdb (10.0GiB) write-thru activated]
+  | |   o- alua ................................................. [ALUA Groups: 1]
+  | |     o- default_tg_pt_gp ..................... [ALUA state: Active/optimized]
+  | o- fileio ............................................... [Storage Objects: 0]
+  | o- pscsi ................................................ [Storage Objects: 0]
+  | o- ramdisk .............................................. [Storage Objects: 0]
+  o- iscsi .......................................................... [Targets: 1]
+  | o- iqn.2018-10.cn.tedu:server51 .................................... [TPGs: 1]
+  |   o- tpg1 ............................................. [no-gen-acls, no-auth]
+  |     o- acls ........................................................ [ACLs: 1]
+  |     | o- iqn.2018-10.cn.tedu.client50 ....................... [Mapped LUNs: 1]
+  |     |   o- mapped_lun0 ............................... [lun0 block/diskb (rw)]
+  |     o- luns ........................................................ [LUNs: 1]
+  |     | o- lun0 .................... [block/diskb (/dev/vdb) (default_tg_pt_gp)]
+  |     o- portals .................................................. [Portals: 1]
+  |       o- 0.0.0.0:3260 ................................................... [OK]
+  o- loopback ....................................................... [Targets: 0]
+[root@server51 ~]# 
+[root@server51 ~]# hostname
+server51.tedu.cn
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@VM3 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.52
+192.168.2.13
+127.0.0.1
+192.168.122.1
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@VM4 ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.53
+192.168.2.14
+127.0.0.1
+192.168.122.1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[root@proxy ~]# lsblk
+NAME          MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sr0            11:0    1 1024M  0 rom  
+vda           252:0    0   20G  0 disk 
+├─vda1        252:1    0    1G  0 part /boot
+└─vda2        252:2    0   19G  0 part 
+  ├─rhel-root 253:0    0   17G  0 lvm  /
+  └─rhel-swap 253:1    0    2G  0 lvm  [SWAP]
+vdb           252:16   0   10G  0 disk 
+[root@proxy ~]# ifconfig |awk '/inet /{print $2}'
+192.168.4.5
+192.168.2.5
+201.1.2.5
+127.0.0.1
+192.168.122.1
+[root@proxy ~]# systemctl disable NetworkManager
+[root@proxy ~]# systemctl stop NetworkManager
+
+[root@proxy ~]# systemctl status NetworkManager
+
+[root@proxy ~]# yum -y install targetcli
+已安装:
+  targetcli.noarch 0:2.1.fb46-1.el7                                             
+
+作为依赖被安装:
+  pyparsing.noarch 0:1.5.6-9.el7     python-configshell.noarch 1:1.1.fb23-3.el7 
+  python-kmod.x86_64 0:0.9-4.el7     python-rtslib.noarch 0:2.1.fb63-2.el7      
+  python-urwid.x86_64 0:1.1.1-3.el7 
+
+完毕！
+[root@proxy ~]# rpm -q targetcli
+targetcli-2.1.fb46-1.el7.noarch
+[root@proxy ~]# yum info targetcli
+已加载插件：langpacks, product-id, search-disabled-repos, subscription-manager
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+已安装的软件包
+名称    ：targetcli
+架构    ：noarch
+版本    ：2.1.fb46
+发布    ：1.el7
+大小    ：224 k
+源    ：installed
+来自源：rhel7
+简介    ： An administration shell for storage targets
+网址    ：https://fedorahosted.org/targetcli-fb/
+协议    ： ASL 2.0
+描述    ： An administration shell for configuring iSCSI, FCoE, and other
+         : SCSI targets, using the TCM/LIO kernel target subsystem. FCoE
+         : users will also need to install and use fcoe-utils.
+
+[root@proxy ~]# parted  /dev/vdb  mklabel  gpt
+信息: You may need to update /etc/fstab.
+[root@proxy ~]# blkid /dev/vdb
+/dev/vdb: PTTYPE="gpt" 
+[root@proxy ~]# parted  /dev/vdb mkpart primary  1  100%
+信息: You may need to update /etc/fstab.
+
+[root@proxy ~]# blkid /dev/vdb                  
+/dev/vdb: PTTYPE="gpt"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

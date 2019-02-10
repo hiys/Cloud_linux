@@ -1,0 +1,176 @@
+﻿
+
+C:\Users\320\Downloads\Git-2.20.1-64-bit
+
+1、注册账号
+首先需要去GitHub官网上注册一个账号，然后创建一个仓库。
+
+2、下载并安装Git for Windows
+https://gitforwindows.org
+
+We bring the awesome Git SCM to Windows
+我们将出色的Git SCM引入Windows
+
+
+43.5MB 
+https://gitforwindows.org/
+https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/Git-2.20.1-64-bit.exe
+
+Git-2.20.1-64-bit
+应用程序 (.exe)
+文件大小  43.4 MB (45,608,976 字节)
+占用空间  43.5 MB (45,617,152 字节)
+C:\Users\320\Downloads\Git-2.20.1-64-bit
+
+下载完成后进行安装，一路next即可。
+
+https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/Git-2.20.1-64-bit.exe
+
+C:\Windows\System32\cmd.exe    ------应用程序 (.exe) ， Windows 命令处理程序
+windows + R   输入cmd    打开控制台
+C:\Users\320
+
+------------------- git -------------
+------------------- D:\Git\git-bash.exe  -------------
+
+$ echo  $USER
+
+
+320@LAPTOP-AEFV1BN0 MINGW64 ~
+$ cd  /
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ ls
+bin/  dev/  git-bash.exe*  LICENSE.txt  proc/              tmp/          unins000.exe*  usr/
+cmd/  etc/  git-cmd.exe*   mingw64/     ReleaseNotes.html  unins000.dat  unins000.msg
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ pwd
+/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+
+
+$ echo  $HOME
+/c/Users/320
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ ls  dev/
+clipboard  cons0    fd@      null    scd0  sda2  sdb1  sdb4  stderr@  tty      windows
+conin      console  full     ptmx    sda   sda3  sdb2  shm/  stdin@   ttyS2    zero
+conout     dsp      mqueue/  random  sda1  sdb   sdb3  sr0   stdout@  urandom
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ ls cmd/
+git.exe*  git-gui.exe*  gitk.exe*  git-lfs.exe*  start-ssh-agent.cmd  start-ssh-pageant.cmd
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$
+
+$ vim  /etc/hosts
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ ls  etc/
+bash.bash_logout  fstab                msystem   nsswitch.conf         profile     ssh/
+bash.bashrc       hosts                mtab@     package-versions.txt  profile.d/  tigrc
+DIR_COLORS        inputrc              nanorc    pkcs11/               protocols   vimrc
+docx2txt.config   install-options.txt  networks  pki/                  services
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ tail   -3  etc/fstab
+# DO NOT REMOVE NEXT LINE. It remove cygdrive prefix from path
+none / cygdrive binary,posix=0,noacl,user 0 0
+none /tmp usertemp binary,posix=0,noacl 0 0
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$
+
+------------------- D:\Git\git-bash.exe  -------------
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ pwd
+/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ mkdir  /linux
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ cd   /linux/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux
+$ git  clone  https://github.com/hiys/linux  ./
+
+Cloning into '.'...
+remote: Enumerating objects: 12, done.
+remote: Counting objects: 100% (12/12), done.
+remote: Compressing objects: 100% (12/12), done.
+remote: Total 1021 (delta 3), reused 0 (delta 0), pack-reused 1009
+Receiving objects: 100% (1021/1021), 233.01 MiB | 843.00 KiB/s, done.
+Resolving deltas: 100% (203/203), done.
+Checking out files: 100% (1061/1061), done.
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ ls
+ 01.admin/                                               index.htm
+...................
+ home.php                                                质量标准规范/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ ls  |wc  -l
+96
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$
+
+$ pwd
+/linux
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ ls  /etc/
+bash.bash_logout  docx2txt.config  inputrc              mtab@     nsswitch.conf         pki/        protocols  tigrc
+bash.bashrc       fstab            install-options.txt  nanorc    package-versions.txt  profile     services   vimrc
+DIR_COLORS        hosts            msystem              networks  pkcs11/               profile.d/  ssh/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /linux (master)
+$ cd  /
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ pwd
+/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ mkdir  cloud
+
+320@LAPTOP-AEFV1BN0 MINGW64 /
+$ cd   /cloud/
+
+320@LAPTOP-AEFV1BN0 MINGW64 /cloud
+$ git  clone  https://github.com/hiys/Cloud_linux    ./
+............
+Receiving objects: 100% (1160/1160), 121.44 MiB | 406.00 KiB/s, done.
+Resolving deltas: 100% (481/481), done.
+Checking out files: 100% (916/916), done.
+warning: the following paths have collided (e.g. case-sensitive paths
+on a case-insensitive filesystem) and only one from the same
+colliding group is in the working tree:
+
+  'CLOUD_architecture_Project/hadoop/HDFS.jpg'
+  'CLOUD_architecture_Project/hadoop/hdfs.jpg'
+
+320@LAPTOP-AEFV1BN0 MINGW64 /cloud (master)
+$ ls  |wc  -l
+68
+
+320@LAPTOP-AEFV1BN0 MINGW64 /cloud (master)
+$ logout
+
+
+D:\Git\cloud\CLOUD_architecture_Project\hadoop
+
+
+
+
+
+
+
+
