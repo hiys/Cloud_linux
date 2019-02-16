@@ -1,0 +1,513 @@
+
+[root@room9pc27 ~]# which  nm-connection-editor
+/usr/bin/nm-connection-editor
+
+[root@room9pc27 ~]# yum  provides  /usr/bin/nm-connection-editor 
+...........
+nm-connection-editor-1.8.0-3.el7.x86_64 : A network connection configuration
+                                        : editor for NetworkManager
+源    ：rhel7
+匹配来源：
+文件名    ：/usr/bin/nm-connection-editor
+
+nm-connection-editor-1.8.0-3.el7.x86_64 : A network connection configuration
+                                        : editor for NetworkManager
+源    ：@anaconda
+匹配来源：
+文件名    ：/usr/bin/nm-connection-editor
+
+[root@room9pc27 ~]# rpm  -q  nm-connection-editor 
+nm-connection-editor-1.8.0-3.el7.x86_64
+[root@room9pc27 ~]# 
+
+[root@room9pc27 ~]# nm-connection-editor 
+..............
+[root@room9pc27 ~]# type  nm-connection-editor
+nm-connection-editor 已被哈希 (/usr/bin/nm-connection-editor)
+
+
+[root@V10 ~]# echo  'testcat' 
+testcat
+[root@V10 ~]# echo  'testcat'  |cat
+testcat
+
+--------------  直接在命令的最后指定 -  则表示从标准输入中读取 --------------
+[root@V10 ~]# echo  'testcat'  |cat  -
+testcat
+
+[root@V10 ~]# echo  -e  "test1\ntest2bbb"  > test.txt
+[root@V10 ~]# cat  test.txt
+test1
+test2bbb
+
+[root@V10 ~]# echo  'testcat------'  |cat  - test.txt
+testcat------
+test1
+test2bbb
+[root@V10 ~]# echo  'testcat------'  |cat  test.txt  -
+test1
+test2bbb
+testcat------
+[root@V10 ~]# 
+
+-----------  grep会同时处理标准输入和文件test.txt中的内容，
+也就是说会在标准输入中搜索 'at' 
+也会在文件 test.txt (该文件名从grep命令行参数中获得)中搜索 'at'
+
+[root@V10 ~]# echo  'testcat------'  |grep  "at"  test.txt  -
+(标准输入):testcat------
+[root@V10 ~]# echo  'testcat------'  |grep  "bb"  test.txt  -
+test.txt:test2bbb
+
+xargs命令可以通过管道接受字符串，
+并将接收到的字符串通过 空格 分割成 许多参数
+(默认情况下是通过空格分割) 然后将参数传递给其后面的命令，
+作为后面命令的命令行参数
+
+echo '--help' | xargs cat 等价于 cat --help 
+
+[root@V10 ~]# echo '--help' | xargs cat
+用法：cat [选项]... [文件]...
+将[文件]或标准输入组合输出到标准输出。
+
+  -A, --show-all           等于-vET
+  -b, --number-nonblank    对非空输出行编号
+  -e                       等于-vE
+  -E, --show-ends          在每行结束处显示"$"
+  -n, --number             对输出的所有行编号
+...............
+------ xargs将其接受的字符串 --help 做成cat的一个命令参数来 运行cat命令
+
+[root@V10 ~]# type   xargs
+xargs 已被哈希 (/usr/bin/xargs)
+
+[root@V10 ~]# cat  test.txt
+test1
+test2bbb
+[root@V10 ~]# echo  test.txt  |xargs  cat
+test1
+test2bbb
+[root@V10 ~]# echo  test.txt  |xargs  grep  bb
+test2bbb
+-------------  注意" {}   \; " 空格 -------------
+[root@V10 ~]# find  ./  -name  "test*" -type  f  -exec  ls  {}\;
+find: 遗漏“-exec”的参数
+[root@V10 ~]# find  ./  -name  "test*" -type  f  -exec  ls  {} \;
+./test.txt
+
+find命令如果不加-print0其搜索结果的每一条字符串后面实际上是加了换行
+默认情况下find的输出结果是每条记录后面加上换行，也就是每条记录是一个新行
+[root@V10 ~]# find  ./  -name  "test*" -type  f  
+./test.txt
+./test2.txt
+
+## -0 选项表示以 '\0' 为分隔符，一般与find结合使用,# 注意是数字"0"零print0
+
+[root@V10 ~]# find  ./  -name  "test*" -type  f  -print0 # 注意是数字"0"零print0
+./test.txt./test2.txt[root@V10 ~]# 
+-----------  加上 -print0 参数表示find输出的每条结果后面加上 '\0' 而不是换行 ----------
+
+[root@V10 ~]# 
+
+-----------  xargs 使用 -d 命令指定分隔符  ---------------
+
+[root@V10 ~]# echo "haha\0xixi\0hehe"
+haha\0xixi\0hehe
+[root@V10 ~]# echo  -e  "haha\0xixi\0hehe"
+hahaxixihehe
+[root@V10 ~]# echo  -e  "haha\0xixi\0hehe" |xargs  -d  "\0"  echo
+haha xixi hehe
+
+[root@V10 ~]# echo  -e  "haha\0xixi\0hehe" |xargs  -0  echo
+haha xixi hehe
+--------------- xargs的 -0 和 -d '\0' 表示其从标准输入中读取的内容使用 '\0' 来分割，
+由于 find 的结果是使用 '\0' 分隔的，所以xargs使用 '\0' 将 find的结果分隔之后得到
+haha xixi hehe
+
+------------ 目录下的所有文件中查找字符串 --------------------
+
+[root@V10 ~]# find ./  |xargs   grep  "2bb"
+grep: ./: 是一个目录
+grep: ./.cache: 是一个目录
+grep: ./.cache/dconf: 是一个目录
+..............
+grep: ./.local/share/webkitgtk/localstorage: 是一个目录
+grep: ./.ssh: 是一个目录
+./test.txt:test2bbb
+./test2.txt:test2bbb
+[root@V10 ~]#  
+
+------------ 目录下的所有文件中查找字符串 ------------------- 
+
+[root@V10 ~]# find ./  |xargs   grep  -ri  "2bb"
+./test.txt:test2bbb
+./test2.txt:test2bbb
+grep: ./.cache/yelp/WebKitCache/Version: 没有那个文件或目录
+grep: 10: 没有那个文件或目录
+grep: ./.cache/yelp/WebKitCache/Version: 没有那个文件或目录
+grep: 10/Blobs: 没有那个文件或目录
+./test.txt:test2bbb
+./test2.txt:test2bbb
+[root@V10 ~]# 
+
+----------- 目录下的所有文件中查找字符串,并且只打印出含有该字符串的文件名 -------------
+
+[root@V10 ~]# find ./  |xargs   grep  -lri  "2bb"
+./test.txt
+./test2.txt
+grep: ./.cache/yelp/WebKitCache/Version: 没有那个文件或目录
+grep: 10: 没有那个文件或目录
+grep: ./.cache/yelp/WebKitCache/Version: 没有那个文件或目录
+grep: 10/Blobs: 没有那个文件或目录
+./test.txt
+./test2.txt
+
+表示在 当前目录 ./ 下面搜索
+并且 列出文件内容中包含 2bb 字符串的文件名，并且是递归的搜索
+
+参数说明：
+-l 列出文件名称
+-r递归的搜索
+-i 不区分大小写搜索
+
+
+--------  配置文件 
+/etc/httpd/conf/httpd.conf 系统自带，管理员配置 
+
+[root@room9pc27 ~]# tail   -2  /etc/httpd/conf/httpd.conf
+# Load config files in the "/etc/httpd/conf.d" directory, if any.
+   在“/etc/httpd/conf.d”目录中加载配置文件（如果有）
+IncludeOptional conf.d/*.conf
+
+[root@room9pc27 ~]# ls  /etc/httpd/
+conf  conf.d  conf.modules.d  logs  modules  run
+
+[root@room9pc27 ~]# ls  /etc/httpd/conf.d/
+00-aa.conf  autoindex.conf  README  rhce.conf  userdir.conf  welcome.conf
+
+[root@room9pc27 ~]# ll /etc/httpd/conf.d/rhce.conf 
+lrwxrwxrwx 1 root root 40 3月  19 2018 /etc/httpd/conf.d/rhce.conf -> /var/lib/libvirt/images/conf.d/rhce.conf
+
+[root@room9pc27 ~]# cat  /etc/httpd/conf.d/rhce.conf 
+Alias  /exam	/var/www/exam
+
+[root@room9pc27 ~]# ll /var/lib/libvirt/images/conf.d/rhce.conf 
+-rw-r--r-- 1 root root 27 1月  10 2018 /var/lib/libvirt/images/conf.d/rhce.conf
+
+[root@room9pc27 ~]# cat   /var/lib/libvirt/images/conf.d/rhce.conf
+Alias  /exam	/var/www/exam
+
+[root@room9pc27 ~]# firefox  http://127.0.0.1/exam
+
+[root@room9pc27 ~]# find   /etc/httpd/  |xargs  grep   -lri  "/var/www/exam"
+/etc/httpd/conf.d/rhce.conf
+
+[root@room9pc27 ~]# find   /etc/httpd/  |xargs  grep   -lri  "exam"
+/etc/httpd/conf/httpd.conf
+/etc/httpd/conf.d/userdir.conf
+/etc/httpd/conf/httpd.conf
+/etc/httpd/conf/httpd.conf
+.................
+/etc/httpd/conf.d/userdir.conf
+/etc/httpd/conf.d/userdir.conf
+/etc/httpd/conf.d/rhce.conf
+[root@room9pc27 ~]# 
+
+[root@room9pc27 ~]# ls  /var/www/
+cgi-bin  exam  html
+[root@room9pc27 ~]# ls  /var/www/exam/
+ex200  ex300  index.html  rht-ex300.desktop
+
+[root@room9pc27 ~]# ls  /var/www/exam/ex200/
+.................
+[root@room9pc27 ~]# ls  /var/www/exam/ex300/
+................
+
+[root@room9pc27 ~]# tail  -2  /etc/profile
+unset -f pathmunge
+/bin/uftpd -D /public
+
+[root@room9pc27 ~]# tail  -3  /etc/bashrc 
+# vim:ts=4:sw=4
+/usr/sbin/ifconfig rhce:0 172.25.0.250
+echo Taren1 | passwd --stdin root &> /dev/null
+
+[root@room9pc27 ~]# lsattr   /etc/bashrc
+----i--------e-- /etc/bashrc
+
+chattr命令的用法：
+chattr [ -RVf ] [ -v version ] [ mode ] files…
+最关键的是在[mode]部分，
+[mode]部分是由 + - = 和 [ASacDdIijsTtu] 这些字符 组合的，
+这部分是用来控制文件的属性。
+
++ ：在原有参数设定基础上，追加参数。
+- ：在原有参数设定基础上，移除参数。
+= ：更新为指定参数设定。
+A：文件或目录的 atime (access time)不可被修改(modified), 
+可以有效预防例如手提电脑磁盘I/O错误的发生。
+
+S：硬盘I/O同步选项，功能类似sync,文件内容变更后立即同步到硬盘(sync)。
+
+a：即append，设定该参数后，只能向文件中添加数据，而不能删除，
+多用于服务器日志文件安全，只有root才能设定这个属性。
+
+i：设定文件不能被删除、改名、设定链接关系，同时不能写入或新增内容。
+  i参数对于文件 系统的安全设置有很大帮助。
+  i是更为严格的安全设定，只有superuser (root) 
+  或具有CAP_LINUX_IMMUTABLE处理能力（标识）的进程能够施加该选项。
+  i若对目录设置后 则仅能修改 子文件 而不能 新建或删除。
+
+j：即journal，设定此参数使得当通过mount参数：data=ordered 或者 data=writeback 挂 载的文件系统，文件在写入时会先被记录(在journal中)。
+如果filesystem被设定参数为 data=journal，则该参数自动失效。
+
+ ------------ 显示(目录的)文件系统属性 这些文件 设置了“e”属性，即可执行   ----
+
+[root@room9pc27 ~]# lsattr   testsed.txt 
+-------------e-- testsed.txt
+
+[root@room9pc27 ~]# chattr  -i  /etc/bashrc
+
+[root@room9pc27 ~]# lsattr   /etc/bashrc
+-------------e-- /etc/bashrc
+
+[root@room9pc27 ~]# vim   /etc/bashrc
+[root@room9pc27 ~]# tail   -1  /etc/bashrc
+echo 1 | passwd --stdin root &> /dev/null
+
+[root@room9pc27 ~]# . /etc/bashrc
+[root@room9pc27 ~]# echo  $?
+0
+[root@room9pc27 ~]# ll  /etc/bashrc
+-rw-r--r-- 1 root root 2934 2月  13 10:12 /etc/bashrc
+
+[root@room9pc27 ~]# vim  .bash_history
+[root@room9pc27 ~]# > .bash_history
+
+[root@room9pc27 ~]# ll .bash_history
+-rw------- 1 root root 0 2月  13 10:33 .bash_history
+[root@room9pc27 ~]# lsattr  .bash_history
+-------------e-- .bash_history
+[root@room9pc27 ~]# history  -c
+[root@room9pc27 ~]# history  -w
+[root@room9pc27 ~]# history 
+    1  history  -w
+    2  history 
+
+
+POSIX标准
+  POSIX（Portable Operating System Interface for Computing Systems）
+是由IEEE 和ISO/IEC 开发的一簇标准。
+该标准是基于现有的UNIX 实践和经验，描述了操作系统的调用服务接口。
+
+查找 Linux 系统中的僵尸进程
+#!/bin/bash 
+#awk 判断 ps 命令输出的第 8 列为 Z 是,显示该进程的 PID 和进程命令 
+ps aux |awk '{if($8 == "Z"){print $2,$11}}' 
+
+Shell 脚本的 fork 炸弹
+#!/bin/bash 
+#快速消耗计算机资源,致使计算机死机 
+#定义函数名为.(点), 函数中递归调用自己并放入后台执行 
+.() { .|.& };. 
+
+生成自签名私钥和证书
+#!/bin/bash 
+#Author:丁丁历险(Jacob) 
+read ‐p "请输入存放证书的目录:" dir 
+if [ ! ‐d $dir ];then 
+  echo "该目录不存在" 
+  exit 
+fi 
+read ‐p "请输入密钥名称:" name 
+#使用 openssl 生成私钥 
+openssl genrsa ‐out ${dir}/${name}.key 
+
+#使用 openssl 生成证书 
+
+#subj 选项可以在生成证书时,非交互自动填写 Common Name 信息 
+openssl req ‐new ‐x509 ‐key ${dir}/${name}.key ‐subj "/CN=common" ‐out ${dir}/${name}.crt 
+
+=================
+generate key
+
+创建EC参数和私钥文件 #使用 openssl 生成私钥 
+openssl ecparam -genkey -name prime256v1 -out attestation_key.pem
+
+#使用 openssl 生成私钥 
+openssl genrsa ‐out ${dir}/${name}.key 
+
+
+查看EC私钥 
+openssl ecparam -in attestation_key.pem -text
+
+验证EC参数 
+openssl ecparam -in attestation_key.pem -check
+
+self-signed certificate
+
+创建公钥证书 
+openssl req -new -sha256 -key attestation_key.pem -out csr.csr -subj “/C=CN/ST=Shanghai/O=WhoAreYou/CN=WAY\ Fingerprint\ U2F\ Authenticator”
+
+自签发公钥证书至attestation.pem 
+openssl req -config opnssl.cnf -x509 -sha256 -days 3650 -key attestation_key.pem -in csr.csr -out attestation.pem
+
+convert to der
+
+openssl x509 -outform der -in attestation.pem -out attestation.der 
+openssl ec -in attestation_key.pem -outform der -out attestation_key.der
+
+generate C code
+
+python dump-der.py > certificates.c || ( rm certificates.c && exit 1 )
+
+gen.sh
+
+#!/bin/bash
+
+set -e
+
+cat > opnssl.cnf <<EOF
+[req]
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+EOF
+
+# generate key and self-signed certificate
+openssl ecparam -genkey -name prime256v1 -out attestation_key.pem
+openssl req -new -sha256 -key attestation_key.pem -out csr.csr -subj "/CN=U2F Token"
+openssl req -config opnssl.cnf -x509 -sha256 -days 3650 -key attestation_key.pem -in csr.csr -out attestation.pem
+
+# convert to der
+openssl x509 -outform der -in attestation.pem -out attestation.der
+openssl ec -in attestation_key.pem -outform der -out attestation_key.der
+
+# generate C code
+python dump-der.py > certificates.c || ( rm certificates.c && exit 1 )
+
+dump-der.py
+
+from __future__ import print_function
+from asn1crypto.keys import ECPrivateKey
+
+def pk_to_c_array(name, pk_der):
+    # parse der format
+    pk = ECPrivateKey.load(pk_der)
+
+    # extract private key
+    pk_native = pk['private_key'].native
+
+    # translate to hex string
+    pk_hex = format(pk_native, '064x')
+
+    # split by pairs of characters
+    hex_bytes = ["0x" + pk_hex[i:i + 2] for i in range(0, len(pk_hex), 2)]
+
+    # make string C array declaration
+    return "const uint8_t " + name + "[32] = {" + ", ".join(hex_bytes) + "};"
+
+def cert_to_c_array(name, der):
+    defname = name.upper() + "_LEN"
+    if hasattr(der, 'hex'):
+        hex_str = der.hex()
+    else:
+        hex_str = der.encode('hex')
+    hex_bytes = ["0x" + hex_str[i:i + 2] for i in range(0, len(hex_str), 2)]
+
+    define = "#define " + defname + " " + str(len(der))
+    array = "const uint8_t " + name + "[" + defname + "] = {" + ", ".join(hex_bytes) + "};"
+    return define + "\n" + array
+
+with open("attestation.der", "rb") as f:
+    print(cert_to_c_array("attestation_der", f.read()))
+
+with open("attestation_key.der", "rb") as f:
+    print(pk_to_c_array("attestation_key", f.read()))
+--------------------- 
+======================
+[root@server0 ~]# tail  -2   /etc/fstab
+UUID=9bf6b9f7-92ad-441b-848e-0257cbb883d1  /    xfs   defaults   1   1
+/dev/systemvg/vo   /vo      ext4          defaults   0    0
+设备路径              挂载点  此分区的文件系统类型  参数     备份标记  检测顺序
+第五列是dump备份设置。
+当其值设置 为  1  时，
+将允许dump备份程序备份；
+设置 为  0  时，忽略备份操作；
+
+第六列是fsck磁盘检查设置。
+其值是一个顺序。 
+当其值为 0 时，永远不检查；
+而 / 根目录分区永远都为1。
+其它分区从2开始，
+数字越小 优先 检查，
+如果两个分区的数字相同，则同时检查。
+
+
+
+[root@room9pc27 ~]# mkdir  /var/git/hiys/
+[root@room9pc27 ~]# cd  /var/git/hiys/
+[root@room9pc27 hiys]# git clone  https://github.com/hiys/Cloud_linux
+正克隆到 'Cloud_linux'...
+.......
+接收对象中: 100% (1190/1190), 121.66 MiB | 732.00 KiB/s, done.
+处理 delta 中: 100% (484/484), done.
+
+[root@room9pc27 linux]# cd  /var/git/linux/linux/
+
+[root@room9pc27 linux]#  pwd
+/var/git/linux/linux
+
+如果想拿远端git服务器上的最新版本(或某个特定版本)覆盖本地的修改,可以使用git pull命令
+[root@room9pc27 linux]# git  pull   #更新本地git仓库
+
+remote: Enumerating objects: 6, done.
+remote: Counting objects: 100% (6/6), done.
+remote: Compressing objects: 100% (5/5), done.
+remote: Total 43 (delta 1), reused 1 (delta 1), pack-reused 37
+Unpacking objects: 100% (43/43), done.
+.............
+
+[root@room9pc27 Cloud_linux]# pwd
+/var/git/hiys/Cloud_linux
+
+[root@room9pc27 Cloud_linux]# find  ./  |xargs   grep  -lri  "redis"
+./nsd1807/exper/mysql.txt
+./nsd1807/exper/haproxy.cfg
+./Architecture/elk02.txt
+./docker/dockerbj01.txt
+./docker/Openstack_end-4.txt
+./docker/Openstack_end-5.txt
+./CLOUD_architecture_Project/docker/dockerbj01.txt
+
+
+[root@room9pc27 Cloud_linux]# cd    /var/git/linux/linux/
+[root@room9pc27 linux]# find  ./  |xargs   grep  -lri  "redis"
+./config/config_global_default.php
+./5747732-dzone-rc43-scalabilityandhighavailability.pdf
+./lnmp_soft/php_scripts/Discuz_X3.4_SC_UTF8.zip
+./lnmp_soft/redis-3.0.6.tar.gz
+./Architecture/elk02.txt
+./Architecture/CLoud/dockerbj01.txt
+./CLoud/cloudbj5-1.txt
+./CLoud/cloudbj5.txt
+./CLoud/cloudbj4-2.txt
+./redis/redis.zip
+./cluster/Ceph%2CTFS%2CFastDFS%2CMogileFS%2CMooseFS%2CGlusterFS+对比+-+yswenli+-+博客园.pdf
+./cluster/clusterbj3.txt
+./NOSQL/nosql_day01.txt
+./NOSQL/nosqlbj2.txt
+./NOSQL/nosqlbj3.txt
+
+./DBa2/master_ip_failover2.txt
+./DBa2/master_ip_failover.txt
+./DBa2/dba2bj3.txt
+
+https://github.com/hiys/linux/blob/master/NOSQL/nosql_day01.txt
+
+
+
+
+
+
+
+

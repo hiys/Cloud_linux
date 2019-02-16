@@ -1,0 +1,292 @@
+
+/**************************** 非必须  操作 *****************
+
+[root@room9pc27 ~]# rht-vmctl   reset  classroom  &&  sleep 5
+classroom [OK]
+域 classroom 已开始
+
+[root@room9pc27 ~]# rht-vmctl   reset  server  &&  sleep 5
+server [OK]
+域 server 已开始
+
+[root@room9pc27 ~]# rht-vmctl   reset  desktop 
+......
+
+******************/
+------------------------------------- 模拟 考试环境 ,如果知道 ip 直接ssh 进去 ------------------
+
+[root@room9pc27 ~]# virsh  console   server
+连接到域 server
+换码符为 ^]
+
+
+Red Hat Enterprise Linux Server 7.0 (Maipo)
+Kernel 3.10.0-123.el7.x86_64 on an x86_64
+
+localhost login: root
+Password:  redhat    # 输入 考试环境的密码
+Last login: Sat Feb 16 19:42:08 from 172.25.0.250
+[root@localhost ~]# ifconfig  |head  -2
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.25.0.110  netmask 255.255.255.0  broadcast 172.25.0.255
+
+---------------------   #注意主机名环境已设置,如果重复设置主机名,一定要看清楚 主机名--------------
+
+[root@localhost ~]# hostnamectl  set-hostname   server0.example.com 
+[root@localhost ~]# hostname
+server0.example.com
+
+[root@localhost ~]# cat   /etc/hostname 
+server0.example.com
+[root@localhost ~]#    敲 Ctrl + ]  退出
+
+[root@room9pc27 ~]# ssh  -X 172.25.0.110
+.............
+[root@server0 ~]# cat  /etc/hostname 
+server0.example.com
+
+[root@server0 ~]# nmcli  connection  show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+
+[root@server0 ~]# nmcli  connection  modify "System eth0"  ipv4.method  manual  ipv4.addresses  '172.25.0.11/24  172.25.0.254' ipv4.dns 172.25.254.254 connection.autoconnect  yes
+
+[root@server0 ~]# nmcli  connection  up  "System eth0" 
+
+^^^^^^^ 这时候ip地址变了,ssh链接信息改变,直接关闭终端窗口,再开一个终端ssh 进去
+
+[root@room9pc27 ~]# ssh  172.25.0.11
+Last login: Sat Feb 16 19:56:39 2019 from 172.25.0.250
+[root@server0 ~]# cat  /etc/hostname 
+server0.example.com
+[root@server0 ~]# hostname
+server0.example.com
+[root@server0 ~]# ifconfig |awk '/inet /{print  $2}'
+172.25.0.11
+127.0.0.1
+[root@server0 ~]# nmcli  connection show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@server0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=none
+ONBOOT=yes     ##开启自动启用网络连接（默认值为no）
+TYPE=Ethernet
+USERCTL=yes    # 允许普通用户控制此接口
+IPV6INIT=no
+PERSISTENT_DHCLIENT=1
+IPADDR0=172.25.0.11   #设置IP地址 只有在BOOTPROTO=(none | static)时设置才有效
+PREFIX0=24
+GATEWAY0=172.25.0.254
+DNS1=172.25.254.254     #主要的DNS设备
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  #设备标识号
+
+[root@server0 ~]# 
+
+/****************
+[root@room9pc27 ~]# ifconfig  |head  -2
+enp1s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 176.121.210.31  netmask 255.255.255.0  broadcast 176.121.210.255
+
+#enp1s0 #en：代表enthernet（以太网）
+  #p1s0代表PCI接口的物理位置为(1, 0), 其中横座标代表bus，纵座标代表slot
+************/
+
+
+[root@room9pc27 ~]# virsh   console  desktop
+连接到域 desktop
+换码符为 ^]
+
+
+Red Hat Enterprise Linux Server 7.0 (Maipo)
+Kernel 3.10.0-123.el7.x86_64 on an x86_64
+
+desktop0 login: root
+Password: redhat
+Last login: Fri Jan 12 18:54:00 from 172.25.0.250
+[root@desktop0 ~]# ifconfig  |grep  "inet "
+        inet 172.25.0.10  netmask 255.255.255.0  broadcast 172.25.0.255
+        inet 127.0.0.1  netmask 255.0.0.0
+
+[root@desktop0 ~]#    敲 Ctrl + ]  退出
+
+[root@room9pc27 ~]# ssh  desktop
+Last login: Sat Feb 16 19:42:44 2019 from 172.25.0.250
+
+[root@desktop0 ~]# ls  /etc/sysconfig/network-scripts/
+ifcfg-eth0   ifdown-ppp       ifup-eth     ifup-sit
+..................
+/********************
+
+BOOTPROTO="static｜none" #启动静态IP地址（BOOTPROTO=dhcp启用动态获取IP）
+USERCTL="yes|no"        #是否允许普通用户控制此接口
+PEERDNS＝"yes|no"         #是不是接受DHCP服务器指派的DNS服务器地址
+PERSISTENT_DHCLIENT=1   #可始终保持DHCP地址(在DHCP服务器/路由器授予IP租约之前连续请求IP租约)
+                             # 默认情况下，此选项处于关闭状态。
+************/
+
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=dhcp
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes   # 允许普通用户控制此接口
+PEERDNS=yes   # 接受DHCP服务器指派的DNS服务器地址
+IPV6INIT=no
+PERSISTENT_DHCLIENT=1   #可始终保持DHCP  ip地址
+
+[root@desktop0 ~]# ll  /etc/hostname
+ls: 无法访问/etc/hostname: 没有那个文件或目录
+
+
+-----------------------------  重新 重复 设置主机名 是为了生成配置文件 /etc/hostname  -----------
+
+[root@desktop0 ~]# hostnamectl  set-hostname  desktop0.example.com
+
+[root@desktop0 ~]# cat  /etc/hostname 
+desktop0.example.com
+
+[root@desktop0 ~]# hostname
+desktop0.example.com
+
+[root@desktop0 ~]# nmcli  connection show
+名称         UUID                                  类型            设备 
+System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  eth0 
+
+[root@desktop0 ~]# nmcli  connection modify  "System eth0"  ipv4.method  manual  ipv4.addresses  '172.25.0.10/24  172.25.0.254'  ipv4.dns  172.25.254.254  connection.autoconnect   yes
+
+[root@desktop0 ~]# nmcli  connection  up  'System eth0' 
+
+^^^^^^^ 这时候ip地址变了,ssh链接信息改变,直接关闭终端窗口,再开一个终端ssh 进去
+
+[root@room9pc27 ~]# ssh   172.25.0.10
+Last login: Sat Feb 16 20:18:49 2019 from 172.25.0.250
+[root@desktop0 ~]# ifconfig  |awk  '/inet /{print $2}'
+172.25.0.10
+127.0.0.1
+[root@desktop0 ~]# cat  /etc/sysconfig/network-scripts/ifcfg-eth0 
+DEVICE=eth0
+BOOTPROTO=none
+ONBOOT=yes
+TYPE=Ethernet
+USERCTL=yes
+IPV6INIT=no
+PERSISTENT_DHCLIENT=1
+IPADDR0=172.25.0.10
+PREFIX0=24
+GATEWAY0=172.25.0.254
+DNS1=172.25.254.254
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03
+
+[root@desktop0 ~]# hostname
+desktop0.example.com
+
+[root@desktop0 ~]# cat  /etc/hostname 
+desktop0.example.com
+
+[root@desktop0 ~]# cat  /etc/resolv.conf 
+# Generated by NetworkManager
+search example.com
+nameserver 172.25.254.254
+
+[root@desktop0 ~]# route  -n
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         172.25.0.254    0.0.0.0         UG    1024   0        0 eth0
+172.25.0.0      0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+[root@desktop0 ~]# 
+
+
+
+考试说明
+
+您在考试过程中将使用的两个系统的信息如下：
+ * server0.example.com(ServerX) 是一个主要的服务器
+ * desktop0.example.com(DesktopX)主要用作客户端
+两个系统的root密码为redhat
+系统的IP地址由DHCP提供，您可以视其正常，或者您可以按以下信息重新设置为静态IP：
+ * server0.example.com ：172.25.0.11
+ * desktop0.example.com ：172.25.0.10
+ * 子网掩码为：255.255.255.0
+ * 默认网关为：172.25.0.254
+
+您的系统是DNS域 .example.com 的成员，
+所有在DNS域 .example.com 中的系统都在子网172.25.0.0/24中，
+同样在这个子网中的系统都在DNS域 .example.com 中。
+除非特别指明，
+所有要求配置的网络都必须能被 .example.com 域中的系统访问。
+
+classroom.example.com 提供了集中认证的服务域 .example.com，
+两个系统 server0 和 desktop0 已经预先配置成此域的客户端，
+此域提供了下列用户帐号（模拟环境酌情创建）：
+ * ldapuser0 （密码：kerberos)
+ * fleyd （密码：redhat)
+ * sergio （密码：redhat)
+ * krishna （密码：redhat)
+
+防火墙默认是打开的，
+在您认为是适当的时候可以关闭。
+其他的关于防火墙的设置可能在单独的要求中。
+在评分之前您的系统会被重新启动，
+所以请您确保您所做的所有修改和服务配置在重新启动之后仍然能够生效，而无需人工干预。
+所有考试用的虚拟机实例必须能重启之后进入正确的用户级别，而无需人工协助。
+如果考试用的虚拟机不能启动或不能正常启动，
+将被评零分。
+您在考试中使用的Red Hat Enterprise Linux操作系统版本对应的分发包可以
+通过YUM在下面的链接中找到：http://content.example.com/rhel7.0/x86_64/dvd
+一部分要求包含了主机安全、确定您的对主机安全限制没有阻挡要求允许的主机或网络。
+虽然您正确配置了网络服务但本来允许访问的主机或网络被阻挡。
+这样也不会得分。
+您将会注意到一些要求明确不允许服务被域 my133t.org 访问，
+这个域的系统在 172.34.0.0/255.255.255.0 子网中，
+并且这些子网中的系统都属于域 my133t.org 。
+注意一些考试题目可能依赖于其他考试题目。
+比如说，在考试题目中可能要求您针对一个用户执行一系列的限制，
+但是这个用户的创建可能是在其他题目中要求的。
+为了方便您的标识，
+每个考试题目都有一些选取按钮以协助您去标识哪个题目您已经完成了，哪些还没有。
+当然，如果您觉得用不着，您也可以不去理会这些按钮。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

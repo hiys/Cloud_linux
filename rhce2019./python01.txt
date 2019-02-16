@@ -1,0 +1,613 @@
+
+[root@room9pc27 ~]# cat /var/lib/libvirt/images/.rhel7.xml
+<!--
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh edit rhel7.1
+or other application using the libvirt API.
+-->
+
+<domain type='kvm'>
+  <name>rh7_template</name>
+  <memory unit='KiB'>1048576</memory>
+  <currentMemory unit='KiB'>1048576</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-i440fx-rhel7.0.0'>hvm</type>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+    <cpu mode='host-model'>
+      <model fallback='allow'/>
+  </cpu>
+  <clock offset='utc'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <pm>
+    <suspend-to-mem enabled='no'/>
+    <suspend-to-disk enabled='no'/>
+  </pm>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/rh7_template.img'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='hda' bus='ide'/>
+      <readonly/>
+      <address type='drive' controller='0' bus='0' target='0' unit='0'/>
+    </disk>
+    <controller type='usb' index='0' model='ich9-ehci1'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x7'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci1'>
+      <master startport='0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci2'>
+      <master startport='2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x1'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci3'>
+      <master startport='4'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pci-root'/>
+    <controller type='ide' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x1'/>
+    </controller>
+    <controller type='virtio-serial' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
+    </controller>
+    <interface type='network'>
+      <source network='private1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='private2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public1'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0a' function='0x0'/>
+    </interface>
+    <interface type='network'>
+      <source network='public2'/>
+      <model type='virtio'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x0b' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='spice' autoport='yes'>
+      <image compression='off'/>
+    </graphics>
+    <sound model='ich6'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <redirdev bus='usb' type='spicevmc'>
+    </redirdev>
+    <redirdev bus='usb' type='spicevmc'>
+    </redirdev>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+
+[root@room9pc27 ~]# du  -sh   /var/lib/libvirt/images/.rh7_template.img
+3.7G	/var/lib/libvirt/images/.rh7_template.img
+
+[root@room9pc27 ~]# ls  /var/lib/libvirt/images/bin/
+charm  clone-auto6  clone-auto7  clone-vm  clone-vm6  clone-vm7  rht-vmctl
+
+[root@room9pc27 ~]# ll  /var/lib/libvirt/images/bin/clone-auto7 
+-rwxr-xr-x 1 root root 2062 1月  12 2018 /var/lib/libvirt/images/bin/clone-auto7
+
+[root@room9pc27 ~]# egrep   -nv  "^(#|$)"   /var/lib/libvirt/images/bin/clone-auto7
+3:BASEVM=rh7_template
+4:IMG_DIR=/var/lib/libvirt/images
+11:read -p "number of vms: " number
+12:if [[ ! "$number" =~ ^[0-9]+$ ]]; then
+13:    echo "you must input a number."
+14:    exit 1
+15:fi
+17:if [ $number -le 0 -o $number -gt 9 ]; then
+18:    echo "number out of range(1~9)."
+19:    exit 2
+20:fi
+21:VMNUM=$number
+22:if [ $VMNUM -le 9 ];then
+23:VMNUM=0$VMNUM
+24:fi
+26:counter=0
+27:vms=0
+28:num=$(virsh  list --all | grep rh7  | wc -l)
+29:if [ $num -ge 9 ];then
+30:  echo -e "\033[31m You already have 9 virtual machines \033[0m"
+31:  exit 3
+32:fi
+34:while [ $vms -lt $number ]
+35:do
+36:    let counter++
+37:    newvm=rh7_node${counter}
+38:    if [ -f ${IMG_DIR}/${newvm}.img ]; then
+39:        continue
+40:    fi
+41:    
+42:    qemu-img create -f qcow2 -b ${IMG_DIR}/.rh7_template.img ${IMG_DIR}/${newvm}.img &> /dev/null
+43:    
+44:    cat /var/lib/libvirt/images/.rhel7.xml > /tmp/myvm.xml
+45:    sed -i "/<name>${BASEVM}/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+47:    sed -i "/${BASEVM}\.img/s/${BASEVM}/${newvm}/" /tmp/myvm.xml
+68:    virsh define /tmp/myvm.xml &> /dev/null
+69:    echo -e "created ${newvm}\t\t\t\t\t\033[32;1m[Done]\033[0m"
+70:    let vms++
+72:done
+[root@room9pc27 ~]# 
+
+
+[root@room9pc27 ~]# echo  9  |clone-auto7
+................
+[root@room9pc27 ~]# echo  1 |clone-auto7
+created rh7_node10					[Done]
+
+[root@room9pc27 ~]# ls  /etc/yum.repos.d/repo/
+CentOS-Base.repo       CentOS-fasttrack.repo  CentOS-Sources.repo    rpm.repo
+CentOS-CR.repo         CentOS-Media.repo      CentOS-Vault.repo
+CentOS-Debuginfo.repo  centos.repo            packagekit-media.repo
+
+[root@room9pc27 ~]# ls  /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  repo  rhel7.repo
+
+[root@room9pc27 ~]# ls  -ld   /etc/yum.repos.d/
+drwxr-xr-x. 4 root root 4096 2月  12 11:55 /etc/yum.repos.d/
+
+[root@room9pc27 ~]# ls  /var/ftp/rhel7/
+addons            GPL       media.repo               RPM-GPG-KEY-redhat-release
+EFI               images    Packages                 TRANS.TBL
+EULA              isolinux  repodata
+extra_files.json  LiveOS    RPM-GPG-KEY-redhat-beta
+
+[root@room9pc27 ~]# systemctl   is-active   vsftpd
+active
+
+[root@room9pc27 ~]# systemctl  is-enabled  vsftpd
+enabled
+
+[root@room9pc27 ~]# tail  -n  1  /etc/fstab
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults  0  0
+
+[root@room9pc27 ~]# ls  /var/lib/libvirt/images/iso/
+CentOS-7-x86_64-DVD-1708.iso    rhel-server-7.4-x86_64-dvd.iso
+lost+found                      Win10_Pro_X64_zh_CN.iso
+rhel-server-6.7-x86_64-dvd.iso
+
+
+[root@room9pc27 ~]# lsattr   /etc/yum.repos.d/rhel7.repo 
+-------------e-- /etc/yum.repos.d/rhel7.repo
+
+[root@room9pc27 ~]# cat   /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://127.0.0.1/rhel7
+enabled=1
+gpgcheck=0
+
+============  创建  虚拟网络  vbr   vbr1  private2  [ 10 ] ==================
+
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+
+[root@room9pc25 ~]# virsh  net-dumpxml  private2
+<network>
+  <name>private2</name>
+  <uuid>dca824f3-cdfc-4fcd-9b98-f8a46656c27d</uuid>
+  <bridge name='private2' stp='on' delay='0'/>
+  <mac address='52:54:00:f8:f9:d7'/>
+  <domain name='private2'/>
+  <ip address='192.168.2.254' netmask='255.255.255.0'>
+  </ip>
+</network>
+
+[root@room9pc25 ~]# 
+
+vbr     :   inet 192.168.0  .254  --eth0
+vbr1    :   inet 192.168.1  .254  --eth1
+private2:   inet 192.168.2  .254  --eth2
+
+[root@hiys ~]# cd  /etc/libvirt/qemu/networks/
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr.xml
+
+<network>
+  <name>vbr</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr' stp='on' delay='0'/>
+  <domain name='vbr'/>
+  <ip address='192.168.0.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.0.100' end='192.168.0.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# cp  /etc/libvirt/qemu/networks/vbr.xml  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# vim  /etc/libvirt/qemu/networks/vbr1.xml
+
+[root@hiys networks]# cat  /etc/libvirt/qemu/networks/vbr1.xml
+
+<network>
+  <name>vbr1</name>
+  <forward mode='nat'>
+  </forward>
+  <bridge name='vbr1' stp='on' delay='0'/>
+  <domain name='vbr1'/>
+  <ip address='192.168.1.254' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.1.100' end='192.168.1.200'/>
+    </dhcp>
+  </ip>
+</network>
+
+[root@hiys networks]# ls
+autostart  default.xml  private1.xml  private2.xml  public1.xml  public2.xml  rhce.xml  vbr1.xml  vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr.xml 
+Network vbr defined from vbr.xml
+
+[root@hiys networks]# virsh  net-define  vbr1.xml 
+Network vbr1 defined from vbr1.xml
+
+[root@room9pc27 networks]# virsh  net-list  --all
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ default              不活跃  否           是
+ private1             活动     是           是
+ private2             活动     是           是
+..................
+
+[root@hiys networks]# virsh  net-autostart  vbr
+Network vbr marked as autostarted
+
+[root@hiys networks]# virsh  net-autostart  vbr1
+Network vbr1 marked as autostarted
+
+[root@hiys networks]# virsh  net-start  vbr
+Network vbr started
+
+[root@hiys networks]# virsh  net-start  vbr1
+Network vbr1 started
+
+[root@room9pc27 networks]# virsh  net-list 
+ 名称               状态     自动开始  持久
+----------------------------------------------------------
+ private1             活动     是           是
+ private2             活动     是           是
+ public1              活动     是           是
+ public2              活动     是           是
+ rhce                 活动     是           是
+ vbr                  活动     是           是
+ vbr1                 活动     是           是
+
+[root@hiys networks]# ifconfig vbr ;ifconfig vbr1
+
+=====================================
+
+[root@hiys ~]# cat  local.repo.txt
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+ 
+
+[root@hiys ~]# vim   Vip.sh
+[root@hiys ~]# cat   Vip.sh
+#!/bin/bash
+nameid=$1
+ip=$2
+export  LANG=en_US.UTF-8
+echo  1  |passwd  --stdin  root
+echo  V${nameid} > /etc/hostname
+echo  "LANG=\"en_US.UTF-8\"" >> /etc/sysconfig/i18n
+echo  "LANG=\"en_US.UTF-8\"" >>  /etc/rc.local
+chmod  a+x  /etc/rc.d/rc.local
+source   /etc/rc.local
+
+echo  "NAME=\"eth0\"
+DEVICE=\"eth0\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.0.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo  "NAME=\"eth1\"
+DEVICE=\"eth1\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.1.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+echo  "NAME=\"eth2\"
+DEVICE=\"eth2\"
+ONBOOT=yes
+NM_CONTROLLED=\"no\"
+TYPE=Ethernet
+IPV6INIT=no
+IPV4_FAILURE_FATAL=\"no\"
+BOOTPROTO=\"static\"
+IPADDR=\"192.168.2.${ip}\"
+NETMASK=\"255.255.255.0\"
+GATEWAY=\"192.168.0.254\""  > /etc/sysconfig/network-scripts/ifcfg-eth2
+
+systemctl  stop   NetworkManager
+yum  -y   remove  NetworkManager-*  firewalld-*  python-firewall 
+sed  -i  "7c SELINUX=disabled"  /etc/selinux/config
+systemctl   restart  network
+
+[root@room9pc27 ~]# 
+
+
+/************************
+c ：取代， c 的后面可以接字串，这些字串可以取代 n1,n2 之间的行！
+[root@room9pc27 ~]# sed  -n  5,8p  testsed.txt
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+SELINUX=disabled
+# SELINUXTYPE= can take one of three two values:
+
+[root@room9pc27 ~]# sed  -i  "7c  xxxxxxx"   testsed.txt
+
+[root@room9pc27 ~]# sed  -n  5,8p  testsed.txt
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+xxxxxxx
+# SELINUXTYPE= can take one of three two values:
+****************/
+
+
+[root@hiys ~]# tty
+/dev/pts/0
+[root@room9pc27 ~]# for  i  in   V{10..19};do virsh  start  $i;done
+域 V10 已开始
+................
+
+域 V19 已开始
+
+[root@room9pc27 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:          15781        6716        7192         346        1872        8366
+Swap:             0           0           0
+[root@room9pc27 ~]# 
+
+[root@hiys ~]# virsh console  V10
+[root@hiys ~]# virsh console  V11
+[root@hiys ~]# virsh console  V12
+...............
+[root@hiys ~]# virsh console  V19
+..........
+[root@localhost ~]# vim   Vip.sh
+[root@localhost ~]# . Vip.sh  10  10  ## 主机名 V10     # ip 10
+.............
+Complete!
+[root@localhost ~]# cat  /etc/hostname 
+V10
+[root@localhost ~]# free  -m 
+              total        used        free      shared  buff/cache   available
+Mem:           1536         133         864           8         537        1215
+Swap:          2047           0        2047
+[root@localhost ~]# reboot
+
+[root@room9pc27 ~]# > /root/.ssh/known_hosts
+[root@room9pc27 ~]# ll /root/.ssh/known_hosts
+-rw-r--r-- 1 root root 0 2月  12 15:38 /root/.ssh/known_hosts
+
+[root@room9pc27 ~]# vim  /etc/ssh/ssh_config
+[root@room9pc27 ~]# sed  -n  58,60p  /etc/ssh/ssh_config
+Host *
+	GSSAPIAuthentication yes
+        StrictHostKeyChecking  no
+
+[root@room9pc27 ~]# systemctl  is-active  sshd
+unknown
+[root@room9pc27 ~]# systemctl  start  sshd  &&  systemctl  enable  sshd
+
+Created symlink from /etc/systemd/system/multi-user.target.wants/sshd.service to /usr/lib/systemd/system/sshd.service.
+
+
+[root@room9pc27 ~]# ssh    192.168.0.10
+ssh: connect to host 192.168.0.10 port 22: No route to host
+
+[root@room9pc27 ~]# systemctl  stop  firewalld.service 
+
+[root@room9pc27 ~]# systemctl  disable  firewalld.service
+
+[root@room9pc27 ~]# systemctl  is-active  sshd
+active
+[root@room9pc27 ~]# systemctl  is-enabled  sshd
+enabled
+
+[root@room9pc27 ~]# ssh  -X   -o  StrictHostKeyChecking=no  root@192.168.0.10
+root@192.168.0.10's password: 
+Last login: Tue Feb 12 16:32:17 2019 from 192.168.0.254
+/usr/bin/xauth:  file /root/.Xauthority does not exist
+
+[root@V10 ~]# ifconfig  |awk  '/inet /{print  $2}'
+192.168.0.10
+192.168.1.10
+192.168.2.10
+127.0.0.1
+192.168.122.1
+[root@V10 ~]# ping  -c1  192.168.0.254
+PING 192.168.0.254 (192.168.0.254) 56(84) bytes of data.
+64 bytes from 192.168.0.254: icmp_seq=1 ttl=64 time=0.117 ms
+.............
+
+[root@V10 ~]#  scp  -o  StrictHostKeyChecking=no  \
+>  root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+ssh: connect to host 192.168.0.254 port 22: Connection refused
+
+[root@room9pc27 ~]# sed  -n  16p   /etc/ssh/sshd_config
+Port 7920
+
+[root@V10 ~]#  scp -P 7920  -o  StrictHostKeyChecking=no   root@192.168.0.254:/root/local.repo.txt   /etc/yum.repos.d/local.repo
+..............
+root@192.168.0.254's password: 
+local.repo.txt            100%   99    76.7KB/s   00:00 
+  
+[root@V10 ~]# cat /etc/yum.repos.d/local.repo
+[rhel7]
+name=rhel-server-7.4-x86_64-dvd.iso
+baseurl=ftp://192.168.0.254/rhel7
+enabled=1
+gpgcheck=0
+
+[root@V10 ~]# yum  clean all >/dev/null &&  yum repolist  |tail  -3
+源标识                   源名称                                            状态
+rhel7               rhel-server-7.4-x86_64-dvd.iso         4,986
+repolist: 4,986
+
+[root@V10 ~]#  ip  route  show
+default via 192.168.0.254 dev eth0 
+169.254.0.0/16 dev eth0 scope link metric 1002 
+169.254.0.0/16 dev eth1 scope link metric 1003 
+169.254.0.0/16 dev eth2 scope link metric 1004 
+192.168.0.0/24 dev eth0 proto kernel scope link src 192.168.0.10 
+192.168.1.0/24 dev eth1 proto kernel scope link src 192.168.1.10 
+192.168.2.0/24 dev eth2 proto kernel scope link src 192.168.2.10 
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 
+
+[root@room9pc27 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:          15781       11179         917         303        3684        3925
+Swap:             0           0           0
+
+
+
+关闭虚拟机  virsh shutdown +域名  
+我们需要安装一个acpid的服务并启动它，什么是ACPI?
+
+ACPI是Advanced Configuration and PowerInterface缩写，高级配置和电源管理接口。
+
+acpid中的d则代表daemon。
+Acpid是一个用户空间的服务进程，
+它充当linux内核与应用程序之间通信的接口，负责将kernel中的电源管理事件转发给应用程序。
+
+Acpid是一个用户空间的服务进程，
+它充当linux内核与应用程序之间通信的接口，负责将kernel中的电源管理事件转发给应用程序。
+
+其实，说明了就是通过这个服务来执行电源关闭的动作
+
+（子机安装acpid服务）yum install -y acpid
+
+/etc/init.d/acpid start
+----------------------------------------------
+
+子机随宿主主机（母机）启动而启动
+
+virsh autostart + 域名
+
+彻底删除虚拟机
+
+1, 删除虚拟机   virsh destroy +域名
+
+2，解除标记     virsh undefine +域名
+
+3，删除虚拟机文件  
+
+[root@room9pc27 ~]# for  i  in  V{12..19};do  virsh  shutdown  $i;done
+..............................
+[root@V13 ~]# Powering off.
+[ 5126.575791] Power down.
+[root@room9pc27 ~]# free  -m
+              total        used        free      shared  buff/cache   available
+Mem:          15781        3790        8280         329        3710       11293
+Swap:             0           0           0
+[root@room9pc27 ~]# 
+
+[root@room9pc27 ~]# vim   /etc/rc.local
+
+[root@room9pc27 ~]# cat  /etc/resolv.conf 
+# Generated by NetworkManager
+search tedu.cn
+nameserver 202.96.128.86
+
+
+[root@room9pc27 ~]# tail  -2 /etc/rc.local
+/usr/bin/crack_pycharm &
+echo  "nameserver  176.121.0.100"  > /etc/resolv.conf
+
+[root@room9pc27 ~]# .  /etc/rc.local
+..............
+[1]+  退出 1                /usr/bin/crack_pycharm
+
+[root@room9pc27 ~]# cat    /etc/resolv.conf 
+nameserver  176.121.0.100
+
+[root@room9pc27 ~]# 
+
+
+[root@room9pc27 ~]# cat 1.py 
+#!/bin/python
+print("hello world")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

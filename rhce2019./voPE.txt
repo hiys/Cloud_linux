@@ -1,0 +1,213 @@
+
+
+
+
+/****** ~]# mkswap    /dev/vdb8  #创建交换分区,格式化交换文件系统 ***/
+
+[root@server0 ~]# lsblk 
+NAME                   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                    252:0    0   10G  0 disk 
+└─vda1                 252:1    0   10G  0 part /
+vdb                    252:16   0   10G  0 disk 
+├─vdb4                 252:20   0    1K  0 part 
+├─vdb5                 252:21   0  210M  0 part 
+│ └─systemvg-vo        253:0    0  312M  0 lvm  /vo
+├─vdb6                 252:22   0  110M  0 part 
+│ └─systemvg-vo        253:0    0  312M  0 lvm  /vo
+├─vdb7                 252:23   0  320M  0 part 
+├─vdb8                 252:24   0  512M  0 part [SWAP]
+└─vdb9                 252:25   0    1G  0 part 
+  └─datastore-database 253:1    0  800M  0 lvm  /mnt/database
+
+[root@server0 ~]# tail  -3  /etc/fstab 
+/dev/systemvg/vo   /vo  ext3   defaults   0   0
+/dev/vdb8         swap   swap   defaults   0   0
+/dev/datastore/database    /mnt/database  ext3  defaults  0  0
+
+[root@server0 ~]# vim  /etc/fstab 
+[root@server0 ~]# tail  -3  /etc/fstab 
+#/dev/systemvg/vo   /vo  ext3   defaults   0   0
+#/dev/vdb8         swap   swap   defaults   0   0
+#/dev/datastore/database    /mnt/database  ext3  defaults  0  0
+
+[root@server0 ~]# blkid   /dev/vdb{5,6,8,9}
+/dev/vdb5: UUID="URBCNI-uMe6-16As-wBrk-oee6-yX2j-YcjpNx" TYPE="LVM2_member" 
+/dev/vdb6: UUID="Ris7mA-rFxq-hp0s-5XlV-1gLs-BnCY-Tg6XH6" TYPE="LVM2_member" 
+/dev/vdb8: UUID="7bf954a0-a067-40a1-984e-7bd28a8efb83" TYPE="swap" 
+/dev/vdb9: UUID="XwHc6F-4uS6-PoNj-QLP1-6yO0-XC7u-lDm8e4" TYPE="LVM2_member" 
+
+=============================
+
+[root@server0 ~]# vim   /etc/fstab 
+[root@server0 ~]# tail  -2   /etc/fstab
+/dev/vdb8         swap   swap   defaults   0   0
+#/dev/datastore/database    /mnt/database  ext3  defaults  0  0
+
+[root@server0 ~]# swapon    /dev/vdb8    #启用交换分区/dev/vdb8 
+/**** ~]# swapon   -a   ## -a 参数是开启全部的交换空间 ******/
+
+[root@server0 ~]# free  -m     #发现已经有交换分区
+             total       used       free     shared    buffers     cached
+Mem:           817        620        196         16          0        291
+-/+ buffers/cache:        327        489
+Swap:          511          0        511
+
+[root@server0 ~]# cat  /proc/swaps    #查看swap是否挂载
+Filename	  Type      Size     Used  Priority
+/dev/vdb8    partition	524284    0    -1
+
+[root@server0 ~]# swapon   -s     #-s 显示简短的装置讯息  //查看swap是否挂载
+文件名		 类型		大小	已用	权限
+/dev/vdb8   partition	524284	0	-1
+
+[root@server0 ~]# lsblk   /dev/vdb8    #查看swap是否挂载
+NAME MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vdb8 252:24   0  512M  0 part [SWAP]
+
+----------------------------  修改/etc/fstab里面逻辑卷的挂载信息 ------------------
+
+[root@server0 ~]# vim  /etc/fstab 
+[root@server0 ~]# tail   -3   /etc/fstab
+#/dev/systemvg/vo   /vo  ext3   defaults   0   0
+#/dev/vdb8         swap   swap   defaults   0   0
+#/dev/datastore/database    /mnt/database  ext3  defaults  0  0
+
+[root@server0 ~]# swapoff   /dev/vdb8   #禁用交换分区
+
+[root@server0 ~]# swapon   -s    #-s 显示简短的装置讯息  //查看swap是否挂载
+
+[root@server0 ~]# free  -m     # #发现 交换分区 free项 数值变成了 0,被关闭了
+             total       used       free     shared    buffers     cached
+Mem:           817        619        197         16          0        291
+-/+ buffers/cache:        326        490
+Swap:            0          0          0
+
+[root@server0 ~]# cat  /proc/swaps 
+Filename				Type		Size	Used	Priority
+
+---------- #目前只能用 fdisk 的 d 指令 强制删除分区/dev/vdb8 的方法,不能使其变成普通分区 ---------------
+[root@server0 ~]# blkid    /dev/vdb8   
+/dev/vdb8: UUID="7bf954a0-a067-40a1-984e-7bd28a8efb83" TYPE="swap" 
+
+[root@server0 ~]# lsblk
+NAME                   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                    252:0    0   10G  0 disk 
+└─vda1                 252:1    0   10G  0 part /
+vdb                    252:16   0   10G  0 disk 
+├─vdb4                 252:20   0    1K  0 part 
+├─vdb5                 252:21   0  210M  0 part 
+│ └─systemvg-vo        253:0    0  312M  0 lvm  /vo
+├─vdb6                 252:22   0  110M  0 part 
+│ └─systemvg-vo        253:0    0  312M  0 lvm  /vo
+├─vdb7                 252:23   0  320M  0 part 
+├─vdb8                 252:24   0  512M  0 part 
+└─vdb9                 252:25   0    1G  0 part 
+  └─datastore-database 253:1    0  800M  0 lvm  /mnt/database
+
+----------------- 1 先通过umount命令卸载掉逻辑卷 ------------------
+
+[root@server0 ~]# umount  /vo/
+[root@server0 ~]# umount  /mnt/database/
+[root@server0 ~]# lsblk 
+NAME                   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                    252:0    0   10G  0 disk 
+└─vda1                 252:1    0   10G  0 part /
+vdb                    252:16   0   10G  0 disk 
+├─vdb4                 252:20   0    1K  0 part 
+├─vdb5                 252:21   0  210M  0 part 
+│ └─systemvg-vo        253:0    0  312M  0 lvm  
+├─vdb6                 252:22   0  110M  0 part 
+│ └─systemvg-vo        253:0    0  312M  0 lvm  
+├─vdb7                 252:23   0  320M  0 part 
+├─vdb8                 252:24   0  512M  0 part 
+└─vdb9                 252:25   0    1G  0 part 
+  └─datastore-database 253:1    0  800M  0 lvm  
+
+---------------------------- 2  修改/etc/fstab里面逻辑卷的挂载信息 ------------------
+
+[root@server0 ~]# vim  /etc/fstab 
+[root@server0 ~]# tail   -3   /etc/fstab
+#/dev/systemvg/vo   /vo  ext3   defaults   0   0
+#/dev/vdb8         swap   swap   defaults   0   0
+#/dev/datastore/database    /mnt/database  ext3  defaults  0  0
+
+[root@server0 ~]# lvs
+  LV       VG        Attr       LSize   Pool Origin Data%  Move Log Cpy%Sync Convert
+  database datastore -wi-a----- 800.00m                                             
+  vo       systemvg  -wi-a----- 312.00m  
+ 
+  ------------------- 3、通过lvremove 删除逻辑卷 ------------------------------
+            
+[root@server0 ~]# lvremove  -f  /dev/systemvg/vo 
+  Logical volume "vo" successfully removed
+
+[root@server0 ~]# lvs
+  LV       VG        Attr       LSize   Pool Origin Data%  Move Log Cpy%Sync Convert
+  database datastore -wi-a----- 800.00m      
+
+  ------------------- 3、通过lvremove 删除逻辑卷 --------------------------
+                 
+[root@server0 ~]# lvremove   -f  /dev/datastore/database 
+  Logical volume "database" successfully removed
+
+[root@server0 ~]# lvs
+
+--------------------  4、通过vgremove 删除卷组  -------------------
+
+[root@server0 ~]# vgremove   -f   /dev/datastore
+  Volume group "datastore" successfully removed
+
+[root@server0 ~]# vgs
+  VG       #PV #LV #SN Attr   VSize   VFree  
+  systemvg   2   0   0 wz--n- 316.00m 316.00m
+
+[root@server0 ~]# vgremove   -f  /dev/systemvg
+  Volume group "systemvg" successfully removed
+
+[root@server0 ~]# vgs
+  No volume groups found
+
+  ---------------------- 5、通过pvremove 将物理卷转化成普通分区 -------------------
+
+[root@server0 ~]# pvs
+  PV         VG   Fmt  Attr PSize   PFree  
+  /dev/vdb5       lvm2 a--  210.00m 210.00m
+  /dev/vdb6       lvm2 a--  110.00m 110.00m
+  /dev/vdb9       lvm2 a--    1.00g   1.00g
+
+[root@server0 ~]# pvremove   -y  /dev/vdb{5,6,9}
+  Labels on physical volume "/dev/vdb5" successfully wiped
+  Labels on physical volume "/dev/vdb6" successfully wiped
+  Labels on physical volume "/dev/vdb9" successfully wiped
+
+
+[root@server0 ~]# blkid
+/dev/vdb8: UUID="7bf954a0-a067-40a1-984e-7bd28a8efb83" TYPE="swap" 
+/dev/vda1: UUID="9bf6b9f7-92ad-441b-848e-0257cbb883d1" TYPE="xfs" 
+
+[root@server0 ~]# blkid  /dev/vdb{4..9}
+/dev/vdb4: PTTYPE="dos" 
+/dev/vdb8: UUID="7bf954a0-a067-40a1-984e-7bd28a8efb83" TYPE="swap" 
+
+[root@server0 ~]# lsblk 
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda    252:0    0   10G  0 disk 
+└─vda1 252:1    0   10G  0 part /
+vdb    252:16   0   10G  0 disk 
+├─vdb4 252:20   0    1K  0 part 
+├─vdb5 252:21   0  210M  0 part 
+├─vdb6 252:22   0  110M  0 part 
+├─vdb7 252:23   0  320M  0 part 
+├─vdb8 252:24   0  512M  0 part 
+└─vdb9 252:25   0    1G  0 part 
+
+
+
+
+
+
+
+
+
+
+
