@@ -1,0 +1,39 @@
+
+[root@room9pc01 ~]# tail -1 /etc/fstab 
+/var/lib/libvirt/images/iso/rhel-server-7.4-x86_64-dvd.iso  /var/ftp/rhel7 iso9660 defaults 0 0
+[root@room9pc01 ~]# ls /var/ftp/rhel7/
+
+[root@room9pc01 ~]# ls /etc/yum.repos.d/
+NSD-2018-1-12.tar.gz  repo  rhel7.repo
+[root@room9pc01 ~]# vim /etc/yum.repos.d/rhel7.repo 
+[root@room9pc01 ~]# cat /etc/yum.repos.d/rhel7.repo
+[rhel7]
+name=rhel7.4
+baseurl=ftp://192.168.4.254/rhel7
+enabled=1
+gpgcheck=0
+[root@room9pc01 ~]# yum clean all >/dev/null && yum repolist |tail -5
+[root@room9pc01 ~]# yum -y install git
+[root@room9pc01 ~]# rpm -q git
+git-1.8.3.1-11.el7.x86_64
+[root@room9pc01 ~]# mkdir /linux
+[root@room9pc01 ~]# cd /linux
+# git  init
+初始化空的 Git 版本库于  ......
+
+1.打开需要下载文件的页面
+2.点击右上角的raw键，这个是原生态的文件，同时地址栏的地址也是该文件的url。
+[root@room9pc01 linux]# wget https://raw.githubusercontent.com/hiys/linux/master/6OPerationx/SubveRPM.txt
+[root@room9pc01 linux]# ls
+SubveRPM.txt
+[root@room9pc01 linux]# wget https://raw.githubusercontent.com/hiys/linux/master/init.d_nginx.txt
+[root@room9pc01 linux]# mv init.d_nginx.txt /root/桌面/
+
+[root@room9pc01 linux]# wget https://raw.githubusercontent.com/hiys/linux/master/autonewlnmp.txt
+
+
+
+
+
+
+
